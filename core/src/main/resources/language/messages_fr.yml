@@ -1,0 +1,73 @@
+Prefix: '&6&lH&e&lead&6&lB&e&llocks &7»&r'
+
+Head:
+  Name: "&6&lH&e&lead&6&lB&e&llocks"
+  Lore:
+    - ""
+    - "&7&oPermet de créer un HeadBlock à l'emplacement choisi"
+    - ""
+    - "&2✔ &8- &7Clic droit + accroupi pour créer un Headblock"
+    - "&c✘ &8- &7Clic gauche + accroupi pour supprimer un Headblock"
+    - ""
+
+Messages:
+  NoPermission: "%prefix% &cVous n'avez pas la permission d'éxécuter cette commande"
+  NoPermissionBlock: "%prefix% &cVous n'avez pas la permission d'intéragir avec cette tête"
+  ErrorCommand: "%prefix% &cErreur dans la commande. Vérifiez avec /hb help"
+  PlayerOnly: "%prefix% &cCette commande ne peut être exécutée que par un joueur"
+  PlayerNotFound: "%prefix% &cLe joueur n'est pas connecté"
+  ReloadComplete: "%prefix% &aLa configuration a été rechargée avec succès"
+  InventoryFull: "%prefix% &cIl n'y a pas assez de place dans l'inventaire du joueur pour donner un HeadBlock"
+  CreativeSneakRemoveHead: "%prefix% &cVous devez être accroupi pour détruire un HeadBlock"
+  CreativeSneakAddHead: "%prefix% &cVous devez être accroupi pour poser un HeadBlock"
+  HeadPlaced: "%prefix% &2&l+ &aHeadBlock placé &7(%world%, %x%, %y%, %z%)"
+  HeadRemoved: "%prefix% &2&c- &eHeadBlock supprimé &7(%world%, %x%, %y%, %z%)"
+  AlreadyClaimHead: "%prefix% &cVous avez déjà cliqué sur cette tête"
+  HeadClicked: "%prefix% &aVous avez trouvé une nouvelle tête"
+  ListHeadEmpty: "%prefix% &aIl n'y a pas encore de têtes"
+  HeadGiven: "%prefix% &aVous avez reçu un HeadBlock avec succès"
+  NoHeadFound: "%prefix% &cCe joueur n'a pas encore trouvé de tête"
+  ResetAllNoData: "%prefix% &cAucune donnée à réinitialiser"
+  ResetAllConfirm: "%prefix% &cAttention, cette commande va réinitialiser les données de &7%playerCount% &cjoueur(s). Ajoutez &7--confirm &cà la commande pour confirmer"
+  ResetAllSuccess: "%prefix% &aLes données de &e%playerCount% &ajoueur(s) ont correctement été réinitialisées"
+  PlayerReset: "%prefix% &aLes données de %player% ont été réinitialisé"
+  RemoveLocationError: "%prefix% &cErreur aucun HeadBlock correspondant n'a été trouvé"
+  HeadAlreadyExistHere: "%prefix% &cUn HeadBlock existe déjà à cet emplacement"
+  Version: "%prefix% &aVersion du plugin : &e%version%"
+  MeCommand:
+    - ""
+    - "&aNombre de têtes récupérées : &e%current%&7/&e%max%"
+    - "&aProgression : &7[%progress%&7]"
+    - ""
+
+Chat:
+  Hover:
+    Teleport: "&7&oSe téléporter au HeadBlock"
+    Remove: "&7&oSupprimer ce HeadBlock"
+    PreviousPage: "&7&oPage précédente"
+    NextPage: "&7&oPage suivante"
+    Own: "&7&oA trouvé la tête"
+    NotOwn: "&7&oN'a pas trouvé la tête"
+  Box:
+    Teleport: "&8[&a☄&8] &7|"
+    Remove: "&7| &8[&c✘&8]"
+    Own: "&7| &8[&2✔&8]"
+    NotOwn: "&7| &8[&c✘&8]"
+  StatsTitleLine: "&7------[ &eDonnées de &6%player% &8» &6%headCount%&8/&6%maxHead% &etêtes &7]-------"
+  LineTitle: "&7------------------[ &6&lH&e&lead&6&lB&e&llocks&7 ]-----------------"
+  LineCoordinate: "&6Monde &8: &e%worldName% &8[&6X&8: &e%x%&8, &6Y&8: &e%y%&8, &6Z&8: &e%z%&8]"
+  PreviousPage: "&7---------[&8<<<&7]---------"
+  NextPage: "&7---------[&8>>>&7]---------"
+  PageFooter: " &8[ &e%pageNumber%&7/&e%totalPage% &8] "
+
+Help:
+  LineTop: "&7--------------------[ &e&lAide &7]--------------------"
+  Help: "&6/hb help &8: &7&oAffiche ce message"
+  Me: "&6/hb me &8: &7&oAffiche votre progression"
+  Give: "&6/hb give <player> &8: &7&oDonne un HeadBlock à poser au <joueur>"
+  Reset: "&6/hb reset <player> &8: &7&oRéinitialise les données du <joueur>"
+  ResetAll: "&6/hb resetall &8: &7&oRéinitialise les données de tous les joueurs"
+  List: "&6/hb list <page> &8: &7&oAffiche la liste des HeadBlocks existant"
+  Stats: "&6/hb stats <player> <page> &8 &7&oAffiche la liste des têtes possédées et manquantes du <joueur>"
+  Reload: "&6/hb reload &8: &7&oRecharge la configuration"
+  Version: "&6/hb version &8: &7&oAffiche la version du plugin"

@@ -1,0 +1,54 @@
+# The language used for messages in the plugin (only write XX in messages_XX.yml)
+language: en
+
+# Head texture in Other-Value format (https://minecraft-heads.com/)
+headTexture: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQ5Y2M1OGFkMjVhMWFiMTZkMzZiYjVkNmQ0OTNjOGY1ODk4YzJiZjMwMmI2NGUzMjU5MjFjNDFjMzU4NjcifX19'
+
+# Custom the progress bar displayed in the /headblocks me command
+progressBar:
+  totalBars: 100
+  symbol: '|'
+  notCompletedColor: '&7'
+  completedColor: '&a'
+
+# Events on headClick
+headClick:
+  # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
+  # Be careful, song may be different depending on the Minecraft Version
+  # Keep empty for no sound
+  sounds:
+    alreadyOwn: block_note_block_didgeridoo
+    notOwn: block_note_block_bell
+  commands: [ ]
+
+# If true, when a Headblocks is destroyed, it will delete all player data related to it
+shouldResetPlayerData: true
+
+# Multi-server support with Redis
+redis:
+  enable: false
+  settings:
+    hostname: localhost
+    database: 0
+    password: ''
+    port: 6379
+
+# Database configuration (MySQL)
+database:
+  enable: false
+  settings:
+    hostname: localhost
+    database: ''
+    username: ''
+    password: ''
+    port: 3306
+
+# Tiered rewards : provide a head count to trigger a reward command list
+# example:
+# tieredRewards:
+#   1:
+#   - "cmd: say &a%player% found a head!"
+#   100:
+#   - "cmd: give %player% diamond"
+#   - "msg: say &2%player% found 100 heads!"
+tieredRewards: { }
