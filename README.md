@@ -15,19 +15,19 @@ Welcome to the **Headblocks** official code repository.
 
 The plugin is compatible with servers running in **1.8 to 1.17+** and is compiled with **Java 8**.
 
-I'm using some third party libraries :
+I'm using some third party libraries:
 
-* [Item-NBT-API](https://github.com/tr7zw/Item-NBT-API) : Used to handle heads textures
-* [ConfigUpdater](https://github.com/tchristofferson/Config-Updater) : Used to update the config.yml and message_XX.yml
+* [Item-NBT-API](https://github.com/tr7zw/Item-NBT-API): Used to handle heads textures
+* [ConfigUpdater](https://github.com/tchristofferson/Config-Updater): Used to update the config.yml and message_XX.yml
   at each update
-* XSound from [XSeries](https://github.com/CryptoMorin/XSeries) : Used to translate song name to the correct MC version
+* XSound from [XSeries](https://github.com/CryptoMorin/XSeries): Used to translate song name to the correct MC version
 
 I'm not using some bStats metrics or Auto-Updater.
 
-Links :
+Links:
 
-* Spigot plugin page : https://www.spigotmc.org/resources/headblocks-1-8-1-17.97630/
-* Discord : https://discord.gg/f3d848XsQt
+* Spigot plugin page: https://www.spigotmc.org/resources/headblocks-1-8-1-17.97630/
+* Discord: https://discord.gg/f3d848XsQt
 
 ___
 
