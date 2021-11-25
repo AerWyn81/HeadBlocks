@@ -1,11 +1,11 @@
 # HeadBlocks
 
-![Issue Github](https://img.shields.io/github/issues-raw/AerWyn81/HeadBlocks?color=%2370d121&style=for-the-badge
-)
+![Issue Github](https://img.shields.io/github/issues-raw/AerWyn81/HeadBlocks?color=%2370d121&style=for-the-badge)
 ![Discord](https://img.shields.io/discord/912462773995335701?label=DISCORD&logo=discord&logoColor=%238bc1f7&style=for-the-badge)
+![Code Quality](https://img.shields.io/codefactor/grade/github/AerWyn81/HeadBlocks?logo=codefactor&style=for-the-badge)
 ___
 
-### Overwiew:
+### OVERVIEW:
 
 Welcome to the **Headblocks** official code repository.
 
@@ -31,15 +31,36 @@ Links :
 
 ___
 
-### Api:
+### API:
 
 #### Using Maven:
 
-_`Soon...`_
+```
+<repositories>
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+
+<dependency>
+  <groupId>com.github.AerWyn81</groupId>
+  <artifactId>HeadBlocks</artifactId>
+  <version>2.1.5</version>
+</dependency>
+```
 
 #### Using Gradle:
 
-_`Soon...`_
+```
+repositories {
+  maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+  implementation 'com.github.AerWyn81:HeadBlocks:2.1.5'
+}
+```
 
 #### Now you can get the HeadBlocks plugin instance:
 
@@ -77,7 +98,8 @@ Methods  | Explanations
 `getTotalHeadSpawnCount()` | _Return an `int` which corresponds to the total of heads placed_
 `getLeftPlayerHeadToMax(UUID playerUuid)` | _Return an `int` showing the amount of remaining heads to be found_
 ___
-### WIKI
+
+### WIKI:
 
 _Coming soon_
 ___
