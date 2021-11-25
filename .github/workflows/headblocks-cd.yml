@@ -1,4 +1,4 @@
-name: Headblocks CD
+name: HeadBlocks CD
 
 on:
   push:
@@ -36,6 +36,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/Headblocks.jar
-          asset_name: Headblocks-${{ steps.get_version.outputs.VERSION }}.jar
+          asset_path: ./build/HeadBlocks.jar
+          asset_name: HeadBlocks-${{ steps.get_version.outputs.VERSION }}.jar
           asset_content_type: application/java-archive
