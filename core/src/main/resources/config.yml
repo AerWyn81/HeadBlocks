@@ -13,12 +13,15 @@ progressBar:
 
 # Events on headClick
 headClick:
+  # The message send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI)
+  message: ''
   # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
   # Be careful, song may be different depending on the Minecraft Version
   # Keep empty for no sound
   sounds:
     alreadyOwn: block_note_block_didgeridoo
     notOwn: block_note_block_bell
+  # A list of commands
   commands: [ ]
 
 # If true, when a Headblocks is destroyed, it will delete all player data related to it

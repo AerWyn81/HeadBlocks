@@ -16,7 +16,7 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.10.10")
     implementation("redis.clients:jedis:3.6.3")
-    implementation("de.tr7zw:item-nbt-api:2.8.0")
+    implementation("de.tr7zw:item-nbt-api:2.9.0-SNAPSHOT")
     implementation("com.zaxxer:HikariCP:4.0.3")
     implementation("org.javatuples:javatuples:1.2")
     implementation("org.yaml:snakeyaml:1.29")
@@ -31,6 +31,7 @@ dependencies {
     implementation(project(":v1_15_R1"))
     implementation(project(":v1_16_R3"))
     implementation(project(":v1_17_R1"))
+    implementation(project(":v1_18_R1"))
 }
 
 tasks {

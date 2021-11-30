@@ -175,6 +175,9 @@ public final class HeadBlocks extends JavaPlugin {
             case v1_17:
                 versionCompatibility = new Helper117();
                 break;
+            case v1_18:
+                versionCompatibility = new Helper118();
+                break;
             default:
                 log.sendMessage(FormatUtils.translate("&cError initializing compatibility version support, version " + currentVersionFormatted + " not yet supported!"));
                 return false;

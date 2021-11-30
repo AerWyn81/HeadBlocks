@@ -3,7 +3,6 @@ package fr.aerwyn81.headblocks.handlers;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -47,11 +46,7 @@ public class LanguageHandler {
 	}
 
 	public String getMessageWithPlaceholders(Player player, String message) {
-		if (HeadBlocks.isPlaceholderApiActive) {
-			return PlaceholderAPI.setPlaceholders(player, getMessage(message));
-		} else {
-			return getMessage(message);
-		}
+		return FormatUtils.TryToFormatPlaceholders(player, getMessage(message));
 	}
 
 	public List<String> getMessages(String message) {

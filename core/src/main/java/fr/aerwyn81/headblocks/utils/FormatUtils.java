@@ -1,9 +1,12 @@
 package fr.aerwyn81.headblocks.utils;
 
 import com.google.common.base.Strings;
+import fr.aerwyn81.headblocks.HeadBlocks;
+import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -89,5 +92,21 @@ public class FormatUtils {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Handle PAPI placeholders
+	 *
+	 * @param player  the player to parse placeholders
+	 * @param message the message with placeholders
+	 * @return message with placeholders parsed or the default message
+	 */
+	public static String TryToFormatPlaceholders(Player player, String message) {
+		message = translate(message);
+
+		if (!HeadBlocks.isPlaceholderApiActive)
+			return message;
+
+		return PlaceholderAPI.setPlaceholders(player, message);
 	}
 }

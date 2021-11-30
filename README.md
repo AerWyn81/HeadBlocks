@@ -13,7 +13,7 @@ Welcome to the **Headblocks** official code repository.
   link: [Spigot](https://www.spigotmc.org/resources/headblocks-1-8-1-17.97630/)
 * If you want technical information about the plugin, you are at the right place!
 
-The plugin is compatible with servers running in **1.8 to 1.17+** and is compiled with **Java 8**.
+The plugin is compatible with servers running in **1.8 to 1.18+** and is compiled with **Java 8**.
 
 I'm using some third party libraries:
 
@@ -46,7 +46,7 @@ ___
 <dependency>
   <groupId>com.github.AerWyn81</groupId>
   <artifactId>HeadBlocks</artifactId>
-  <version>2.1.5</version>
+  <version>1.3.0</version>
 </dependency>
 ```
 
@@ -58,7 +58,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'com.github.AerWyn81:HeadBlocks:2.1.5'
+  implementation 'com.github.AerWyn81:HeadBlocks:1.3.0'
 }
 ```
 

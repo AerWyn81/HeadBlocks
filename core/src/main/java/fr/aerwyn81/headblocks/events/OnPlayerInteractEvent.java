@@ -104,6 +104,13 @@ public class OnPlayerInteractEvent implements Listener {
             player.sendMessage(message);
         }
 
+        message = configHandler.getHeadClickMessage();
+        if (!message.trim().isEmpty()) {
+            player.sendMessage(FormatUtils.TryToFormatPlaceholders(player, message
+                    .replaceAll("%player%", player.getName())
+                    .replaceAll("%prefix%", languageHandler.getPrefix())));
+        }
+
         try {
             XSound.play(player, configHandler.getHeadClickNotOwnSound());
         } catch (Exception ex) {
