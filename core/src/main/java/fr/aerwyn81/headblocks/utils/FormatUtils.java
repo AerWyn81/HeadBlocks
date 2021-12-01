@@ -10,6 +10,8 @@ import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -108,5 +110,21 @@ public class FormatUtils {
 			return message;
 
 		return PlaceholderAPI.setPlaceholders(player, message);
+	}
+
+	/**
+	 * Handle PAPI placeholders
+	 *
+	 * @param player   the player to parse placeholders
+	 * @param messages messages with placeholders
+	 * @return message with placeholders parsed or the default message
+	 */
+	public static String[] TryToFormatPlaceholders(Player player, List<String> messages) {
+		List<String> msgs = new ArrayList<>();
+
+		messages.stream().map(FormatUtils::translate)
+				.forEach(message -> msgs.add(TryToFormatPlaceholders(player, message)));
+
+		return msgs.toArray(new String[0]);
 	}
 }

@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -255,12 +256,8 @@ public class HBCommands implements CommandExecutor {
 
         List<String> messages = languageHandler.getMessages("Messages.MeCommand");
         if (messages.size() != 0) {
-            languageHandler.getMessages("Messages.MeCommand").forEach(msg -> player.sendMessage(msg
-                    .replaceAll("%progress%", progressBar)
-                    .replaceAll("%player%", player.getName())
-                    .replaceAll("%current%", String.valueOf(current))
-                    .replaceAll("%max%", String.valueOf(max))
-                    .replaceAll("%left%", String.valueOf(left))));
+            languageHandler.getMessages("Messages.MeCommand").forEach(msg -> player.sendMessage(InternalPlaceholders
+                    .parse(player, msg).replaceAll("%progress%", progressBar)));
         }
     }
 

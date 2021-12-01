@@ -39,8 +39,8 @@ public class ConfigHandler {
         return config.getString("headClick.sounds.notOwn", "block_note_block_bell");
     }
 
-    public String getHeadClickMessage() {
-        return config.getString("headClick.message", "");
+    public List<String> getHeadClickMessages() {
+        return config.getStringList("headClick.messages");
     }
 
     public List<String> getHeadClickCommands() {

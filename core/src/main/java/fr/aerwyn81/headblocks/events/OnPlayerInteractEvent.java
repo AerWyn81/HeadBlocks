@@ -1,10 +1,12 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.XSound;
@@ -17,7 +19,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OnPlayerInteractEvent implements Listener {
@@ -25,11 +29,13 @@ public class OnPlayerInteractEvent implements Listener {
     private final HeadBlocks main;
     private final ConfigHandler configHandler;
     private final LanguageHandler languageHandler;
+    private final HeadBlocksAPI headBlocksAPI;
 
     public OnPlayerInteractEvent(HeadBlocks main) {
         this.main = main;
         this.configHandler = main.getConfigHandler();
         this.languageHandler = main.getLanguageHandler();
+        this.headBlocksAPI = main.getHeadBlocksAPI();
     }
 
     @EventHandler
@@ -104,11 +110,12 @@ public class OnPlayerInteractEvent implements Listener {
             player.sendMessage(message);
         }
 
-        message = configHandler.getHeadClickMessage();
-        if (!message.trim().isEmpty()) {
-            player.sendMessage(FormatUtils.TryToFormatPlaceholders(player, message
-                    .replaceAll("%player%", player.getName())
-                    .replaceAll("%prefix%", languageHandler.getPrefix())));
+        List<String> messages = configHandler.getHeadClickMessages();
+        if (messages.size() != 0) {
+            messages = messages.stream().map(msg -> InternalPlaceholders.parse(player, msg))
+                    .collect(Collectors.toList());
+
+            player.sendMessage(FormatUtils.TryToFormatPlaceholders(player, messages));
         }
 
         try {

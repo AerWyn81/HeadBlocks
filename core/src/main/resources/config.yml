@@ -13,8 +13,15 @@ progressBar:
 
 # Events on headClick
 headClick:
-  # The message send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI)
-  message: ''
+  # Messages send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI) and multilines
+  messages: [ ]
+  # Title send to the player - Support placeholders as above
+  title:
+    firstline: "&e&lEASTER EGGS"
+    subtitle: "&fYou found an easter egg! &7(%current%/%max%)"
+    fadeIn: 0
+    stay: 50
+    fadOut: 0
   # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
   # Be careful, song may be different depending on the Minecraft Version
   # Keep empty for no sound
