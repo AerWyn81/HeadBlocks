@@ -43,6 +43,30 @@ public class ConfigHandler {
         return config.getStringList("headClick.messages");
     }
 
+    public boolean isHeadClickTitleEnabled() {
+        return config.getBoolean("headClick.title.enabled", false);
+    }
+
+    public String getHeadClickTitleFirstLine() {
+        return config.getString("headClick.title.firstLine", "");
+    }
+
+    public String getHeadClickTitleSubTitle() {
+        return config.getString("headClick.title.subTitle", "");
+    }
+
+    public int getHeadClickTitleFadeIn() {
+        return config.getInt("headClick.title.fadeIn", 0);
+    }
+
+    public int getHeadClickTitleStay() {
+        return config.getInt("headClick.title.stay", 50);
+    }
+
+    public int getHeadClickTitleFadeOut() {
+        return config.getInt("headClick.title.fadeOut", 0);
+    }
+
     public List<String> getHeadClickCommands() {
         return config.getStringList("headClick.commands");
     }

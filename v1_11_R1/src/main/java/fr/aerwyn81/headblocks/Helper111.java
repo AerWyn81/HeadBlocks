@@ -30,4 +30,9 @@ public class Helper111 implements IVersionCompatibility {
         Location loc = (Location) location;
         loc.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, loc.clone().add(.5f, .1f, .5f), 10, .5f, .5f, .5f, 0);
     }
+
+    @Override
+    public void sendTitle(Object player, String title, String subTitle, int fadeIn, int stay, int fadeOut) {
+        ((Player) player).sendTitle(title, subTitle, fadeIn, stay, fadeOut);
+    }
 }

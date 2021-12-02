@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.events;
 
+import com.connorlinfoot.titleapi.TitleAPI;
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.Version;
 import fr.aerwyn81.headblocks.utils.XSound;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -21,7 +22,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OnPlayerInteractEvent implements Listener {
@@ -29,13 +29,11 @@ public class OnPlayerInteractEvent implements Listener {
     private final HeadBlocks main;
     private final ConfigHandler configHandler;
     private final LanguageHandler languageHandler;
-    private final HeadBlocksAPI headBlocksAPI;
 
     public OnPlayerInteractEvent(HeadBlocks main) {
         this.main = main;
         this.configHandler = main.getConfigHandler();
         this.languageHandler = main.getLanguageHandler();
-        this.headBlocksAPI = main.getHeadBlocksAPI();
     }
 
     @EventHandler
@@ -105,23 +103,33 @@ public class OnPlayerInteractEvent implements Listener {
 
         main.getStorageHandler().savePlayer(player.getUniqueId(), headUuid);
 
-        String message = languageHandler.getMessageWithPlaceholders(player, "Messages.HeadClicked");
-        if (!message.trim().isEmpty()) {
-            player.sendMessage(message);
-        }
-
         List<String> messages = configHandler.getHeadClickMessages();
         if (messages.size() != 0) {
-            messages = messages.stream().map(msg -> InternalPlaceholders.parse(player, msg))
-                    .collect(Collectors.toList());
-
-            player.sendMessage(FormatUtils.TryToFormatPlaceholders(player, messages));
+            player.sendMessage(InternalPlaceholders.parse(player, messages));
         }
 
         try {
             XSound.play(player, configHandler.getHeadClickNotOwnSound());
         } catch (Exception ex) {
             HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+        }
+
+        if (configHandler.isHeadClickTitleEnabled()) {
+            String firstLine = InternalPlaceholders.parse(player, configHandler.getHeadClickTitleFirstLine());
+            String subTitle = InternalPlaceholders.parse(player, configHandler.getHeadClickTitleSubTitle());
+            int fadeIn = configHandler.getHeadClickTitleFadeIn();
+            int stay = configHandler.getHeadClickTitleStay();
+            int fadeOut = configHandler.getHeadClickTitleFadeOut();
+
+            if (Version.getCurrent().isOlderOrSameThan(Version.v1_10)) {
+                if (!HeadBlocks.isTitleApiActive) {
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cTitle in your server version (1.8) is not supported without TitleAPI. You need to install it in your plugin folder."));
+                } else {
+                    TitleAPI.sendTitle(player, firstLine, subTitle, fadeIn, stay, fadeOut);
+                }
+            } else {
+                main.getVersionCompatibility().sendTitle(player, firstLine, subTitle, fadeIn, stay, fadeOut);
+            }
         }
 
         if (configHandler.getHeadClickCommands().size() != 0) {

@@ -28,4 +28,9 @@ public class Helper18 implements IVersionCompatibility {
         Location loc = (Location) location;
         loc.getWorld().playEffect(loc.clone().add(.5f, .1f, .5f), Effect.HAPPY_VILLAGER, Integer.MAX_VALUE);
     }
+
+    @Override
+    public void sendTitle(Object player, String title, String subTitle, int fadeIn, int stay, int fadeOut) {
+        // not supported
+    }
 }

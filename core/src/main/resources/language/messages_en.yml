@@ -23,7 +23,6 @@ Messages:
   HeadPlaced: "%prefix% &2&l+ &aHeadBlock placed &7(%world%, %x%, %y%, %z%)"
   HeadRemoved: "%prefix% &2&c- &eHeadBlock removed &7(%world%, %x%, %y%, %z%)"
   AlreadyClaimHead: "%prefix% &cYou have already clicked on this head"
-  HeadClicked: "%prefix% &aYou found a new head"
   ListHeadEmpty: "%prefix% &cThere are no heads yet"
   HeadGiven: "%prefix% &aYou have successfully received a HeadBlock"
   NoHeadFound: "%prefix% &cThis player has not yet found a head"

@@ -10,6 +10,7 @@ version = rootProject.version
 
 repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -20,6 +21,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:4.0.3")
     implementation("org.javatuples:javatuples:1.2")
     implementation("org.yaml:snakeyaml:1.29")
+    implementation("com.github.ConnorLinfoot:TitleAPI:1.8.1")
     implementation(project(":common"))
     implementation(project(":v1_8_R1"))
     implementation(project(":v1_9_R2"))
@@ -66,7 +68,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI")
+    softDepend = listOf("PlaceholderAPI", "TitleAPI")
     version = rootProject.version.toString()
     website = "https://just2craft.fr"
 

@@ -23,7 +23,6 @@ Messages:
   HeadPlaced: "%prefix% &2&l+ &aHeadBlock placé &7(%world%, %x%, %y%, %z%)"
   HeadRemoved: "%prefix% &2&c- &eHeadBlock supprimé &7(%world%, %x%, %y%, %z%)"
   AlreadyClaimHead: "%prefix% &cVous avez déjà cliqué sur cette tête"
-  HeadClicked: "%prefix% &aVous avez trouvé une nouvelle tête"
   ListHeadEmpty: "%prefix% &aIl n'y a pas encore de têtes"
   HeadGiven: "%prefix% &aVous avez reçu un HeadBlock avec succès"
   NoHeadFound: "%prefix% &cCe joueur n'a pas encore trouvé de tête"
