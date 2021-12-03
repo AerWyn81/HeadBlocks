@@ -7,11 +7,9 @@ import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
-import fr.aerwyn81.headblocks.utils.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.Version;
-import fr.aerwyn81.headblocks.utils.XSound;
+import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -130,6 +128,18 @@ public class OnPlayerInteractEvent implements Listener {
             } else {
                 main.getVersionCompatibility().sendTitle(player, firstLine, subTitle, fadeIn, stay, fadeOut);
             }
+        }
+
+        if (configHandler.isFireworkEnabled()) {
+            List<Color> colors = configHandler.getHeadClickFireworkColors();
+            List<Color> fadeColors = configHandler.getHeadClickFireworkFadeColors();
+            boolean isFlickering = configHandler.isFireworkFlickerEnabled();
+            int power = configHandler.getHeadClickFireworkPower();
+
+            Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
+
+            FireworkUtils.launchFirework(loc, isFlickering,
+                    colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power);
         }
 
         if (configHandler.getHeadClickCommands().size() != 0) {

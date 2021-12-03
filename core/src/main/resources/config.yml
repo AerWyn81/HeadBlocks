@@ -11,9 +11,10 @@ progressBar:
   notCompletedColor: '&7'
   completedColor: '&a'
 
-# Events on headClick
+# Events on head click
 headClick:
   # Messages send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI) and multilines
+  # [] for no message
   messages:
     - "%prefix% &aYou found a new head!"
   # Title send to the player - Support placeholders as above
@@ -24,6 +25,21 @@ headClick:
     fadeIn: 0
     stay: 50
     fadeOut: 0
+  # Firework displayed when a player found a head
+  # Keep empty "colors" and "fadeColors" for random colors
+  # Support multi line with any color of the format "red,green,blue"
+  firework:
+    enabled: false
+    colors: [ ]
+    fadeColors: [ ]
+    flicker: true
+    power: 0
+  # Particle displayed when a player had already found the head
+  particles:
+    enabled: true
+    alreadyOwn:
+      type: VILLAGER_ANGRY
+      amount: ''
   # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
   # Be careful, song may be different depending on the Minecraft Version
   # Keep empty for no sound

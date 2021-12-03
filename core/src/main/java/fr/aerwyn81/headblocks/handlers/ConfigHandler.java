@@ -2,11 +2,13 @@ package fr.aerwyn81.headblocks.handlers;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
+import org.bukkit.Color;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import redis.clients.jedis.Protocol;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -67,6 +69,58 @@ public class ConfigHandler {
         return config.getInt("headClick.title.fadeOut", 0);
     }
 
+    public boolean isFireworkEnabled() {
+        return config.getBoolean("headClick.firework.enabled", false);
+    }
+
+    public List<Color> getHeadClickFireworkColors() {
+        List<Color> colors = new ArrayList<>();
+
+        if (!config.contains("headClick.firework.colors")) {
+            return colors;
+        }
+
+        config.getStringList("headClick.firework.colors").forEach(color -> {
+            try {
+                String[] s = color.split(",");
+                colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
+            } catch (Exception ex) {
+                HeadBlocks.log.sendMessage(FormatUtils.translate(
+                        "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
+            }
+        });
+
+        return colors;
+    }
+
+    public List<Color> getHeadClickFireworkFadeColors() {
+        List<Color> colors = new ArrayList<>();
+
+        if (!config.contains("headClick.firework.fadeColors")) {
+            return colors;
+        }
+
+        config.getStringList("headClick.firework.fadeColors").forEach(color -> {
+            try {
+                String[] s = color.split(",");
+                colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
+            } catch (Exception ex) {
+                HeadBlocks.log.sendMessage(FormatUtils.translate(
+                        "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
+            }
+        });
+
+        return colors;
+    }
+
+    public boolean isFireworkFlickerEnabled() {
+        return config.getBoolean("headClick.firework.flicker", true);
+    }
+
+    public int getHeadClickFireworkPower() {
+        return config.getInt("headClick.firework.power", 0);
+    }
+
     public List<String> getHeadClickCommands() {
         return config.getStringList("headClick.commands");
     }
@@ -76,7 +130,7 @@ public class ConfigHandler {
     }
 
     public int getProgressBarBars() {
-        return config.getInt("progressBar.totalBars");
+        return config.getInt("progressBar.totalBars", 100);
     }
 
     public String getProgressBarSymbol() {
