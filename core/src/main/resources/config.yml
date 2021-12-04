@@ -49,7 +49,7 @@ headClick:
     fadeOut: 0
   # Firework fired when a player found a head
   # Keep empty 'colors' and 'fadeColors' for random colors
-  # Support multi line colors of the format: 'red,green,blue'
+  # Support multi line colors of the format: 'red,green,blue' (add dash)
   firework:
     enabled: false
     colors: [ ]
@@ -82,7 +82,7 @@ particles:
     type: REDSTONE
     # Colors is only for REDSTONE type
     # RGB format: 'red,green,blue'
-    # Support multiple colors
+    # Support multiple colors (add dash)
     colors: [ ]
     amount: 1
 
