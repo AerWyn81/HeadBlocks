@@ -43,6 +43,7 @@ public class HBTabCompleter implements TabCompleter {
             if (PlayerUtils.hasPermission(player, "headblocks.admin")) {
                 list.add("give");
                 list.add("remove");
+                list.add("removeall");
                 list.add("reset");
                 list.add("resetall");
                 list.add("list");
@@ -58,7 +59,7 @@ public class HBTabCompleter implements TabCompleter {
                     .map(Pair::getValue0)
                     .map(UUID::toString)
                     .collect(Collectors.toList()));
-        } else if (args[0].equalsIgnoreCase("resetall")) {
+        } else if (args[0].equalsIgnoreCase("resetall") || args[0].equalsIgnoreCase("removeall")) {
             list.add("--confirm");
         }
 

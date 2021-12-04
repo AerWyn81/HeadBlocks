@@ -81,6 +81,9 @@ public class HBCommands implements CommandExecutor {
             case "remove":
                 removeCommand(player, args);
                 return true;
+            case "removeall":
+                removeAllCommand(player, args);
+                return true;
             case "reset":
                 resetCommand(player, args);
                 return true;
@@ -252,7 +255,6 @@ public class HBCommands implements CommandExecutor {
         }
 
         int current = headBlocksAPI.getPlayerHeads(player.getUniqueId()).size();
-        int left = headBlocksAPI.getLeftPlayerHeadToMax(player.getUniqueId());
 
         int bars = configHandler.getProgressBarBars();
         String symbol = configHandler.getProgressBarSymbol();
@@ -264,7 +266,7 @@ public class HBCommands implements CommandExecutor {
         List<String> messages = languageHandler.getMessages("Messages.MeCommand");
         if (messages.size() != 0) {
             languageHandler.getMessages("Messages.MeCommand").forEach(msg -> player.sendMessage(InternalPlaceholders
-                    .parse(player, msg).replaceAll("%progress%", progressBar)));
+                    .parse(player, msg.replaceAll("%progress%", progressBar))));
         }
     }
 
@@ -297,6 +299,39 @@ public class HBCommands implements CommandExecutor {
                 .replaceAll("%x%", String.valueOf(loc.getBlockX()))
                 .replaceAll("%y%", String.valueOf(loc.getBlockY()))
                 .replaceAll("%z%", String.valueOf(loc.getBlockZ())));
+    }
+
+    private void removeAllCommand(Player player, String[] args) {
+        if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
+            player.sendMessage(languageHandler.getMessage("Messages.NoPermission"));
+            return;
+        }
+
+        List<Pair<UUID, Location>> headLocations = headHandler.getHeadLocations();
+        int headCount = headLocations.size();
+
+        if (headLocations.size() == 0) {
+            player.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
+            return;
+        }
+
+        boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
+        if (hasConfirmInCommand) {
+            new ArrayList<>(headLocations).forEach(head -> {
+                if (configHandler.shouldResetPlayerData()) {
+                    storageHandler.removeHead(head.getValue0());
+                }
+
+                headHandler.removeHead(head.getValue0());
+            });
+
+            player.sendMessage(languageHandler.getMessage("Messages.RemoveAllSuccess")
+                    .replaceAll("%headCount%", String.valueOf(headCount)));
+            return;
+        }
+
+        player.sendMessage(languageHandler.getMessage("Messages.RemoveAllConfirm")
+                .replaceAll("%headCount%", String.valueOf(headCount)));
     }
 
     private void resetCommand(Player player, String[] args) {
@@ -358,6 +393,8 @@ public class HBCommands implements CommandExecutor {
 
         if (PlayerUtils.hasPermission(sender, "headblocks.admin")) {
             sender.sendMessage(languageHandler.getMessage("Help.Give"));
+            sender.sendMessage(languageHandler.getMessage("Help.Remove"));
+            sender.sendMessage(languageHandler.getMessage("Help.RemoveAll"));
             sender.sendMessage(languageHandler.getMessage("Help.List"));
             sender.sendMessage(languageHandler.getMessage("Help.Stats"));
             sender.sendMessage(languageHandler.getMessage("Help.Reset"));
