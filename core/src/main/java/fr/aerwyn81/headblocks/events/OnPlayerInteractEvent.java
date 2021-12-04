@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks.events;
 
-import com.connorlinfoot.titleapi.TitleAPI;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
@@ -150,22 +149,14 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Send title to the player if enabled
-        if (configHandler.isHeadClickTitleEnabled()) {
+        if (configHandler.isHeadClickTitleEnabled() && Version.getCurrent().isNewerThan(Version.v1_10)) {
             String firstLine = InternalPlaceholders.parse(player, configHandler.getHeadClickTitleFirstLine());
             String subTitle = InternalPlaceholders.parse(player, configHandler.getHeadClickTitleSubTitle());
             int fadeIn = configHandler.getHeadClickTitleFadeIn();
             int stay = configHandler.getHeadClickTitleStay();
             int fadeOut = configHandler.getHeadClickTitleFadeOut();
 
-            if (Version.getCurrent().isOlderOrSameThan(Version.v1_10)) {
-                if (!HeadBlocks.isTitleApiActive) {
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cTitle in your server version (1.8) is not supported without TitleAPI. You need to install it in your plugin folder."));
-                } else {
-                    TitleAPI.sendTitle(player, firstLine, subTitle, fadeIn, stay, fadeOut);
-                }
-            } else {
-                main.getVersionCompatibility().sendTitle(player, firstLine, subTitle, fadeIn, stay, fadeOut);
-            }
+            player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
         }
 
         // Fire firework if enabled

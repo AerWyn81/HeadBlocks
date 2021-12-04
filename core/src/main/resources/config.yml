@@ -1,70 +1,8 @@
-# The language used for messages in the plugin (only write XX in messages_XX.yml)
+# Language used for messages in the plugin
 language: en
 
 # Head texture in Other-Value format (https://minecraft-heads.com/)
 headTexture: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQ5Y2M1OGFkMjVhMWFiMTZkMzZiYjVkNmQ0OTNjOGY1ODk4YzJiZjMwMmI2NGUzMjU5MjFjNDFjMzU4NjcifX19'
-
-# Custom the progress bar displayed in the /headblocks me command
-progressBar:
-  totalBars: 100
-  symbol: '|'
-  notCompletedColor: '&7'
-  completedColor: '&a'
-
-# Events on head click
-headClick:
-  # Messages send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI) and multilines
-  # [] for no message
-  messages:
-    - "%prefix% &aYou found a new head!"
-  # Title send to the player - Support placeholders as above
-  title:
-    enabled: false
-    firstLine: ""
-    subTitle: ""
-    fadeIn: 0
-    stay: 50
-    fadeOut: 0
-  # Firework displayed when a player found a head
-  # Keep empty "colors" and "fadeColors" for random colors
-  # Support multi line with any color of the format: "red,green,blue"
-  firework:
-    enabled: false
-    colors: [ ]
-    fadeColors: [ ]
-    flicker: true
-    power: 0
-  # Particle displayed when a player had already found the head
-  particles:
-    enabled: false
-    alreadyOwn:
-      type: VILLAGER_ANGRY
-      amount: 1
-  # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
-  # Be careful, song may be different depending on the Minecraft Version
-  # Keep empty for no sound
-  sounds:
-    alreadyOwn: block_note_block_didgeridoo
-    notOwn: block_note_block_bell
-  # A list of commands
-  commands: [ ]
-
-# Not supported in 1.8
-# Particles floating above the head when the player has not yet found it
-particles:
-  enabled: true
-  delay: 20 #delay in ticks (1sec = 20 ticks)
-  notFound:
-    playerViewDistance: 16
-    type: REDSTONE
-    # Colors is only for redstone type
-    # RGB format (ex: 12,12,12)
-    # Support multiple colors
-    colors: [ ]
-    amount: 1
-
-# If true, when a Headblocks is destroyed, it will delete all player data related to it
-shouldResetPlayerData: true
 
 # Multi-server support with Redis
 redis:
@@ -85,15 +23,79 @@ database:
     password: ''
     port: 3306
 
+# Progress bar customization displayed in the /headblocks me command is placeholder %progress% is used
+progressBar:
+  totalBars: 100
+  symbol: '|'
+  notCompletedColor: '&7'
+  completedColor: '&a'
+
+# Events on head click
+headClick:
+  # Messages send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI) and multilines
+  # Keep [] for no message
+  messages:
+    - ''
+    - '%prefix% &aYou found a new head!'
+    - ''
+  # Title send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI)
+  # Not supported below 1.10
+  title:
+    enabled: false
+    firstLine: ''
+    subTitle: ''
+    fadeIn: 0
+    stay: 50
+    fadeOut: 0
+  # Firework fired when a player found a head
+  # Keep empty 'colors' and 'fadeColors' for random colors
+  # Support multi line colors of the format: 'red,green,blue'
+  firework:
+    enabled: false
+    colors: [ ]
+    fadeColors: [ ]
+    flicker: true
+    power: 0
+  # Particle displayed when a player had already found the head
+  particles:
+    enabled: false
+    alreadyOwn:
+      type: VILLAGER_ANGRY
+      amount: 1
+  # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
+  # Keep empty for no sound
+  sounds:
+    alreadyOwn: block_note_block_didgeridoo
+    notOwn: block_note_block_bell
+  # A list of commands
+  # Keep [] for no command
+  commands:
+    - "give %player% diamond"
+
+# Not supported in 1.8
+# Particles floating above the head when player has not yet found it
+particles:
+  enabled: true
+  delay: 20 #delay in ticks (1sec = 20 ticks)
+  notFound:
+    playerViewDistance: 16
+    type: REDSTONE
+    # Colors is only for REDSTONE type
+    # RGB format: 'red,green,blue'
+    # Support multiple colors
+    colors: [ ]
+    amount: 1
+
+# If true, when a Headblocks is destroyed, it will delete all player data related to it
+shouldResetPlayerData: true
+
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
 preventCommandsOnTieredRewardsLevel: false
 
 # Tiered rewards : provide a head count to trigger a reward command list
-# example:
-# tieredRewards:
-#   1:
-#   - "say &a%player% found a head!"
-#   100:
-#   - "give %player% diamond"
-#   - "say &2%player% found 100 heads!"
-tieredRewards: { }
+tieredRewards:
+  1:
+    - 'say &a%player% found a head!'
+  100:
+    - 'give %player% diamond'
+    - 'say &2%player% found 100 heads!'

@@ -21,7 +21,6 @@ dependencies {
     implementation("com.zaxxer:HikariCP:4.0.3")
     implementation("org.javatuples:javatuples:1.2")
     implementation("org.yaml:snakeyaml:1.29")
-    implementation("com.github.ConnorLinfoot:TitleAPI:1.8.1")
     implementation(project(":common"))
     implementation(project(":v1_8_R1"))
     implementation(project(":v1_9_R2"))

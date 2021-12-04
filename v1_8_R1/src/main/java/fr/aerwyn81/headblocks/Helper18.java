@@ -20,9 +20,4 @@ public class Helper18 implements IVersionCompatibility {
     public ItemStack getItemStackInHand(Object player) {
         return ((Player) player).getInventory().getItemInHand();
     }
-
-    @Override
-    public void sendTitle(Object player, String title, String subTitle, int fadeIn, int stay, int fadeOut) {
-        // not supported
-    }
 }

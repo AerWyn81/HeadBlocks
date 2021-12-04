@@ -47,8 +47,10 @@ public final class HeadBlocks extends JavaPlugin {
         log.sendMessage(FormatUtils.translate("&6HeadBlocks &einitializing..."));
 
         File configFile = new File(getDataFolder(), "config.yml");
+        File backupConfigFile = new File(getDataFolder(), "config.yml.save");
         File locationFile = new File(getDataFolder(), "locations.yml");
 
+        ConfigUpdater.saveOldConfig(backupConfigFile, configFile);
         saveDefaultConfig();
         try {
             ConfigUpdater.update(this, "config.yml", configFile, Collections.singletonList("tieredRewards"));

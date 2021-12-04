@@ -6,6 +6,4 @@ public interface IVersionCompatibility {
     boolean isLeftHand(Object event);
 
     Object getItemStackInHand(Object player);
-
-    void sendTitle(Object player, String title, String subTitle, int fadeIn, int stay, int fadeOut);
 }

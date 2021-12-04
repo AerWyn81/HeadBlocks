@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.utils;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
  * Read and write each line of the new config, if the old config has value for the given key it writes that value in the new config.
  * If a key has an attached comment above it, it is written first.
  *
- * @author tchristofferson, eddited by AerWyn81
+ * @author tchristofferson, edited by AerWyn81
  */
 public class ConfigUpdater {
 
@@ -324,5 +325,22 @@ public class ConfigUpdater {
 
     private static void appendPrefixSpaces(StringBuilder builder, int indents) {
         builder.append(getPrefixSpaces(indents));
+    }
+
+
+    public static void saveOldConfig(File file, File configFile) {
+        FileConfiguration oldConfig = YamlConfiguration.loadConfiguration(configFile);
+
+        try {
+            if (file.exists()) {
+                file.delete();
+            }
+
+            oldConfig.save(file);
+        } catch (Exception ex) {
+            HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot save the old configuration file. To prevent some errors, the config will be printed below..."));
+            List<String> lines = Collections.singletonList(oldConfig.saveToString());
+            lines.forEach(l -> HeadBlocks.log.sendMessage(l));
+        }
     }
 }
