@@ -20,7 +20,8 @@ I'm using some third party libraries:
 * [Item-NBT-API](https://github.com/tr7zw/Item-NBT-API): Used to handle heads textures
 * [ConfigUpdater](https://github.com/tchristofferson/Config-Updater): Used to update the config.yml and message_XX.yml
   at each update
-* XSound from [XSeries](https://github.com/CryptoMorin/XSeries): Used to translate song name to the correct MC version
+* XSound, XParticle from [XSeries](https://github.com/CryptoMorin/XSeries): Used to translate song name to the correct
+  MC version and particles
 
 I'm not using some bStats metrics or Auto-Updater.
 

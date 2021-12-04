@@ -13,11 +13,13 @@ public class HeadClickEvent extends Event {
     private final UUID headUuid;
     private final Player player;
     private final Location location;
+    private final boolean success;
 
-    public HeadClickEvent(UUID headUuid, Player player, Location location) {
+    public HeadClickEvent(UUID headUuid, Player player, Location location, boolean success) {
         this.headUuid = headUuid;
         this.player = player;
         this.location = location;
+        this.success = success;
     }
 
     public UUID getHeadUuid() {
@@ -35,5 +37,9 @@ public class HeadClickEvent extends Event {
     @Override
     public HandlerList getHandlers() {
         return handlers;
+    }
+
+    public boolean isSuccess() {
+        return success;
     }
 }

@@ -5,6 +5,8 @@ import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -38,14 +40,16 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        if (main.getHeadHandler().getHeadAt(headBlock.getLocation()) != null) {
+        Location headLocation = headBlock.getLocation();
+
+        if (main.getHeadHandler().getHeadAt(headLocation) != null) {
             e.setCancelled(true);
             player.sendMessage(languageHandler.getMessage("Messages.HeadAlreadyExistHere"));
             return;
         }
 
-        UUID headUuid = main.getHeadHandler().addLocation(headBlock.getLocation());
-        main.getVersionCompatibility().spawnParticle(headBlock.getLocation());
+        UUID headUuid = main.getHeadHandler().addLocation(headLocation);
+        player.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, headLocation.clone().add(.5f, .1f, .5f), 10, .5f, .5f, .5f, 0);
 
         player.sendMessage(languageHandler.getMessage("Messages.HeadPlaced")
                 .replaceAll("%x%", String.valueOf(headBlock.getX()))
@@ -53,6 +57,6 @@ public class OnPlayerPlaceBlockEvent implements Listener {
                 .replaceAll("%z%", String.valueOf(headBlock.getZ()))
                 .replaceAll("%world%", headBlock.getWorld().getName()));
 
-        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headBlock.getLocation()));
+        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
     }
 }

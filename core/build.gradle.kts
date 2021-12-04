@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
+    compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.10.10")
     implementation("redis.clients:jedis:3.6.3")
     implementation("de.tr7zw:item-nbt-api:2.9.0-SNAPSHOT")

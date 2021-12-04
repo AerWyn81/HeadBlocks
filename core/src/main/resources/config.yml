@@ -27,7 +27,7 @@ headClick:
     fadeOut: 0
   # Firework displayed when a player found a head
   # Keep empty "colors" and "fadeColors" for random colors
-  # Support multi line with any color of the format "red,green,blue"
+  # Support multi line with any color of the format: "red,green,blue"
   firework:
     enabled: false
     colors: [ ]
@@ -36,10 +36,10 @@ headClick:
     power: 0
   # Particle displayed when a player had already found the head
   particles:
-    enabled: true
+    enabled: false
     alreadyOwn:
       type: VILLAGER_ANGRY
-      amount: ''
+      amount: 1
   # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
   # Be careful, song may be different depending on the Minecraft Version
   # Keep empty for no sound
@@ -48,6 +48,20 @@ headClick:
     notOwn: block_note_block_bell
   # A list of commands
   commands: [ ]
+
+# Not supported in 1.8
+# Particles floating above the head when the player has not yet found it
+particles:
+  enabled: true
+  delay: 20 #delay in ticks (1sec = 20 ticks)
+  notFound:
+    playerViewDistance: 16
+    type: REDSTONE
+    # Colors is only for redstone type
+    # RGB format (ex: 12,12,12)
+    # Support multiple colors
+    colors: [ ]
+    amount: 1
 
 # If true, when a Headblocks is destroyed, it will delete all player data related to it
 shouldResetPlayerData: true
@@ -70,6 +84,9 @@ database:
     username: ''
     password: ''
     port: 3306
+
+# Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
+preventCommandsOnTieredRewardsLevel: false
 
 # Tiered rewards : provide a head count to trigger a reward command list
 # example:

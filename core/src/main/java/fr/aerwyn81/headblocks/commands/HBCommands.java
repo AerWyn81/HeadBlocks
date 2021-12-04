@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
+import fr.aerwyn81.headblocks.runnables.ParticlesTask;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -228,6 +229,12 @@ public class HBCommands implements CommandExecutor {
         main.getStorageHandler().getDatabase().load();
 
         main.getRewardHandler().loadRewards();
+
+        Bukkit.getScheduler().cancelTasks(main);
+        if (configHandler.isParticlesEnabled()) {
+            main.setParticlesTask(new ParticlesTask(main));
+            main.getParticlesTask().runTaskTimer(main, 0, configHandler.getParticlesDelay());
+        }
 
         player.sendMessage(languageHandler.getMessage("Messages.ReloadComplete"));
     }

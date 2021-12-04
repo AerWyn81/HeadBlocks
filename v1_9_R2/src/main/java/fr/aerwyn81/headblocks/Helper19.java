@@ -1,8 +1,6 @@
 package fr.aerwyn81.headblocks;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -23,12 +21,6 @@ public class Helper19 implements IVersionCompatibility {
     @Override
     public ItemStack getItemStackInHand(Object player) {
         return ((Player) player).getInventory().getItemInMainHand();
-    }
-
-    @Override
-    public void spawnParticle(Object location) {
-        Location loc = (Location) location;
-        loc.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, loc.clone().add(.5f, .1f, .5f), 10, .5f, .5f, .5f, 0);
     }
 
     @Override

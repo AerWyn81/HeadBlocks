@@ -7,11 +7,12 @@ import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
-import fr.aerwyn81.headblocks.utils.*;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
+import fr.aerwyn81.headblocks.utils.FireworkUtils;
+import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.Version;
+import fr.aerwyn81.headblocks.utils.xseries.XSound;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -36,6 +37,7 @@ public class OnPlayerInteractEvent implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
+        // Check if the correct hand is used
         if (Stream.of(Action.LEFT_CLICK_BLOCK, Action.RIGHT_CLICK_BLOCK).noneMatch(a -> a == e.getAction()) || main.getVersionCompatibility().isLeftHand(e)) {
             return;
         }
@@ -47,12 +49,14 @@ public class OnPlayerInteractEvent implements Listener {
         Location clickedLocation = e.getClickedBlock().getLocation();
         UUID headUuid = main.getHeadHandler().getHeadAt(clickedLocation);
 
+        // Check if the head is a head of the plugin
         if (headUuid == null) {
             return;
         }
 
         Player player = e.getPlayer();
 
+        // Actions to destroy the head only if player has the permission and the creative gamemode
         if (e.getAction() == Action.LEFT_CLICK_BLOCK && player.getGameMode() == GameMode.CREATIVE && PlayerUtils.hasPermission(player, "headblocks.admin")) {
             if (!player.isSneaking()) {
                 e.setCancelled(true);
@@ -60,21 +64,27 @@ public class OnPlayerInteractEvent implements Listener {
                 return;
             }
 
+            // Remove the head from the fround
+            main.getHeadHandler().removeHead(headUuid);
+
+            // If resetPlayerData enabled, reset all players data for the head
             if (configHandler.shouldResetPlayerData()) {
                 main.getStorageHandler().removeHead(headUuid);
             }
 
-            main.getHeadHandler().removeHead(headUuid);
+            // Send player success message
             player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")
                     .replaceAll("%x%", String.valueOf(clickedLocation.getX()))
                     .replaceAll("%y%", String.valueOf(clickedLocation.getY()))
                     .replaceAll("%z%", String.valueOf(clickedLocation.getZ()))
                     .replaceAll("%world%", clickedLocation.getWorld() != null ? clickedLocation.getWorld().getName() : FormatUtils.translate("&cUnknownWorld")));
 
+            // Trigger the event HeadDeleted
             Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headUuid, clickedLocation));
             return;
         }
 
+        // Check if the player has the permission to click on the head
         if (!PlayerUtils.hasPermission(player, "headblocks.use")) {
             String message = languageHandler.getMessage("Messages.NoPermissionBlock");
 
@@ -84,6 +94,7 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
+        // Check if the player has already clicked on the head
         if (main.getStorageHandler().hasAlreadyClaimedHead(player.getUniqueId(), headUuid)) {
             String message = languageHandler.getMessageWithPlaceholders(player, "Messages.AlreadyClaimHead");
 
@@ -91,27 +102,54 @@ public class OnPlayerInteractEvent implements Listener {
                 player.sendMessage(message);
             }
 
-            try {
-                XSound.play(player, configHandler.getHeadClickAlreadyOwnSound());
-            } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+            // Already own song if not empty
+            String songName = configHandler.getHeadClickAlreadyOwnSound();
+            if (!songName.trim().isEmpty()) {
+                try {
+                    XSound.play(player, configHandler.getHeadClickAlreadyOwnSound());
+                } catch (Exception ex) {
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+                }
             }
+
+            // Already own particles if enabled
+            if (configHandler.isHeadClickParticlesEnabled()) {
+                String particleName = configHandler.getHeadClickParticlesAlreadyOwnType();
+                int amount = configHandler.getHeadClickParticlesAmount();
+                double size = amount == 1 ? 0 : .5f;
+
+                try {
+                    player.getWorld().spawnParticle(Particle.valueOf(particleName), clickedLocation.clone().add(.5f, .1f, .5f), amount, size, size, size, 0);
+                } catch (Exception ex) {
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cError particle name " + particleName + " cannot be parsed!"));
+                }
+            }
+
+            // Trigger the event HeadClick with no success because the player already own the head
+            Bukkit.getPluginManager().callEvent(new HeadClickEvent(headUuid, player, clickedLocation, false));
             return;
         }
 
+        // Save player click in storage
         main.getStorageHandler().savePlayer(player.getUniqueId(), headUuid);
 
+        // Success messages if not empty
         List<String> messages = configHandler.getHeadClickMessages();
         if (messages.size() != 0) {
             player.sendMessage(InternalPlaceholders.parse(player, messages));
         }
 
-        try {
-            XSound.play(player, configHandler.getHeadClickNotOwnSound());
-        } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+        // Success song if not empty
+        String songName = configHandler.getHeadClickNotOwnSound();
+        if (!songName.trim().isEmpty()) {
+            try {
+                XSound.play(player, songName);
+            } catch (Exception ex) {
+                HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+            }
         }
 
+        // Send title to the player if enabled
         if (configHandler.isHeadClickTitleEnabled()) {
             String firstLine = InternalPlaceholders.parse(player, configHandler.getHeadClickTitleFirstLine());
             String subTitle = InternalPlaceholders.parse(player, configHandler.getHeadClickTitleSubTitle());
@@ -130,6 +168,7 @@ public class OnPlayerInteractEvent implements Listener {
             }
         }
 
+        // Fire firework if enabled
         if (configHandler.isFireworkEnabled()) {
             List<Color> colors = configHandler.getHeadClickFireworkColors();
             List<Color> fadeColors = configHandler.getHeadClickFireworkFadeColors();
@@ -142,13 +181,19 @@ public class OnPlayerInteractEvent implements Listener {
                     colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power);
         }
 
-        if (configHandler.getHeadClickCommands().size() != 0) {
-            Bukkit.getScheduler().runTaskLater(main, () -> configHandler.getHeadClickCommands().forEach(reward ->
-                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), FormatUtils.translate(reward.replaceAll("%player%", player.getName())))), 1L);
+        // Prevent trigger commands rewards if current is contained in tieredRewards and enabled in config
+        if (!main.getConfigHandler().isPreventCommandsOnTieredRewardsLevel() || !main.getRewardHandler().currentIsContainedInTiered(main.getHeadBlocksAPI().getPlayerHeads(player.getUniqueId()).size())) {
+            // Commands list if not empty
+            if (configHandler.getHeadClickCommands().size() != 0) {
+                Bukkit.getScheduler().runTaskLater(main, () -> configHandler.getHeadClickCommands().forEach(reward ->
+                        main.getServer().dispatchCommand(main.getServer().getConsoleSender(), FormatUtils.translate(reward.replaceAll("%player%", player.getName())))), 1L);
+            }
         }
 
+        // Check and reward if triggerRewards is used
         main.getRewardHandler().giveReward(player);
 
-        Bukkit.getPluginManager().callEvent(new HeadClickEvent(headUuid, player, clickedLocation));
+        // Trigger the event HeadClick with success
+        Bukkit.getPluginManager().callEvent(new HeadClickEvent(headUuid, player, clickedLocation, true));
     }
 }

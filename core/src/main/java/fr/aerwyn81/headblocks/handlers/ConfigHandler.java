@@ -34,11 +34,11 @@ public class ConfigHandler {
     }
 
     public String getHeadClickAlreadyOwnSound() {
-        return config.getString("headClick.sounds.alreadyOwn", "block_anvil_break");
+        return config.getString("headClick.sounds.alreadyOwn");
     }
 
     public String getHeadClickNotOwnSound() {
-        return config.getString("headClick.sounds.notOwn", "block_note_block_bell");
+        return config.getString("headClick.sounds.notOwn");
     }
 
     public List<String> getHeadClickMessages() {
@@ -121,6 +121,18 @@ public class ConfigHandler {
         return config.getInt("headClick.firework.power", 0);
     }
 
+    public boolean isHeadClickParticlesEnabled() {
+        return config.getBoolean("headClick.particles.enabled", false);
+    }
+
+    public String getHeadClickParticlesAlreadyOwnType() {
+        return config.getString("headClick.particles.alreadyOwn.type", "VILLAGER_ANGRY");
+    }
+
+    public int getHeadClickParticlesAmount() {
+        return config.getInt("headClick.particles.alreadyOwn.amount", 1);
+    }
+
     public List<String> getHeadClickCommands() {
         return config.getStringList("headClick.commands");
     }
@@ -187,6 +199,34 @@ public class ConfigHandler {
 
     public int getDatabasePort() {
         return config.getInt("database.settings.port", 3306);
+    }
+
+    public boolean isPreventCommandsOnTieredRewardsLevel() {
+        return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
+    }
+
+    public boolean isParticlesEnabled() {
+        return config.getBoolean("particles.enabled", false);
+    }
+
+    public int getParticlesDelay() {
+        return config.getInt("particles.notFound.delay", 20);
+    }
+
+    public int getParticlesNotFoundPlayerViewDistance() {
+        return config.getInt("particles.notFound.playerViewDistance", 16);
+    }
+
+    public String getParticlesNotFoundType() {
+        return config.getString("particles.notFound.type", "REDSTONE");
+    }
+
+    public List<String> getParticlesNotFoundColors() {
+        return config.getStringList("particles.notFound.colors");
+    }
+
+    public int getParticlesNotFoundAmount() {
+        return config.getInt("particles.notFound.amount", 3);
     }
 
     public HashMap<Integer, List<String>> getTieredRewards() {

@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.events.OnPlayerInteractEvent;
 import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
 import fr.aerwyn81.headblocks.handlers.*;
 import fr.aerwyn81.headblocks.placeholders.PlaceholderHook;
+import fr.aerwyn81.headblocks.runnables.ParticlesTask;
 import fr.aerwyn81.headblocks.utils.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.Version;
@@ -35,6 +36,8 @@ public final class HeadBlocks extends JavaPlugin {
     private StorageHandler storageHandler;
 
     private HeadBlocksAPI headBlocksAPI;
+
+    private ParticlesTask particlesTask;
 
     @Override
     public void onEnable() {
@@ -82,6 +85,11 @@ public final class HeadBlocks extends JavaPlugin {
 
         this.headBlocksAPI = new HeadBlocksAPI();
 
+        if (configHandler.isParticlesEnabled()) {
+            this.particlesTask = new ParticlesTask(this);
+            particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
+        }
+
         registerCommands();
 
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(this), this);
@@ -105,6 +113,8 @@ public final class HeadBlocks extends JavaPlugin {
             storageHandler.getStorage().close();
             storageHandler.getDatabase().close();
         }
+
+        Bukkit.getScheduler().cancelTasks(this);
 
         log.sendMessage(FormatUtils.translate("&6HeadBlocks &cdisabled!"));
     }
@@ -144,6 +154,14 @@ public final class HeadBlocks extends JavaPlugin {
 
     public IVersionCompatibility getVersionCompatibility() {
         return versionCompatibility;
+    }
+
+    public void setParticlesTask(ParticlesTask particlesTask) {
+        this.particlesTask = particlesTask;
+    }
+
+    public ParticlesTask getParticlesTask() {
+        return particlesTask;
     }
 
     private boolean setupVersionCompatibility() {

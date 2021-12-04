@@ -61,4 +61,8 @@ public class RewardHandler {
                     main.getServer().dispatchCommand(main.getServer().getConsoleSender(), reward.replaceAll("%player%", p.getName())));
         }, 1L);
     }
+
+    public boolean currentIsContainedInTiered(int playerHeads) {
+        return rewards.containsKey(playerHeads);
+    }
 }
