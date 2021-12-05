@@ -23,21 +23,19 @@ public class InternalPlaceholders {
         int current = headBlocksAPI.getPlayerHeads(player.getUniqueId()).size();
         int max = headBlocksAPI.getTotalHeadSpawnCount();
         int left = headBlocksAPI.getLeftPlayerHeadToMax(player.getUniqueId());
-        String playerName = player.getName();
-        String prefix = languageHandler.getPrefix();
 
-        return FormatUtils.TryToFormatPlaceholders(player, message.replaceAll("%current%", String.valueOf(current)
+        return FormatUtils.TryToFormatPlaceholders(player, message
+                .replaceAll("%current%", String.valueOf(current))
                 .replaceAll("%max%", String.valueOf(max))
                 .replaceAll("%left%", String.valueOf(left))
-                .replaceAll("%player%", playerName)
-                .replaceAll("%prefix%", prefix)));
+                .replaceAll("%player%", player.getName())
+                .replaceAll("%prefix%", languageHandler.getPrefix()));
     }
 
     public static String[] parse(Player player, List<String> messages) {
         List<String> msgs = new ArrayList<>();
 
-        messages.stream().map(FormatUtils::translate)
-                .forEach(message -> msgs.add(FormatUtils.TryToFormatPlaceholders(player, message)));
+        messages.forEach(message -> msgs.add(parse(player, message)));
 
         return msgs.toArray(new String[0]);
     }

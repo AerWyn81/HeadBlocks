@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.handlers;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -58,7 +59,7 @@ public class RewardHandler {
             List<String> rewardsCommands = rewards.get(headFound);
 
             rewardsCommands.forEach(reward ->
-                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), reward.replaceAll("%player%", p.getName())));
+                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(p, reward.replaceAll("%player%", p.getName()))));
         }, 1L);
     }
 
