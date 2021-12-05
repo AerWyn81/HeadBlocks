@@ -177,7 +177,7 @@ public class OnPlayerInteractEvent implements Listener {
             // Commands list if not empty
             if (configHandler.getHeadClickCommands().size() != 0) {
                 Bukkit.getScheduler().runTaskLater(main, () -> configHandler.getHeadClickCommands().forEach(reward ->
-                        main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(player, reward.replaceAll("%player%", player.getName())))), 1L);
+                        main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(player, reward))), 1L);
             }
         }
 

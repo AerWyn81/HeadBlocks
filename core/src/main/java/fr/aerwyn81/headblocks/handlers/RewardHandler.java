@@ -59,7 +59,7 @@ public class RewardHandler {
             List<String> rewardsCommands = rewards.get(headFound);
 
             rewardsCommands.forEach(reward ->
-                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(p, reward.replaceAll("%player%", p.getName()))));
+                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(p, reward)));
         }, 1L);
     }
 
