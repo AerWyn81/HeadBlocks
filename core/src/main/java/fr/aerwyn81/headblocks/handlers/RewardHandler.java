@@ -1,69 +1,46 @@
 package fr.aerwyn81.headblocks.handlers;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class RewardHandler {
 
     private final HeadBlocks main;
 
-    private final HashMap<Integer, List<String>> rewards;
-
-    private boolean hadRewardsSet;
-
     public RewardHandler(HeadBlocks main) {
         this.main = main;
-
-        this.rewards = new HashMap<>();
-    }
-
-    public void loadRewards() {
-        HashMap<Integer, List<String>> trConfig = main.getConfigHandler().getTieredRewards();
-
-        if (trConfig.size() == 0) {
-            hadRewardsSet = false;
-            return;
-        }
-
-        for (Map.Entry<Integer, List<String>> reward : trConfig.entrySet()) {
-            try {
-                rewards.put(reward.getKey(), reward.getValue().stream().map(FormatUtils::translate).collect(Collectors.toList()));
-            } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate(
-                        "&cCannot parse reward command \"" + reward.getValue() + "\" from config. Error message :" + ex.getMessage()));
-            }
-        }
-
-        hadRewardsSet = true;
     }
 
     public void giveReward(Player p) {
-        if (!hadRewardsSet) {
+        if (main.getConfigHandler().getTieredRewards().size() == 0) {
             return;
         }
 
-        int headFound = main.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size();
-        if (!rewards.containsKey(headFound)) {
+        TieredReward tieredReward = main.getConfigHandler().getTieredRewards().stream().filter(t -> t.getLevel() ==
+                main.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size()).findFirst().orElse(null);
+
+        if (tieredReward == null) {
             return;
+        }
+
+        List<String> messages = tieredReward.getMessages();
+        if (messages.size() != 0) {
+            p.sendMessage(InternalPlaceholders.parse(p, messages));
         }
 
         Bukkit.getScheduler().runTaskLater(main, () -> {
-            List<String> rewardsCommands = rewards.get(headFound);
-
-            rewardsCommands.forEach(reward ->
-                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(p, reward)));
+            List<String> commands = tieredReward.getCommands();
+            commands.forEach(command ->
+                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(p, command)));
         }, 1L);
     }
 
     public boolean currentIsContainedInTiered(int playerHeads) {
-        return rewards.containsKey(playerHeads);
+        return main.getConfigHandler().getTieredRewards().stream().anyMatch(t -> t.getLevel() == playerHeads);
     }
 }

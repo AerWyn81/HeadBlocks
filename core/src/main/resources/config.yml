@@ -23,7 +23,7 @@ database:
     password: ''
     port: 3306
 
-# Progress bar customization displayed in the /headblocks me command is placeholder %progress% is used
+# Progress bar customization displayed wherever the placeholder %progress% is used
 progressBar:
   totalBars: 100
   symbol: '|'
@@ -94,7 +94,16 @@ preventCommandsOnTieredRewardsLevel: false
 # Tiered rewards : provide a head count to trigger a reward command list
 tieredRewards:
   1:
-    - 'say &a%player% found a head!'
+    messages:
+      - ''
+      - '%prefix% &e%player% &afound one head!'
+      - ''
+    commands:
+      - 'give %player% diamond'
   100:
-    - 'give %player% diamond'
-    - 'say &2%player% found 100 heads!'
+    messages:
+      - ''
+      - '%prefix% &e%player% &afound &6100 heads&a!!!'
+      - ''
+    commands:
+      - 'give %player% diamond 100'

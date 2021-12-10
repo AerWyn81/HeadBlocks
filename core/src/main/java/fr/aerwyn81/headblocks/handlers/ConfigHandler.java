@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.handlers;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import org.bukkit.Color;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -9,7 +10,6 @@ import redis.clients.jedis.Protocol;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class ConfigHandler {
@@ -229,19 +229,22 @@ public class ConfigHandler {
         return config.getInt("particles.notFound.amount", 3);
     }
 
-    public HashMap<Integer, List<String>> getTieredRewards() {
-        HashMap<Integer, List<String>> tieredRewards = new HashMap<>();
+    public List<TieredReward> getTieredRewards() {
+        List<TieredReward> tieredRewards = new ArrayList<>();
 
         if (!config.contains("tieredRewards")) {
             return tieredRewards;
         }
 
-        config.getConfigurationSection("tieredRewards").getKeys(false).forEach(tieredReward -> {
+        config.getConfigurationSection("tieredRewards").getKeys(false).forEach(level -> {
             try {
-                tieredRewards.put(Integer.valueOf(tieredReward), config.getStringList("tieredRewards." + tieredReward));
+                List<String> messages = config.getStringList("tieredRewards." + level + ".messages");
+                List<String> commandes = config.getStringList("tieredRewards." + level + ".commands");
+
+                tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commandes));
             } catch (Exception ex) {
                 HeadBlocks.log.sendMessage(FormatUtils.translate(
-                        "&cCannot read tiered rewards of \"" + tieredReward + "\". Error message :" + ex.getMessage()));
+                        "&cCannot read tiered rewards of \"" + level + "\". Error message :" + ex.getMessage()));
             }
         });
 

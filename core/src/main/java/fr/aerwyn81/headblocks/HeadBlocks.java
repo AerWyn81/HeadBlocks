@@ -82,7 +82,6 @@ public final class HeadBlocks extends JavaPlugin {
 
         Bukkit.getScheduler().runTaskLater(this, () -> {
             this.headHandler.loadLocations();
-            this.rewardHandler.loadRewards();
         }, 1L);
 
         this.headBlocksAPI = new HeadBlocksAPI();

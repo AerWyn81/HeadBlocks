@@ -206,6 +206,6 @@ public class OnPlayerInteractEvent implements Listener {
             return block.getType().name().equals("SKULL");
         }
 
-        return block.getType() != main.getHeadHandler().getPluginHead().getType();
+        return block.getType() == main.getHeadHandler().getPluginHead().getType();
     }
 }

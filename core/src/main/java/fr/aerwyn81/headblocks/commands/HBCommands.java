@@ -232,8 +232,6 @@ public class HBCommands implements CommandExecutor {
         main.getStorageHandler().openConnection();
         main.getStorageHandler().getDatabase().load();
 
-        main.getRewardHandler().loadRewards();
-
         Bukkit.getScheduler().cancelTasks(main);
         if (configHandler.isParticlesEnabled()) {
             if (Version.getCurrent().isOlderThan(Version.v1_13)) {
