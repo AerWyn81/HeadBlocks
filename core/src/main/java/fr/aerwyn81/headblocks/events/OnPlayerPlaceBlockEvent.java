@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -30,7 +31,11 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         Player player = e.getPlayer();
         Block headBlock = e.getBlockPlaced();
 
-        if (!PlayerUtils.hasPermission(player, "headblocks.admin") || !((ItemStack) main.getVersionCompatibility().getItemStackInHand(player)).isSimilar(main.getHeadHandler().getPluginHead())) {
+        if (!hasHeadBlocksItemInHand(player)) {
+            return;
+        }
+
+        if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
             return;
         }
 
@@ -49,7 +54,10 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         }
 
         UUID headUuid = main.getHeadHandler().addLocation(headLocation);
-        player.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, headLocation.clone().add(.5f, .1f, .5f), 10, .5f, .5f, .5f, 0);
+
+        if (Version.getCurrent().isNewerOrSameThan(Version.v1_13)) {
+            player.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, headLocation.clone().add(.5f, .1f, .5f), 10, .5f, .5f, .5f, 0);
+        }
 
         player.sendMessage(languageHandler.getMessage("Messages.HeadPlaced")
                 .replaceAll("%x%", String.valueOf(headBlock.getX()))
@@ -58,5 +66,13 @@ public class OnPlayerPlaceBlockEvent implements Listener {
                 .replaceAll("%world%", headBlock.getWorld().getName()));
 
         Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
+    }
+
+    private boolean hasHeadBlocksItemInHand(Player player) {
+        if (Version.getCurrent() == Version.v1_8) {
+            return main.getHeadHandler().getPluginHead().isSimilar(((ItemStack) main.getLegacySupport().getItemStackInHand(player)));
+        }
+
+        return player.getInventory().getItemInMainHand().isSimilar(main.getHeadHandler().getPluginHead());
     }
 }

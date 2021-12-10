@@ -22,17 +22,7 @@ dependencies {
     implementation("org.javatuples:javatuples:1.2")
     implementation("org.yaml:snakeyaml:1.29")
     implementation(project(":common"))
-    implementation(project(":v1_8_R1"))
-    implementation(project(":v1_9_R2"))
-    implementation(project(":v1_10_R1"))
-    implementation(project(":v1_11_R1"))
-    implementation(project(":v1_12_R1"))
-    implementation(project(":v1_13_R2"))
-    implementation(project(":v1_14_R1"))
-    implementation(project(":v1_15_R1"))
-    implementation(project(":v1_16_R3"))
-    implementation(project(":v1_17_R1"))
-    implementation(project(":v1_18_R1"))
+    implementation(project(":legacy"))
 }
 
 tasks {

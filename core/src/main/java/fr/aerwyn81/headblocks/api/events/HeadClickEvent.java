@@ -34,12 +34,12 @@ public class HeadClickEvent extends Event {
         return location;
     }
 
+    public boolean isSuccess() {
+        return success;
+    }
+
     @Override
     public HandlerList getHandlers() {
         return handlers;
-    }
-
-    public boolean isSuccess() {
-        return success;
     }
 }

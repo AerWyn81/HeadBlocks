@@ -10,6 +10,7 @@ import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
 import fr.aerwyn81.headblocks.runnables.ParticlesTask;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.Version;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -235,8 +236,12 @@ public class HBCommands implements CommandExecutor {
 
         Bukkit.getScheduler().cancelTasks(main);
         if (configHandler.isParticlesEnabled()) {
-            main.setParticlesTask(new ParticlesTask(main));
-            main.getParticlesTask().runTaskTimer(main, 0, configHandler.getParticlesDelay());
+            if (Version.getCurrent().isOlderThan(Version.v1_13)) {
+                HeadBlocks.log.sendMessage(FormatUtils.translate("&cParticles is enabled but not supported before 1.13 included."));
+            } else {
+                main.setParticlesTask(new ParticlesTask(main));
+                main.getParticlesTask().runTaskTimer(main, 0, configHandler.getParticlesDelay());
+            }
         }
 
         player.sendMessage(languageHandler.getMessage("Messages.ReloadComplete"));

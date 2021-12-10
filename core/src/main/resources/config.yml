@@ -56,7 +56,7 @@ headClick:
     fadeColors: [ ]
     flicker: true
     power: 0
-  # Particle displayed when a player had already found the head
+  # 1.13+ - Particle displayed when a player had already found the head
   particles:
     enabled: false
     alreadyOwn:
@@ -72,8 +72,7 @@ headClick:
   commands:
     - "give %player% diamond"
 
-# Not supported in 1.8
-# Particles floating above the head when player has not yet found it
+# 1.13+ - Particles floating above the head when player has not yet found it
 particles:
   enabled: true
   delay: 20 #delay in ticks (1sec = 20 ticks)

@@ -27,7 +27,7 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isPlaceholderApiActive;
     public static boolean isTitleApiActive;
 
-    private IVersionCompatibility versionCompatibility;
+    private LegacySupport legacySupport;
 
     private ConfigHandler configHandler;
     private LanguageHandler languageHandler;
@@ -88,8 +88,12 @@ public final class HeadBlocks extends JavaPlugin {
         this.headBlocksAPI = new HeadBlocksAPI();
 
         if (configHandler.isParticlesEnabled()) {
-            this.particlesTask = new ParticlesTask(this);
-            particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
+            if (Version.getCurrent().isOlderThan(Version.v1_13)) {
+                log.sendMessage(FormatUtils.translate("&cParticles is enabled but not supported before 1.13 included."));
+            } else {
+                this.particlesTask = new ParticlesTask(this);
+                particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
+            }
         }
 
         registerCommands();
@@ -154,8 +158,8 @@ public final class HeadBlocks extends JavaPlugin {
         return storageHandler;
     }
 
-    public IVersionCompatibility getVersionCompatibility() {
-        return versionCompatibility;
+    public LegacySupport getLegacySupport() {
+        return legacySupport;
     }
 
     public void setParticlesTask(ParticlesTask particlesTask) {
@@ -169,43 +173,8 @@ public final class HeadBlocks extends JavaPlugin {
     private boolean setupVersionCompatibility() {
         String currentVersionFormatted = Version.getCurrentFormatted();
 
-        switch (Version.getCurrent()) {
-            case v1_8:
-                versionCompatibility = new Helper18();
-                break;
-            case v1_9:
-                versionCompatibility = new Helper19();
-                break;
-            case v1_10:
-                versionCompatibility = new Helper110();
-                break;
-            case v1_11:
-                versionCompatibility = new Helper111();
-                break;
-            case v1_12:
-                versionCompatibility = new Helper112();
-                break;
-            case v1_13:
-                versionCompatibility = new Helper113();
-                break;
-            case v1_14:
-                versionCompatibility = new Helper114();
-                break;
-            case v1_15:
-                versionCompatibility = new Helper115();
-                break;
-            case v1_16:
-                versionCompatibility = new Helper116();
-                break;
-            case v1_17:
-                versionCompatibility = new Helper117();
-                break;
-            case v1_18:
-                versionCompatibility = new Helper118();
-                break;
-            default:
-                log.sendMessage(FormatUtils.translate("&cError initializing compatibility version support, version " + currentVersionFormatted + " not yet supported!"));
-                return false;
+        if (Version.getCurrent() == Version.v1_8) {
+            legacySupport = new LegacyHelper();
         }
 
         log.sendMessage(FormatUtils.translate("&aSuccessfully loaded version compatibility for v" + currentVersionFormatted));

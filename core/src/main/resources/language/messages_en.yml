@@ -23,7 +23,7 @@ Messages:
   HeadPlaced: "%prefix% &2&l+ &aHeadBlock placed &7(%world%, %x%, %y%, %z%)"
   HeadRemoved: "%prefix% &2&c- &eHeadBlock removed &7(%world%, %x%, %y%, %z%)"
   RemoveAllConfirm: "%prefix% &cWarning, this command will remove &7%headCount% &chead(s). Add &7--confirm &cin the command to confirm"
-  RemoveAllSuccess: "%prefix% &e%headCount% &asuccessfully removed"
+  RemoveAllSuccess: "%prefix% &e%headCount% &ahead(s) successfully removed"
   AlreadyClaimHead: "%prefix% &cYou have already clicked on this head"
   ListHeadEmpty: "%prefix% &cThere are no heads yet"
   HeadGiven: "%prefix% &aYou have successfully received a HeadBlock"

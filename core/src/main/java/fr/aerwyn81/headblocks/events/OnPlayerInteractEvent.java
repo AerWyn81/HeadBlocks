@@ -12,15 +12,16 @@ import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import fr.aerwyn81.headblocks.utils.xseries.XSound;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 public class OnPlayerInteractEvent implements Listener {
 
@@ -36,16 +37,19 @@ public class OnPlayerInteractEvent implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
+        Block block = e.getClickedBlock();
+
         // Check if the correct hand is used
-        if (Stream.of(Action.LEFT_CLICK_BLOCK, Action.RIGHT_CLICK_BLOCK).noneMatch(a -> a == e.getAction()) || main.getVersionCompatibility().isLeftHand(e)) {
+        if (block == null || !isMainHand(e)) {
             return;
         }
 
-        if (e.getClickedBlock() == null) {
+        // Check if clickedBlock is a head
+        if (!isClickedBlockIsHeadBlocks(block)) {
             return;
         }
 
-        Location clickedLocation = e.getClickedBlock().getLocation();
+        Location clickedLocation = block.getLocation();
         UUID headUuid = main.getHeadHandler().getHeadAt(clickedLocation);
 
         // Check if the head is a head of the plugin
@@ -63,10 +67,10 @@ public class OnPlayerInteractEvent implements Listener {
                 return;
             }
 
-            // Remove the head from the fround
+            // Remove the head from the ground
             main.getHeadHandler().removeHead(headUuid);
 
-            // If resetPlayerData enabled, reset all players data for the head
+            // If resetPlayerData is enabled, reset all player data for the head
             if (configHandler.shouldResetPlayerData()) {
                 main.getStorageHandler().removeHead(headUuid);
             }
@@ -112,7 +116,7 @@ public class OnPlayerInteractEvent implements Listener {
             }
 
             // Already own particles if enabled
-            if (configHandler.isHeadClickParticlesEnabled()) {
+            if (Version.getCurrent().isNewerOrSameThan(Version.v1_13) && configHandler.isHeadClickParticlesEnabled()) {
                 String particleName = configHandler.getHeadClickParticlesAlreadyOwnType();
                 int amount = configHandler.getHeadClickParticlesAmount();
                 double size = amount == 1 ? 0 : .5f;
@@ -186,5 +190,22 @@ public class OnPlayerInteractEvent implements Listener {
 
         // Trigger the event HeadClick with success
         Bukkit.getPluginManager().callEvent(new HeadClickEvent(headUuid, player, clickedLocation, true));
+    }
+
+    private boolean isMainHand(PlayerInteractEvent e) {
+        if (Version.getCurrent() == Version.v1_8) {
+            return true;
+        }
+
+        return e.getHand() == EquipmentSlot.HAND;
+    }
+
+    private boolean isClickedBlockIsHeadBlocks(Block block) {
+        // Specific case where we only check if the block type if a skull
+        if (Version.getCurrent() == Version.v1_8) {
+            return block.getType().name().equals("SKULL");
+        }
+
+        return block.getType() != main.getHeadHandler().getPluginHead().getType();
     }
 }

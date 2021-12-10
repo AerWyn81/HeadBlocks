@@ -136,7 +136,13 @@ public class HeadHandler {
             return;
         }
 
-        ItemStack head = (ItemStack) main.getVersionCompatibility().createHeadItemStack();
+        ItemStack head;
+
+        if (Version.getCurrent() == Version.v1_8) {
+            head = new ItemStack(Material.valueOf("SKULL_ITEM"), 1, (short) 3);
+        } else {
+            head = new ItemStack(Material.PLAYER_HEAD, 1);
+        }
 
         ItemMeta headMeta = head.getItemMeta();
         headMeta.setDisplayName(languageHandler.getMessage("Head.Name"));
