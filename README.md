@@ -27,7 +27,7 @@ I'm not using some bStats metrics or Auto-Updater.
 
 Links:
 
-* Spigot plugin page: https://www.spigotmc.org/resources/headblocks-1-8-1-17.97630/
+* Spigot plugin page: https://www.spigotmc.org/resources/headblocks.97630/
 * Discord: https://discord.gg/f3d848XsQt
 
 ___
@@ -47,7 +47,7 @@ ___
 <dependency>
   <groupId>com.github.AerWyn81</groupId>
   <artifactId>HeadBlocks</artifactId>
-  <version>1.3.7</version>
+  <version>1.3.9</version>
 </dependency>
 ```
 
@@ -59,7 +59,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'com.github.AerWyn81:HeadBlocks:1.3.7'
+  implementation 'com.github.AerWyn81:HeadBlocks:1.3.9'
 }
 ```
 
