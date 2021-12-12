@@ -59,6 +59,7 @@ public class HBCommands implements CommandExecutor {
             return true;
         }
 
+        // todo: à décaler dans les méthodes
         if (!(sender instanceof Player)) {
             sender.sendMessage(languageHandler.getMessage("Messages.PlayerOnly"));
             return true;

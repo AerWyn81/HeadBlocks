@@ -1,0 +1,14 @@
+- **Getting Started**
+    - [Installation](getting-started/installation.md)
+    - [Commands and Permissions](getting-started/commands.md)
+    - [First-time Usage](getting-started/usage.md)
+- **Customization**
+    - [Configuration](config/general.md)
+        - [config.yml](config/config.md)
+    - [Translations](config/translations.md)
+- **Reference**
+    - [Particles](reference/particles.md)
+    - [Sounds](reference/sounds.md)
+    - [Screenshots](reference/screenshots.md)
+- **API** (For Developers)
+    - [Essentials](api/info.md)
