@@ -11,4 +11,4 @@
     - [Sounds](reference/sounds.md)
     - [Screenshots](reference/screenshots.md)
 - **API** (For Developers)
-    - [Essentials](api/info.md)
+    - [General](api/info.md)
