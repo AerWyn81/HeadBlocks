@@ -102,7 +102,7 @@ ___
 
 ### WIKI:
 
-_Coming soon_
+Find the wiki **[here](https://aerwyn81.github.io/HeadBlocks)**
 ___
 It's my first plugin, it's not perfect yet, don't hesitate to tell me bugs or suggestions on discord or in issue :)
 Thank you for your interest ❤️
