@@ -19,7 +19,6 @@ import org.javatuples.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -32,7 +31,7 @@ public class HeadHandler {
     private final LanguageHandler languageHandler;
     private FileConfiguration config;
 
-    private List<Pair<UUID, Location>> headLocations;
+    private ArrayList<Pair<UUID, Location>> headLocations;
 
     private ItemStack pluginHead;
 
@@ -174,7 +173,7 @@ public class HeadHandler {
         return pluginHead;
     }
 
-    public List<Pair<UUID, Location>> getHeadLocations() {
+    public ArrayList<Pair<UUID, Location>> getHeadLocations() {
         return headLocations;
     }
 }

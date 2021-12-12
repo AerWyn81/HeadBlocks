@@ -1,8 +1,7 @@
 package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
-import fr.aerwyn81.headblocks.commands.HBCommands;
-import fr.aerwyn81.headblocks.commands.HBTabCompleter;
+import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.events.OnPlayerInteractEvent;
 import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
 import fr.aerwyn81.headblocks.handlers.*;
@@ -95,7 +94,7 @@ public final class HeadBlocks extends JavaPlugin {
             }
         }
 
-        registerCommands();
+        getCommand("headblocks").setExecutor(new HBCommandExecutor(this));
 
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(this), this);
@@ -122,11 +121,6 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
 
         log.sendMessage(FormatUtils.translate("&6HeadBlocks &cdisabled!"));
-    }
-
-    private void registerCommands() {
-        getCommand("headblocks").setExecutor(new HBCommands(this));
-        getCommand("headblocks").setTabCompleter(new HBTabCompleter(this));
     }
 
     public static HeadBlocks getInstance() {

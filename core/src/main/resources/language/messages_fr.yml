@@ -54,7 +54,7 @@ Chat:
     Remove: "&7| &8[&c✘&8]"
     Own: "&7| &8[&2✔&8]"
     NotOwn: "&7| &8[&c✘&8]"
-  StatsTitleLine: "&7------[ &eDonnées de &6%player% &8» &6%headCount%&8/&6%maxHead% &etêtes &7]-------"
+  StatsTitleLine: "&7------[ &eDonnées de &6%player% &8» &6%headCount%&8/&6%max% &etêtes &7]-------"
   LineTitle: "&7------------------[ &6&lH&e&lead&6&lB&e&llocks&7 ]-----------------"
   LineCoordinate: "&6Monde &8: &e%worldName% &8[&6X&8: &e%x%&8, &6Y&8: &e%y%&8, &6Z&8: &e%z%&8]"
   PreviousPage: "&7---------[&8<<<&7]---------"

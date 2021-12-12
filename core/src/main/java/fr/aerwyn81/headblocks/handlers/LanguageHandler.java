@@ -41,6 +41,10 @@ public class LanguageHandler {
 		return FormatUtils.translate(messages.get("Prefix").toString());
 	}
 
+	public boolean hasMessage(String message) {
+		return messages.containsKey(message);
+	}
+
 	public String getMessage(String message) {
 		return FormatUtils.translate(messages.get(message).toString().replaceAll("%prefix%", getPrefix()));
 	}
