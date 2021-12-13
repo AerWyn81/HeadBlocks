@@ -202,7 +202,7 @@ public class OnPlayerInteractEvent implements Listener {
 
     private boolean isClickedBlockIsHeadBlocks(Block block) {
         // Specific case where we only check if the block type if a skull
-        if (Version.getCurrent() == Version.v1_8) {
+        if (Version.getCurrent().isOlderOrSameThan(Version.v1_12)) {
             return block.getType().name().equals("SKULL");
         }
 

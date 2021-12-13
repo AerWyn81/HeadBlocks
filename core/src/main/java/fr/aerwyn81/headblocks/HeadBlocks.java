@@ -58,9 +58,8 @@ public final class HeadBlocks extends JavaPlugin {
         }
         reloadConfig();
 
-        if (!setupVersionCompatibility()) {
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
+        if (Version.getCurrent() == Version.v1_8) {
+            legacySupport = new LegacyHelper();
         }
 
         this.configHandler = new ConfigHandler(configFile);
@@ -161,16 +160,5 @@ public final class HeadBlocks extends JavaPlugin {
 
     public ParticlesTask getParticlesTask() {
         return particlesTask;
-    }
-
-    private boolean setupVersionCompatibility() {
-        String currentVersionFormatted = Version.getCurrentFormatted();
-
-        if (Version.getCurrent() == Version.v1_8) {
-            legacySupport = new LegacyHelper();
-        }
-
-        log.sendMessage(FormatUtils.translate("&aSuccessfully loaded version compatibility for v" + currentVersionFormatted));
-        return true;
     }
 }

@@ -137,7 +137,7 @@ public class HeadHandler {
 
         ItemStack head;
 
-        if (Version.getCurrent() == Version.v1_8) {
+        if (Version.getCurrent().isOlderOrSameThan(Version.v1_12)) {
             head = new ItemStack(Material.valueOf("SKULL_ITEM"), 1, (short) 3);
         } else {
             head = new ItemStack(Material.PLAYER_HEAD, 1);
