@@ -66,7 +66,7 @@ Help:
   Help: "&6/hb help &8: &7&oDisplay this message"
   Me: "&6/hb me &8: &7&oDisplays your progress"
   Remove: "&6/hb remove <headUuid> &8: &7&oRemove head by it's <headUuid>"
-  RemoveAll: "&6/hb remove <headUuid> &8: &7&oRemove all spawned head"
+  RemoveAll: "&6/hb removeall &8: &7&oRemove all spawned head"
   Give: "&6/hb give <player> &8: &7&oGives a HeadBlock to <player>"
   Reset: "&6/hb reset <player> &8: &7&oReset data of the <player>"
   ResetAll: "&6/hb resetall &8: &7&oReset data of all players"

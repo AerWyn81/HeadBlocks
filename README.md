@@ -1,8 +1,9 @@
 # HeadBlocks
 
 ![Issue Github](https://img.shields.io/github/issues-raw/AerWyn81/HeadBlocks?color=%2370d121&style=for-the-badge)
-![Discord](https://img.shields.io/discord/912462773995335701?label=DISCORD&logo=discord&logoColor=%238bc1f7&style=for-the-badge)
 ![Code Quality](https://img.shields.io/codefactor/grade/github/AerWyn81/HeadBlocks?logo=codefactor&style=for-the-badge)
+![Discord](https://img.shields.io/discord/912462773995335701?label=DISCORD&logo=discord&logoColor=%238bc1f7&style=for-the-badge)
+![Spigot Download](https://img.shields.io/spiget/downloads/97630?logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAAXNSR0IB2cksfwAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGASURBVDhPYxg0gB2I2Xx8fDRERUV5jI2N%2BSHCCMAIpZEBk6%2Bv73x2dnYNQUFB1Y8fP15kZWVdsHTp0oVQeTBghtLI4H9kZOSmGzdunGNkZLQ%2Ff%2F68w8GDB89C5eCACUqjgMbGxn9AG6O4ubkN9PX1vaHCKADs1MIQC84%2F7P%2BEf3L%2FfQnii%2F5ilDjzXPgYUKMMLxfrET7Bjy6TJ%2B%2F4CZKDAZBTGf2MP603kP7cyvzjT5Qcy9tEWaHvifysX%2BSkuV4x64s8kHv2UYKBk1%2Fq9MOHD39BtEE0skiJC7k%2BfM9pzsn2X%2FzuW27JD1%2F%2Bi3Ky%2FGR%2B%2B42d4eEHPoZ773nsuLi4Ynh4eOY%2Ff%2F4cbDPYqW5ubipfvnyZxMzMJPLv3%2F8D379%2F%2FcXBxmHJzMoKioanv3%2F%2F1gY6WxkYug%2Ffvn1rfPr06bfw6Kivr2c6cOAAEzAE%2F0CFwHKurq5cQEMvMjExyf7792%2Ff%2F%2F%2F%2Fo0%2BcOPEOrIIQsLe3V7C2tpYDMrHGAj0AAwMAnm2Bn%2B%2FKtQMAAAAASUVORK5CYII%3D&style=for-the-badge)
 ___
 
 ### OVERVIEW:
