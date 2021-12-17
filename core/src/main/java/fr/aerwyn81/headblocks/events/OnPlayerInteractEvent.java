@@ -6,10 +6,7 @@ import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
-import fr.aerwyn81.headblocks.utils.FireworkUtils;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
-import fr.aerwyn81.headblocks.utils.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.Version;
+import fr.aerwyn81.headblocks.utils.*;
 import fr.aerwyn81.headblocks.utils.xseries.XSound;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -20,6 +17,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -119,10 +117,10 @@ public class OnPlayerInteractEvent implements Listener {
             if (Version.getCurrent().isNewerOrSameThan(Version.v1_13) && configHandler.isHeadClickParticlesEnabled()) {
                 String particleName = configHandler.getHeadClickParticlesAlreadyOwnType();
                 int amount = configHandler.getHeadClickParticlesAmount();
-                double size = amount == 1 ? 0 : .5f;
+                ArrayList<String> colors = configHandler.getHeadClickParticlesColors();
 
                 try {
-                    player.getWorld().spawnParticle(Particle.valueOf(particleName), clickedLocation.clone().add(.5f, .1f, .5f), amount, size, size, size, 0);
+                    ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
                 } catch (Exception ex) {
                     HeadBlocks.log.sendMessage(FormatUtils.translate("&cError particle name " + particleName + " cannot be parsed!"));
                 }

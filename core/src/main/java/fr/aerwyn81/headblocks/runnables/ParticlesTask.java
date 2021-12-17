@@ -5,14 +5,14 @@ import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
-import fr.aerwyn81.headblocks.utils.xseries.ParticleDisplay;
+import fr.aerwyn81.headblocks.utils.ParticlesUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.javatuples.Pair;
 
-import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,11 +37,15 @@ public class ParticlesTask extends BukkitRunnable {
             List<Player> players = playersInRange(h);
 
             if (!inError && players.size() != 0) {
+                String particleName = configHandler.getParticlesNotFoundType();
+                int amount = configHandler.getParticlesNotFoundAmount();
+                ArrayList<String> colors = configHandler.getParticlesNotFoundColors();
+
                 try {
-                    spawnParticles(h.getValue1(), players.toArray(new Player[0]));
+                    ParticlesUtils.spawn(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.toArray(new Player[0]));
                 } catch (Exception ex) {
                     inError = true;
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot spawn particle for HeadBlocks... " + ex.getMessage()));
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot spawn particle " + particleName + "... " + ex.getMessage()));
                     HeadBlocks.log.sendMessage(FormatUtils.translate("&cTo prevent log spam, particles is disabled until reload!"));
                 }
             }
@@ -58,29 +62,5 @@ public class ParticlesTask extends BukkitRunnable {
                 .map(e -> (Player) e)
                 .filter(p -> !storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuidLocPair.getValue0()))
                 .collect(Collectors.toList());
-    }
-
-    private void spawnParticles(Location location, Player... players) {
-        ParticleDisplay t = new ParticleDisplay();
-
-        int pCount = configHandler.getParticlesNotFoundAmount();
-        if (pCount != 1) {
-            t.withCount(pCount);
-        }
-
-        Particle pType = Particle.valueOf(configHandler.getParticlesNotFoundType());
-        t.withParticle(pType);
-
-        if (pType == Particle.REDSTONE) {
-            for (String color : configHandler.getParticlesNotFoundColors()) {
-                String[] colors = color.split(",");
-                t.withColor(new Color(Integer.parseInt(colors[0]), Integer.parseInt(colors[1]), Integer.parseInt(colors[2])), 1);
-                t.spawn(location.clone().add(.5f, 0.75f, .5f), players);
-            }
-
-            return;
-        }
-
-        t.spawn(location.clone().add(.5f, 1f, .5f), players);
     }
 }

@@ -61,6 +61,10 @@ headClick:
     enabled: false
     alreadyOwn:
       type: VILLAGER_ANGRY
+      # Colors is only for REDSTONE type
+      # RGB format: 'red,green,blue'
+      # Support multiple colors (add dash)
+      colors: [ ]
       amount: 1
   # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
   # Keep empty for no sound
@@ -76,8 +80,8 @@ headClick:
 particles:
   enabled: true
   delay: 20 #delay in ticks (1sec = 20 ticks)
+  playerViewDistance: 16
   notFound:
-    playerViewDistance: 16
     type: REDSTONE
     # Colors is only for REDSTONE type
     # RGB format: 'red,green,blue'

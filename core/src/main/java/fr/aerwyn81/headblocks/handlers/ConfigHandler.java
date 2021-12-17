@@ -133,6 +133,8 @@ public class ConfigHandler {
         return config.getInt("headClick.particles.alreadyOwn.amount", 1);
     }
 
+    public ArrayList<String> getHeadClickParticlesColors() { return new ArrayList<>(config.getStringList("headClick.particles.alreadyOwn.colors")); }
+
     public List<String> getHeadClickCommands() {
         return config.getStringList("headClick.commands");
     }
@@ -213,16 +215,14 @@ public class ConfigHandler {
         return config.getInt("particles.notFound.delay", 20);
     }
 
-    public int getParticlesNotFoundPlayerViewDistance() {
-        return config.getInt("particles.notFound.playerViewDistance", 16);
-    }
+    public int getParticlesNotFoundPlayerViewDistance() { return config.getInt("particles.playerViewDistance", 16); }
 
     public String getParticlesNotFoundType() {
         return config.getString("particles.notFound.type", "REDSTONE");
     }
 
-    public List<String> getParticlesNotFoundColors() {
-        return config.getStringList("particles.notFound.colors");
+    public ArrayList<String> getParticlesNotFoundColors() {
+        return new ArrayList<>(config.getStringList("particles.notFound.colors"));
     }
 
     public int getParticlesNotFoundAmount() {

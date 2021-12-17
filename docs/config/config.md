@@ -93,8 +93,8 @@ Allows to configure the progress bar displayed in any message of the plugin with
 particles:
   enabled: true
   delay: 20
+  playerViewDistance: 16
   notFound:
-    playerViewDistance: 16
     type: REDSTONE
     colors:
       - '121, 51, 32'
@@ -249,11 +249,18 @@ headClick:
     enabled: false
     alreadyOwn:
       type: VILLAGER_ANGRY
+      colors:
+      - '121, 51, 32'
+      - '10, 154, 15'
       amount: 1
 ```
 
 If `enabled`, you can define [particles](reference/particles.md) which will be displayed when the player will click on
-the head that it has already.
+the head that it has already:
+- type: particle type (you can see the list [here](reference/particles.md))
+- colors: only work for REDSTONE particle type
+  - can be a list of colors (format: 'r, g, b')
+- amount: number of particles displayed
 
 #### Headclick - Sound
 

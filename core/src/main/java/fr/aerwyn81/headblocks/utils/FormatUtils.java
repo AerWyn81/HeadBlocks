@@ -5,11 +5,14 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -108,5 +111,18 @@ public class FormatUtils {
 			return message;
 
 		return PlaceholderAPI.setPlaceholders(player, message);
+	}
+
+	/**
+	 * Return a random list of random colors
+	 * @return list of color
+	 */
+	public static ArrayList<Color> getRandomColors() {
+		ArrayList<Color> colors = new ArrayList<>();
+		for (int i = 0; i < ThreadLocalRandom.current().nextInt(1, 4); i++) {
+			colors.add(Color.fromRGB(ThreadLocalRandom.current().nextInt(256), ThreadLocalRandom.current().nextInt(256), ThreadLocalRandom.current().nextInt(256)));
+		}
+
+		return colors;
 	}
 }

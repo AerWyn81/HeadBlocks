@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.utils.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
@@ -56,7 +57,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         UUID headUuid = main.getHeadHandler().addLocation(headLocation);
 
         if (Version.getCurrent().isNewerOrSameThan(Version.v1_13)) {
-            player.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, headLocation.clone().add(.5f, .1f, .5f), 10, .5f, .5f, .5f, 0);
+            ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
         }
 
         player.sendMessage(languageHandler.getMessage("Messages.HeadPlaced")

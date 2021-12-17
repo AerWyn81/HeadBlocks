@@ -24,7 +24,6 @@ public final class HeadBlocks extends JavaPlugin {
     public static ConsoleCommandSender log;
     private static HeadBlocks instance;
     public static boolean isPlaceholderApiActive;
-    public static boolean isTitleApiActive;
 
     private LegacySupport legacySupport;
 
@@ -101,10 +100,6 @@ public final class HeadBlocks extends JavaPlugin {
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new PlaceholderHook(this).register();
             isPlaceholderApiActive = true;
-        }
-
-        if (Bukkit.getPluginManager().isPluginEnabled("TitleAPI")) {
-            isTitleApiActive = true;
         }
 
         log.sendMessage(FormatUtils.translate("&a&6HeadBlocks &asuccessfully loaded!"));
