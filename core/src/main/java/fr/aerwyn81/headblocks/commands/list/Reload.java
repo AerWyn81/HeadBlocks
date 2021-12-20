@@ -10,7 +10,6 @@ import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 
@@ -28,8 +27,6 @@ public class Reload implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        Player player = (Player) sender;
-
         main.reloadConfig();
         main.getConfigHandler().loadConfiguration();
 
@@ -58,7 +55,7 @@ public class Reload implements Cmd {
             }
         }
 
-        player.sendMessage(languageHandler.getMessage("Messages.ReloadComplete"));
+        sender.sendMessage(languageHandler.getMessage("Messages.ReloadComplete"));
         return true;
     }
 
