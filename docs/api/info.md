@@ -13,7 +13,7 @@
 <dependency>
   <groupId>com.github.AerWyn81</groupId>
   <artifactId>HeadBlocks</artifactId>
-  <version><LATEST RELEASE></version>
+  <version>LATEST_RELEASE</version>
 </dependency>
 ```
 
