@@ -11,7 +11,7 @@ import java.util.List;
 
 public class FireworkUtils {
     public static void launchFirework(Location loc, boolean isFlickering, boolean isColorsRandom, List<Color> colors, boolean isFadeColorsRandom, List<Color> fadeColors, int power) {
-        Firework firework = (Firework) loc.getWorld().spawnEntity(loc.add(0.5, 0, 0.5), EntityType.FIREWORK);
+        Firework firework = (Firework) loc.getWorld().spawnEntity(loc.add(0.5, 0.5, 0.5), EntityType.FIREWORK);
         FireworkMeta fMeta = firework.getFireworkMeta();
 
         FireworkEffect.Builder fBuilder = FireworkEffect.builder()
@@ -35,5 +35,9 @@ public class FireworkUtils {
 
         fMeta.setPower(power);
         firework.setFireworkMeta(fMeta);
+
+        if (power == 0) {
+            firework.detonate();
+        }
     }
 }
