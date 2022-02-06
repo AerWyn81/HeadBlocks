@@ -35,19 +35,15 @@ public class ParticlesTask extends BukkitRunnable {
             Pair<List<Player>, List<Player>> players = playersInRange(h);
 
             if (players.getValue0().size() != 0) {
-                String particleName = configHandler.getParticlesFoundType();
-                int amount = configHandler.getParticlesFoundAmount();
-                ArrayList<String> colors = configHandler.getParticlesFoundColors();
-
-                spawnParticles(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.getValue0().toArray(new Player[0]));
+                spawnParticles(h.getValue1(), Particle.valueOf(configHandler.getParticlesFoundType()),
+                        configHandler.getParticlesFoundAmount(), configHandler.getParticlesFoundColors(),
+                        players.getValue0().toArray(new Player[0]));
             }
 
             if (players.getValue1().size() != 0) {
-                String particleName = configHandler.getParticlesNotFoundType();
-                int amount = configHandler.getParticlesNotFoundAmount();
-                ArrayList<String> colors = configHandler.getParticlesNotFoundColors();
-
-                spawnParticles(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.getValue1().toArray(new Player[0]));
+                spawnParticles(h.getValue1(), Particle.valueOf(configHandler.getParticlesNotFoundType()),
+                        configHandler.getParticlesNotFoundAmount(), configHandler.getParticlesNotFoundColors(),
+                        players.getValue1().toArray(new Player[0]));
             }
         });
     }
@@ -66,18 +62,15 @@ public class ParticlesTask extends BukkitRunnable {
         int range = configHandler.getParticlesPlayerViewDistance();
         Location loc = uuidLocPair.getValue1();
 
-        List<Player> playersInRange = loc.getWorld().getNearbyEntities(loc, range, range, range).stream()
-                .filter(Player.class::isInstance)
-                .map(e -> (Player) e)
-                .collect(Collectors.toList());
-
-        List<Player> playersFound = playersInRange.stream()
-                .filter(p -> storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuidLocPair.getValue0()))
-                .collect(Collectors.toList());
-
-        List<Player> playersNotFound = playersInRange.stream()
-                .filter(i -> !playersFound.contains(i))
-                .collect(Collectors.toList());
+        List<Player> playersFound = new ArrayList<>();
+        List<Player> playersNotFound = new ArrayList<>();
+        for (Player p : loc.getWorld().getNearbyEntities(loc, range, range, range).stream().filter(Player.class::isInstance).map(e -> (Player) e).collect(Collectors.toList())) {
+            if (storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuidLocPair.getValue0())){
+                playersFound.add(p);
+            } else {
+                playersNotFound.add(p);
+            }
+        }
 
         return new Pair<>(playersFound, playersNotFound);
     }
