@@ -7,7 +7,6 @@ import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
 import fr.aerwyn81.headblocks.utils.*;
-import fr.aerwyn81.headblocks.utils.xseries.XSound;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;

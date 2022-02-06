@@ -109,9 +109,17 @@ particles:
       - '121, 51, 32'
       - '10, 154, 15'
     amount: 1
+  found:
+    type: REDSTONE
+    # Colors is only for REDSTONE type
+    # RGB format: 'red,green,blue'
+    # Support multiple colors (add dash)
+    colors:
+    - "255,0,0"
+    amount: 3
 ```
 
-It is possible to float particles over the head if the player has not found the head if **enabled**:
+It is possible to float particles over the head if the player has found or not found the head if **enabled**:
 
 - delay: time between each particle display (the longer the time, the less lag it can cause) (20 ticks - 1 second)
 - playerViewDistance: the range at which players can see the particles

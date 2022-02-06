@@ -34,33 +34,55 @@ public class ParticlesTask extends BukkitRunnable {
     @Override
     public void run() {
         headHandler.getHeadLocations().forEach(h -> {
-            List<Player> players = playersInRange(h);
+            Pair<List<Player>, List<Player>> players = playersInRange(h);
 
-            if (!inError && players.size() != 0) {
-                String particleName = configHandler.getParticlesNotFoundType();
-                int amount = configHandler.getParticlesNotFoundAmount();
-                ArrayList<String> colors = configHandler.getParticlesNotFoundColors();
+            if (!inError) {
+                if (players.getValue0().size() != 0) {
+                    String particleName = configHandler.getParticlesFoundType();
+                    int amount = configHandler.getParticlesFoundAmount();
+                    ArrayList<String> colors = configHandler.getParticlesFoundColors();
 
-                try {
-                    ParticlesUtils.spawn(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.toArray(new Player[0]));
-                } catch (Exception ex) {
-                    inError = true;
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot spawn particle " + particleName + "... " + ex.getMessage()));
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cTo prevent log spam, particles is disabled until reload!"));
+                    spawnParticles(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.getValue0().toArray(new Player[0]));
+                }
+
+                if (players.getValue1().size() != 0) {
+                    String particleName = configHandler.getParticlesNotFoundType();
+                    int amount = configHandler.getParticlesNotFoundAmount();
+                    ArrayList<String> colors = configHandler.getParticlesNotFoundColors();
+
+                    spawnParticles(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.getValue1().toArray(new Player[0]));
                 }
             }
         });
     }
 
-    private List<Player> playersInRange(Pair<UUID, Location> uuidLocPair) {
-        int range = configHandler.getParticlesNotFoundPlayerViewDistance();
+    private void spawnParticles(Location location, Particle particle, int amount, ArrayList<String> colors, Player... players) {
+        try {
+            ParticlesUtils.spawn(location, particle, amount, colors, players);
+        } catch (Exception ex) {
+            inError = true;
+            HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(FormatUtils.translate("&cTo prevent log spamming, particles is disabled until reload"));
+        }
+    }
 
+    private Pair<List<Player>, List<Player>> playersInRange(Pair<UUID, Location> uuidLocPair) {
+        int range = configHandler.getParticlesPlayerViewDistance();
         Location loc = uuidLocPair.getValue1();
 
-        return loc.getWorld().getNearbyEntities(loc, range, range, range).stream()
+        List<Player> playersInRange = loc.getWorld().getNearbyEntities(loc, range, range, range).stream()
                 .filter(Player.class::isInstance)
                 .map(e -> (Player) e)
-                .filter(p -> !storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuidLocPair.getValue0()))
                 .collect(Collectors.toList());
+
+        List<Player> playersFound = playersInRange.stream()
+                .filter(p -> storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuidLocPair.getValue0()))
+                .collect(Collectors.toList());
+
+        List<Player> playersNotFound = playersInRange.stream()
+                .filter(i -> !playersFound.contains(i))
+                .collect(Collectors.toList());
+
+        return new Pair<>(playersFound, playersNotFound);
     }
 }

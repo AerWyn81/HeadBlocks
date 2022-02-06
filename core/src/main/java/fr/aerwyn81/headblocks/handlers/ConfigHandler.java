@@ -212,10 +212,10 @@ public class ConfigHandler {
     }
 
     public int getParticlesDelay() {
-        return config.getInt("particles.notFound.delay", 20);
+        return config.getInt("particles.delay", 20);
     }
 
-    public int getParticlesNotFoundPlayerViewDistance() { return config.getInt("particles.playerViewDistance", 16); }
+    public int getParticlesPlayerViewDistance() { return config.getInt("particles.playerViewDistance", 16); }
 
     public String getParticlesNotFoundType() {
         return config.getString("particles.notFound.type", "REDSTONE");
@@ -227,6 +227,18 @@ public class ConfigHandler {
 
     public int getParticlesNotFoundAmount() {
         return config.getInt("particles.notFound.amount", 3);
+    }
+
+    public String getParticlesFoundType() {
+        return config.getString("particles.found.type", "REDSTONE");
+    }
+
+    public ArrayList<String> getParticlesFoundColors() {
+        return new ArrayList<>(config.getStringList("particles.found.colors"));
+    }
+
+    public int getParticlesFoundAmount() {
+        return config.getInt("particles.found.amount", 3);
     }
 
     public List<TieredReward> getTieredRewards() {

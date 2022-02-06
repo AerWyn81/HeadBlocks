@@ -11,7 +11,7 @@ public class ParticlesUtils {
 
     public static void spawn(Location loc, Particle particle, int amount, ArrayList<String> colors, Player... players) {
         double size = amount == 1 ? 0 : .25f;
-        Location location = loc.clone().add(.5f, .5f, .5f);
+        Location location = loc.clone().add(.5f, .75f, .5f);
 
         ArrayList<Particle.DustOptions> dustOptions = new ArrayList<>();
 

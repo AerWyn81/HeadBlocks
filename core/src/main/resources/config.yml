@@ -91,8 +91,17 @@ particles:
     # Colors is only for REDSTONE type
     # RGB format: 'red,green,blue'
     # Support multiple colors (add dash)
-    colors: [ ]
-    amount: 1
+    colors:
+      - 255,0,0
+    amount: 3
+  found:
+    type: REDSTONE
+    # Colors is only for REDSTONE type
+    # RGB format: 'red,green,blue'
+    # Support multiple colors (add dash)
+    colors:
+      - 0,255,0
+    amount: 3
 
 # If true, when a Headblocks is destroyed, it will delete all player data related to it
 shouldResetPlayerData: true
