@@ -23,8 +23,6 @@ public class ParticlesTask extends BukkitRunnable {
     private final HeadHandler headHandler;
     private final StorageHandler storageHandler;
 
-    private boolean inError;
-
     public ParticlesTask(HeadBlocks main) {
         this.configHandler = main.getConfigHandler();
         this.headHandler = main.getHeadHandler();
@@ -36,22 +34,20 @@ public class ParticlesTask extends BukkitRunnable {
         headHandler.getHeadLocations().forEach(h -> {
             Pair<List<Player>, List<Player>> players = playersInRange(h);
 
-            if (!inError) {
-                if (players.getValue0().size() != 0) {
-                    String particleName = configHandler.getParticlesFoundType();
-                    int amount = configHandler.getParticlesFoundAmount();
-                    ArrayList<String> colors = configHandler.getParticlesFoundColors();
+            if (players.getValue0().size() != 0) {
+                String particleName = configHandler.getParticlesFoundType();
+                int amount = configHandler.getParticlesFoundAmount();
+                ArrayList<String> colors = configHandler.getParticlesFoundColors();
 
-                    spawnParticles(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.getValue0().toArray(new Player[0]));
-                }
+                spawnParticles(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.getValue0().toArray(new Player[0]));
+            }
 
-                if (players.getValue1().size() != 0) {
-                    String particleName = configHandler.getParticlesNotFoundType();
-                    int amount = configHandler.getParticlesNotFoundAmount();
-                    ArrayList<String> colors = configHandler.getParticlesNotFoundColors();
+            if (players.getValue1().size() != 0) {
+                String particleName = configHandler.getParticlesNotFoundType();
+                int amount = configHandler.getParticlesNotFoundAmount();
+                ArrayList<String> colors = configHandler.getParticlesNotFoundColors();
 
-                    spawnParticles(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.getValue1().toArray(new Player[0]));
-                }
+                spawnParticles(h.getValue1(), Particle.valueOf(particleName), amount, colors, players.getValue1().toArray(new Player[0]));
             }
         });
     }
@@ -60,7 +56,7 @@ public class ParticlesTask extends BukkitRunnable {
         try {
             ParticlesUtils.spawn(location, particle, amount, colors, players);
         } catch (Exception ex) {
-            inError = true;
+            this.cancel();
             HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
             HeadBlocks.log.sendMessage(FormatUtils.translate("&cTo prevent log spamming, particles is disabled until reload"));
         }
