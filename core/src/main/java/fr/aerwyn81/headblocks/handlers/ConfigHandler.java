@@ -29,8 +29,8 @@ public class ConfigHandler {
         return config.getString("language", "en").toLowerCase();
     }
 
-    public String getHeadTexture() {
-        return config.getString("headTexture", "");
+    public List<String> getHeads() {
+        return config.getStringList("heads");
     }
 
     public String getHeadClickAlreadyOwnSound() {
@@ -236,17 +236,30 @@ public class ConfigHandler {
             return tieredRewards;
         }
 
-        config.getConfigurationSection("tieredRewards").getKeys(false).forEach(level -> {
+        for (String level : config.getConfigurationSection("tieredRewards").getKeys(false)) {
             try {
-                List<String> messages = config.getStringList("tieredRewards." + level + ".messages");
-                List<String> commandes = config.getStringList("tieredRewards." + level + ".commands");
+                List<String> messages;
+                if (config.contains("tieredRewards." + level + ".messages")) {
+                    messages = config.getStringList("tieredRewards." + level + ".messages");
+                } else {
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot read property messages in tiered line " + level));
+                    continue;
+                }
 
-                tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commandes));
+                List<String> commands;
+                if (config.contains("tieredRewards." + level + ".commands")) {
+                    commands = config.getStringList("tieredRewards." + level + ".commands");
+                } else {
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot read property commands in tiered line " + level));
+                    continue;
+                }
+
+                tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands));
             } catch (Exception ex) {
                 HeadBlocks.log.sendMessage(FormatUtils.translate(
                         "&cCannot read tiered rewards of \"" + level + "\". Error message :" + ex.getMessage()));
             }
-        });
+        }
 
         return tieredRewards;
     }

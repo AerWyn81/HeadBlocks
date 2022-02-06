@@ -9,7 +9,7 @@
 | **/hb me**                         | Player     |                                             | headblocks.use   | Show the current amount of head found                    |
 | **/hb remove**                     | Any        | `<headUUID>`                                | headblocks.admin | Remove the head block according to its UUID              |
 | **/hb removeAll**                  | Any        | `--confirm`                                 | headblocks.admin | Remove all head spawned (_type --confirm to confirm_)    |
-| **/hb give**                       | Player     | `(player)`                                  | headblocks.admin | Give the HeadBlocks head                                 |
+| **/hb give**                       | Player     | `<player> (* or head number)`                                  | headblocks.admin | Give the HeadBlocks head                                 |
 | **/hb reset**                      | Any        | `<player>`                                  | headblocks.admin | Reset player's data                                      |
 | **/hb resetAll**                   | Any        | `--confirm`                                 | headblocks.admin | Reset all player data (_type --confirm to confirm_)      |
 | **/hb list**                       | Any        | `(page)`                                    | headblocks.admin | Show list of heads spawned (with remove/teleport)        |

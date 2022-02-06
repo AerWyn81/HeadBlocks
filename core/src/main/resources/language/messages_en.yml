@@ -67,7 +67,7 @@ Help:
   Me: "&6/hb me &8: &7&oDisplays your progress"
   Remove: "&6/hb remove <headUuid> &8: &7&oRemove head by it's <headUuid>"
   RemoveAll: "&6/hb removeall &8: &7&oRemove all spawned head"
-  Give: "&6/hb give <player> &8: &7&oGives a HeadBlock to <player>"
+  Give: "&6/hb give <player> <*|number> &8: &7&oGives a HeadBlock to <player>. <number> when multi HeadBlocks are defined"
   Reset: "&6/hb reset <player> &8: &7&oReset data of the <player>"
   ResetAll: "&6/hb resetall &8: &7&oReset data of all players"
   List: "&6/hb list <page> &8: &7&oDisplays the list of existing HeadBlocks"

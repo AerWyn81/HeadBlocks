@@ -32,6 +32,11 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         Player player = e.getPlayer();
         Block headBlock = e.getBlockPlaced();
 
+        // Prevent some issue if HeadDatabase is not yet running
+        if (HeadBlocks.isHeadDatabaseActive && !HeadBlocks.isHeadDatabaseLoaded) {
+            return;
+        }
+
         if (!hasHeadBlocksItemInHand(player)) {
             return;
         }
@@ -71,9 +76,9 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
     private boolean hasHeadBlocksItemInHand(Player player) {
         if (Version.getCurrent() == Version.v1_8) {
-            return main.getHeadHandler().getPluginHead().isSimilar(((ItemStack) main.getLegacySupport().getItemStackInHand(player)));
+            return main.getHeadHandler().getHeads().stream().anyMatch(i -> i.isSimilar((ItemStack) main.getLegacySupport().getItemStackInHand(player)));
         }
 
-        return player.getInventory().getItemInMainHand().isSimilar(main.getHeadHandler().getPluginHead());
+        return main.getHeadHandler().getHeads().stream().anyMatch(i -> i.isSimilar(player.getInventory().getItemInMainHand()));
     }
 }

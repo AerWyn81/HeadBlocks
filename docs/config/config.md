@@ -12,15 +12,24 @@ This setting tells the configuration which language file to use. For this, the l
 folder `plugins/HeadBlocks/language/` and must be named as follows: `messages_xx.yml` where `xx` corresponds to the
 above setting. By default, `en` is used.
 
-#### Head texture
+#### Heads
 
 ```
-headTexture: 'base64String'
+heads:
+  - 'default:Base64String'
+  - 'hdb:Id'
 ```
 
-This parameter corresponds to the texture that will be used on the head. I advise you to
+You can use multiple texture on a HeadBlock. Two types are possible:
+- **default**: to get the Base64String, I advise you to
 visit [Minecraft-Heads](https://minecraft-heads.com/) to get this information. Find the head you want to use and in the
 same page, at the bottom, in **Other** section, copy the **Value** and paste it in place of `base64String`.
+- **hdb**: Plugin [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/) is needed. Now, you can
+retrieve the ID of the head with the plugin and use it in place of `Id`.
+
+When using the command `/hb give <yourName>`, you can specify what HeadBlock you want:
+- add a `*` at the end of the command and you will get all HeadBlocks
+- add a `number` at the end of the command and will get the head in order in the config
 
 #### Multi-server
 
@@ -274,7 +283,7 @@ headClick:
 When clicking, it is possible to send two different [sounds](reference/sounds.md) to the player depending on whether he
 already has the head or not. Leave empty for no sound.
 
-#### Headclick - Sound
+#### Headclick - Commands
 
 ```
 headClick:

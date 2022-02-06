@@ -1,8 +1,13 @@
 # Language used for messages in the plugin
 language: en
 
-# Head texture in Other-Value format (https://minecraft-heads.com/)
-headTexture: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQ5Y2M1OGFkMjVhMWFiMTZkMzZiYjVkNmQ0OTNjOGY1ODk4YzJiZjMwMmI2NGUzMjU5MjFjNDFjMzU4NjcifX19'
+# Heads textures
+# By default, use the format "default:<value> where <value> is an encoded string (see: Other-Value at https://minecraft-heads.com/)
+# Support HeadDatabase plugin, use the format "hdb:<id>" where <id> is the id of the head
+heads:
+  - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQ5Y2M1OGFkMjVhMWFiMTZkMzZiYjVkNmQ0OTNjOGY1ODk4YzJiZjMwMmI2NGUzMjU5MjFjNDFjMzU4NjcifX19'
+  - 'hdb:28591'
+  - 'hdb:28596'
 
 # Multi-server support with Redis
 redis:

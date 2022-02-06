@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
+import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
 import fr.aerwyn81.headblocks.events.OnPlayerInteractEvent;
 import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
 import fr.aerwyn81.headblocks.handlers.*;
@@ -10,13 +11,14 @@ import fr.aerwyn81.headblocks.runnables.ParticlesTask;
 import fr.aerwyn81.headblocks.utils.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.Version;
+import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
@@ -24,6 +26,8 @@ public final class HeadBlocks extends JavaPlugin {
     public static ConsoleCommandSender log;
     private static HeadBlocks instance;
     public static boolean isPlaceholderApiActive;
+    public static boolean isHeadDatabaseActive;
+    public static boolean isHeadDatabaseLoaded;
 
     private LegacySupport legacySupport;
 
@@ -36,6 +40,7 @@ public final class HeadBlocks extends JavaPlugin {
     private HeadBlocksAPI headBlocksAPI;
 
     private ParticlesTask particlesTask;
+    private HeadDatabaseAPI headDatabaseAPI;
 
     @Override
     public void onEnable() {
@@ -51,7 +56,7 @@ public final class HeadBlocks extends JavaPlugin {
         ConfigUpdater.saveOldConfig(backupConfigFile, configFile);
         saveDefaultConfig();
         try {
-            ConfigUpdater.update(this, "config.yml", configFile, Collections.singletonList("tieredRewards"));
+            ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -68,7 +73,6 @@ public final class HeadBlocks extends JavaPlugin {
         this.languageHandler.pushMessages();
 
         this.headHandler = new HeadHandler(this, locationFile);
-        this.headHandler.loadConfiguration();
 
         this.storageHandler = new StorageHandler(this);
         this.storageHandler.openConnection();
@@ -76,10 +80,6 @@ public final class HeadBlocks extends JavaPlugin {
         this.storageHandler.getDatabase().load();
 
         this.rewardHandler = new RewardHandler(this);
-
-        Bukkit.getScheduler().runTaskLater(this, () -> {
-            this.headHandler.loadLocations();
-        }, 1L);
 
         this.headBlocksAPI = new HeadBlocksAPI();
 
@@ -102,6 +102,14 @@ public final class HeadBlocks extends JavaPlugin {
             isPlaceholderApiActive = true;
         }
 
+        isHeadDatabaseLoaded = false;
+        isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
+        if (isHeadDatabaseActive) {
+            Bukkit.getPluginManager().registerEvents(new OnHeadDatabaseLoaded(this), this);
+        } else {
+            this.headHandler.loadConfiguration();
+        }
+
         log.sendMessage(FormatUtils.translate("&a&6HeadBlocks &asuccessfully loaded!"));
     }
 
@@ -115,6 +123,13 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
 
         log.sendMessage(FormatUtils.translate("&6HeadBlocks &cdisabled!"));
+    }
+
+    public void loadHeadDatabase() {
+        headDatabaseAPI = new HeadDatabaseAPI();
+        isHeadDatabaseLoaded = true;
+
+        headHandler.loadConfiguration();
     }
 
     public static HeadBlocks getInstance() {
@@ -155,5 +170,9 @@ public final class HeadBlocks extends JavaPlugin {
 
     public ParticlesTask getParticlesTask() {
         return particlesTask;
+    }
+
+    public HeadDatabaseAPI getHeadDatabaseAPI() {
+        return headDatabaseAPI;
     }
 }

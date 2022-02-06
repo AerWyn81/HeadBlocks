@@ -16,6 +16,7 @@ repositories {
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.10.10")
+    compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
     implementation("redis.clients:jedis:3.6.3")
     implementation("de.tr7zw:item-nbt-api:2.9.0-SNAPSHOT")
     implementation("com.zaxxer:HikariCP:4.0.3")
@@ -57,7 +58,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI")
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase")
     version = rootProject.version.toString()
     website = "https://just2craft.fr"
 

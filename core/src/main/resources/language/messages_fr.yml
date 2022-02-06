@@ -67,7 +67,7 @@ Help:
   Me: "&6/hb me &8: &7&oAffiche votre progression"
   Remove: "&6/hb remove <headUuid> &8: &7&oSupprime la tête par son <headUuid>"
   RemoveAll: "&6/hb removeall &8: &7&oSupprime toutes les têtes spawn"
-  Give: "&6/hb give <player> &8: &7&oDonne un HeadBlock à poser au <joueur>"
+  Give: "&6/hb give <player> <*|number> &8: &7&oDonne un HeadBlock à poser au <joueur>. <number> dans le cas où plusieurs têtes sont définies"
   Reset: "&6/hb reset <player> &8: &7&oRéinitialise les données du <joueur>"
   ResetAll: "&6/hb resetall &8: &7&oRéinitialise les données de tous les joueurs"
   List: "&6/hb list <page> &8: &7&oAffiche la liste des HeadBlocks existant"

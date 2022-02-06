@@ -34,7 +34,6 @@ public class Reload implements Cmd {
         main.getLanguageHandler().pushMessages();
 
         main.getHeadHandler().loadConfiguration();
-        main.getHeadHandler().loadLocations();
 
         main.getStorageHandler().getStorage().close();
         main.getStorageHandler().getDatabase().close();

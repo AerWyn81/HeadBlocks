@@ -42,6 +42,11 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
+        // Prevent some issue if HeadDatabase is not yet running
+        if (HeadBlocks.isHeadDatabaseActive && !HeadBlocks.isHeadDatabaseLoaded) {
+            return;
+        }
+
         // Check if clickedBlock is a head
         if (!isClickedBlockIsHeadBlocks(block)) {
             return;
@@ -171,7 +176,7 @@ public class OnPlayerInteractEvent implements Listener {
             Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
 
             FireworkUtils.launchFirework(loc, isFlickering,
-                    colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power);
+                    colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power, isHeadWalled(block));
         }
 
         // Prevent trigger commands rewards if current is contained in tieredRewards and enabled in config
@@ -204,6 +209,14 @@ public class OnPlayerInteractEvent implements Listener {
             return block.getType().name().equals("SKULL");
         }
 
-        return block.getType() == Material.PLAYER_WALL_HEAD || block.getType() == main.getHeadHandler().getPluginHead().getType();
+        return block.getType() == Material.PLAYER_WALL_HEAD || block.getType() == Material.PLAYER_HEAD;
+    }
+
+    private boolean isHeadWalled(Block block) {
+        if (Version.getCurrent().isOlderOrSameThan(Version.v1_12)) {
+            return true;
+        }
+
+        return block.getType() == Material.PLAYER_WALL_HEAD;
     }
 }
