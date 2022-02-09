@@ -59,7 +59,13 @@ public class Give implements Cmd {
                 id = 1;
             }
 
-            headsToGive.add(headHandler.getHeads().get(--id));
+            int finalId = --id;
+            if (finalId > heads.size() - 1) {
+                player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
+                return true;
+            }
+
+            headsToGive.add(headHandler.getHeads().get(finalId));
         } else {
             player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
             return true;

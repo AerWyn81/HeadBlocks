@@ -27,7 +27,6 @@ public final class HeadBlocks extends JavaPlugin {
     private static HeadBlocks instance;
     public static boolean isPlaceholderApiActive;
     public static boolean isHeadDatabaseActive;
-    public static boolean isHeadDatabaseLoaded;
 
     private LegacySupport legacySupport;
 
@@ -102,13 +101,15 @@ public final class HeadBlocks extends JavaPlugin {
             isPlaceholderApiActive = true;
         }
 
-        isHeadDatabaseLoaded = false;
         isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
         if (isHeadDatabaseActive) {
             Bukkit.getPluginManager().registerEvents(new OnHeadDatabaseLoaded(this), this);
-        } else {
-            this.headHandler.loadConfiguration();
+            headDatabaseAPI = new HeadDatabaseAPI();
         }
+
+        this.headHandler.loadConfiguration();
+
+        Bukkit.getScheduler().runTaskLater(this, () -> getHeadHandler().loadLocations(), 1L);
 
         log.sendMessage(FormatUtils.translate("&a&6HeadBlocks &asuccessfully loaded!"));
     }
@@ -123,13 +124,6 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
 
         log.sendMessage(FormatUtils.translate("&6HeadBlocks &cdisabled!"));
-    }
-
-    public void loadHeadDatabase() {
-        headDatabaseAPI = new HeadDatabaseAPI();
-        isHeadDatabaseLoaded = true;
-
-        headHandler.loadConfiguration();
     }
 
     public static HeadBlocks getInstance() {

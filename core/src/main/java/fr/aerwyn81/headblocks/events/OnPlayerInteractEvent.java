@@ -41,11 +41,6 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
-        // Prevent some issue if HeadDatabase is not yet running
-        if (HeadBlocks.isHeadDatabaseActive && !HeadBlocks.isHeadDatabaseLoaded) {
-            return;
-        }
-
         // Check if clickedBlock is a head
         if (!isClickedBlockIsHeadBlocks(block)) {
             return;

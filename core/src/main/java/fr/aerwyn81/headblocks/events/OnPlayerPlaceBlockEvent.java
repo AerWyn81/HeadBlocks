@@ -32,11 +32,6 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         Player player = e.getPlayer();
         Block headBlock = e.getBlockPlaced();
 
-        // Prevent some issue if HeadDatabase is not yet running
-        if (HeadBlocks.isHeadDatabaseActive && !HeadBlocks.isHeadDatabaseLoaded) {
-            return;
-        }
-
         if (!hasHeadBlocksItemInHand(player)) {
             return;
         }

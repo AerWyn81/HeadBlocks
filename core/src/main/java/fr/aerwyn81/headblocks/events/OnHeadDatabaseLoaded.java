@@ -14,6 +14,6 @@ public class OnHeadDatabaseLoaded implements Listener {
 
     @EventHandler
     public void onDatabaseLoad(DatabaseLoadEvent e) {
-        main.loadHeadDatabase();
+        main.getHeadHandler().loadConfiguration();
     }
 }

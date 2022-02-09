@@ -47,8 +47,6 @@ public class HeadHandler {
     public void loadConfiguration() {
         config = YamlConfiguration.loadConfiguration(configFile);
         loadHeads();
-
-        Bukkit.getScheduler().runTaskLater(main, this::loadLocations, 1L);
     }
 
     private void saveConfig() {
@@ -181,7 +179,7 @@ public class HeadHandler {
                     texture.setString("Value", parts[1]);
                     break;
                 case "hdb":
-                    if (!HeadBlocks.isHeadDatabaseLoaded) {
+                    if (!HeadBlocks.isHeadDatabaseActive) {
                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot load hdb head type " + configHead + " without HeadDatabase installed"));
                         continue;
                     }

@@ -3,7 +3,6 @@ package fr.aerwyn81.headblocks.commands;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.list.*;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -50,10 +49,6 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command c, String s, String[] args) {
-        if (HeadBlocks.isHeadDatabaseActive && !HeadBlocks.isHeadDatabaseLoaded) {
-            sender.sendMessage(languageHandler.getPrefix() + FormatUtils.translate(" &cHeadDatabase is loading... Some data aren't loaded yet, please wait!"));
-        }
-
         if (args.length <= 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
             return false;
