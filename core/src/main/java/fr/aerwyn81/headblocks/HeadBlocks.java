@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
+import fr.aerwyn81.headblocks.data.head.HeadType;
 import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
 import fr.aerwyn81.headblocks.events.OnPlayerInteractEvent;
 import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
@@ -10,6 +11,7 @@ import fr.aerwyn81.headblocks.placeholders.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.ParticlesTask;
 import fr.aerwyn81.headblocks.utils.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import org.bukkit.Bukkit;
@@ -103,11 +105,18 @@ public final class HeadBlocks extends JavaPlugin {
 
         isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
         if (isHeadDatabaseActive) {
-            Bukkit.getPluginManager().registerEvents(new OnHeadDatabaseLoaded(this), this);
             headDatabaseAPI = new HeadDatabaseAPI();
-        }
+            Bukkit.getPluginManager().registerEvents(new OnHeadDatabaseLoaded(this), this);
 
-        this.headHandler.loadConfiguration();
+            this.headHandler.loadConfiguration();
+
+            // Plugman/HeadDatabase issue.
+            // OnHeadDatabaseLoaded is not called on plugman load, it's not clean, it should be done better
+            this.loadHeadsHDB();
+
+        } else {
+            this.headHandler.loadConfiguration();
+        }
 
         Bukkit.getScheduler().runTaskLater(this, () -> getHeadHandler().loadLocations(), 1L);
 
@@ -124,6 +133,15 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
 
         log.sendMessage(FormatUtils.translate("&6HeadBlocks &cdisabled!"));
+    }
+
+    public void loadHeadsHDB() {
+        this.getHeadHandler().getHeads().stream()
+                .filter(h -> !h.isLoaded() && h.getHeadType() == HeadType.HDB)
+                .forEach(h -> {
+                    h.setTexture(this.getHeadDatabaseAPI().getBase64(h.getId()));
+                    HeadUtils.applyTexture(h);
+                });
     }
 
     public static HeadBlocks getInstance() {

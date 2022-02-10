@@ -16,6 +16,7 @@ Messages:
   ErrorCommand: "%prefix% &cErreur dans la commande. Vérifiez avec /hb help"
   PlayerOnly: "%prefix% &cCette commande ne peut être exécutée que par un joueur"
   PlayerNotFound: "%prefix% &cLe joueur n'est pas connecté"
+  HeadNotYetLoaded: "%prefix% &cLa tête id %id% ne peut pas vous être donnée tant que HeadDatabase n'est pas complètement chargé"
   ReloadComplete: "%prefix% &aLa configuration a été rechargée avec succès"
   InventoryFull: "%prefix% &cIl n'y a pas assez de place dans l'inventaire du joueur pour donner un HeadBlock"
   CreativeSneakRemoveHead: "%prefix% &cVous devez être accroupi pour détruire un HeadBlock"

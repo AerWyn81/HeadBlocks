@@ -1,10 +1,10 @@
 package fr.aerwyn81.headblocks.handlers;
 
-import de.tr7zw.changeme.nbtapi.NBTCompound;
-import de.tr7zw.changeme.nbtapi.NBTItem;
-import de.tr7zw.changeme.nbtapi.NBTListCompound;
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.head.Head;
+import fr.aerwyn81.headblocks.data.head.HeadType;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -32,7 +32,7 @@ public class HeadHandler {
     private final LanguageHandler languageHandler;
     private FileConfiguration config;
 
-    private final ArrayList<ItemStack> heads;
+    private ArrayList<Head> heads;
     private ArrayList<Pair<UUID, Location>> headLocations;
 
     public HeadHandler(HeadBlocks main, File configFile) {
@@ -46,6 +46,8 @@ public class HeadHandler {
 
     public void loadConfiguration() {
         config = YamlConfiguration.loadConfiguration(configFile);
+
+        heads.clear();
         loadHeads();
     }
 
@@ -130,8 +132,6 @@ public class HeadHandler {
     }
 
     private void loadHeads() {
-        heads.clear();
-
         List<String> headsConfig = main.getConfigHandler().getHeads();
 
         for (int i = 0; i < headsConfig.size(); i++) {
@@ -162,21 +162,9 @@ public class HeadHandler {
 
             head.setItemMeta(headMeta);
 
-            NBTItem nbti = new NBTItem(head);
-            NBTCompound skull = nbti.addCompound("SkullOwner");
-            skull.setString("Name", "HeadBlocks");
-
-            if (Version.getCurrent().isOlderOrSameThan(Version.v1_15)) {
-                skull.setString("Id", "f032de26-fde9-469f-a6eb-c453470894a5");
-            } else {
-                skull.setUUID("Id", UUID.fromString("f032de26-fde9-469f-a6eb-c453470894a5"));
-            }
-
-            NBTListCompound texture = skull.addCompound("Properties").getCompoundList("textures").addCompound();
-
             switch (parts[0]) {
                 case "default":
-                    texture.setString("Value", parts[1]);
+                    heads.add(HeadUtils.applyTexture(new Head("", head, parts[1], HeadType.DEFAULT)));
                     break;
                 case "hdb":
                     if (!HeadBlocks.isHeadDatabaseActive) {
@@ -184,18 +172,15 @@ public class HeadHandler {
                         continue;
                     }
 
-                    texture.setString("Value", main.getHeadDatabaseAPI().getBase64(parts[1]));
+                    heads.add(new Head(parts[1], head, "", HeadType.HDB));
                     break;
                 default:
                     HeadBlocks.log.sendMessage(FormatUtils.translate("&cUnknown type " + parts[0] + " in heads configuration section"));
-                    continue;
             }
-
-            heads.add(nbti.getItem());
         }
     }
 
-    public ArrayList<ItemStack> getHeads() {
+    public ArrayList<Head> getHeads() {
         return heads;
     }
 

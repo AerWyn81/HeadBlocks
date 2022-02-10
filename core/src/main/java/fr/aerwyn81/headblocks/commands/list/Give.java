@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.data.head.Head;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
@@ -44,13 +45,13 @@ public class Give implements Cmd {
             player = pTemp;
         }
 
-        ArrayList<ItemStack> heads = headHandler.getHeads();
+        ArrayList<Head> heads = headHandler.getHeads();
         if (heads.size() == 0) {
             player.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 
-        ArrayList<ItemStack> headsToGive = new ArrayList<>();
+        ArrayList<Head> headsToGive = new ArrayList<>();
         if (args.length > 2 && args[2].equals("*")) {
             headsToGive = headHandler.getHeads();
         } else if (args.length > 2) {
@@ -76,9 +77,22 @@ public class Give implements Cmd {
             return true;
         }
 
-        Player finalPlayer = player;
-        headsToGive.forEach(h -> finalPlayer.getInventory().addItem(h));
-        player.sendMessage(languageHandler.getMessage("Messages.HeadGiven"));
+        int headGiven = 0;
+        for (Head head : headsToGive) {
+            if (!head.isLoaded()) {
+                player.sendMessage(languageHandler.getMessage("Messages.HeadNotYetLoaded")
+                        .replaceAll("%id%", String.valueOf(head.getId())));
+                continue;
+            }
+
+            player.getInventory().addItem(head.getHead());
+            headGiven++;
+        }
+
+        if (headGiven != 0) {
+            player.sendMessage(languageHandler.getMessage("Messages.HeadGiven"));
+        }
+
         return true;
     }
 
