@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
+import fr.aerwyn81.headblocks.utils.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -40,16 +41,16 @@ public class Stats implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        if (sender instanceof ConsoleCommandSender) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cThis command cannot be performed by console without player in argument."));
-            return true;
-        }
-
         Player player;
 
         if (args.length >= 2 && !NumberUtils.isDigits(args[1])) {
             player = Bukkit.getOfflinePlayer(args[1]).getPlayer();
         } else {
+            if (sender instanceof ConsoleCommandSender) {
+                HeadBlocks.log.sendMessage(FormatUtils.translate("&cThis command cannot be performed by console without player in argument."));
+                return true;
+            }
+
             player = (Player) sender;
         }
 
@@ -71,32 +72,20 @@ public class Stats implements Cmd {
 
         headsSpawned.sort(Comparator.comparingInt(playerHeads::indexOf));
 
-        int pageNumber;
-        int pageHeight = 8;
-        int totalPage = (headsSpawned.size() / pageHeight) + (headsSpawned.size() % pageHeight == 0 ? 0 : 1);
+        ChatPageUtils cpu = new ChatPageUtils(languageHandler, sender)
+                .entriesCount(headsSpawned.size())
+                .currentPage(args);
 
-        if (args.length == 1) {
-            pageNumber = 1;
-        } else if (NumberUtils.isDigits(args[args.length - 1])) {
-            try {
-                pageNumber = NumberUtils.createInteger(args[args.length - 1]);
-                pageNumber = (totalPage < pageNumber) ? totalPage : Math.max(pageNumber, 1);
-            } catch (NumberFormatException exception) {
-                pageNumber = 1;
-            }
-            if (pageNumber <= 0) {
-                pageNumber = 1;
-            }
+        String message = languageHandler.getMessage("Chat.LineTitle");
+        if (sender instanceof Player) {
+            TextComponent titleComponent = new TextComponent(InternalPlaceholders.parse(player, languageHandler.getMessage("Chat.StatsTitleLine")
+                    .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
+            cpu.addTitleLine(titleComponent);
         } else {
-            pageNumber = 1;
+            sender.sendMessage(message);
         }
 
-        int firstPos = ((pageNumber - 1) * pageHeight);
-
-        sender.sendMessage(InternalPlaceholders.parse(player, languageHandler.getMessage("Chat.StatsTitleLine")
-                        .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
-
-        for (int i = firstPos; i < firstPos + pageHeight && i < headsSpawned.size(); i++) {
+        for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
             UUID uuid = headsSpawned.get(i).getValue0();
             Location location = headsSpawned.get(i).getValue1();
 
@@ -106,38 +95,34 @@ public class Stats implements Cmd {
                     .replaceAll("%y%", String.valueOf(location.getBlockY()))
                     .replaceAll("%z%", String.valueOf(location.getBlockZ()));
 
-            TextComponent msg = new TextComponent(FormatUtils.translate("&6" + uuid));
-            msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
+            if (sender instanceof Player) {
+                TextComponent msg = new TextComponent(FormatUtils.translate("&6" + uuid));
+                msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
 
-            TextComponent own;
-            if (playerHeads.stream().anyMatch(s -> s.getValue0() == uuid)) {
-                own = new TextComponent(languageHandler.getMessage("Chat.Box.Own"));
-                own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.Own")).create()));
+                TextComponent own;
+                if (playerHeads.stream().anyMatch(s -> s.getValue0() == uuid)) {
+                    own = new TextComponent(languageHandler.getMessage("Chat.Box.Own"));
+                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.Own")).create()));
+                } else {
+                    own = new TextComponent(languageHandler.getMessage("Chat.Box.NotOwn"));
+                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.NotOwn")).create()));
+                }
+
+                TextComponent tp = new TextComponent(languageHandler.getMessage("Chat.Box.Teleport"));
+                tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/minecraft:tp " + sender.getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
+                tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.Teleport")).create()));
+
+                TextComponent space = new TextComponent(" ");
+                cpu.addLine(own, space, tp, space, msg, space);
             } else {
-                own = new TextComponent(languageHandler.getMessage("Chat.Box.NotOwn"));
-                own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.NotOwn")).create()));
+                sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getValue0() == uuid) ?
+                                languageHandler.getMessage("Chat.Box.Own") : languageHandler.getMessage("Chat.Box.NotOwn")) + " " +
+                                FormatUtils.translate("&6" + uuid));
             }
-
-            TextComponent tp = new TextComponent(languageHandler.getMessage("Chat.Box.Teleport"));
-            tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/minecraft:tp " + sender.getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
-            tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.Teleport")).create()));
-
-            TextComponent space = new TextComponent(" ");
-            sender.spigot().sendMessage(own, space, tp, space, msg, space);
         }
 
-        if (headsSpawned.size() > pageHeight) {
-            TextComponent c1 = new TextComponent(FormatUtils.translate(languageHandler.getMessage("Chat.PreviousPage")));
-            c1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks stats " + player.getName() + " " + (pageNumber - 1)));
-            c1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.PreviousPage")).create()));
-
-            TextComponent c2 = new TextComponent(FormatUtils.translate(languageHandler.getMessage("Chat.NextPage")));
-            c2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks stats " + player.getName() + " " + (pageNumber + 1)));
-            c2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.NextPage")).create()));
-
-            sender.spigot().sendMessage(c1, new TextComponent(languageHandler.getMessage("Chat.PageFooter").replaceAll("%pageNumber%", String.valueOf(pageNumber)).replaceAll("%totalPage%", String.valueOf(totalPage))), c2);
-        }
-
+        cpu.addPageLine("stats");
+        cpu.build();
         return true;
     }
 
