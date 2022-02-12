@@ -26,19 +26,24 @@ public class InternalPlaceholders {
         int current = headBlocksAPI.getPlayerHeads(player.getUniqueId()).size();
         int total = headBlocksAPI.getTotalHeadSpawnCount();
         int left = headBlocksAPI.getLeftPlayerHeadToMax(player.getUniqueId());
-        String progress = FormatUtils.createProgressBar(current, total,
-                configHandler.getProgressBarBars(),
-                configHandler.getProgressBarSymbol(),
-                configHandler.getProgressBarCompletedColor(),
-                configHandler.getProgressBarNotCompletedColor());
 
-        return FormatUtils.TryToFormatPlaceholders(player, message
+        String progress = null;
+        if (message.contains("%progress%")) {
+            progress = FormatUtils.createProgressBar(current, total,
+                    configHandler.getProgressBarBars(),
+                    configHandler.getProgressBarSymbol(),
+                    configHandler.getProgressBarCompletedColor(),
+                    configHandler.getProgressBarNotCompletedColor());
+        }
+
+        String ret = FormatUtils.TryToFormatPlaceholders(player, message
                 .replaceAll("%current%", String.valueOf(current))
                 .replaceAll("%max%", String.valueOf(total))
                 .replaceAll("%left%", String.valueOf(left))
                 .replaceAll("%player%", player.getName())
                 .replaceAll("%progress%", progress)
                 .replaceAll("%prefix%", languageHandler.getPrefix()));
+        return ret.contains("{center}") ? FormatUtils.sendCenteredString(ret.replaceAll("\\{center}", "")) : ret;
     }
 
     public static String[] parse(Player player, List<String> messages) {

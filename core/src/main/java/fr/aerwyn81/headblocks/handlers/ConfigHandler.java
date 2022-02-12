@@ -250,23 +250,19 @@ public class ConfigHandler {
 
         for (String level : config.getConfigurationSection("tieredRewards").getKeys(false)) {
             try {
-                List<String> messages;
+                List<String> messages = new ArrayList<>();
                 if (config.contains("tieredRewards." + level + ".messages")) {
                     messages = config.getStringList("tieredRewards." + level + ".messages");
-                } else {
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot read property messages in tiered line " + level));
-                    continue;
                 }
 
-                List<String> commands;
+                List<String> commands = new ArrayList<>();
                 if (config.contains("tieredRewards." + level + ".commands")) {
                     commands = config.getStringList("tieredRewards." + level + ".commands");
-                } else {
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot read property commands in tiered line " + level));
-                    continue;
                 }
 
-                tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands));
+                if (messages.size() != 0 || commands.size() != 0) {
+                    tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands));
+                }
             } catch (Exception ex) {
                 HeadBlocks.log.sendMessage(FormatUtils.translate(
                         "&cCannot read tiered rewards of \"" + level + "\". Error message :" + ex.getMessage()));

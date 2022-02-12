@@ -92,7 +92,7 @@ Allows to configure the progress bar displayed in any message of the plugin with
 - notCompletedColor: color of symbol not completed
 - completedColor: color of symbol completed
 
-?> Hex colors are supported
+?> Hex colors (format: {#ffffff}) and centering (use: {center}) are supported
 
 #### Particles (floating on the head)
 
@@ -180,7 +180,7 @@ tieredRewards:
 It is possible to set up reward levels. When the player reaches the level, that will send a message containing several
 lines and execute a list of commands.
 
-?> Hex colors and placeholders are supported
+?> Hex colors, placeholders and centering (use: {center}) are supported
 
 !> It is not yet possible to trigger a level with rewards if the player has already passed it (by doing the
 configuration later for example). Make sure that you don't have to add levels afterwards or they won't be triggered.
@@ -227,7 +227,7 @@ It is also possible to send a title when the head is clicked, if `enabled`, to t
 - stay: how long it stays displayed in ticks
 - fadeOut: how long it takes to disappear in ticks
 
-?> Hex colors and placeholders are supported
+?> Hex colors (format: {#ffffff}), placeholders are supported and centering (use: {center}) are supported
 
 #### Headclick - Firework
 
@@ -301,5 +301,5 @@ headClick:
 
 It is possible to execute a command list when a player clicks on the head.
 
-?> Hex colors and placeholders are supported
+?> Hex colors (format: {#ffffff}), placeholders and centering (use: {center}) are supported
 
