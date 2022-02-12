@@ -8,4 +8,9 @@ public class LegacyHelper implements LegacySupport {
     public ItemStack getItemStackInHand(Object player) {
         return ((Player) player).getInventory().getItemInHand();
     }
+
+    @Override
+    public Object[] getInventoryContent(Object player) {
+        return ((Player) player).getInventory().getContents();
+    }
 }

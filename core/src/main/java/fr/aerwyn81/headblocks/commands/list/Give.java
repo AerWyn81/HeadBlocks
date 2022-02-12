@@ -7,11 +7,11 @@ import fr.aerwyn81.headblocks.data.head.Head;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -72,7 +72,7 @@ public class Give implements Cmd {
             return true;
         }
 
-        if (getEmptySlots(player.getInventory()) < headsToGive.size()) {
+        if (getEmptySlots(player) < headsToGive.size()) {
             player.sendMessage(languageHandler.getMessage("Messages.InventoryFull"));
             return true;
         }
@@ -96,9 +96,17 @@ public class Give implements Cmd {
         return true;
     }
 
-    public int getEmptySlots(Inventory inventory) {
+    public int getEmptySlots(Player player) {
         int i = 0;
-        for (ItemStack is : inventory.getStorageContents()) {
+
+        ItemStack[] items;
+        if (Version.getCurrent() == Version.v1_8) {
+            items = (ItemStack[]) main.getLegacySupport().getInventoryContent(player);
+        } else {
+            items = player.getInventory().getStorageContents();
+        }
+
+        for (ItemStack is : items) {
             if (is != null && is.getType() != Material.AIR)
                 continue;
             i++;
