@@ -52,9 +52,9 @@ public class ParticlesTask extends BukkitRunnable {
         try {
             ParticlesUtils.spawn(location, particle, amount, colors, players);
         } catch (Exception ex) {
-            this.cancel();
             HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
             HeadBlocks.log.sendMessage(FormatUtils.translate("&cTo prevent log spamming, particles is disabled until reload"));
+            this.cancel();
         }
     }
 

@@ -26,11 +26,11 @@ public class ParticlesUtils {
         for (Player player : players) {
             if (dustOptions.size() != 0) {
                 dustOptions.forEach(dustOpt ->
-                        player.getWorld().spawnParticle(particle, location, amount, size, size, size, dustOpt));
+                        player.spawnParticle(particle, location, amount, size, size, size, dustOpt));
                 continue;
             }
 
-            player.getWorld().spawnParticle(particle, location, amount, size, size, size, 0);
+            player.spawnParticle(particle, location, amount, size, size, size, 0);
         }
     }
 }
