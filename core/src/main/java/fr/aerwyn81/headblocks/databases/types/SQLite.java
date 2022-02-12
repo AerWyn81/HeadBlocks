@@ -188,11 +188,7 @@ public class SQLite implements Database {
 
         try (PreparedStatement ps = connection.prepareStatement("SELECT `pUUID`, COUNT(*) as hCount FROM hb_players GROUP BY `pUUID` ORDER BY hCount DESC LIMIT '" + limit + "'"); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                String toto = rs.getString("pUUID");
-                Integer tata = rs.getInt("hCount");
-                UUID tutu = UUID.fromString(toto);
-
-                top.add(new Pair<>(tutu, tata));
+                top.add(new Pair<>(UUID.fromString(rs.getString("pUUID")), rs.getInt("hCount")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
