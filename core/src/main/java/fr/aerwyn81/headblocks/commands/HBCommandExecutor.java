@@ -38,6 +38,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         this.register(new ResetAll(main));
         this.register(new Version(main));
         this.register(new Stats(main));
+        this.register(new Top(main));
     }
 
     private void register(Object c) {

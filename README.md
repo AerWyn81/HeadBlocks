@@ -47,7 +47,7 @@ ___
 <dependency>
   <groupId>com.github.AerWyn81</groupId>
   <artifactId>HeadBlocks</artifactId>
-  <version>1.5.3</version>
+  <version>1.5.4</version>
 </dependency>
 ```
 
@@ -59,7 +59,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'com.github.AerWyn81:HeadBlocks:1.5.3'
+  implementation 'com.github.AerWyn81:HeadBlocks:1.5.4'
 }
 ```
 

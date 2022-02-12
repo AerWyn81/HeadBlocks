@@ -8,13 +8,13 @@ import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import org.bukkit.Bukkit;
+import org.javatuples.Pair;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public final class MySQL implements Database {
@@ -119,8 +119,8 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public List<UUID> getHeadsPlayer(UUID playerUuid) {
-        List<UUID> heads = new ArrayList<>();
+    public ArrayList<UUID> getHeadsPlayer(UUID playerUuid) {
+        ArrayList<UUID> heads = new ArrayList<>();
 
         try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("SELECT * FROM hb_players WHERE pUUID = '" + playerUuid.toString() + "';"); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -189,8 +189,8 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public List<UUID> getAllPlayers() {
-        List<UUID> players = new ArrayList<>();
+    public ArrayList<UUID> getAllPlayers() {
+        ArrayList<UUID> players = new ArrayList<>();
 
         try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("SELECT DISTINCT pUUID FROM hb_players"); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -201,5 +201,20 @@ public final class MySQL implements Database {
         }
 
         return players;
+    }
+
+    @Override
+    public ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit) {
+        ArrayList<Pair<UUID, Integer>> top = new ArrayList<>();
+
+        try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("SELECT `pUUID`, COUNT(*) as hCount FROM hb_players GROUP BY `pUUID` ORDER BY hCount DESC LIMIT '" + limit + "'"); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                top.add(new Pair<>(UUID.fromString(rs.getString("pUUID")), rs.getInt("hCount")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return top;
     }
 }

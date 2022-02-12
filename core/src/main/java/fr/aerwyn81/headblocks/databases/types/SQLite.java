@@ -4,11 +4,11 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import org.bukkit.Bukkit;
+import org.javatuples.Pair;
 
 import java.io.File;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public class SQLite implements Database {
@@ -100,8 +100,8 @@ public class SQLite implements Database {
     }
 
     @Override
-    public List<UUID> getHeadsPlayer(UUID playerUuid) {
-        List<UUID> heads = new ArrayList<>();
+    public ArrayList<UUID> getHeadsPlayer(UUID playerUuid) {
+        ArrayList<UUID> heads = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM hb_players WHERE pUUID = '" + playerUuid.toString() + "';"); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -168,8 +168,8 @@ public class SQLite implements Database {
     }
 
     @Override
-    public List<UUID> getAllPlayers() {
-        List<UUID> players = new ArrayList<>();
+    public ArrayList<UUID> getAllPlayers() {
+        ArrayList<UUID> players = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement("SELECT DISTINCT pUUID FROM hb_players"); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -180,5 +180,24 @@ public class SQLite implements Database {
         }
 
         return players;
+    }
+
+    @Override
+    public ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit) {
+        ArrayList<Pair<UUID, Integer>> top = new ArrayList<>();
+
+        try (PreparedStatement ps = connection.prepareStatement("SELECT `pUUID`, COUNT(*) as hCount FROM hb_players GROUP BY `pUUID` ORDER BY hCount DESC LIMIT '" + limit + "'"); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String toto = rs.getString("pUUID");
+                Integer tata = rs.getInt("hCount");
+                UUID tutu = UUID.fromString(toto);
+
+                top.add(new Pair<>(tutu, tata));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return top;
     }
 }

@@ -1,6 +1,8 @@
 package fr.aerwyn81.headblocks.databases;
 
-import java.util.List;
+import org.javatuples.Pair;
+
+import java.util.ArrayList;
 import java.util.UUID;
 
 public interface Database {
@@ -15,7 +17,7 @@ public interface Database {
 
     boolean containsPlayer(UUID playerUuid);
 
-    List<UUID> getHeadsPlayer(UUID playerUuid);
+    ArrayList<UUID> getHeadsPlayer(UUID playerUuid);
 
     void savePlayer(UUID playerUuid, UUID headUuid);
 
@@ -23,5 +25,7 @@ public interface Database {
 
     void removeHead(UUID headUuid);
 
-    List<UUID> getAllPlayers();
+    ArrayList<UUID> getAllPlayers();
+
+    ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit);
 }

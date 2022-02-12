@@ -7,7 +7,9 @@ import fr.aerwyn81.headblocks.databases.types.SQLite;
 import fr.aerwyn81.headblocks.storages.Storage;
 import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
+import org.javatuples.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -101,5 +103,9 @@ public class StorageHandler {
 
     public List<UUID> getAllPlayers() {
         return getDatabase().getAllPlayers();
+    }
+
+    public ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit) {
+        return getDatabase().getTopPlayers(limit);
     }
 }
