@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.handlers;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
+import fr.aerwyn81.headblocks.utils.FormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -37,6 +38,13 @@ public class RewardHandler {
             List<String> commands = tieredReward.getCommands();
             commands.forEach(command ->
                     main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(p, command)));
+
+            List<String> broadcastMessages = tieredReward.getBroadcastMessages();
+            if (broadcastMessages.size() != 0) {
+                for (String message : broadcastMessages) {
+                    main.getServer().broadcastMessage(FormatUtils.formatMessage(message));
+                }
+            }
         }, 1L);
     }
 

@@ -45,6 +45,17 @@ public class FormatUtils {
 	}
 
 	/**
+	 * Clean message string
+	 * @param message to translate
+	 * @return clean message translated
+	 */
+	public static String formatMessage(String message) {
+		String translated = translate(message);
+
+		return message.contains("{center}") ? sendCenteredString(translated.replaceAll("\\{center}", "")) : translated;
+	}
+
+	/**
 	 * Create a progress bar
 	 *
 	 * @param current           current progression
@@ -105,8 +116,6 @@ public class FormatUtils {
 	 * @return message with placeholders parsed or the default message
 	 */
 	public static String TryToFormatPlaceholders(Player player, String message) {
-		message = translate(message);
-
 		if (!HeadBlocks.isPlaceholderApiActive)
 			return message;
 

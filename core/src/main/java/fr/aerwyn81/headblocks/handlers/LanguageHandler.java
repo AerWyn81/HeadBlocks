@@ -50,7 +50,7 @@ public class LanguageHandler {
 	}
 
 	public String getMessageWithPlaceholders(Player player, String message) {
-		return FormatUtils.TryToFormatPlaceholders(player, getMessage(message));
+		return FormatUtils.translate(FormatUtils.TryToFormatPlaceholders(player, getMessage(message)));
 	}
 
 	public List<String> getMessages(String message) {

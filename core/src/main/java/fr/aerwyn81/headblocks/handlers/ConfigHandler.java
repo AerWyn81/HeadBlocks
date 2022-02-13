@@ -260,8 +260,13 @@ public class ConfigHandler {
                     commands = config.getStringList("tieredRewards." + level + ".commands");
                 }
 
-                if (messages.size() != 0 || commands.size() != 0) {
-                    tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands));
+                List<String> broadcastMessages = new ArrayList<>();
+                if (config.contains("tieredRewards." + level + ".broadcast")) {
+                    broadcastMessages = config.getStringList("tieredRewards." + level + ".broadcast");
+                }
+
+                if (messages.size() != 0 || commands.size() != 0 || broadcastMessages.size() != 0) {
+                    tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages));
                 }
             } catch (Exception ex) {
                 HeadBlocks.log.sendMessage(FormatUtils.translate(

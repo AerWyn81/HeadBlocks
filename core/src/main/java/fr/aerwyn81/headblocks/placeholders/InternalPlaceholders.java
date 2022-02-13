@@ -43,7 +43,7 @@ public class InternalPlaceholders {
                 .replaceAll("%player%", player.getName())
                 .replaceAll("%progress%", progress)
                 .replaceAll("%prefix%", languageHandler.getPrefix()));
-        return ret.contains("{center}") ? FormatUtils.sendCenteredString(ret.replaceAll("\\{center}", "")) : ret;
+        return FormatUtils.formatMessage(ret);
     }
 
     public static String[] parse(Player player, List<String> messages) {
