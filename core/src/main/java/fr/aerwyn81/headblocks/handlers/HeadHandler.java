@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.handlers;
 
+import de.tr7zw.changeme.nbtapi.NBTItem;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.Head;
 import fr.aerwyn81.headblocks.data.head.HeadType;
@@ -9,11 +10,13 @@ import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.javatuples.Pair;
 
 import java.io.File;
@@ -32,7 +35,7 @@ public class HeadHandler {
     private final LanguageHandler languageHandler;
     private FileConfiguration config;
 
-    private ArrayList<Head> heads;
+    private final ArrayList<Head> heads;
     private ArrayList<Pair<UUID, Location>> headLocations;
 
     public HeadHandler(HeadBlocks main, File configFile) {
@@ -114,11 +117,7 @@ public class HeadHandler {
     }
 
     public UUID getHeadAt(Location location) {
-        return headLocations.stream().filter(l -> l.getValue1().getBlockX() == location.getBlockX()
-                        && l.getValue1().getBlockY() == location.getBlockY()
-                        && l.getValue1().getBlockZ() == location.getBlockZ()
-                        && l.getValue1().getWorld() != null && location.getWorld() != null &&
-                        l.getValue1().getWorld().getName().equals(location.getWorld().getName()))
+        return headLocations.stream().filter(l -> HeadUtils.areEquals(l.getValue1(), location))
                 .map(Pair::getValue0)
                 .findFirst().orElse(null);
     }
@@ -162,17 +161,36 @@ public class HeadHandler {
 
             head.setItemMeta(headMeta);
 
+            NBTItem nbtItem = new NBTItem(head, true);
+            nbtItem.setBoolean("HB_HEAD", true);
+
             switch (parts[0]) {
+                case "player":
+                    OfflinePlayer p;
+
+                    try {
+                        p = Bukkit.getOfflinePlayer(UUID.fromString(parts[1]));
+                    } catch (Exception ex) {
+                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot parse the player UUID " + configHead + ". Please provide a correct UUID"));
+                        continue;
+                    }
+
+                    SkullMeta meta = (SkullMeta) head.getItemMeta();
+                    meta.setOwningPlayer(p);
+                    head.setItemMeta(meta);
+
+                    heads.add(new Head(null, head, null, HeadType.PLAYER));
+                    break;
                 case "default":
-                    heads.add(HeadUtils.applyTexture(new Head("", head, parts[1], HeadType.DEFAULT)));
+                    heads.add(HeadUtils.applyTexture(new Head(null, head, parts[1], HeadType.DEFAULT)));
                     break;
                 case "hdb":
                     if (!HeadBlocks.isHeadDatabaseActive) {
                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot load hdb head type " + configHead + " without HeadDatabase installed"));
-                        continue;
+                       continue;
                     }
 
-                    heads.add(new Head(parts[1], head, "", HeadType.HDB));
+                    heads.add(new Head(parts[1], head, null, HeadType.HDB));
                     break;
                 default:
                     HeadBlocks.log.sendMessage(FormatUtils.translate("&cUnknown type " + parts[0] + " in heads configuration section"));

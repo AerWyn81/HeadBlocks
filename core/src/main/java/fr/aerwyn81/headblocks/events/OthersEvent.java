@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -8,13 +9,14 @@ import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
 
 import java.util.UUID;
 
-public class OnPlayerBlockBreakEvent implements Listener {
+public class OthersEvent implements Listener {
     private final HeadBlocks main;
 
-    public OnPlayerBlockBreakEvent(HeadBlocks main) {
+    public OthersEvent(HeadBlocks main) {
         this.main = main;
     }
 
@@ -22,8 +24,8 @@ public class OnPlayerBlockBreakEvent implements Listener {
     public void onPlayerInteract(BlockBreakEvent e) {
         Block block = e.getBlock();
 
-        // Check if clickedBlock is a head
-        if (!isClickedBlockIsHeadBlocks(block)) {
+        // Check if block is a head
+        if (!isBlockIsHeadBlock(block)) {
             return;
         }
 
@@ -38,7 +40,15 @@ public class OnPlayerBlockBreakEvent implements Listener {
         e.setCancelled(true);
     }
 
-    private boolean isClickedBlockIsHeadBlocks(Block block) {
+    @EventHandler
+    public void onPistonExtend(BlockPistonExtendEvent e) {
+        if (e.getBlocks().stream().anyMatch(b -> main.getHeadHandler().getHeadLocations().stream()
+                .anyMatch(p -> HeadUtils.areEquals(p.getValue1(), b.getLocation())))) {
+            e.setCancelled(true);
+        }
+    }
+
+    private boolean isBlockIsHeadBlock(Block block) {
         // Specific case where we only check if the block type if a skull
         if (Version.getCurrent().isOlderOrSameThan(Version.v1_12)) {
             return block.getType().name().equals("SKULL");

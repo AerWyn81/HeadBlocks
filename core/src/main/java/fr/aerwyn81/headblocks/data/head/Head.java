@@ -18,7 +18,7 @@ public class Head {
         this.texture = texture;
         this.headType = headType;
 
-        this.loaded = false;
+        this.loaded = headType == HeadType.PLAYER;
     }
 
     public String getId() {

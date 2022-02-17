@@ -4,9 +4,9 @@ import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.data.head.HeadType;
 import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
-import fr.aerwyn81.headblocks.events.OnPlayerBlockBreakEvent;
 import fr.aerwyn81.headblocks.events.OnPlayerInteractEvent;
 import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
+import fr.aerwyn81.headblocks.events.OthersEvent;
 import fr.aerwyn81.headblocks.handlers.*;
 import fr.aerwyn81.headblocks.placeholders.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.ParticlesTask;
@@ -98,7 +98,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new OnPlayerBlockBreakEvent(this), this);
+        Bukkit.getPluginManager().registerEvents(new OthersEvent(this), this);
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new PlaceholderHook(this).register();

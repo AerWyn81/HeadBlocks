@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.Version;
@@ -71,9 +72,9 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
     private boolean hasHeadBlocksItemInHand(Player player) {
         if (Version.getCurrent() == Version.v1_8) {
-            return main.getHeadHandler().getHeads().stream().anyMatch(i -> i.getHead().isSimilar((ItemStack) main.getLegacySupport().getItemStackInHand(player)));
+            return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getHead(), (ItemStack) main.getLegacySupport().getItemStackInHand(player)));
         }
 
-        return main.getHeadHandler().getHeads().stream().anyMatch(i -> i.getHead().isSimilar(player.getInventory().getItemInMainHand()));
+        return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getHead(), player.getInventory().getItemInMainHand()));
     }
 }
