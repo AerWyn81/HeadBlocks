@@ -5,6 +5,7 @@ import de.tr7zw.changeme.nbtapi.NBTItem;
 import de.tr7zw.changeme.nbtapi.NBTListCompound;
 import fr.aerwyn81.headblocks.data.head.Head;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
@@ -33,6 +34,10 @@ public class HeadUtils {
     }
 
     public static boolean areEquals(ItemStack i1, ItemStack i2) {
+        if (!isValidItemStack(i1) || !isValidItemStack(i2)) {
+            return false;
+        }
+
         NBTItem nbtItem = new NBTItem(i1);
         NBTItem nbtItem2 = new NBTItem(i2);
 
@@ -45,5 +50,9 @@ public class HeadUtils {
                 && loc1.getBlockZ() == loc2.getBlockZ()
                 && loc1.getWorld() != null && loc2.getWorld() != null &&
                 loc1.getWorld().getName().equals(loc2.getWorld().getName());
+    }
+
+    private static boolean isValidItemStack(ItemStack i) {
+        return i != null && i.getType() != Material.AIR;
     }
 }
