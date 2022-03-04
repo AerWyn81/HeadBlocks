@@ -169,7 +169,7 @@ public class HeadHandler {
                     OfflinePlayer p;
 
                     try {
-                        p = Bukkit.getOfflinePlayer(UUID.fromString(parts[1]));
+                        p = Bukkit.getOfflinePlayer(parts[1]);
                     } catch (Exception ex) {
                         HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot parse the player UUID " + configHead + ". Please provide a correct UUID"));
                         continue;

@@ -18,7 +18,7 @@ above setting. By default, `en` is used.
 heads:
   - 'default:Base64String'
   - 'hdb:Id'
-  - 'player:PlayerUUID'
+  - 'player:PlayerName'
 ```
 
 You can use multiple texture on a HeadBlock. Two types are possible:
@@ -27,7 +27,7 @@ visit [Minecraft-Heads](https://minecraft-heads.com/) to get this information. F
 same page, at the bottom, in **Other** section, copy the **Value** and paste it in place of `base64String`.
 - **hdb**: Plugin [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/) is needed. Now, you can
 retrieve the ID of the head with the plugin and use it in place of `Id`.
-- **player**: Retrieve the player UUID (_ex: f032de26-fde9-469f-a6eb-c453470894a5_) and the head will have the texture of the player head.
+- **player**: Retrieve the player name and the head will have the texture of the player head.
 
 !> Note: Skulls and BetterHeads plugins are not supported.
 
