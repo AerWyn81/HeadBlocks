@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.placeholders;
+package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
