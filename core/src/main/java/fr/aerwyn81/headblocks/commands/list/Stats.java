@@ -121,7 +121,7 @@ public class Stats implements Cmd {
             }
         }
 
-        cpu.addPageLine("stats");
+        cpu.addPageLine("stats " + player.getName());
         cpu.build();
         return true;
     }
