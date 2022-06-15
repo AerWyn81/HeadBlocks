@@ -5,6 +5,8 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
@@ -24,7 +26,14 @@ public class ResetAll implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        List<UUID> allPlayers = storageHandler.getAllPlayers();
+        List<UUID> allPlayers;
+
+        try {
+            allPlayers = storageHandler.getAllPlayers();
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            return true;
+        }
 
         if (allPlayers.size() == 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.ResetAllNoData"));
@@ -33,7 +42,16 @@ public class ResetAll implements Cmd {
 
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
-            allPlayers.forEach(storageHandler::resetPlayer);
+
+            for (UUID uuid : allPlayers) {
+                try {
+                    storageHandler.resetPlayer(uuid);
+                } catch (InternalException ex) {
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to remove a player in the storage : " + ex.getMessage()));
+                    return true;
+                }
+            }
+
             sender.sendMessage(languageHandler.getMessage("Messages.ResetAllSuccess")
                     .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
             return true;

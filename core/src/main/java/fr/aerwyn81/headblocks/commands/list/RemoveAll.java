@@ -7,6 +7,8 @@ import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.javatuples.Pair;
@@ -44,7 +46,12 @@ public class RemoveAll implements Cmd {
         if (hasConfirmInCommand) {
             new ArrayList<>(headLocations).forEach(head -> {
                 if (configHandler.shouldResetPlayerData()) {
-                    storageHandler.removeHead(head.getValue0());
+                    try {
+                        storageHandler.removeHead(head.getValue0());
+                    } catch (InternalException ex) {
+                        HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                        return;
+                    }
                 }
 
                 headHandler.removeHead(head.getValue0());

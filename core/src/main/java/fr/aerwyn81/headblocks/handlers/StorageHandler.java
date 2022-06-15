@@ -7,6 +7,8 @@ import fr.aerwyn81.headblocks.databases.types.SQLite;
 import fr.aerwyn81.headblocks.storages.Storage;
 import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
+import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import org.javatuples.Pair;
 
 import java.util.ArrayList;
@@ -21,23 +23,17 @@ public class StorageHandler {
     private Storage storage;
     private Database database;
 
+    private boolean storageError;
+
     public StorageHandler(HeadBlocks main) {
         this.main = main;
         this.configHandler = main.getConfigHandler();
-
-        initStorage();
+        
+        this.storageError = false;
     }
 
-    public void openConnection() {
-        database.open();
-    }
-
-    public Database getDatabase() {
-        return database;
-    }
-
-    public Storage getStorage() {
-        return storage;
+    public boolean hasStorageError() {
+        return storageError;
     }
 
     public void initStorage() {
@@ -46,66 +42,94 @@ public class StorageHandler {
         } else {
             storage = new Memory();
         }
-
+        
         if (configHandler.isDatabaseEnabled()) {
-            database = new MySQL(main);
+            database = new MySQL(
+                    configHandler.getDatabaseUsername(),
+                    configHandler.getDatabasePassword(),
+                    configHandler.getDatabaseHostname(),
+                    configHandler.getDatabasePort(),
+                    configHandler.getDatabaseName(),
+                    configHandler.getDatabaseSsl());
         } else {
-            database = new SQLite(main);
+            String pathToDatabase = main.getDataFolder() + "\\headblocks.db";
+            database = new SQLite(pathToDatabase);
+        }
+
+        try {
+            storage.init();
+        } catch (InternalException ex) {
+            storageError = true;
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to initialize the storage : " + ex.getMessage()));
+        }
+
+        try {
+            database.open();
+            database.load();
+        } catch (InternalException ex) {
+            storageError = true;
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to connect to the SQL database : " + ex.getMessage()));
         }
     }
 
-    public void changeToSQLite() {
-        database = new SQLite(main);
-        database.open();
+    public void close() {
+        try {
+            storage.close();
+        } catch (InternalException ex) {
+            storageError = true;
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to close the REDIS connection : " + ex.getMessage()));
+        }
+
+        try {
+            database.close();
+        } catch (InternalException ex) {
+            storageError = true;
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to close the SQL connection : " + ex.getMessage()));
+        }
     }
 
-    public void changeToMemory() {
-        storage = new Memory();
-        storage.init();
-    }
-
-    public boolean hasAlreadyClaimedHead(UUID playerUuid, UUID headUuid) {
-        boolean isFoundInRedis = getStorage().hasAlreadyClaimedHead(playerUuid, headUuid);
+    public boolean hasAlreadyClaimedHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        boolean isFoundInRedis = storage.hasAlreadyClaimedHead(playerUuid, headUuid);
         if (isFoundInRedis) {
             return true;
         }
 
-        boolean isFoundInDatabase = getDatabase().hasHead(playerUuid, headUuid);
+        boolean isFoundInDatabase = database.hasHead(playerUuid, headUuid);
         if (isFoundInDatabase) {
-            getStorage().savePlayer(playerUuid, headUuid);
+            storage.savePlayer(playerUuid, headUuid);
         }
 
         return isFoundInDatabase;
     }
 
-    public void savePlayer(UUID playerUuid, UUID headUuid) {
-        getStorage().savePlayer(playerUuid, headUuid);
-        getDatabase().savePlayer(playerUuid, headUuid);
+    public void savePlayer(UUID playerUuid, UUID headUuid) throws InternalException {
+        storage.savePlayer(playerUuid, headUuid);
+        database.savePlayer(playerUuid, headUuid);
     }
 
-    public boolean containsPlayer(UUID playerUuid) {
-        return getStorage().containsPlayer(playerUuid) || getDatabase().containsPlayer(playerUuid);
+    public boolean containsPlayer(UUID playerUuid) throws InternalException {
+        return storage.containsPlayer(playerUuid) || database.containsPlayer(playerUuid);
     }
 
-    public List<UUID> getHeadsPlayer(UUID playerUuid) {
-        return getDatabase().getHeadsPlayer(playerUuid);
+    public List<UUID> getHeadsPlayer(UUID playerUuid) throws InternalException {
+        return database.getHeadsPlayer(playerUuid);
     }
 
-    public void resetPlayer(UUID playerUuid) {
-        getStorage().resetPlayer(playerUuid);
-        getDatabase().resetPlayer(playerUuid);
+    public void resetPlayer(UUID playerUuid) throws InternalException {
+        storage.resetPlayer(playerUuid);
+        database.resetPlayer(playerUuid);
     }
 
-    public void removeHead(UUID headUuid) {
-        getStorage().removeHead(headUuid);
-        getDatabase().removeHead(headUuid);
+    public void removeHead(UUID headUuid) throws InternalException {
+        storage.removeHead(headUuid);
+        database.removeHead(headUuid);
     }
 
-    public List<UUID> getAllPlayers() {
-        return getDatabase().getAllPlayers();
+    public List<UUID> getAllPlayers() throws InternalException {
+        return database.getAllPlayers();
     }
 
-    public ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit) {
-        return getDatabase().getTopPlayers(limit);
+    public ArrayList<Pair<String, Integer>> getTopPlayers(int limit) throws InternalException {
+        return database.getTopPlayers(limit);
     }
 }

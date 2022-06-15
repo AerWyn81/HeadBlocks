@@ -75,9 +75,7 @@ public final class HeadBlocks extends JavaPlugin {
         this.headHandler = new HeadHandler(this, locationFile);
 
         this.storageHandler = new StorageHandler(this);
-        this.storageHandler.openConnection();
-        this.storageHandler.getStorage().init();
-        this.storageHandler.getDatabase().load();
+        this.storageHandler.initStorage();
 
         this.rewardHandler = new RewardHandler(this);
 
@@ -126,8 +124,7 @@ public final class HeadBlocks extends JavaPlugin {
     @Override
     public void onDisable() {
         if (storageHandler != null) {
-            storageHandler.getStorage().close();
-            storageHandler.getDatabase().close();
+            storageHandler.close();
         }
 
         Bukkit.getScheduler().cancelTasks(this);

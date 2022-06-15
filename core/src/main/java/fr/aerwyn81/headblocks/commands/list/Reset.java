@@ -5,6 +5,8 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -12,7 +14,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-@HBAnnotations(command = "reset", permission = "headblocks.admin", args = { "player" })
+@HBAnnotations(command = "reset", permission = "headblocks.admin", args = {"player"})
 public class Reset implements Cmd {
     private final LanguageHandler languageHandler;
     private final StorageHandler storageHandler;
@@ -31,12 +33,18 @@ public class Reset implements Cmd {
             return true;
         }
 
-        if (!storageHandler.containsPlayer(pTemp.getUniqueId())) {
-            sender.sendMessage(languageHandler.getMessage("Messages.NoHeadFound"));
+        try {
+            if (!storageHandler.containsPlayer(pTemp.getUniqueId())) {
+                sender.sendMessage(languageHandler.getMessage("Messages.NoHeadFound"));
+                return true;
+            }
+
+            storageHandler.resetPlayer(pTemp.getUniqueId());
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
             return true;
         }
 
-        storageHandler.resetPlayer(pTemp.getUniqueId());
         sender.sendMessage(languageHandler.getMessage("Messages.PlayerReset")
                 .replaceAll("%player%", pTemp.getName()));
 

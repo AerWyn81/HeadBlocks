@@ -40,14 +40,12 @@ public class Reload implements Cmd {
             main.getHeadDatabaseHook().loadHeadsHDB();
         }
 
-        main.getStorageHandler().getStorage().close();
-        main.getStorageHandler().getDatabase().close();
+        main.getStorageHandler().close();
 
         main.getStorageHandler().initStorage();
-        main.getStorageHandler().getStorage().init();
-
-        main.getStorageHandler().openConnection();
-        main.getStorageHandler().getDatabase().load();
+        if (main.getStorageHandler().hasStorageError()) {
+            sender.sendMessage(FormatUtils.translate("&cError while configuring database connection."));
+        }
 
         Bukkit.getScheduler().cancelTasks(main);
         if (configHandler.isParticlesEnabled()) {

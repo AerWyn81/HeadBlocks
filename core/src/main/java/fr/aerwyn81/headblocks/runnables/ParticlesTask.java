@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.ParticlesUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -65,10 +66,15 @@ public class ParticlesTask extends BukkitRunnable {
         List<Player> playersFound = new ArrayList<>();
         List<Player> playersNotFound = new ArrayList<>();
         for (Player p : loc.getWorld().getNearbyEntities(loc, range, range, range).stream().filter(Player.class::isInstance).map(e -> (Player) e).collect(Collectors.toList())) {
-            if (storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuidLocPair.getValue0())){
-                playersFound.add(p);
-            } else {
-                playersNotFound.add(p);
+            try {
+                if (storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuidLocPair.getValue0())){
+                    playersFound.add(p);
+                } else {
+                    playersNotFound.add(p);
+                }
+            } catch (InternalException ex) {
+                HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                this.cancel();
             }
         }
 

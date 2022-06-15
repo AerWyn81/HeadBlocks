@@ -4,9 +4,7 @@ import com.google.common.base.Strings;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
@@ -18,11 +16,9 @@ import java.util.regex.Pattern;
 
 public class FormatUtils {
 	private static final Pattern hexPattern = Pattern.compile("\\{#[0-9a-fA-F]{6}}");
-	private static final Pattern locPattern = Pattern.compile("^\\[([a-zA-Z]+),([\\-0-9.]+),([\\-0-9.]+),([\\-0-9.]+)]");
 
 	/**
 	 * Format a message with chat format and color (& or hexa)
-	 * <p>
 	 * Support MC Version 12.2 -> 1.16+
 	 *
 	 * @param message with {#RRGGBB}
@@ -38,8 +34,7 @@ public class FormatUtils {
 			try {
 				Method ofMethod = ChatColor.class.getMethod("of", String.class);
 				replaced = replaced.replace(hexcode, ofMethod.invoke(null, fixed).toString());
-			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {
-			}
+			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) { }
 		}
 		return ChatColor.translateAlternateColorCodes('&', replaced);
 	}
@@ -51,7 +46,6 @@ public class FormatUtils {
 	 */
 	public static String formatMessage(String message) {
 		String translated = translate(message);
-
 		return message.contains("{center}") ? sendCenteredString(translated.replaceAll("\\{center}", "")) : translated;
 	}
 
@@ -86,26 +80,6 @@ public class FormatUtils {
 		} catch (NumberFormatException e) {
 			return null;
 		}
-	}
-
-	/**
-	 * @param locInString Location in string
-	 * @return Location bukkit or null if cannot parse
-	 */
-	public static Location parseLocation(String locInString) {
-		if (locInString == null || locInString.trim().isEmpty()) {
-			return null;
-		}
-
-		Matcher matcher = locPattern.matcher(locInString);
-		if (matcher.find()) {
-			try {
-				return new Location(Bukkit.getWorld(matcher.group(1)), Double.parseDouble(matcher.group(2)), Double.parseDouble(matcher.group(3)), Double.parseDouble(matcher.group(4)));
-			} catch (Exception ignored) {
-			}
-		}
-
-		return null;
 	}
 
 	/**

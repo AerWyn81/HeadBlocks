@@ -27,6 +27,7 @@ database:
     username: ''
     password: ''
     port: 3306
+    ssl: false
 
 # Progress bar customization displayed wherever the placeholder %progress% is used
 progressBar:

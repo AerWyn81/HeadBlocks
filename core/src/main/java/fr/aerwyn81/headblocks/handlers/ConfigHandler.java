@@ -203,6 +203,8 @@ public class ConfigHandler {
         return config.getInt("database.settings.port", 3306);
     }
 
+    public boolean getDatabaseSsl() { return config.getBoolean("database.settings.ssl", false); }
+
     public boolean isPreventCommandsOnTieredRewardsLevel() {
         return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
     }

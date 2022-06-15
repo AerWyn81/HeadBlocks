@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -59,10 +60,16 @@ public class Stats implements Cmd {
             return true;
         }
 
-        ArrayList<Pair<UUID, Location>> playerHeads = storageHandler.getHeadsPlayer(player.getUniqueId()).stream()
-                .map(headHandler::getHeadByUUID)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<Pair<UUID, Location>> playerHeads;
+        try {
+            playerHeads = storageHandler.getHeadsPlayer(player.getUniqueId()).stream()
+                    .map(headHandler::getHeadByUUID)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(ArrayList::new));
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            return true;
+        }
 
         ArrayList<Pair<UUID, Location>> headsSpawned = headHandler.getHeadLocations();
         if (headsSpawned.size() == 0) {

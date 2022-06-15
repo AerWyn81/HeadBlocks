@@ -14,8 +14,7 @@ public class Memory implements Storage {
         headsFound = new HashMap<>();
     }
 
-    public void close() {
-    }
+    public void close() { }
 
     public boolean hasAlreadyClaimedHead(UUID pUuid, UUID hUuid) {
         return containsPlayer(pUuid) && headsFound.get(pUuid).contains(hUuid);

@@ -3,6 +3,8 @@ package fr.aerwyn81.headblocks.handlers;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
+import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -21,8 +23,15 @@ public class RewardHandler {
             return;
         }
 
-        TieredReward tieredReward = main.getConfigHandler().getTieredRewards().stream().filter(t -> t.getLevel() ==
-                main.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size()).findFirst().orElse(null);
+        TieredReward tieredReward = main.getConfigHandler().getTieredRewards().stream().filter(t -> {
+            try {
+                return t.getLevel() ==
+                        main.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size();
+            } catch (InternalException ex) {
+                HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to calculate tieredReward from the storage : " + ex.getMessage()));
+                return false;
+            }
+        }).findFirst().orElse(null);
 
         if (tieredReward == null) {
             return;

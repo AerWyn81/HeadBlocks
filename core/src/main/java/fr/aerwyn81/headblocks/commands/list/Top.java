@@ -12,13 +12,11 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.math.NumberUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.javatuples.Pair;
 
 import java.util.ArrayList;
-import java.util.UUID;
 
 @HBAnnotations(command = "top", permission = "headblocks.admin")
 public class Top implements Cmd {
@@ -48,7 +46,7 @@ public class Top implements Cmd {
             limit = 10;
         }
 
-        ArrayList<Pair<UUID, Integer>> top = headBlocksAPI.getTopPlayers(limit);
+        ArrayList<Pair<String, Integer>> top = headBlocksAPI.getTopPlayers(limit);
 
         if (top.size() == 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.TopEmpty"));
@@ -69,20 +67,17 @@ public class Top implements Cmd {
 
         for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
             int pos = i + 1;
-            Pair<UUID, Integer> currentScore = top.get(i);
-            Player player = Bukkit.getOfflinePlayer(currentScore.getValue0()).getPlayer();
+            Pair<String, Integer> currentScore = top.get(i);
 
             message = languageHandler.getMessage("Chat.LineTop")
                     .replaceAll("%pos%", String.valueOf(pos))
-                    .replaceAll("%player%", player == null ? FormatUtils.translate("&cUnknownPlayer") : player.getName())
+                    .replaceAll("%player%", currentScore.getValue0())
                     .replaceAll("%count%", String.valueOf(currentScore.getValue1()));
 
             if (sender instanceof Player) {
                 TextComponent msg = new TextComponent(message);
-                if (player != null) {
-                    msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + player.getName()));
-                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.LineTop")).create()));
-                }
+                msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + currentScore.getValue0()));
+                msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.LineTop")).create()));
 
                 cpu.addLine(msg);
             } else {

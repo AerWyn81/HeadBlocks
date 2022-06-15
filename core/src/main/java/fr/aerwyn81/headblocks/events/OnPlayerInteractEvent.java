@@ -64,13 +64,17 @@ public class OnPlayerInteractEvent implements Listener {
                 return;
             }
 
+            // If resetPlayerData is enabled, reset all player data for the head
+            if (configHandler.shouldResetPlayerData() && !main.getStorageHandler().hasStorageError()) {
+                try {
+                    main.getStorageHandler().removeHead(headUuid);
+                } catch (InternalException ex) {
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to remove a head (" + headUuid + ") in the storage : " + ex.getMessage()));
+                }
+            }
+
             // Remove the head from the ground
             main.getHeadHandler().removeHead(headUuid);
-
-            // If resetPlayerData is enabled, reset all player data for the head
-            if (configHandler.shouldResetPlayerData()) {
-                main.getStorageHandler().removeHead(headUuid);
-            }
 
             // Send player success message
             player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")
@@ -94,44 +98,49 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
-        // Check if the player has already clicked on the head
-        if (main.getStorageHandler().hasAlreadyClaimedHead(player.getUniqueId(), headUuid)) {
-            String message = languageHandler.getMessageWithPlaceholders(player, "Messages.AlreadyClaimHead");
+        try {
+            // Check if the player has already clicked on the head
+            if (main.getStorageHandler().hasAlreadyClaimedHead(player.getUniqueId(), headUuid)) {
+                String message = languageHandler.getMessageWithPlaceholders(player, "Messages.AlreadyClaimHead");
 
-            if (!message.trim().isEmpty()) {
-                player.sendMessage(message);
-            }
-
-            // Already own song if not empty
-            String songName = configHandler.getHeadClickAlreadyOwnSound();
-            if (!songName.trim().isEmpty()) {
-                try {
-                    XSound.play(player, configHandler.getHeadClickAlreadyOwnSound());
-                } catch (Exception ex) {
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+                if (!message.trim().isEmpty()) {
+                    player.sendMessage(message);
                 }
-            }
 
-            // Already own particles if enabled
-            if (Version.getCurrent().isNewerOrSameThan(Version.v1_13) && configHandler.isHeadClickParticlesEnabled()) {
-                String particleName = configHandler.getHeadClickParticlesAlreadyOwnType();
-                int amount = configHandler.getHeadClickParticlesAmount();
-                ArrayList<String> colors = configHandler.getHeadClickParticlesColors();
-
-                try {
-                    ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
-                } catch (Exception ex) {
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cError particle name " + particleName + " cannot be parsed!"));
+                // Already own song if not empty
+                String songName = configHandler.getHeadClickAlreadyOwnSound();
+                if (!songName.trim().isEmpty()) {
+                    try {
+                        XSound.play(player, configHandler.getHeadClickAlreadyOwnSound());
+                    } catch (Exception ex) {
+                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+                    }
                 }
+
+                // Already own particles if enabled
+                if (Version.getCurrent().isNewerOrSameThan(Version.v1_13) && configHandler.isHeadClickParticlesEnabled()) {
+                    String particleName = configHandler.getHeadClickParticlesAlreadyOwnType();
+                    int amount = configHandler.getHeadClickParticlesAmount();
+                    ArrayList<String> colors = configHandler.getHeadClickParticlesColors();
+
+                    try {
+                        ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
+                    } catch (Exception ex) {
+                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cError particle name " + particleName + " cannot be parsed!"));
+                    }
+                }
+
+                // Trigger the event HeadClick with no success because the player already own the head
+                Bukkit.getPluginManager().callEvent(new HeadClickEvent(headUuid, player, clickedLocation, false));
+                return;
             }
 
-            // Trigger the event HeadClick with no success because the player already own the head
-            Bukkit.getPluginManager().callEvent(new HeadClickEvent(headUuid, player, clickedLocation, false));
+            // Save player click in storage
+            main.getStorageHandler().savePlayer(player.getUniqueId(), headUuid);
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
             return;
         }
-
-        // Save player click in storage
-        main.getStorageHandler().savePlayer(player.getUniqueId(), headUuid);
 
         // Success messages if not empty
         List<String> messages = configHandler.getHeadClickMessages();

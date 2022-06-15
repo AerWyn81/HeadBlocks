@@ -1,6 +1,8 @@
 package fr.aerwyn81.headblocks.api;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import org.javatuples.Pair;
 
 import java.util.ArrayList;
@@ -16,7 +18,12 @@ public class HeadBlocksAPI {
     }
 
     public List<UUID> getPlayerHeads(UUID playerUuid) {
-        return main.getStorageHandler().getHeadsPlayer(playerUuid);
+        try {
+            return main.getStorageHandler().getHeadsPlayer(playerUuid);
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            return new ArrayList<>();
+        }
     }
 
     public int getTotalHeadSpawnCount() {
@@ -27,7 +34,12 @@ public class HeadBlocksAPI {
         return getTotalHeadSpawnCount() - getPlayerHeads(playerUuid).size();
     }
 
-    public ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit) {
-        return main.getStorageHandler().getTopPlayers(limit);
+    public ArrayList<Pair<String, Integer>> getTopPlayers(int limit) {
+        try {
+            return main.getStorageHandler().getTopPlayers(limit);
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            return new ArrayList<>();
+        }
     }
 }

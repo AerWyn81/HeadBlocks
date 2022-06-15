@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.databases;
 
+import fr.aerwyn81.headblocks.utils.InternalException;
 import org.javatuples.Pair;
 
 import java.util.ArrayList;
@@ -7,25 +8,29 @@ import java.util.UUID;
 
 public interface Database {
 
-    void close();
+    void close() throws InternalException;
 
-    void open();
+    void open() throws InternalException;
 
-    void load();
+    void load() throws InternalException;
 
-    boolean hasHead(UUID playerUuid, UUID headUuid);
+    void updatePlayerInfo(UUID pUUID, String pName) throws InternalException;
 
-    boolean containsPlayer(UUID playerUuid);
+    void createNewHead(UUID hUUID) throws InternalException;
 
-    ArrayList<UUID> getHeadsPlayer(UUID playerUuid);
+    boolean hasHead(UUID pUUID, UUID hUUID) throws InternalException;
 
-    void savePlayer(UUID playerUuid, UUID headUuid);
+    boolean containsPlayer(UUID pUUID) throws InternalException;
 
-    void resetPlayer(UUID playerUuid);
+    ArrayList<UUID> getHeadsPlayer(UUID pUUID) throws InternalException;
 
-    void removeHead(UUID headUuid);
+    void savePlayer(UUID pUUID, UUID hUUID) throws InternalException;
 
-    ArrayList<UUID> getAllPlayers();
+    void resetPlayer(UUID pUUID) throws InternalException;
 
-    ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit);
+    void removeHead(UUID hUUID) throws InternalException;
+
+    ArrayList<UUID> getAllPlayers() throws InternalException;
+
+    ArrayList<Pair<String, Integer>> getTopPlayers(int limit) throws InternalException;
 }
