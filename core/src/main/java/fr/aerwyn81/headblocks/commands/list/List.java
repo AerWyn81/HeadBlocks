@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -55,12 +55,12 @@ public class List implements Cmd {
             Location location = headLocations.get(i).getValue1();
 
             String hover = languageHandler.getMessage("Chat.LineCoordinate")
-                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : FormatUtils.translate("&cUnknownWorld"))
+                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.translate("&cUnknownWorld"))
                     .replaceAll("%x%", String.valueOf(location.getBlockX()))
                     .replaceAll("%y%", String.valueOf(location.getBlockY()))
                     .replaceAll("%z%", String.valueOf(location.getBlockZ()));
 
-            TextComponent msg = new TextComponent(FormatUtils.translate("&6" + uuid));
+            TextComponent msg = new TextComponent(MessageUtils.translate("&6" + uuid));
             msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
 
             if (sender instanceof Player) {
@@ -78,7 +78,7 @@ public class List implements Cmd {
 
                 cpu.addLine(del, space, tp, space, msg, space);
             } else {
-                sender.sendMessage(FormatUtils.translate("&6" + uuid));
+                sender.sendMessage(MessageUtils.translate("&6" + uuid));
             }
         }
 

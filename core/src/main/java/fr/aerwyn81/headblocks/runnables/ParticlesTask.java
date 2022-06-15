@@ -4,8 +4,8 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import fr.aerwyn81.headblocks.utils.ParticlesUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -53,8 +53,8 @@ public class ParticlesTask extends BukkitRunnable {
         try {
             ParticlesUtils.spawn(location, particle, amount, colors, players);
         } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cTo prevent log spamming, particles is disabled until reload"));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cTo prevent log spamming, particles is disabled until reload"));
             this.cancel();
         }
     }
@@ -73,7 +73,7 @@ public class ParticlesTask extends BukkitRunnable {
                     playersNotFound.add(p);
                 }
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
                 this.cancel();
             }
         }

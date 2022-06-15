@@ -5,11 +5,11 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
-import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -48,7 +48,7 @@ public class Stats implements Cmd {
             player = Bukkit.getOfflinePlayer(args[1]).getPlayer();
         } else {
             if (sender instanceof ConsoleCommandSender) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("&cThis command cannot be performed by console without player in argument."));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cThis command cannot be performed by console without player in argument."));
                 return true;
             }
 
@@ -67,7 +67,7 @@ public class Stats implements Cmd {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
             return true;
         }
 
@@ -85,7 +85,7 @@ public class Stats implements Cmd {
 
         String message = languageHandler.getMessage("Chat.LineTitle");
         if (sender instanceof Player) {
-            TextComponent titleComponent = new TextComponent(InternalPlaceholders.parse(player, languageHandler.getMessage("Chat.StatsTitleLine")
+            TextComponent titleComponent = new TextComponent(PlaceholdersHandler.parse(player, languageHandler.getMessage("Chat.StatsTitleLine")
                     .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
             cpu.addTitleLine(titleComponent);
         } else {
@@ -97,13 +97,13 @@ public class Stats implements Cmd {
             Location location = headsSpawned.get(i).getValue1();
 
             String hover = languageHandler.getMessage("Chat.LineCoordinate")
-                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : FormatUtils.translate("&cUnknownWorld"))
+                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.translate("&cUnknownWorld"))
                     .replaceAll("%x%", String.valueOf(location.getBlockX()))
                     .replaceAll("%y%", String.valueOf(location.getBlockY()))
                     .replaceAll("%z%", String.valueOf(location.getBlockZ()));
 
             if (sender instanceof Player) {
-                TextComponent msg = new TextComponent(FormatUtils.translate("&6" + uuid));
+                TextComponent msg = new TextComponent(MessageUtils.translate("&6" + uuid));
                 msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
 
                 TextComponent own;
@@ -124,7 +124,7 @@ public class Stats implements Cmd {
             } else {
                 sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getValue0() == uuid) ?
                                 languageHandler.getMessage("Chat.Box.Own") : languageHandler.getMessage("Chat.Box.NotOwn")) + " " +
-                                FormatUtils.translate("&6" + uuid));
+                                MessageUtils.translate("&6" + uuid));
             }
         }
 

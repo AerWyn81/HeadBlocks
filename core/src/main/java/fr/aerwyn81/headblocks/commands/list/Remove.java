@@ -7,8 +7,8 @@ import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -53,7 +53,7 @@ public class Remove implements Cmd {
             try {
                 storageHandler.removeHead(head.getValue0());
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
                 return true;
             }
         }
@@ -62,7 +62,7 @@ public class Remove implements Cmd {
 
         Location loc = head.getValue1();
         player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")
-                .replaceAll("%world%", loc.getWorld() != null ? loc.getWorld().getName() : FormatUtils.translate("&cUnknownWorld"))
+                .replaceAll("%world%", loc.getWorld() != null ? loc.getWorld().getName() : MessageUtils.translate("&cUnknownWorld"))
                 .replaceAll("%x%", String.valueOf(loc.getBlockX()))
                 .replaceAll("%y%", String.valueOf(loc.getBlockY()))
                 .replaceAll("%z%", String.valueOf(loc.getBlockZ())));

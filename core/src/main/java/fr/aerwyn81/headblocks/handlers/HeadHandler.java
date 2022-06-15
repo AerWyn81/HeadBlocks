@@ -6,8 +6,8 @@ import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.HeadUtils;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -83,7 +83,7 @@ public class HeadHandler {
                 try {
                     headLocations.add(new Pair<>(UUID.fromString(uuid), Location.deserialize(serializedLoc)));
                 } catch (Exception e) {
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot deserialize location of head " + uuid));
+                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cCannot deserialize location of head " + uuid));
                 }
             }
         });
@@ -140,12 +140,12 @@ public class HeadHandler {
             String[] parts = configHead.split(":");
 
             if (parts.length != 2) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("&cInvalid format for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cInvalid format for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
                 continue;
             }
 
             if (parts[1].trim().equals("")) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("&cValue cannot be empty for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cValue cannot be empty for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
                 continue;
             }
 
@@ -173,7 +173,7 @@ public class HeadHandler {
                     try {
                         p = Bukkit.getOfflinePlayer(parts[1]);
                     } catch (Exception ex) {
-                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot parse the player UUID " + configHead + ". Please provide a correct UUID"));
+                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cCannot parse the player UUID " + configHead + ". Please provide a correct UUID"));
                         continue;
                     }
 
@@ -188,14 +188,14 @@ public class HeadHandler {
                     break;
                 case "hdb":
                     if (!HeadBlocks.isHeadDatabaseActive) {
-                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot load hdb head type " + configHead + " without HeadDatabase installed"));
+                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cCannot load hdb head type " + configHead + " without HeadDatabase installed"));
                         continue;
                     }
 
                     heads.add(new HBHeadHDB(head, parts[1]));
                     break;
                 default:
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cThe " + parts[0] + " type is not yet supported!"));
+                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cThe " + parts[0] + " type is not yet supported!"));
             }
         }
     }

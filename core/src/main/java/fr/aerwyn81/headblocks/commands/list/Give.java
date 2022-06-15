@@ -7,7 +7,6 @@ import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -56,8 +55,15 @@ public class Give implements Cmd {
         if (args.length > 2 && args[2].equals("*")) {
             headsToGive = headHandler.getHeads();
         } else if (args.length > 2) {
-            Integer id = FormatUtils.parseIntOrNull(args[2]);
-            if (id == null) {
+            Integer id;
+
+            try {
+                id = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e) {
+                id = null;
+            }
+
+            if (id == null || id < 1) {
                 id = 1;
             }
 

@@ -11,8 +11,8 @@ import fr.aerwyn81.headblocks.handlers.*;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.ParticlesTask;
 import fr.aerwyn81.headblocks.utils.ConfigUpdater;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.HeadUtils;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.arcaniax.hdb.enums.CategoryEnum;
@@ -52,7 +52,7 @@ public final class HeadBlocks extends JavaPlugin {
         instance = this;
         log = Bukkit.getConsoleSender();
 
-        log.sendMessage(FormatUtils.translate("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
+        log.sendMessage(MessageUtils.translate("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
 
         File configFile = new File(getDataFolder(), "config.yml");
         File backupConfigFile = new File(getDataFolder(), "config.yml.save");
@@ -63,7 +63,9 @@ public final class HeadBlocks extends JavaPlugin {
         try {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads"));
         } catch (IOException e) {
-            log.sendMessage(FormatUtils.translate("&cError while loading config file: " + e.getMessage()));
+            log.sendMessage(MessageUtils.translate("&cError while loading config file: " + e.getMessage()));
+            this.setEnabled(false);
+            return;
         }
         reloadConfig();
 
@@ -78,6 +80,7 @@ public final class HeadBlocks extends JavaPlugin {
         this.languageHandler.pushMessages();
 
         this.headHandler = new HeadHandler(this, locationFile);
+        this.headHandler.loadConfiguration();
 
         this.storageHandler = new StorageHandler(this);
         this.storageHandler.initStorage();
@@ -88,7 +91,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         if (configHandler.isParticlesEnabled()) {
             if (Version.getCurrent().isOlderThan(Version.v1_13)) {
-                log.sendMessage(FormatUtils.translate("&cParticles are enabled but not supported before 1.13 included."));
+                log.sendMessage(MessageUtils.translate("&cParticles are enabled but not supported before 1.13 included."));
             } else {
                 this.particlesTask = new ParticlesTask(this);
                 particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
@@ -114,9 +117,6 @@ public final class HeadBlocks extends JavaPlugin {
                     this.loadHeadsHDB();
                 }
             } catch (Exception ignored) { }
-
-        } else {
-            this.headHandler.loadConfiguration();
         }
 
         Bukkit.getScheduler().runTaskLater(this, () -> getHeadHandler().loadLocations(), 1L);
@@ -127,7 +127,7 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new OthersEvent(this), this);
 
-        log.sendMessage(FormatUtils.translate("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
+        log.sendMessage(MessageUtils.translate("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
     }
 
     @Override
@@ -138,7 +138,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         Bukkit.getScheduler().cancelTasks(this);
 
-        log.sendMessage(FormatUtils.translate("&6HeadBlocks &cdisabled!"));
+        log.sendMessage(MessageUtils.translate("&6HeadBlocks &cdisabled!"));
     }
 
     public void loadHeadsHDB() {
@@ -190,9 +190,5 @@ public final class HeadBlocks extends JavaPlugin {
 
     public ParticlesTask getParticlesTask() {
         return particlesTask;
-    }
-
-    public HeadDatabaseAPI getHeadDatabaseAPI() {
-        return headDatabaseAPI;
     }
 }

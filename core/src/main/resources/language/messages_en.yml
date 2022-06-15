@@ -17,6 +17,7 @@ Messages:
   PlayerOnly: "%prefix% &cThis command can only be executed by a player"
   PlayerNotFound: "%prefix% &cThe player is not connected"
   HeadNotYetLoaded: "%prefix% &cThe head id %id% cannot be given until HeadDatabase is fully loaded"
+  StorageError: "%prefix% &cAn error occurred with the storage system. Please check your console logs"
   ReloadComplete: "%prefix% &aThe configuration has been successfully reloaded"
   InventoryFull: "%prefix% &cThere is not enough space in the player's inventory to give a HeadBlock"
   TopEmpty: "%prefix% &cPlayer top is empty"

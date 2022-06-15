@@ -7,8 +7,8 @@ import fr.aerwyn81.headblocks.databases.types.SQLite;
 import fr.aerwyn81.headblocks.storages.Storage;
 import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.javatuples.Pair;
 
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public class StorageHandler {
             storage.init();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to initialize the storage : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to initialize the storage : " + ex.getMessage()));
         }
 
         try {
@@ -68,7 +68,7 @@ public class StorageHandler {
             database.load();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to connect to the SQL database : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to connect to the SQL database : " + ex.getMessage()));
         }
     }
 
@@ -77,14 +77,14 @@ public class StorageHandler {
             storage.close();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to close the REDIS connection : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to close the REDIS connection : " + ex.getMessage()));
         }
 
         try {
             database.close();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to close the SQL connection : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to close the SQL connection : " + ex.getMessage()));
         }
     }
 

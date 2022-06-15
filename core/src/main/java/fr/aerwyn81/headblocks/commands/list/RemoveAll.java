@@ -7,8 +7,8 @@ import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.javatuples.Pair;
@@ -49,7 +49,7 @@ public class RemoveAll implements Cmd {
                     try {
                         storageHandler.removeHead(head.getValue0());
                     } catch (InternalException ex) {
-                        HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                        HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
                         return;
                     }
                 }

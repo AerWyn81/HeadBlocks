@@ -6,7 +6,8 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -20,10 +21,12 @@ import java.util.ArrayList;
 
 @HBAnnotations(command = "top", permission = "headblocks.admin")
 public class Top implements Cmd {
+    private final HeadBlocks main;
     private final LanguageHandler languageHandler;
     private final HeadBlocksAPI headBlocksAPI;
 
     public Top(HeadBlocks main) {
+        this.main = main;
         this.languageHandler = main.getLanguageHandler();
         this.headBlocksAPI = main.getHeadBlocksAPI();
     }
@@ -46,7 +49,13 @@ public class Top implements Cmd {
             limit = 10;
         }
 
-        ArrayList<Pair<String, Integer>> top = headBlocksAPI.getTopPlayers(limit);
+        ArrayList<Pair<String, Integer>> top;
+        try {
+            top = main.getStorageHandler().getTopPlayers(limit);
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            return true;
+        }
 
         if (top.size() == 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.TopEmpty"));
@@ -81,7 +90,7 @@ public class Top implements Cmd {
 
                 cpu.addLine(msg);
             } else {
-                sender.sendMessage(FormatUtils.translate("&6" + message));
+                sender.sendMessage(MessageUtils.translate("&6" + message));
             }
         }
 

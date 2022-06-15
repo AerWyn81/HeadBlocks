@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.placeholders.InternalPlaceholders;
+import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
 import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -69,7 +69,7 @@ public class OnPlayerInteractEvent implements Listener {
                 try {
                     main.getStorageHandler().removeHead(headUuid);
                 } catch (InternalException ex) {
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to remove a head (" + headUuid + ") in the storage : " + ex.getMessage()));
+                    HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to remove a head (" + headUuid + ") in the storage : " + ex.getMessage()));
                 }
             }
 
@@ -81,7 +81,7 @@ public class OnPlayerInteractEvent implements Listener {
                     .replaceAll("%x%", String.valueOf(clickedLocation.getX()))
                     .replaceAll("%y%", String.valueOf(clickedLocation.getY()))
                     .replaceAll("%z%", String.valueOf(clickedLocation.getZ()))
-                    .replaceAll("%world%", clickedLocation.getWorld() != null ? clickedLocation.getWorld().getName() : FormatUtils.translate("&cUnknownWorld")));
+                    .replaceAll("%world%", clickedLocation.getWorld() != null ? clickedLocation.getWorld().getName() : MessageUtils.translate("&cUnknownWorld")));
 
             // Trigger the event HeadDeleted
             Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headUuid, clickedLocation));
@@ -101,7 +101,7 @@ public class OnPlayerInteractEvent implements Listener {
         try {
             // Check if the player has already clicked on the head
             if (main.getStorageHandler().hasAlreadyClaimedHead(player.getUniqueId(), headUuid)) {
-                String message = languageHandler.getMessageWithPlaceholders(player, "Messages.AlreadyClaimHead");
+                String message = PlaceholdersHandler.parse(player, languageHandler.getMessage("Messages.AlreadyClaimHead"));
 
                 if (!message.trim().isEmpty()) {
                     player.sendMessage(message);
@@ -113,7 +113,7 @@ public class OnPlayerInteractEvent implements Listener {
                     try {
                         XSound.play(player, configHandler.getHeadClickAlreadyOwnSound());
                     } catch (Exception ex) {
-                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
                     }
                 }
 
@@ -126,7 +126,7 @@ public class OnPlayerInteractEvent implements Listener {
                     try {
                         ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
                     } catch (Exception ex) {
-                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cError particle name " + particleName + " cannot be parsed!"));
+                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cError particle name " + particleName + " cannot be parsed!"));
                     }
                 }
 
@@ -138,14 +138,14 @@ public class OnPlayerInteractEvent implements Listener {
             // Save player click in storage
             main.getStorageHandler().savePlayer(player.getUniqueId(), headUuid);
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
             return;
         }
 
         // Success messages if not empty
         List<String> messages = configHandler.getHeadClickMessages();
         if (messages.size() != 0) {
-            player.sendMessage(InternalPlaceholders.parse(player, messages));
+            player.sendMessage(PlaceholdersHandler.parse(player, messages));
         }
 
         // Success song if not empty
@@ -154,14 +154,14 @@ public class OnPlayerInteractEvent implements Listener {
             try {
                 XSound.play(player, songName);
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
             }
         }
 
         // Send title to the player if enabled
         if (configHandler.isHeadClickTitleEnabled() && Version.getCurrent().isNewerThan(Version.v1_10)) {
-            String firstLine = InternalPlaceholders.parse(player, configHandler.getHeadClickTitleFirstLine());
-            String subTitle = InternalPlaceholders.parse(player, configHandler.getHeadClickTitleSubTitle());
+            String firstLine = PlaceholdersHandler.parse(player, configHandler.getHeadClickTitleFirstLine());
+            String subTitle = PlaceholdersHandler.parse(player, configHandler.getHeadClickTitleSubTitle());
             int fadeIn = configHandler.getHeadClickTitleFadeIn();
             int stay = configHandler.getHeadClickTitleStay();
             int fadeOut = configHandler.getHeadClickTitleFadeOut();
@@ -183,11 +183,21 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Prevent trigger commands rewards if current is contained in tieredRewards and enabled in config
-        if (!main.getConfigHandler().isPreventCommandsOnTieredRewardsLevel() || !main.getRewardHandler().currentIsContainedInTiered(main.getHeadBlocksAPI().getPlayerHeads(player.getUniqueId()).size())) {
-            // Commands list if not empty
-            if (configHandler.getHeadClickCommands().size() != 0) {
-                Bukkit.getScheduler().runTaskLater(main, () -> configHandler.getHeadClickCommands().forEach(reward ->
-                        main.getServer().dispatchCommand(main.getServer().getConsoleSender(), InternalPlaceholders.parse(player, reward))), 1L);
+        if (!main.getConfigHandler().isPreventCommandsOnTieredRewardsLevel()) {
+            int playerHeads;
+            try {
+                playerHeads = main.getStorageHandler().getHeadsPlayer(player.getUniqueId()).size();
+            } catch (InternalException ex) {
+                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                return;
+            }
+
+            if (!main.getRewardHandler().currentIsContainedInTiered(playerHeads)) {
+                // Commands list if not empty
+                if (configHandler.getHeadClickCommands().size() != 0) {
+                    Bukkit.getScheduler().runTaskLater(main, () -> configHandler.getHeadClickCommands().forEach(reward ->
+                            main.getServer().dispatchCommand(main.getServer().getConsoleSender(), PlaceholdersHandler.parse(player, reward))), 1L);
+                }
             }
         }
 

@@ -25,7 +25,7 @@ public class DebugLog {
             ps = new PrintStream(logFile);
             canWrite = true;
         } catch (IOException e) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot create a debuglog file: " + e.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cCannot create a debuglog file: " + e.getMessage()));
             canWrite = false;
         }
     }

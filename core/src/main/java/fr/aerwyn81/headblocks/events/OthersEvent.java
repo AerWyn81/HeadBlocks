@@ -1,9 +1,9 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -68,7 +68,7 @@ public class OthersEvent implements Listener {
         try {
             main.getStorageHandler().updatePlayerName(p.getUniqueId(), p.getName());
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("Error while trying to update player name with the storage : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to update player name with the storage : " + ex.getMessage()));
         }
     }
 }

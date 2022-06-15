@@ -3,8 +3,8 @@ package fr.aerwyn81.headblocks.storages.types;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.storages.Storage;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -39,9 +39,9 @@ public class Redis implements Storage {
 
         try (Jedis redis = pool.getResource()) {
             redis.keys("headblocks:*");
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&aRedis connected!"));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&aRedis connected!"));
         } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cError cannot connect to Redis database : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError cannot connect to Redis database : " + ex.getMessage()));
         }
     }
 

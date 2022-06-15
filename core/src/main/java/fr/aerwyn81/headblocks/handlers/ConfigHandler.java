@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.handlers;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Color;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -85,7 +85,7 @@ public class ConfigHandler {
                 String[] s = color.split(",");
                 colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.translate(
                         "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
             }
         });
@@ -105,7 +105,7 @@ public class ConfigHandler {
                 String[] s = color.split(",");
                 colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.translate(
                         "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
             }
         });
@@ -271,7 +271,7 @@ public class ConfigHandler {
                     tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages));
                 }
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.translate(
                         "&cCannot read tiered rewards of \"" + level + "\". Error message :" + ex.getMessage()));
             }
         }

@@ -1,11 +1,8 @@
 package fr.aerwyn81.headblocks.utils;
 
 import com.google.common.base.Strings;
-import fr.aerwyn81.headblocks.HeadBlocks;
-import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Color;
-import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -14,7 +11,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FormatUtils {
+public class MessageUtils {
 	private static final Pattern hexPattern = Pattern.compile("\\{#[0-9a-fA-F]{6}}");
 
 	/**
@@ -44,7 +41,7 @@ public class FormatUtils {
 	 * @param message to translate
 	 * @return clean message translated
 	 */
-	public static String formatMessage(String message) {
+	public static String centerMessage(String message) {
 		String translated = translate(message);
 		return message.contains("{center}") ? sendCenteredString(translated.replaceAll("\\{center}", "")) : translated;
 	}
@@ -66,34 +63,6 @@ public class FormatUtils {
 
 		return translate(Strings.repeat(completedColor + symbol, progressBars) +
 				Strings.repeat(notCompletedColor + symbol, totalBars - progressBars));
-	}
-
-	/**
-	 * Parse int and return null if not an int
-	 *
-	 * @param value String
-	 * @return the integer or not if not
-	 */
-	public static Integer parseIntOrNull(Object value) {
-		try {
-			return Integer.parseInt(value.toString());
-		} catch (NumberFormatException e) {
-			return null;
-		}
-	}
-
-	/**
-	 * Handle PAPI placeholders
-	 *
-	 * @param player  the player to parse placeholders
-	 * @param message the message with placeholders
-	 * @return message with placeholders parsed or the default message
-	 */
-	public static String TryToFormatPlaceholders(Player player, String message) {
-		if (!HeadBlocks.isPlaceholderApiActive)
-			return message;
-
-		return PlaceholderAPI.setPlaceholders(player, message);
 	}
 
 	/**

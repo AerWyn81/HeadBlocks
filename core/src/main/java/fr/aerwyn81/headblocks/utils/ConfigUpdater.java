@@ -338,7 +338,7 @@ public class ConfigUpdater {
 
             oldConfig.save(file);
         } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot save the old configuration file. To prevent some errors, the config will be printed below..."));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cCannot save the old configuration file. To prevent some errors, the config will be printed below..."));
             List<String> lines = Collections.singletonList(oldConfig.saveToString());
             lines.forEach(l -> HeadBlocks.log.sendMessage(l));
         }

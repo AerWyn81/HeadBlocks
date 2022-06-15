@@ -20,13 +20,13 @@ public class FireworkUtils {
                 .trail(false);
 
         if (isColorsRandom) {
-            fBuilder.withColor(FormatUtils.getRandomColors());
+            fBuilder.withColor(MessageUtils.getRandomColors());
         } else {
             fBuilder.withColor(colors);
         }
 
         if (isFadeColorsRandom) {
-            fBuilder.withFade(FormatUtils.getRandomColors());
+            fBuilder.withFade(MessageUtils.getRandomColors());
         } else {
             fBuilder.withFade(fadeColors);
         }

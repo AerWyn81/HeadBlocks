@@ -7,8 +7,7 @@ import java.util.*;
 public class Memory implements Storage {
     private HashMap<UUID, ArrayList<UUID>> headsFound;
 
-    public Memory() {
-    }
+    public Memory() { }
 
     public void init() {
         headsFound = new HashMap<>();
