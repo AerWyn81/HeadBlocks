@@ -1,31 +1,52 @@
 package fr.aerwyn81.headblocks.databases;
 
-import org.javatuples.Pair;
+import fr.aerwyn81.headblocks.utils.InternalException;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 
 public interface Database {
+    int version = 1;
 
-    void close();
+    void close() throws InternalException;
 
-    void open();
+    void open() throws InternalException;
 
-    void load();
+    void load() throws InternalException;
 
-    boolean hasHead(UUID playerUuid, UUID headUuid);
+    int checkVersion();
 
-    boolean containsPlayer(UUID playerUuid);
+    void updatePlayerInfo(UUID pUUID, String pName) throws InternalException;
 
-    ArrayList<UUID> getHeadsPlayer(UUID playerUuid);
+    void createNewHead(UUID hUUID) throws InternalException;
 
-    void savePlayer(UUID playerUuid, UUID headUuid);
+    boolean containsPlayer(UUID pUUID) throws InternalException;
 
-    void resetPlayer(UUID playerUuid);
+    ArrayList<UUID> getHeadsPlayer(UUID pUUID) throws InternalException;
 
-    void removeHead(UUID headUuid);
+    void addHead(UUID pUUID, UUID hUUID) throws InternalException;
 
-    ArrayList<UUID> getAllPlayers();
+    void resetPlayer(UUID pUUID) throws InternalException;
 
-    ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit);
+    void removeHead(UUID hUUID, boolean withDelete) throws InternalException;
+
+    ArrayList<UUID> getAllPlayers() throws InternalException;
+
+    Map<String, Integer> getTopPlayers(int limit) throws InternalException;
+
+    boolean hasPlayerRenamed(UUID pUUID, String playerName) throws InternalException;
+
+    boolean isHeadExist(UUID headUuid) throws InternalException;
+
+    void migrate() throws InternalException;
+
+    void addTableVersion() throws InternalException;
+
+    ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getHeads() throws InternalException;
+
+    ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayerHeads() throws InternalException;
+
+    ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayers() throws InternalException;
 }

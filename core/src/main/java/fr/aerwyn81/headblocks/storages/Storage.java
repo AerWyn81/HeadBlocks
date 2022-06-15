@@ -1,20 +1,25 @@
 package fr.aerwyn81.headblocks.storages;
 
+import fr.aerwyn81.headblocks.utils.InternalException;
+
+import java.util.ArrayList;
 import java.util.UUID;
 
 public interface Storage {
 
-    void init();
+    void init() throws InternalException;
 
-    void close();
+    void close() throws InternalException;
 
-    boolean hasAlreadyClaimedHead(UUID playerUuid, UUID headUuid);
+    boolean containsPlayer(UUID playerUuid) throws InternalException;
 
-    boolean containsPlayer(UUID playerUuid);
+    void resetPlayer(UUID playerUuid) throws InternalException;
 
-    void savePlayer(UUID playerUuid, UUID headUuid);
+    void addHead(UUID playerUuid, UUID headUuid) throws InternalException;
 
-    void resetPlayer(UUID playerUuid);
+    boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException;
 
-    void removeHead(UUID headUuid);
+    void removeHead(UUID headUuid) throws InternalException;
+
+    ArrayList<UUID> getHeadsPlayer(UUID pUuid) throws InternalException;
 }

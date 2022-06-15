@@ -39,13 +39,20 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         this.register(new Version(main));
         this.register(new Stats(main));
         this.register(new Top(main));
+        this.register(new Tp());
+        this.register(new Move(main));
+        this.register(new Options(main));
+        this.register(new Export(main));
     }
 
-    private void register(Object c) {
+    private void register(Cmd c) {
         HBCommand command = new HBCommand(c);
 
         registeredCommands.put(command.getCommand(), command);
-        helpCommand.addCommand(command);
+
+        if (command.isVisible()) {
+            helpCommand.addCommand(command);
+        }
     }
 
     @Override
@@ -87,6 +94,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         if(args.length == 1) {
             return registeredCommands.keySet().stream()
                     .filter(arg -> arg.startsWith(args[0].toLowerCase()))
+                    .filter(arg -> registeredCommands.get(arg).isVisible())
                     .filter(arg -> PlayerUtils.hasPermission(sender, registeredCommands.get(arg).getPermission())).distinct()
                     .collect(Collectors.toCollection(ArrayList::new));
         }

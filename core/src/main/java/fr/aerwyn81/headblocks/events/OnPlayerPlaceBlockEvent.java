@@ -3,10 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.utils.HeadUtils;
-import fr.aerwyn81.headblocks.utils.ParticlesUtils;
-import fr.aerwyn81.headblocks.utils.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.Version;
+import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -15,7 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
@@ -55,26 +51,36 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        UUID headUuid = main.getHeadHandler().addLocation(headLocation);
-
-        if (Version.getCurrent().isNewerOrSameThan(Version.v1_13)) {
-            ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
+        if (HeadBlocks.isReloadInProgress) {
+            e.setCancelled(true);
+            player.sendMessage(languageHandler.getMessage("Messages.PluginReloading"));
+            return;
         }
 
-        player.sendMessage(languageHandler.getMessage("Messages.HeadPlaced")
-                .replaceAll("%x%", String.valueOf(headBlock.getX()))
-                .replaceAll("%y%", String.valueOf(headBlock.getY()))
-                .replaceAll("%z%", String.valueOf(headBlock.getZ()))
-                .replaceAll("%world%", headBlock.getWorld().getName()));
+        // Check if there is a storage issue
+        if (main.getStorageHandler().hasStorageError()) {
+            e.setCancelled(true);
+            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            return;
+        }
+
+        UUID headUuid;
+        try {
+            headUuid = main.getHeadHandler().saveHeadLocation(headLocation);
+        } catch (InternalException ex) {
+            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
+            return;
+        }
+
+        ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
+
+        player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
 
         Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {
-        if (Version.getCurrent() == Version.v1_8) {
-            return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getHead(), (ItemStack) main.getLegacySupport().getItemStackInHand(player)));
-        }
-
-        return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getHead(), player.getInventory().getItemInMainHand()));
+        return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
     }
 }

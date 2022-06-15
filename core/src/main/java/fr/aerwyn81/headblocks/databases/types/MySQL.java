@@ -1,220 +1,450 @@
 package fr.aerwyn81.headblocks.databases.types;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.pool.HikariPool;
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.databases.Database;
-import fr.aerwyn81.headblocks.handlers.ConfigHandler;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
-import org.bukkit.Bukkit;
-import org.javatuples.Pair;
+import fr.aerwyn81.headblocks.databases.Requests;
+import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.PlayerUtils;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.sql.*;
+import java.util.*;
 
+@SuppressWarnings("DuplicatedCode")
 public final class MySQL implements Database {
+    private final String user;
+    private final String password;
+    private final String hostname;
+    private final int port;
+    private final String databaseName;
+    private final boolean isSsl;
 
-    private final HeadBlocks main;
-    private final ConfigHandler configHandler;
+    private Connection connection;
 
-    private HikariDataSource hikari;
-
-    public MySQL(HeadBlocks main) {
-        this.main = main;
-        this.configHandler = main.getConfigHandler();
+    public MySQL(String user, String password, String hostname, int port, String databaseName, boolean isSsl) {
+        this.user = user;
+        this.password = password;
+        this.hostname = hostname;
+        this.port = port;
+        this.databaseName = databaseName;
+        this.isSsl = isSsl;
     }
 
+    /**
+     * Open the MySQL connection
+     */
     @Override
-    public void close() {
-        if (hikari == null) {
-            return;
-        }
-
-        hikari.close();
-    }
-
-    @Override
-    public void open() {
-        if (hikari != null) {
-            return;
+    public void open() throws InternalException {
+        Properties properties = new Properties();
+        properties.setProperty("user", user);
+        properties.setProperty("password", password);
+        if (!isSsl) {
+            properties.setProperty("verifyServerCertificate", "false");
+            properties.setProperty("useSSL", "false");
         }
 
         try {
-            HikariConfig config = new HikariConfig();
-            config.setPoolName("HeadBlocksPoolMySQL");
-            config.setJdbcUrl("jdbc:mysql://" + configHandler.getDatabaseHostname() + ":" + configHandler.getDatabasePort() + "/" + configHandler.getDatabaseName());
-            config.setUsername(configHandler.getDatabaseUsername());
-            config.setPassword(configHandler.getDatabasePassword());
-            config.setMaximumPoolSize(75);
-            config.setMinimumIdle(4);
-            config.addDataSourceProperty("cachePrepStmts", "true");
-            config.addDataSourceProperty("prepStmtCacheSize", "250");
-            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-            hikari = new HikariDataSource(config);
-
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&aMySQL has been enabled!"));
-        } catch (HikariPool.PoolInitializationException e) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cMySQL has an error on the connection! Now trying with SQLite..."));
-            main.getStorageHandler().changeToSQLite();
+            connection = DriverManager.getConnection("jdbc:mysql://" + hostname + ":" + port + "/" + databaseName, properties);
+        } catch (SQLException ex) {
+            throw new InternalException(ex);
         }
     }
 
+    /**
+     * Close the MySQL connection
+     */
     @Override
-    public void load() {
-        PreparedStatement statement = null;
-        Connection connection = null;
+    public void close() throws InternalException {
+        if (connection == null)
+            return;
+
         try {
-            connection = hikari.getConnection();
-            statement = connection.prepareStatement("CREATE TABLE IF NOT EXISTS hb_players (`pUUID` varchar(40) NOT NULL, `hUUID` varchar(40) NOT NULL, PRIMARY KEY (pUUID,`hUUID`));");
+            connection.close();
+        } catch (SQLException ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Ensure tables are created
+     */
+    @Override
+    public void load() throws InternalException {
+        PreparedStatement statement;
+        try {
+            statement = connection.prepareStatement(Requests.CREATE_TABLE_PLAYERS_MYSQL);
             statement.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+
+            statement = connection.prepareStatement(Requests.CREATE_TABLE_HEADS_MYSQL);
+            statement.execute();
+
+            statement = connection.prepareStatement(Requests.CREATE_TABLE_PLAYERHEADS_MYSQL);
+            statement.execute();
+
+            statement = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
+            statement.execute();
+        } catch (SQLException ex) {
+            throw new InternalException(ex);
         }
     }
 
+    /**
+     * Check version of the database
+     *
+     * @return if migration needed
+     */
     @Override
-    public boolean hasHead(UUID playerUuid, UUID headUuid) {
-        try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("SELECT * FROM hb_players WHERE pUUID = '" + playerUuid.toString() + "' AND hUUID = '" + headUuid.toString() + "';"); ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return true;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public int checkVersion() {
+        PreparedStatement statement;
+
+        try {
+            statement = connection.prepareStatement(Requests.CONTAINS_TABLE_HEADS);
+            statement.executeQuery();
+        } catch (Exception ex) {
+            return -1;
         }
 
-        return false;
-    }
-
-    @Override
-    public boolean containsPlayer(UUID playerUuid) {
-        try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("SELECT * FROM hb_players WHERE pUUID = '" + playerUuid.toString() + "';"); ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return true;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        try {
+            statement = connection.prepareStatement(Requests.GET_TABLE_VERSION);
+            ResultSet rs = statement.executeQuery();
+            return rs.getInt("current");
+        } catch (Exception ex) {
+            return 0;
         }
-
-        return false;
     }
 
+    /**
+     * Create or update a player
+     *
+     * @param pUUID player UUID
+     * @param pName player name
+     * @throws InternalException SQL Exception
+     */
     @Override
-    public ArrayList<UUID> getHeadsPlayer(UUID playerUuid) {
+    public void updatePlayerInfo(UUID pUUID, String pName) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.UPDATE_PLAYER_MYSQL)) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, pName);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Create a head
+     *
+     * @param hUUID head UUID
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public void createNewHead(UUID hUUID) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.CREATE_HEAD)) {
+            ps.setString(1, hUUID.toString());
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Check if player exist
+     *
+     * @param pUUID player UUID
+     * @return true if player exist
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public boolean containsPlayer(UUID pUUID) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.CONTAINS_PLAYER)) {
+            ps.setString(1, pUUID.toString());
+            ResultSet rs = ps.executeQuery();
+
+            return rs.next();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Retrieve heads for a player
+     *
+     * @param pUUID player UUID
+     * @return list of heads UUID
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public ArrayList<UUID> getHeadsPlayer(UUID pUUID) throws InternalException {
         ArrayList<UUID> heads = new ArrayList<>();
 
-        try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("SELECT * FROM hb_players WHERE pUUID = '" + playerUuid.toString() + "';"); ResultSet rs = ps.executeQuery()) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.PLAYER_HEADS)) {
+            ps.setString(1, pUUID.toString());
+
+            ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 heads.add(UUID.fromString(rs.getString("hUUID")));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+
+            return heads;
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Save a new head for the player
+     *
+     * @param pUUID player UUID
+     * @param hUUID head UUID
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public void addHead(UUID pUUID, UUID hUUID) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.SAVE_PLAYERHEAD)) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, hUUID.toString());
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Reset the players heads
+     *
+     * @param pUUID player UUID
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public void resetPlayer(UUID pUUID) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.RESET_PLAYER)) {
+            ps.setString(1, pUUID.toString());
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Remove a head
+     *
+     * @param hUUID head UUID
+     * @param withDelete should delete the head from the database
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.DELETE_HEAD : Requests.REMOVE_HEAD)) {
+            ps.setString(1, hUUID.toString());
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Retrieve all players stored
+     *
+     * @return list of player UUID
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public ArrayList<UUID> getAllPlayers() throws InternalException {
+        ArrayList<UUID> players = new ArrayList<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(Requests.ALL_PLAYERS)) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                players.add(UUID.fromString(rs.getString("pUUID")));
+            }
+
+            return players;
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Retrieve top players with a limit
+     *
+     * @param limit int limit
+     * @return list of player name with head count
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public Map<String, Integer> getTopPlayers(int limit) throws InternalException {
+        Map<String, Integer> top = new LinkedHashMap<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(Requests.TOP_PLAYERS)) {
+            ps.setInt(1, limit);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                top.put(rs.getString("pName"), rs.getInt("hCount"));
+            }
+
+            return top;
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Check player name
+     * @param pUUID player UUID
+     * @param pName player name
+     * @return boolean if player has renamed
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public boolean hasPlayerRenamed(UUID pUUID, String pName) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.CHECK_PLAYER_NAME)) {
+            ps.setString(1, pUUID.toString());
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return !pName.equals(rs.getString("pName"));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if head exist
+     * @param hUUID head uuid
+     * @return true if head exist otherwise false
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public boolean isHeadExist(UUID hUUID) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.HEAD_EXIST)) {
+            ps.setString(1, hUUID.toString());
+            ResultSet rs = ps.executeQuery();
+
+            return rs.next();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Migrate v1 to v2 database
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public void migrate() throws InternalException {
+        try {
+            // Create of the archive table
+            PreparedStatement ps = connection.prepareStatement(Requests.MIG_ARCHIVE_TABLE);
+            ps.executeUpdate();
+
+            // Copy old data into the archive table
+            ps = connection.prepareStatement(Requests.MIG_COPY_OLD_TO_ARCHIVE);
+            ps.executeUpdate();
+
+            // Delete old table
+            ps = connection.prepareStatement(Requests.MIG_DELETE_OLD);
+            ps.executeUpdate();
+
+            // Creation of new v2 tables
+            load();
+
+            // Import old users
+            ps = connection.prepareStatement(Requests.MIG_IMPORT_OLD_USERS);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String pUUID = rs.getString("pUUID");
+                String pName = PlayerUtils.getPseudoFromSession(pUUID);
+
+                ps = connection.prepareStatement(Requests.MIG_INSERT_PLAYER);
+                ps.setString(1, pUUID);
+                ps.setString(2, pName);
+                ps.executeUpdate();
+            }
+
+            // Import old heads
+            ps = connection.prepareStatement(Requests.MIG_IMPORT_OLD_HEADS);
+            ps.executeUpdate();
+
+            // Remap
+            ps = connection.prepareStatement(Requests.MIG_REMAP);
+            ps.executeUpdate();
+
+            // Delete archive table
+            ps = connection.prepareStatement(Requests.MIG_DEL_ARCHIVE);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Add table version
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public void addTableVersion() throws InternalException {
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
+            ps.execute();
+
+            ps = connection.prepareStatement(Requests.INSERT_VERSION);
+            ps.setInt(1, version);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getHeads() throws InternalException {
+        ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = new ArrayList<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_HEADS)) {
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                heads.add(new AbstractMap.SimpleEntry<>(rs.getString("hUUID"), rs.getBoolean("hExist")));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
         }
 
         return heads;
     }
 
     @Override
-    public void savePlayer(UUID playerUuid, UUID headUuid) {
-        try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("REPLACE INTO hb_players (pUUID, hUUID) VALUES(?,?)")) {
-            ps.setString(1, playerUuid.toString());
-            ps.setString(2, headUuid.toString());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+    public ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayerHeads() throws InternalException {
+        ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
-    @Override
-    public void resetPlayer(UUID playerUuid) {
-        Bukkit.getScheduler().runTaskAsynchronously(main, () -> {
-            PreparedStatement ps = null;
-            try {
-                Connection connection = hikari.getConnection();
-                ps = connection.prepareStatement("DELETE FROM hb_players WHERE pUUID = '" + playerUuid.toString() + "'");
-                ps.execute();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                if (ps != null) {
-                    try {
-                        ps.close();
-                    } catch (SQLException throwables) {
-                        throwables.printStackTrace();
-                    }
-                }
-            }
-        });
-    }
+        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_PLAYERHEADS)) {
+            ResultSet rs = ps.executeQuery();
 
-    @Override
-    public void removeHead(UUID headUuid) {
-        Bukkit.getScheduler().runTaskAsynchronously(main, () -> {
-            PreparedStatement ps = null;
-            try {
-                Connection connection = hikari.getConnection();
-                ps = connection.prepareStatement("DELETE FROM hb_players WHERE hUUID = '" + headUuid.toString() + "'");
-                ps.execute();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                if (ps != null) {
-                    try {
-                        ps.close();
-                    } catch (SQLException throwables) {
-                        throwables.printStackTrace();
-                    }
-                }
-            }
-        });
-    }
-
-    @Override
-    public ArrayList<UUID> getAllPlayers() {
-        ArrayList<UUID> players = new ArrayList<>();
-
-        try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("SELECT DISTINCT pUUID FROM hb_players"); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                players.add(UUID.fromString(rs.getString("pUUID")));
+                playerHeads.add(new AbstractMap.SimpleEntry<>(rs.getString("pUUID"), rs.getString("hUUID")));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
         }
 
-        return players;
+        return playerHeads;
     }
 
     @Override
-    public ArrayList<Pair<UUID, Integer>> getTopPlayers(int limit) {
-        ArrayList<Pair<UUID, Integer>> top = new ArrayList<>();
+    public ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayers() throws InternalException {
+        ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
-        try (Connection connection = hikari.getConnection(); PreparedStatement ps = connection.prepareStatement("SELECT `pUUID`, COUNT(*) as hCount FROM hb_players GROUP BY `pUUID` ORDER BY hCount DESC LIMIT '" + limit + "'"); ResultSet rs = ps.executeQuery()) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_PLAYER)) {
+            ResultSet rs = ps.executeQuery();
+
             while (rs.next()) {
-                top.add(new Pair<>(UUID.fromString(rs.getString("pUUID")), rs.getInt("hCount")));
+                playerHeads.add(new AbstractMap.SimpleEntry<>(rs.getString("pUUID"), rs.getString("pName")));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
         }
 
-        return top;
+        return playerHeads;
     }
 }

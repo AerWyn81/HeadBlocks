@@ -1,17 +1,18 @@
 package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
+import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
 public class PlaceholderHook extends PlaceholderExpansion {
 
-    private final HeadBlocksAPI headBlocksAPI;
+    private final HeadBlocks main;
 
     public PlaceholderHook(HeadBlocks main) {
-        this.headBlocksAPI = main.getHeadBlocksAPI();
+        this.main = main;
     }
 
     @Override
@@ -52,16 +53,24 @@ public class PlaceholderHook extends PlaceholderExpansion {
     public String onRequest(OfflinePlayer player, String identifier) {
         if (player == null) return "";
 
-        if (identifier.equals("current")) {
-            return "" + headBlocksAPI.getPlayerHeads(player.getUniqueId()).size();
+        if (identifier.equals("current") || identifier.equals("left")) {
+            int current;
+            try {
+                current = main.getStorageHandler().getHeadsPlayer(player.getUniqueId()).size();
+            } catch (InternalException ex) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
+                return "-1";
+            }
+
+            if (identifier.equals("current")) {
+                return "" + current;
+            } else {
+                return "" + (main.getHeadHandler().getChargedHeadLocations().size() - current);
+            }
         }
 
         if (identifier.equals("max")) {
-            return "" + headBlocksAPI.getTotalHeadSpawnCount();
-        }
-
-        if (identifier.equals("left")) {
-            return "" + headBlocksAPI.getLeftPlayerHeadToMax(player.getUniqueId());
+            return "" +  main.getHeadHandler().getChargedHeadLocations().size();
         }
 
         return null;

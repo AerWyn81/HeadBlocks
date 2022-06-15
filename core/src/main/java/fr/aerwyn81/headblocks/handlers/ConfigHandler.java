@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.handlers;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Color;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -28,6 +28,8 @@ public class ConfigHandler {
     public String getLanguage() {
         return config.getString("language", "en").toLowerCase();
     }
+
+    public boolean isMetricsEnabled() { return config.getBoolean("metrics", true); }
 
     public List<String> getHeads() {
         return config.getStringList("heads");
@@ -85,7 +87,7 @@ public class ConfigHandler {
                 String[] s = color.split(",");
                 colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.colorize(
                         "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
             }
         });
@@ -105,7 +107,7 @@ public class ConfigHandler {
                 String[] s = color.split(",");
                 colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.colorize(
                         "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
             }
         });
@@ -203,42 +205,46 @@ public class ConfigHandler {
         return config.getInt("database.settings.port", 3306);
     }
 
+    public boolean getDatabaseSsl() { return config.getBoolean("database.settings.ssl", false); }
+
     public boolean isPreventCommandsOnTieredRewardsLevel() {
         return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
     }
 
-    public boolean isParticlesEnabled() {
-        return config.getBoolean("particles.enabled", false);
+    public boolean isParticlesFoundEnabled() {
+        return config.getBoolean("floatingParticles.found.enabled", true);
     }
 
-    public int getParticlesDelay() {
-        return config.getInt("particles.delay", 20);
+    public boolean isParticlesNotFoundEnabled() {
+        return config.getBoolean("floatingParticles.notFound.enabled", false);
     }
 
-    public int getParticlesPlayerViewDistance() { return config.getInt("particles.playerViewDistance", 16); }
+    public boolean isFloatingParticlesEnabled() {
+        return isParticlesFoundEnabled() || isParticlesNotFoundEnabled();
+    }
 
     public String getParticlesNotFoundType() {
-        return config.getString("particles.notFound.type", "REDSTONE");
+        return config.getString("floatingParticles.notFound.type", "REDSTONE");
     }
 
     public ArrayList<String> getParticlesNotFoundColors() {
-        return new ArrayList<>(config.getStringList("particles.notFound.colors"));
+        return new ArrayList<>(config.getStringList("floatingParticles.notFound.colors"));
     }
 
     public int getParticlesNotFoundAmount() {
-        return config.getInt("particles.notFound.amount", 3);
+        return config.getInt("floatingParticles.notFound.amount", 3);
     }
 
     public String getParticlesFoundType() {
-        return config.getString("particles.found.type", "REDSTONE");
+        return config.getString("floatingParticles.found.type", "REDSTONE");
     }
 
     public ArrayList<String> getParticlesFoundColors() {
-        return new ArrayList<>(config.getStringList("particles.found.colors"));
+        return new ArrayList<>(config.getStringList("floatingParticles.found.colors"));
     }
 
     public int getParticlesFoundAmount() {
-        return config.getInt("particles.found.amount", 3);
+        return config.getInt("floatingParticles.found.amount", 3);
     }
 
     public List<TieredReward> getTieredRewards() {
@@ -269,11 +275,43 @@ public class ConfigHandler {
                     tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages));
                 }
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.colorize(
                         "&cCannot read tiered rewards of \"" + level + "\". Error message :" + ex.getMessage()));
             }
         }
 
         return tieredRewards;
+    }
+
+    public int getHologramParticlePlayerViewDistance() {
+        return config.getInt("internalTask.hologramParticlePlayerViewDistance", 16);
+    }
+
+    public int getDelayGlobalTask() {
+        return config.getInt("internalTask.delay", 20);
+    }
+
+    public double getHologramsHeightAboveHead() {
+        return config.getDouble("holograms.heightAboveHead", 0.5);
+    }
+
+    public boolean isHologramsEnabled() {
+        return isHologramsFoundEnabled() || isHologramsNotFoundEnabled();
+    }
+
+    public boolean isHologramsFoundEnabled() {
+        return config.getBoolean("holograms.found.enabled", true);
+    }
+
+    public boolean isHologramsNotFoundEnabled() {
+        return config.getBoolean("holograms.notFound.enabled", true);
+    }
+
+    public ArrayList<String> getHologramsFoundLines() {
+        return new ArrayList<>(config.getStringList("holograms.found.lines"));
+    }
+
+    public ArrayList<String> getHologramsNotFoundLines() {
+        return new ArrayList<>(config.getStringList("holograms.notFound.lines"));
     }
 }

@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.commands.HBCommand;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.CommandSender;
@@ -43,7 +43,7 @@ public class Help implements Cmd {
                     .replaceAll("all", "All");
 
             if (!languageHandler.hasMessage("Help." + command)) {
-                sender.sendMessage(FormatUtils.translate("&6/hb " + registeredCommands.get(i).getCommand() + " &8: &c&oNo help message found. Please report to developer!"));
+                sender.sendMessage(MessageUtils.colorize("&6/hb " + registeredCommands.get(i).getCommand() + " &8: &c&oNo help message found. Please report to developer!"));
             } else {
                 message = languageHandler.getMessage("Help." + command);
                 if (sender instanceof Player) {

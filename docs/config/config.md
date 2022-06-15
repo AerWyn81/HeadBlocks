@@ -12,6 +12,18 @@ This setting tells the configuration which language file to use. For this, the l
 folder `plugins/HeadBlocks/language/` and must be named as follows: `messages_xx.yml` where `xx` corresponds to the
 above setting. By default, `en` is used.
 
+#### Metrics
+You can safely disable this option if needed.  
+However, it allows me to have information about the use of my plugin.  
+I will not publish this information, it is exclusively for me  
+_Metrics by bStats_
+```
+metrics: true
+```
+
+!> Reload the plugin has no effect on this property, to change, please restart the server
+
+
 #### Heads
 
 ```
@@ -29,11 +41,13 @@ same page, at the bottom, in **Other** section, copy the **Value** and paste it 
 retrieve the ID of the head with the plugin and use it in place of `Id`.
 - **player**: Retrieve the player name and the head will have the texture of the player head.
 
-!> Note: Skulls and BetterHeads plugins are not supported.
+!> Note: Skulls and BetterHeads plugins cannot be supported because their API's is not working properly.
 
-When using the command `/hb give <yourName>`, you can specify what HeadBlock you want:
+When using the command `/hb give <playerName>`, you can specify what HeadBlock you want:
 - add a `*` at the end of the command and you will get all HeadBlocks
 - add a `number` at the end of the command and will get the head in order in the config
+
+!> Note: If you have only one head configured, just use the simple command /hb give
 
 #### Multi-server
 
@@ -47,13 +61,15 @@ redis:
     port: 6379
 ```
 
-For a multi-server configuration, it is highly recommended to have a Redis database. This configuration, once `enabled`,
+For a multi-server configuration, it is highly recommended having a Redis database. This configuration, once `enabled`,
 allows you to configure:
 
 - hostname: `localhost` or `url` to the remote redis database
 - database: redis database number (0 - 15)
 - password: password used for connection
 - port: port used for connection (_default is 6379_)
+
+!> Note: To make Redis work, you must configure a connection to an SQL database.
 
 #### MySQL database
 
@@ -66,6 +82,7 @@ database:
     username: ''
     password: ''
     port: 3306
+    ssl: false
 ```
 
 By default, all data is stored locally in SQLite in the file `plugins/HeadBlocks/headblocks.db`. If **enabled**, it is
@@ -76,6 +93,7 @@ possible to connect a remote database in MySQL:
 - username: user used for connection with read/write access
 - password: password used for connection
 - port: 3306 port used for connection (_default is 3306_)
+- ssl: enable ssl requests
 
 !> By switching SQLite to MySQL, the data is not migrated.
 
@@ -104,16 +122,17 @@ Allows to configure the progress bar displayed in any message of the plugin with
 
 ```
 particles:
-  enabled: true
   delay: 20
   playerViewDistance: 16
   notFound:
+    enabled: true
     type: REDSTONE
     colors:
       - '121, 51, 32'
       - '10, 154, 15'
     amount: 1
   found:
+    enabled: false
     type: REDSTONE
     # Colors is only for REDSTONE type
     # RGB format: 'red,green,blue'
@@ -125,6 +144,7 @@ particles:
 
 It is possible to float particles over the head if the player has found or not found the head if **enabled**:
 
+- enabled: if particle found/not found is enabled
 - delay: time between each particle display (the longer the time, the less lag it can cause) (20 ticks - 1 second)
 - playerViewDistance: the range at which players can see the particles
 - type: particle type (you can see the list [here](reference/particles.md))
@@ -139,7 +159,7 @@ shouldResetPlayerData: true
 ```
 
 By disabling this configuration, when a head is deleted (from the command or sneak), players' data will not be deleted.
-It is not recommended to deactivate it because the data will never be deleted.
+It is not recommended deactivating it because the data will never be deleted (not used atm).
 
 #### Prevent commands if tieredRewards contains the current number
 
@@ -210,8 +230,6 @@ or [PlaceHolderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/).
 
 #### Headclick - Title
 
-!> Title is not supported below Minecraft server version 1.10
-
 ```
 headClick:
   title:
@@ -231,7 +249,7 @@ It is also possible to send a title when the head is clicked, if `enabled`, to t
 - stay: how long it stays displayed in ticks
 - fadeOut: how long it takes to disappear in ticks
 
-?> Hex colors (format: {#ffffff}), placeholders are supported and centering (use: {center}) are supported
+?> Hex colors (format: {#ffffff}), placeholders and centering (use: {center}) are supported
 
 #### Headclick - Firework
 
@@ -261,8 +279,6 @@ clicked with several options:
   - set to more: the firework will explode in height according to the power (1 and 2 is vanilla)
 
 #### Headclick - Particles
-
-!> Title is not supported below Minecraft server version 1.13
 
 ```
 headClick:
@@ -307,3 +323,38 @@ It is possible to execute a command list when a player clicks on the head.
 
 ?> Hex colors (format: {#ffffff}), placeholders and centering (use: {center}) are supported
 
+#### Holograms
+
+```
+holograms:
+  heightAboveHead: 0
+  found:
+    enabled: true
+    lines:
+      - "&a&lFound"
+  notFound:
+    enabled: true
+    lines:
+      - "&c&lNot found"
+```
+
+It is possible to add holograms over the head and show it if the player has found the head or not. Can be configurable by:
+- heightAboveHead: height from the top of head and bottom of the last line of the hologram (support decimals)
+- enabled: set enabled or disabled found or noFound hologram
+- lines: lines displayed in the hologram
+
+?> Hex colors (format: {#ffffff}) supported
+
+!> Placeholders aren't supported
+
+#### Internal Task
+
+```
+internalTask:
+  delay: 20 # delay in ticks (1sec = 20 ticks)
+  hologramParticlePlayerViewDistance: 16
+```
+
+This section affects the internal timer of the plugin. You can modify these values to improve the performance but it may affect the plugin's operation.
+- delay: in ticks when plugin will check for player around a head
+- hologramParticlePlayerViewDistance: view distance for hologram and particles displayed to the player

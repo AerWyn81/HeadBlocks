@@ -3,18 +3,17 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
-import org.bukkit.Location;
+import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.command.CommandSender;
-import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
 
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
 public class RemoveAll implements Cmd {
@@ -32,7 +31,7 @@ public class RemoveAll implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        List<Pair<UUID, Location>> headLocations = headHandler.getHeadLocations();
+        ArrayList<HeadLocation> headLocations = new ArrayList<>(headHandler.getChargedHeadLocations());
         int headCount = headLocations.size();
 
         if (headLocations.size() == 0) {
@@ -40,15 +39,25 @@ public class RemoveAll implements Cmd {
             return true;
         }
 
+        int headRemoved = 0;
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
-            new ArrayList<>(headLocations).forEach(head -> {
-                if (configHandler.shouldResetPlayerData()) {
-                    storageHandler.removeHead(head.getValue0());
-                }
 
-                headHandler.removeHead(head.getValue0());
-            });
+            for (HeadLocation head : new ArrayList<>(headLocations)) {
+                try {
+                    headHandler.removeHeadLocation(head, configHandler.shouldResetPlayerData());
+                    headRemoved++;
+                } catch (InternalException ex) {
+                    sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getUuid().toString() + " at " + head.getLocation().toString() + ") from the storage: " + ex.getMessage()));
+                }
+            }
+
+            if (headRemoved == 0) {
+                sender.sendMessage(languageHandler.getMessage("Messages.RemoveAllError")
+                        .replaceAll("%headCount%", String.valueOf(headCount)));
+                return true;
+            }
 
             sender.sendMessage(languageHandler.getMessage("Messages.RemoveAllSuccess")
                     .replaceAll("%headCount%", String.valueOf(headCount)));

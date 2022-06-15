@@ -3,15 +3,15 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.handlers.StorageHandler;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -23,14 +23,12 @@ public class Remove implements Cmd {
     private final ConfigHandler configHandler;
     private final LanguageHandler languageHandler;
     private final HeadHandler headHandler;
-    private final StorageHandler storageHandler;
 
     public Remove(HeadBlocks main) {
         this.main = main;
         this.configHandler = main.getConfigHandler();
         this.languageHandler = main.getLanguageHandler();
         this.headHandler = main.getHeadHandler();
-        this.storageHandler = main.getStorageHandler();
     }
 
     @Override
@@ -42,33 +40,29 @@ public class Remove implements Cmd {
             return true;
         }
 
-        Pair<UUID, Location> head = headHandler.getHeadByUUID(UUID.fromString(args[1]));
+        HeadLocation head = headHandler.getHeadByUUID(UUID.fromString(args[1]));
         if (head == null) {
             player.sendMessage(languageHandler.getMessage("Messages.RemoveLocationError"));
             return true;
         }
 
-        if (configHandler.shouldResetPlayerData()) {
-            storageHandler.removeHead(head.getValue0());
+        try {
+            headHandler.removeHeadLocation(head, configHandler.shouldResetPlayerData());
+        } catch (InternalException ex) {
+            sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getUuid().toString() + " at " + head.getLocation().toString() + ") from the storage: " + ex.getMessage()));
+            return true;
         }
 
-        headHandler.removeHead(head.getValue0());
-
-        Location loc = head.getValue1();
-        player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")
-                .replaceAll("%world%", loc.getWorld() != null ? loc.getWorld().getName() : FormatUtils.translate("&cUnknownWorld"))
-                .replaceAll("%x%", String.valueOf(loc.getBlockX()))
-                .replaceAll("%y%", String.valueOf(loc.getBlockY()))
-                .replaceAll("%z%", String.valueOf(loc.getBlockZ())));
-
+        Location loc = head.getLocation();
+        player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.HeadRemoved"), loc));
         return true;
     }
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 ? main.getHeadHandler().getHeadLocations().stream()
-                .map(Pair::getValue0)
-                .map(UUID::toString)
+        return args.length == 2 ? main.getHeadHandler().getChargedHeadLocations().stream()
+                .map(h -> h.getUuid().toString())
                 .collect(Collectors.toCollection(ArrayList::new)) : new ArrayList<>();
     }
 }

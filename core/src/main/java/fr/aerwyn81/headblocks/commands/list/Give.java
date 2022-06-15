@@ -3,11 +3,10 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.data.head.Head;
+import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
-import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -38,30 +37,40 @@ public class Give implements Cmd {
             Player pTemp = Bukkit.getPlayer(args[1]);
 
             if (pTemp == null) {
-                player.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound"));
+                player.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound")
+                        .replaceAll("%player%", args[1]));
                 return true;
             }
 
             player = pTemp;
         }
 
-        ArrayList<Head> heads = headHandler.getHeads();
-        if (heads.size() == 0) {
+        ArrayList<HBHead> hbHeads = headHandler.getHeads();
+        if (hbHeads.size() == 0) {
             player.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 
-        ArrayList<Head> headsToGive = new ArrayList<>();
+        ArrayList<HBHead> headsToGive = new ArrayList<>();
         if (args.length > 2 && args[2].equals("*")) {
             headsToGive = headHandler.getHeads();
+        } else if (args.length >= 1 && hbHeads.size() == 1) {
+            headsToGive.add(headHandler.getHeads().get(0));
         } else if (args.length > 2) {
-            Integer id = FormatUtils.parseIntOrNull(args[2]);
-            if (id == null) {
+            int id;
+
+            try {
+                id = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e) {
+                id = 1;
+            }
+
+            if (id < 1) {
                 id = 1;
             }
 
             int finalId = --id;
-            if (finalId > heads.size() - 1) {
+            if (finalId > hbHeads.size() - 1) {
                 player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
                 return true;
             }
@@ -78,16 +87,21 @@ public class Give implements Cmd {
         }
 
         int headGiven = 0;
-        for (Head head : headsToGive) {
-            if (!head.isLoaded()) {
-                player.sendMessage(languageHandler.getMessage("Messages.HeadNotYetLoaded")
-                        .replaceAll("%id%", String.valueOf(head.getId())));
-                continue;
+        for (HBHead head : headsToGive) {
+            if (head instanceof HBHeadHDB) {
+                HBHeadHDB headHDB = (HBHeadHDB) head;
+
+                if (!headHDB.isLoaded()) {
+                    player.sendMessage(languageHandler.getMessage("Messages.HeadNotYetLoaded")
+                            .replaceAll("%id%", String.valueOf(headHDB.getId())));
+                    continue;
+                }
             }
 
-            player.getInventory().addItem(head.getHead());
+            player.getInventory().addItem(head.getItemStack());
             headGiven++;
         }
+
 
         if (headGiven != 0) {
             player.sendMessage(languageHandler.getMessage("Messages.HeadGiven"));
@@ -99,12 +113,7 @@ public class Give implements Cmd {
     public int getEmptySlots(Player player) {
         int i = 0;
 
-        ItemStack[] items;
-        if (Version.getCurrent() == Version.v1_8) {
-            items = (ItemStack[]) main.getLegacySupport().getInventoryContent(player);
-        } else {
-            items = player.getInventory().getStorageContents();
-        }
+        ItemStack[] items = player.getInventory().getStorageContents();
 
         for (ItemStack is : items) {
             if (is != null && is.getType() != Material.AIR)
@@ -122,13 +131,18 @@ public class Give implements Cmd {
                     .collect(Collectors.toCollection(ArrayList::new));
         }
 
+        int headCount = main.getHeadHandler().getHeads().size();
+
         ArrayList<String> items = new ArrayList<>();
-        if (args.length == 3 && main.getHeadHandler().getHeads().size() > 0) {
-            items.add("*");
-            items.addAll(IntStream.range(1, main.getHeadHandler().getHeads().size() + 1)
-                    .boxed()
-                    .map(Object::toString)
-                    .collect(Collectors.toList()));
+        if (args.length == 3 && headCount > 0) {
+            if (headCount > 1) {
+                items.add("*");
+
+                items.addAll(IntStream.range(1, headCount + 1)
+                        .boxed()
+                        .map(Object::toString)
+                        .collect(Collectors.toList()));
+            }
         }
 
         return items;

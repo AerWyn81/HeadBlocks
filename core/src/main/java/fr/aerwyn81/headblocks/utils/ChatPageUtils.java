@@ -99,11 +99,11 @@ public class ChatPageUtils  {
             }
 
             if (!isConsoleSender && command != null && size > pageHeight) {
-                TextComponent c1 = new TextComponent(FormatUtils.translate(languageHandler.getMessage("Chat.PreviousPage")));
+                TextComponent c1 = new TextComponent(MessageUtils.colorize(languageHandler.getMessage("Chat.PreviousPage")));
                 c1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb " + command + " " + (pageNumber - 1)));
                 c1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.PreviousPage")).create()));
 
-                TextComponent c2 = new TextComponent(FormatUtils.translate(languageHandler.getMessage("Chat.NextPage")));
+                TextComponent c2 = new TextComponent(MessageUtils.colorize(languageHandler.getMessage("Chat.NextPage")));
                 c2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb " + command + " " + (pageNumber + 1)));
                 c2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.NextPage")).create()));
 

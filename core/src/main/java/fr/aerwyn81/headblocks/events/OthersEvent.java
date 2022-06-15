@@ -1,8 +1,12 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.utils.HeadUtils;
-import fr.aerwyn81.headblocks.utils.Version;
+import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.handlers.ConfigHandler;
+import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HologramHandler;
+import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.utils.LocationUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -10,14 +14,25 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class OthersEvent implements Listener {
     private final HeadBlocks main;
+    private final ConfigHandler configHandler;
+    private final HeadHandler headHandler;
+    private final StorageHandler storageHandler;
+    private final HologramHandler hologramHandler;
 
     public OthersEvent(HeadBlocks main) {
         this.main = main;
+        this.configHandler = main.getConfigHandler();
+        this.headHandler = main.getHeadHandler();
+        this.storageHandler = main.getStorageHandler();
+        this.hologramHandler = main.getHologramHandler();
     }
 
     @EventHandler
@@ -25,15 +40,13 @@ public class OthersEvent implements Listener {
         Block block = e.getBlock();
 
         // Check if block is a head
-        if (!isBlockIsHeadBlock(block)) {
+        if (block.getType() != Material.PLAYER_WALL_HEAD || block.getType() != Material.PLAYER_HEAD) {
             return;
         }
 
-        Location clickedLocation = block.getLocation();
-        UUID headUuid = main.getHeadHandler().getHeadAt(clickedLocation);
-
         // Check if the head is a head of the plugin
-        if (headUuid == null) {
+        HeadLocation headLocation = headHandler.getHeadAt(block.getLocation());
+        if (headLocation == null) {
             return;
         }
 
@@ -42,18 +55,45 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent e) {
-        if (e.getBlocks().stream().anyMatch(b -> main.getHeadHandler().getHeadLocations().stream()
-                .anyMatch(p -> HeadUtils.areEquals(p.getValue1(), b.getLocation())))) {
+        if (e.getBlocks().stream().anyMatch(b -> headHandler.getChargedHeadLocations().stream()
+                .anyMatch(p -> LocationUtils.areEquals(p.getLocation(), b.getLocation())))) {
             e.setCancelled(true);
         }
     }
 
-    private boolean isBlockIsHeadBlock(Block block) {
-        // Specific case where we only check if the block type if a skull
-        if (Version.getCurrent().isOlderOrSameThan(Version.v1_12)) {
-            return block.getType().name().equals("SKULL");
-        }
+    @EventHandler
+    public void onJoin(PlayerJoinEvent e) {
+        storageHandler.loadPlayer(e.getPlayer());
 
-        return block.getType() == Material.PLAYER_WALL_HEAD || block.getType() == Material.PLAYER_HEAD;
+        if (configHandler.isHologramsEnabled()) {
+            hologramHandler.addExcludedPlayer(e.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        storageHandler.unloadPlayer(e.getPlayer());
+        headHandler.getHeadMoves().remove(e.getPlayer().getUniqueId());
+
+        if (configHandler.isHologramsEnabled()) {
+            hologramHandler.removeExcludedPlayer(e.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onWorldLoaded(WorldLoadEvent e) {
+        var headsInWorld = headHandler.getHeadLocations()
+                .stream()
+                .filter(h -> !h.isCharged() && e.getWorld().getName().equals(h.getConfigWorldName()))
+                .collect(Collectors.toList());
+
+        for (HeadLocation head : headsInWorld) {
+            if (main.getConfigHandler().isHologramsEnabled()) {
+                hologramHandler.createHolograms(head.getLocation());
+            }
+
+            head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));
+            head.setCharged(true);
+        }
     }
 }

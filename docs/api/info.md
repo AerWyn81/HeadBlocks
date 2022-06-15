@@ -43,9 +43,6 @@ public final class MyPlugin extends JavaPlugin {
             // HeadBlocks not enabled
         }
 
-        // Get HeadBlockAPI instance for methods
-        HeadBlocksAPI headBlocksAPI = headBlocksInstance.getHeadBlocksAPI();
-        
         // Access at the entire plugin with the headBlocksInstance instance
         headBlocksInstance..
     }
@@ -58,9 +55,3 @@ Events  | Explanations
 HeadClickEvent | _Event triggered when a head is clicked (contains success or not)_
 HeadCreatedEvent | _Event called when a head is created (contains the location)_
 HeadDeletedEvent | _Event to trigger when a head is deleted_
-
-Methods  | Explanations
-------------- | -------------
-`getPlayerHeads(UUID playerUuid)` | _Return a `List<UUID>` of all related head found by the player_
-`getTotalHeadSpawnCount()` | _Return an `int` which corresponds to the total of heads placed_
-`getLeftPlayerHeadToMax(UUID playerUuid)` | _Return an `int` showing the amount of remaining heads to be found_

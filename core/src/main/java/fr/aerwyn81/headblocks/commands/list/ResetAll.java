@@ -5,6 +5,8 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
@@ -24,7 +26,15 @@ public class ResetAll implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        List<UUID> allPlayers = storageHandler.getAllPlayers();
+        List<UUID> allPlayers;
+
+        try {
+            allPlayers = storageHandler.getAllPlayers();
+        } catch (InternalException ex) {
+            sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving all players from the storage: " + ex.getMessage()));
+            return true;
+        }
 
         if (allPlayers.size() == 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.ResetAllNoData"));
@@ -33,7 +43,17 @@ public class ResetAll implements Cmd {
 
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
-            allPlayers.forEach(storageHandler::resetPlayer);
+
+            for (UUID uuid : allPlayers) {
+                try {
+                    storageHandler.resetPlayer(uuid);
+                } catch (InternalException ex) {
+                    sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + uuid.toString() + " from the storage: " + ex.getMessage()));
+                    return true;
+                }
+            }
+
             sender.sendMessage(languageHandler.getMessage("Messages.ResetAllSuccess")
                     .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
             return true;

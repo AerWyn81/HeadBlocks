@@ -1,22 +1,18 @@
 # Language used for messages in the plugin
 language: en
 
+# Message from the developer: You can safely disable this option.
+# However, it allows me to have information about the use of my plugin.
+# I will not publish this information, it is exclusively for me
+# Reload the plugin has no effect on this property, to change, please restart the server
+# Metrics by bStats
+metrics: true
+
 # Heads textures
 # By default, use the format "default:<value> where <value> is an encoded string (see: Other-Value at https://minecraft-heads.com/)
 # Support HeadDatabase plugin, use the format "hdb:<id>" where <id> is the id of the head
 heads:
   - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQ5Y2M1OGFkMjVhMWFiMTZkMzZiYjVkNmQ0OTNjOGY1ODk4YzJiZjMwMmI2NGUzMjU5MjFjNDFjMzU4NjcifX19'
-  - 'hdb:28591'
-  - 'hdb:28596'
-
-# Multi-server support with Redis
-redis:
-  enable: false
-  settings:
-    hostname: localhost
-    database: 0
-    password: ''
-    port: 6379
 
 # Database configuration (MySQL)
 database:
@@ -27,6 +23,16 @@ database:
     username: ''
     password: ''
     port: 3306
+    ssl: false
+
+# Multi-server support with Redis
+redis:
+  enable: false
+  settings:
+    hostname: localhost
+    database: 0
+    password: ''
+    port: 6379
 
 # Progress bar customization displayed wherever the placeholder %progress% is used
 progressBar:
@@ -35,16 +41,18 @@ progressBar:
   notCompletedColor: '&7'
   completedColor: '&a'
 
-# Events on head click
+# Interactions on head click
 headClick:
-  # Messages send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI) and multilines
+  # A multiline message send to the player
+  # Support placeholders (%player%, %prefix%, %current%, %max%, %progress%) & PlaceholderAPI
   # Keep [] for no message
   messages:
     - ''
-    - '%prefix% &aYou found a new head!'
+    - '%prefix% &aYou found a new head! &7(%current%/%max%)'
     - ''
-  # Title send to the player - Support placeholders (%player%, %prefix%, PlaceholderAPI)
-  # Not supported below 1.10
+
+  # Title send to the player
+  # Support placeholders (%player%, %prefix%, %current%, %max%, %progress%) & PlaceholderAPI
   title:
     enabled: false
     firstLine: ''
@@ -52,76 +60,105 @@ headClick:
     fadeIn: 0
     stay: 50
     fadeOut: 0
+
   # Firework fired when a player found a head
   # Keep empty 'colors' and 'fadeColors' for random colors
-  # Support multi line colors of the format: 'red,green,blue' (add dash)
+  # Support multiple colors (ex: 12,16,18)
   firework:
     enabled: false
     colors: [ ]
     fadeColors: [ ]
     flicker: true
     power: 0
-  # 1.13+ - Particle displayed when a player had already found the head
+
+  # Particle displayed when a player had already found the head
   particles:
     enabled: false
     alreadyOwn:
       type: VILLAGER_ANGRY
       # Colors is only for REDSTONE type
-      # RGB format: 'red,green,blue'
-      # Support multiple colors (add dash)
+      # Support multiple colors (ex: 12,16,18)
       colors: [ ]
       amount: 1
+
   # Sound on head click (You can find the list of sounds here : https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html)
   # Keep empty for no sound
   sounds:
     alreadyOwn: block_note_block_didgeridoo
     notOwn: block_note_block_bell
+
   # A list of commands
   # Keep [] for no command
   commands:
     - "give %player% diamond"
 
-# 1.13+ - Particles floating above the head when player has not yet found it
-particles:
-  enabled: true
-  delay: 20 #delay in ticks (1sec = 20 ticks)
-  playerViewDistance: 16
+# Holograms displayed above heads
+# Placeholders are not supported
+holograms:
+  heightAboveHead: 0.5
+  found:
+    enabled: true
+    lines:
+      - "&a&lFound"
   notFound:
+    enabled: true
+    lines:
+      - "&c&lNot found"
+
+# Internal settings for internal tasks
+# Increase delay or reduce view distance can improve performance but decreases the quality
+internalTask:
+  delay: 20 # delay in ticks (1sec = 20 ticks)
+  hologramParticlePlayerViewDistance: 16
+
+# Particles floating above the head when player has not yet found it
+floatingParticles:
+  notFound:
+    enabled: true
     type: REDSTONE
     # Colors is only for REDSTONE type
-    # RGB format: 'red,green,blue'
-    # Support multiple colors (add dash)
+    # Support multiple colors (ex: 12,16,18)
     colors:
       - 255,0,0
+      - 255,50,0
+      - 255,0,50
     amount: 3
   found:
+    enabled: false
     type: REDSTONE
     # Colors is only for REDSTONE type
-    # RGB format: 'red,green,blue'
-    # Support multiple colors (add dash)
+    # Support multiple colors (ex: 12,16,18)
     colors:
       - 0,255,0
+      - 50,255,0
+      - 0,255,50
     amount: 3
 
 # If true, when a Headblocks is destroyed, it will delete all player data related to it
+# If false, Headblocks destroyed will remain in database. There's no purge command atm
 shouldResetPlayerData: true
 
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
 preventCommandsOnTieredRewardsLevel: false
 
 # Tiered rewards : provide a head count to trigger a reward command list
+# Add the tier, then messages, commands or broadcast message which will be executed
 tieredRewards:
   1:
     messages:
       - ''
-      - '%prefix% &e%player% &afound one head!'
+      - '%prefix% &aYou found &e1 head&a!'
       - ''
     commands:
       - 'give %player% diamond'
   100:
     messages:
       - ''
-      - '%prefix% &e%player% &afound &6100 heads&a!!!'
+      - '%prefix% &aYou found &6100 heads&a!'
       - ''
     commands:
       - 'give %player% diamond 100'
+    broadcast:
+      - ''
+      - '%prefix% &6%player% &afound &6100 heads&a!!!'
+      - ''

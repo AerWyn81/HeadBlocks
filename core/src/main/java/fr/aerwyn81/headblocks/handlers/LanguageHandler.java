@@ -2,11 +2,10 @@ package fr.aerwyn81.headblocks.handlers;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.ConfigUpdater;
-import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +37,7 @@ public class LanguageHandler {
 	}
 
 	public String getPrefix() {
-		return FormatUtils.translate(messages.get("Prefix").toString());
+		return MessageUtils.colorize(messages.get("Prefix").toString());
 	}
 
 	public boolean hasMessage(String message) {
@@ -46,15 +45,11 @@ public class LanguageHandler {
 	}
 
 	public String getMessage(String message) {
-		return FormatUtils.translate(messages.get(message).toString().replaceAll("%prefix%", getPrefix()));
-	}
-
-	public String getMessageWithPlaceholders(Player player, String message) {
-		return FormatUtils.translate(FormatUtils.TryToFormatPlaceholders(player, getMessage(message)));
+		return MessageUtils.colorize(messages.get(message).toString().replaceAll("%prefix%", getPrefix()));
 	}
 
 	public List<String> getMessages(String message) {
-		return ((List<String>) messages.get(message)).stream().map(FormatUtils::translate).collect(Collectors.toList());
+		return ((List<String>) messages.get(message)).stream().map(MessageUtils::colorize).collect(Collectors.toList());
 	}
 
 	public String checkLanguage(String lang) {

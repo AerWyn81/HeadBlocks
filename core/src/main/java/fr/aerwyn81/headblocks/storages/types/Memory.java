@@ -1,48 +1,59 @@
 package fr.aerwyn81.headblocks.storages.types;
 
 import fr.aerwyn81.headblocks.storages.Storage;
+import fr.aerwyn81.headblocks.utils.InternalException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.UUID;
 
 public class Memory implements Storage {
+
     private HashMap<UUID, ArrayList<UUID>> headsFound;
 
-    public Memory() {
-    }
+    public Memory() { }
 
+    @Override
     public void init() {
         headsFound = new HashMap<>();
     }
 
-    public void close() {
+    @Override
+    public void close() throws InternalException { }
+
+    @Override
+    public boolean hasHead(UUID playerUuid, UUID headUuid) {
+        return containsPlayer(playerUuid) && headsFound.get(playerUuid).contains(headUuid);
     }
 
-    public boolean hasAlreadyClaimedHead(UUID pUuid, UUID hUuid) {
-        return containsPlayer(pUuid) && headsFound.get(pUuid).contains(hUuid);
+    @Override
+    public boolean containsPlayer(UUID playerUuid) {
+        return headsFound.get(playerUuid) != null;
     }
 
-    public void savePlayer(UUID pUuid, UUID hUuid) {
-        if (!containsPlayer(pUuid)) {
-            headsFound.put(pUuid, new ArrayList<>(Collections.singletonList(hUuid)));
+    @Override
+    public void addHead(UUID playerUuid, UUID headUuid) {
+        if (!containsPlayer(playerUuid)) {
+            headsFound.put(playerUuid, new ArrayList<>(Collections.singletonList(headUuid)));
             return;
         }
 
-        headsFound.get(pUuid).add(hUuid);
+        headsFound.get(playerUuid).add(headUuid);
     }
 
-    public boolean containsPlayer(UUID pUuid) {
-        return headsFound.get(pUuid) != null;
+    @Override
+    public void resetPlayer(UUID playerUuid) {
+        headsFound.remove(playerUuid);
     }
 
-    public List<UUID> getHeadsPlayer(UUID pUuid) {
+    @Override
+    public void removeHead(UUID headUuid) {
+        headsFound.values().forEach(u -> u.remove(headUuid));
+    }
+
+    @Override
+    public ArrayList<UUID> getHeadsPlayer(UUID pUuid) throws InternalException {
         return containsPlayer(pUuid) ? headsFound.get(pUuid) : new ArrayList<>();
-    }
-
-    public void resetPlayer(UUID pUuid) {
-        headsFound.remove(pUuid);
-    }
-
-    public void removeHead(UUID hUuid) {
-        headsFound.values().forEach(u -> u.remove(hUuid));
     }
 }

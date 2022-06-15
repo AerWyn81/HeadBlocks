@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class DebugLog {
-    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu/MM/dd HH:mm:ss");
+    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
     private static PrintStream ps;
     private static boolean canWrite;
@@ -25,7 +25,7 @@ public class DebugLog {
             ps = new PrintStream(logFile);
             canWrite = true;
         } catch (IOException e) {
-            HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot create a debuglog file: " + e.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create a debuglog file: " + e.getMessage()));
             canWrite = false;
         }
     }
