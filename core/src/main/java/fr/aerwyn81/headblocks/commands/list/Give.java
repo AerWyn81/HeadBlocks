@@ -55,15 +55,15 @@ public class Give implements Cmd {
         if (args.length > 2 && args[2].equals("*")) {
             headsToGive = headHandler.getHeads();
         } else if (args.length > 2) {
-            Integer id;
+            int id;
 
             try {
                 id = Integer.parseInt(args[2]);
             } catch (NumberFormatException e) {
-                id = null;
+                id = 1;
             }
 
-            if (id == null || id < 1) {
+            if (id < 1) {
                 id = 1;
             }
 

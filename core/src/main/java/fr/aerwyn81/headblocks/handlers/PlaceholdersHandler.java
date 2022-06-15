@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.handlers;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlaceholdersHandler {
-    private static final HeadBlocksAPI headBlocksAPI;
     private static final ConfigHandler configHandler;
     private static final LanguageHandler languageHandler;
     private static final HeadHandler headHandler;
@@ -21,7 +19,6 @@ public class PlaceholdersHandler {
         HeadBlocks instance = HeadBlocks.getInstance();
         configHandler = instance.getConfigHandler();
         languageHandler = instance.getLanguageHandler();
-        headBlocksAPI = instance.getHeadBlocksAPI();
         headHandler = instance.getHeadHandler();
         storageHandler = instance.getStorageHandler();
     }

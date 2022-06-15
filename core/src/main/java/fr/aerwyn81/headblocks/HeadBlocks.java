@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks;
 
-import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
@@ -41,8 +40,6 @@ public final class HeadBlocks extends JavaPlugin {
     private HeadHandler headHandler;
     private RewardHandler rewardHandler;
     private StorageHandler storageHandler;
-
-    private HeadBlocksAPI headBlocksAPI;
 
     private ParticlesTask particlesTask;
     private HeadDatabaseAPI headDatabaseAPI;
@@ -86,8 +83,6 @@ public final class HeadBlocks extends JavaPlugin {
         this.storageHandler.initStorage();
 
         this.rewardHandler = new RewardHandler(this);
-
-        this.headBlocksAPI = new HeadBlocksAPI();
 
         if (configHandler.isParticlesEnabled()) {
             if (Version.getCurrent().isOlderThan(Version.v1_13)) {
@@ -171,11 +166,7 @@ public final class HeadBlocks extends JavaPlugin {
     public RewardHandler getRewardHandler() {
         return rewardHandler;
     }
-
-    public HeadBlocksAPI getHeadBlocksAPI() {
-        return headBlocksAPI;
-    }
-
+    
     public StorageHandler getStorageHandler() {
         return storageHandler;
     }

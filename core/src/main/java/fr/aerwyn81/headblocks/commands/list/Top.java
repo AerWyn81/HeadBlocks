@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
@@ -23,12 +22,10 @@ import java.util.ArrayList;
 public class Top implements Cmd {
     private final HeadBlocks main;
     private final LanguageHandler languageHandler;
-    private final HeadBlocksAPI headBlocksAPI;
 
     public Top(HeadBlocks main) {
         this.main = main;
         this.languageHandler = main.getLanguageHandler();
-        this.headBlocksAPI = main.getHeadBlocksAPI();
     }
 
     @Override

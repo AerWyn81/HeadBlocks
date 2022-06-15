@@ -39,6 +39,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         this.register(new Version(main));
         this.register(new Stats(main));
         this.register(new Top(main));
+        this.register(new Tp());
     }
 
     private void register(Object c) {
@@ -87,6 +88,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         if(args.length == 1) {
             return registeredCommands.keySet().stream()
                     .filter(arg -> arg.startsWith(args[0].toLowerCase()))
+                    .filter(arg -> registeredCommands.get(arg).isTabVisible())
                     .filter(arg -> PlayerUtils.hasPermission(sender, registeredCommands.get(arg).getPermission())).distinct()
                     .collect(Collectors.toCollection(ArrayList::new));
         }
