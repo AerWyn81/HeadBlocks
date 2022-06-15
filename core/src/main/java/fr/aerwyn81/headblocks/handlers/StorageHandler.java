@@ -132,4 +132,8 @@ public class StorageHandler {
     public ArrayList<Pair<String, Integer>> getTopPlayers(int limit) throws InternalException {
         return database.getTopPlayers(limit);
     }
+
+    public void updatePlayerName(UUID playerUuid, String playerName) throws InternalException {
+        database.updatePlayerInfo(playerUuid, playerName);
+    }
 }

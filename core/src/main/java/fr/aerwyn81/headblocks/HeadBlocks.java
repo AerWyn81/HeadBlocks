@@ -2,17 +2,21 @@ package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.api.HeadBlocksAPI;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
 import fr.aerwyn81.headblocks.events.OnPlayerInteractEvent;
 import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
 import fr.aerwyn81.headblocks.events.OthersEvent;
 import fr.aerwyn81.headblocks.handlers.*;
-import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.ParticlesTask;
 import fr.aerwyn81.headblocks.utils.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
+import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.Version;
+import me.arcaniax.hdb.api.HeadDatabaseAPI;
+import me.arcaniax.hdb.enums.CategoryEnum;
+import me.arcaniax.hdb.object.head.Head;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +24,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
@@ -40,14 +45,14 @@ public final class HeadBlocks extends JavaPlugin {
     private HeadBlocksAPI headBlocksAPI;
 
     private ParticlesTask particlesTask;
-    private HeadDatabaseHook headDatabaseHook;
+    private HeadDatabaseAPI headDatabaseAPI;
 
     @Override
     public void onEnable() {
         instance = this;
         log = Bukkit.getConsoleSender();
 
-        log.sendMessage(FormatUtils.translate("&6HeadBlocks &einitializing..."));
+        log.sendMessage(FormatUtils.translate("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
 
         File configFile = new File(getDataFolder(), "config.yml");
         File backupConfigFile = new File(getDataFolder(), "config.yml.save");
@@ -58,7 +63,7 @@ public final class HeadBlocks extends JavaPlugin {
         try {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads"));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.sendMessage(FormatUtils.translate("&cError while loading config file: " + e.getMessage()));
         }
         reloadConfig();
 
@@ -83,18 +88,12 @@ public final class HeadBlocks extends JavaPlugin {
 
         if (configHandler.isParticlesEnabled()) {
             if (Version.getCurrent().isOlderThan(Version.v1_13)) {
-                log.sendMessage(FormatUtils.translate("&cParticles is enabled but not supported before 1.13 included."));
+                log.sendMessage(FormatUtils.translate("&cParticles are enabled but not supported before 1.13 included."));
             } else {
                 this.particlesTask = new ParticlesTask(this);
                 particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
             }
         }
-
-        getCommand("headblocks").setExecutor(new HBCommandExecutor(this));
-
-        Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new OthersEvent(this), this);
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new PlaceholderHook(this).register();
@@ -103,14 +102,18 @@ public final class HeadBlocks extends JavaPlugin {
 
         isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
         if (isHeadDatabaseActive) {
-            headDatabaseHook = new HeadDatabaseHook(this);
+            headDatabaseAPI = new HeadDatabaseAPI();
             Bukkit.getPluginManager().registerEvents(new OnHeadDatabaseLoaded(this), this);
 
-            this.headHandler.loadConfiguration();
-
-            // Plugman/HeadDatabase issue.
-            // OnHeadDatabaseLoaded is not called on plugman load, it's not clean, it should be done better
-            headDatabaseHook.loadHeadsHDB();
+            // Plugman/HeadDatabase issue
+            // OnHeadDatabaseLoaded event is not fired on plugman reload command
+            try {
+                // If the list is not empty, then the database is already loaded
+                List<Head> heads = headDatabaseAPI.getHeads(CategoryEnum.ALPHABET);
+                if (heads != null & heads.size() > 0) {
+                    this.loadHeadsHDB();
+                }
+            } catch (Exception ignored) { }
 
         } else {
             this.headHandler.loadConfiguration();
@@ -118,7 +121,13 @@ public final class HeadBlocks extends JavaPlugin {
 
         Bukkit.getScheduler().runTaskLater(this, () -> getHeadHandler().loadLocations(), 1L);
 
-        log.sendMessage(FormatUtils.translate("&a&6HeadBlocks &asuccessfully loaded!"));
+        getCommand("headblocks").setExecutor(new HBCommandExecutor(this));
+
+        Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(this), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(this), this);
+        Bukkit.getPluginManager().registerEvents(new OthersEvent(this), this);
+
+        log.sendMessage(FormatUtils.translate("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
     }
 
     @Override
@@ -130,6 +139,17 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
 
         log.sendMessage(FormatUtils.translate("&6HeadBlocks &cdisabled!"));
+    }
+
+    public void loadHeadsHDB() {
+        this.getHeadHandler().getHeads().stream()
+                .filter(h -> h instanceof HBHeadHDB)
+                .map(h -> (HBHeadHDB) h)
+                .filter(h -> !h.isLoaded())
+                .forEach(h -> {
+                    HeadUtils.applyTexture(h, headDatabaseAPI.getBase64(h.getId()));
+                    h.setLoaded(true);
+                });
     }
 
     public static HeadBlocks getInstance() {
@@ -172,7 +192,7 @@ public final class HeadBlocks extends JavaPlugin {
         return particlesTask;
     }
 
-    public HeadDatabaseHook getHeadDatabaseHook() {
-        return headDatabaseHook;
+    public HeadDatabaseAPI getHeadDatabaseAPI() {
+        return headDatabaseAPI;
     }
 }

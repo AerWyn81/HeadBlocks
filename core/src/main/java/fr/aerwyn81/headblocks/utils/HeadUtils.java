@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.utils;
 import de.tr7zw.changeme.nbtapi.NBTCompound;
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import de.tr7zw.changeme.nbtapi.NBTListCompound;
-import fr.aerwyn81.headblocks.data.head.Head;
+import fr.aerwyn81.headblocks.data.head.HBHead;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -11,11 +11,8 @@ import org.bukkit.inventory.ItemStack;
 import java.util.UUID;
 
 public class HeadUtils {
-    public static Head applyTexture(Head head) {
-        if (head.getTexture() == null)
-            return head;
-
-        NBTItem nbti = new NBTItem(head.getHead());
+    public static HBHead applyTexture(HBHead head, String texture) {
+        NBTItem nbti = new NBTItem(head.getItemStack());
         NBTCompound skull = nbti.addCompound("SkullOwner");
         skull.setString("Name", "HeadBlocks");
 
@@ -26,10 +23,9 @@ public class HeadUtils {
         }
 
         NBTListCompound textCompound = skull.addCompound("Properties").getCompoundList("textures").addCompound();
-        textCompound.setString("Value", head.getTexture());
+        textCompound.setString("Value", texture);
 
-        head.setHead(nbti.getItem());
-        head.setLoaded(true);
+        head.setItemStack(nbti.getItem());
         return head;
     }
 

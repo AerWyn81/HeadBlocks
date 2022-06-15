@@ -37,7 +37,7 @@ public class Reload implements Cmd {
         main.getHeadHandler().loadLocations();
 
         if (HeadBlocks.isHeadDatabaseActive) {
-            main.getHeadDatabaseHook().loadHeadsHDB();
+            main.loadHeadsHDB();
         }
 
         main.getStorageHandler().close();

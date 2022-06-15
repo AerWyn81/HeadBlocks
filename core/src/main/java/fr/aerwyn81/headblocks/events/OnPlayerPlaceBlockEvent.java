@@ -72,9 +72,9 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
     private boolean hasHeadBlocksItemInHand(Player player) {
         if (Version.getCurrent() == Version.v1_8) {
-            return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getHead(), (ItemStack) main.getLegacySupport().getItemStackInHand(player)));
+            return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), (ItemStack) main.getLegacySupport().getItemStackInHand(player)));
         }
 
-        return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getHead(), player.getInventory().getItemInMainHand()));
+        return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
     }
 }

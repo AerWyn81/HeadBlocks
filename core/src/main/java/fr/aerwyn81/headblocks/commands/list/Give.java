@@ -3,7 +3,8 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.data.head.Head;
+import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
@@ -45,13 +46,13 @@ public class Give implements Cmd {
             player = pTemp;
         }
 
-        ArrayList<Head> heads = headHandler.getHeads();
-        if (heads.size() == 0) {
+        ArrayList<HBHead> HBHeads = headHandler.getHeads();
+        if (HBHeads.size() == 0) {
             player.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 
-        ArrayList<Head> headsToGive = new ArrayList<>();
+        ArrayList<HBHead> headsToGive = new ArrayList<>();
         if (args.length > 2 && args[2].equals("*")) {
             headsToGive = headHandler.getHeads();
         } else if (args.length > 2) {
@@ -61,7 +62,7 @@ public class Give implements Cmd {
             }
 
             int finalId = --id;
-            if (finalId > heads.size() - 1) {
+            if (finalId > HBHeads.size() - 1) {
                 player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
                 return true;
             }
@@ -78,16 +79,21 @@ public class Give implements Cmd {
         }
 
         int headGiven = 0;
-        for (Head head : headsToGive) {
-            if (!head.isLoaded()) {
-                player.sendMessage(languageHandler.getMessage("Messages.HeadNotYetLoaded")
-                        .replaceAll("%id%", String.valueOf(head.getId())));
-                continue;
+        for (HBHead head : headsToGive) {
+            if (head instanceof HBHeadHDB) {
+                HBHeadHDB headHDB = (HBHeadHDB) head;
+
+                if (!headHDB.isLoaded()) {
+                    player.sendMessage(languageHandler.getMessage("Messages.HeadNotYetLoaded")
+                            .replaceAll("%id%", String.valueOf(headHDB.getId())));
+                    continue;
+                }
             }
 
-            player.getInventory().addItem(head.getHead());
+            player.getInventory().addItem(head.getItemStack());
             headGiven++;
         }
+
 
         if (headGiven != 0) {
             player.sendMessage(languageHandler.getMessage("Messages.HeadGiven"));

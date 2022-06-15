@@ -2,8 +2,10 @@ package fr.aerwyn81.headblocks.handlers;
 
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.data.head.Head;
-import fr.aerwyn81.headblocks.data.head.HeadType;
+import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.utils.FormatUtils;
 import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.Version;
@@ -35,7 +37,7 @@ public class HeadHandler {
     private final LanguageHandler languageHandler;
     private FileConfiguration config;
 
-    private final ArrayList<Head> heads;
+    private final ArrayList<HBHead> heads;
     private ArrayList<Pair<UUID, Location>> headLocations;
 
     public HeadHandler(HeadBlocks main, File configFile) {
@@ -138,12 +140,12 @@ public class HeadHandler {
             String[] parts = configHead.split(":");
 
             if (parts.length != 2) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("&cInvalid format for " + configHead + " in heads configuration section (l." + i + 1 + ")"));
+                HeadBlocks.log.sendMessage(FormatUtils.translate("&cInvalid format for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
                 continue;
             }
 
             if (parts[1].trim().equals("")) {
-                HeadBlocks.log.sendMessage(FormatUtils.translate("&cValue cannot be empty for " + configHead + " in heads configuration section (l." + i + 1 + ")"));
+                HeadBlocks.log.sendMessage(FormatUtils.translate("&cValue cannot be empty for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
                 continue;
             }
 
@@ -179,26 +181,26 @@ public class HeadHandler {
                     meta.setOwningPlayer(p);
                     head.setItemMeta(meta);
 
-                    heads.add(new Head(null, head, null, HeadType.PLAYER));
+                    heads.add(new HBHeadPlayer(head));
                     break;
                 case "default":
-                    heads.add(HeadUtils.applyTexture(new Head(null, head, parts[1], HeadType.DEFAULT)));
+                    heads.add(HeadUtils.applyTexture(new HBHeadDefault(head), parts[1]));
                     break;
                 case "hdb":
                     if (!HeadBlocks.isHeadDatabaseActive) {
-                       HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot load hdb head type " + configHead + " without HeadDatabase installed"));
-                       continue;
+                        HeadBlocks.log.sendMessage(FormatUtils.translate("&cCannot load hdb head type " + configHead + " without HeadDatabase installed"));
+                        continue;
                     }
 
-                    heads.add(new Head(parts[1], head, null, HeadType.HDB));
+                    heads.add(new HBHeadHDB(head, parts[1]));
                     break;
                 default:
-                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cUnknown type " + parts[0] + " in heads configuration section"));
+                    HeadBlocks.log.sendMessage(FormatUtils.translate("&cThe " + parts[0] + " type is not yet supported!"));
             }
         }
     }
 
-    public ArrayList<Head> getHeads() {
+    public ArrayList<HBHead> getHeads() {
         return heads;
     }
 
