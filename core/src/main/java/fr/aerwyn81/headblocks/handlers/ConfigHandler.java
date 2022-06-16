@@ -29,6 +29,8 @@ public class ConfigHandler {
         return config.getString("language", "en").toLowerCase();
     }
 
+    public boolean isMetricsEnabled() { return config.getBoolean("metrics", true); }
+
     public List<String> getHeads() {
         return config.getStringList("heads");
     }

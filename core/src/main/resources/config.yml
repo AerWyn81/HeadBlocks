@@ -1,6 +1,13 @@
 # Language used for messages in the plugin
 language: en
 
+# Message from the developer: You can safely disable this option.
+# However, it allows me to have information about the use of my plugin.
+# I will not publish this information, it is exclusively for me
+# Reload the plugin has no effect on this property, to change, please restart the server
+# Metrics by bStats
+metrics: true
+
 # Heads textures
 # By default, use the format "default:<value> where <value> is an encoded string (see: Other-Value at https://minecraft-heads.com/)
 # Support HeadDatabase plugin, use the format "hdb:<id>" where <id> is the id of the head

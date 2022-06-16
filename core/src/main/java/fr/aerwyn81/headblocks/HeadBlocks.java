@@ -9,10 +9,7 @@ import fr.aerwyn81.headblocks.events.OthersEvent;
 import fr.aerwyn81.headblocks.handlers.*;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.ParticlesTask;
-import fr.aerwyn81.headblocks.utils.ConfigUpdater;
-import fr.aerwyn81.headblocks.utils.HeadUtils;
-import fr.aerwyn81.headblocks.utils.MessageUtils;
-import fr.aerwyn81.headblocks.utils.Version;
+import fr.aerwyn81.headblocks.utils.*;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.arcaniax.hdb.enums.CategoryEnum;
 import me.arcaniax.hdb.object.head.Head;
@@ -77,6 +74,10 @@ public final class HeadBlocks extends JavaPlugin {
 
         this.languageHandler = new LanguageHandler(this, configHandler.getLanguage());
         this.languageHandler.pushMessages();
+
+        if (configHandler.isMetricsEnabled()) {
+            new Metrics(this, 15495);
+        }
 
         this.headHandler = new HeadHandler(this, locationFile);
         this.headHandler.loadConfiguration();
