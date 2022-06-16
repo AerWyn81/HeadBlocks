@@ -16,7 +16,6 @@ import org.javatuples.Pair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
 public class RemoveAll implements Cmd {
@@ -42,25 +41,24 @@ public class RemoveAll implements Cmd {
             return true;
         }
 
-        AtomicInteger headRemoved = new AtomicInteger();
+        int headRemoved = 0;
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
-            headLocations.forEach(head -> {
-                if (configHandler.shouldResetPlayerData()) {
-                    try {
-                        storageHandler.removeHead(head.getValue0());
-                    } catch (InternalException ex) {
-                        sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getValue0() + " at " + head.getValue1().toString() + ") from the storage: " + ex.getMessage()));
-                        return;
-                    }
+
+            for (Pair<UUID, Location> head : new ArrayList<>(headLocations)) {
+                try {
+                    storageHandler.removeHead(head.getValue0(), configHandler.shouldResetPlayerData());
+                } catch (InternalException ex) {
+                    sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getValue0() + " at " + head.getValue1().toString() + ") from the storage: " + ex.getMessage()));
+                    continue;
                 }
 
                 headHandler.removeHead(head.getValue0());
-                headRemoved.getAndIncrement();
-            });
+                headRemoved++;
+            }
 
-            if (headRemoved.get() == 0) {
+            if (headRemoved == 0) {
                 sender.sendMessage(languageHandler.getMessage("Messages.RemoveAllError")
                         .replaceAll("%headCount%", String.valueOf(headCount)));
                 return true;

@@ -60,7 +60,7 @@ public class StorageHandler {
             storage.init();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to initialize the storage : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to initialize the storage : " + ex.getMessage()));
         }
 
         try {
@@ -68,7 +68,7 @@ public class StorageHandler {
             database.load();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to connect to the SQL database : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to connect to the SQL database : " + ex.getMessage()));
         }
     }
 
@@ -77,14 +77,14 @@ public class StorageHandler {
             storage.close();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to close the REDIS connection : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to close the REDIS connection : " + ex.getMessage()));
         }
 
         try {
             database.close();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to close the SQL connection : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to close the SQL connection : " + ex.getMessage()));
         }
     }
 
@@ -120,9 +120,9 @@ public class StorageHandler {
         database.resetPlayer(playerUuid);
     }
 
-    public void removeHead(UUID headUuid) throws InternalException {
+    public void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
         storage.removeHead(headUuid);
-        database.removeHead(headUuid);
+        database.removeHead(headUuid, withDelete);
     }
 
     public List<UUID> getAllPlayers() throws InternalException {
@@ -135,5 +135,13 @@ public class StorageHandler {
 
     public void updatePlayerName(UUID playerUuid, String playerName) throws InternalException {
         database.updatePlayerInfo(playerUuid, playerName);
+    }
+
+    public boolean hasPlayerRenamed(UUID playerUuid, String playerName) throws InternalException {
+        return database.hasPlayerRenamed(playerUuid, playerName);
+    }
+
+    public void createNewHead(UUID headUuid) throws InternalException {
+        database.createNewHead(headUuid);
     }
 }

@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.utils;
 import org.bukkit.Bukkit;
 
 public enum Version {
-    v1_8, v1_9, v1_10, v1_11, v1_12, v1_13, v1_14, v1_15, v1_16, v1_17, v1_18;
+    v1_8, v1_9, v1_10, v1_11, v1_12, v1_13, v1_14, v1_15, v1_16, v1_17, v1_18, v1_19, v1_20;
 
     private Integer value;
 
@@ -29,7 +29,7 @@ public enum Version {
             String serverVersion = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
             current = valueOf(serverVersion.substring(0, serverVersion.length() - 3));
         } catch (IllegalArgumentException e) {
-            current = v1_13;
+            current = v1_15;
         }
 
         return current;

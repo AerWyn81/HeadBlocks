@@ -33,8 +33,6 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isPlaceholderApiActive;
     public static boolean isHeadDatabaseActive;
 
-    private LegacySupport legacySupport;
-
     private ConfigHandler configHandler;
     private LanguageHandler languageHandler;
     private HeadHandler headHandler;
@@ -52,10 +50,8 @@ public final class HeadBlocks extends JavaPlugin {
         log.sendMessage(MessageUtils.translate("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
 
         File configFile = new File(getDataFolder(), "config.yml");
-        File backupConfigFile = new File(getDataFolder(), "config.yml.save");
         File locationFile = new File(getDataFolder(), "locations.yml");
 
-        ConfigUpdater.saveOldConfig(backupConfigFile, configFile);
         saveDefaultConfig();
         try {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads"));
@@ -66,8 +62,14 @@ public final class HeadBlocks extends JavaPlugin {
         }
         reloadConfig();
 
-        if (Version.getCurrent() == Version.v1_8) {
-            legacySupport = new LegacyHelper();
+        if (Version.getCurrent().isOlderOrSameThan(Version.v1_15)) {
+            log.sendMessage(MessageUtils.translate("&c***** --------------------------------------- *****"));
+            log.sendMessage(MessageUtils.translate("&cHeadBlocks version 2 does not support your Minecraft Server version: " + Version.getCurrentFormatted()));
+            log.sendMessage(MessageUtils.translate("&cIf you are using a version below Minecraft 1.16, use the version 1.6 of the plugin"));
+            log.sendMessage(MessageUtils.translate("&cVersion 1.6 will not receive any new features but may receive corrective updates."));
+            log.sendMessage(MessageUtils.translate("&c***** --------------------------------------- *****"));
+            this.setEnabled(false);
+            return;
         }
 
         this.configHandler = new ConfigHandler(configFile);
@@ -85,12 +87,8 @@ public final class HeadBlocks extends JavaPlugin {
         this.rewardHandler = new RewardHandler(this);
 
         if (configHandler.isParticlesEnabled()) {
-            if (Version.getCurrent().isOlderThan(Version.v1_13)) {
-                log.sendMessage(MessageUtils.translate("&cParticles are enabled but not supported before 1.13 included."));
-            } else {
-                this.particlesTask = new ParticlesTask(this);
-                particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
-            }
+            this.particlesTask = new ParticlesTask(this);
+            particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
         }
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
@@ -169,10 +167,6 @@ public final class HeadBlocks extends JavaPlugin {
     
     public StorageHandler getStorageHandler() {
         return storageHandler;
-    }
-
-    public LegacySupport getLegacySupport() {
-        return legacySupport;
     }
 
     public void setParticlesTask(ParticlesTask particlesTask) {

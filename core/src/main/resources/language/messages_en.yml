@@ -6,8 +6,8 @@ Head:
     - ""
     - "&7&oAllows you to create a HeadBlock at the chosen location"
     - ""
-    - "&2✔ &8- &7Right click + crouch to create"
-    - "&c✘ &8- &7Left click + crouch to delete"
+    - "&2✔ &8- &7Right click + sneak to create"
+    - "&c✘ &8- &7Left click + sneak to delete"
     - ""
 
 Messages:

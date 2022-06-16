@@ -212,7 +212,7 @@ public class SQLite implements Database {
         try (PreparedStatement ps = connection.prepareStatement(Requests.RESET_PLAYER)) {
             ps.setString(1, pUUID.toString());
 
-            ps.executeQuery();
+            ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -222,14 +222,15 @@ public class SQLite implements Database {
      * Remove a head
      *
      * @param hUUID head UUID
+     * @param withDelete should delete the head from the database
      * @throws InternalException SQL Exception
      */
     @Override
-    public void removeHead(UUID hUUID) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.REMOVE_HEAD)) {
+    public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.DELETE_HEAD : Requests.REMOVE_HEAD)) {
             ps.setString(1, hUUID.toString());
 
-            ps.executeQuery();
+            ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -281,5 +282,28 @@ public class SQLite implements Database {
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
+    }
+
+    /**
+     * Check player name
+     * @param pUUID player UUID
+     * @param pName player name
+     * @return boolean if playername is equals
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public boolean hasPlayerRenamed(UUID pUUID, String pName) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.CHECK_PLAYER_NAME)) {
+            ps.setString(1, pUUID.toString());
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return !pName.equals(rs.getString("pName"));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return true;
     }
 }

@@ -73,7 +73,7 @@ public class ParticlesTask extends BukkitRunnable {
                     playersNotFound.add(p);
                 }
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to communicate with the storage : " + ex.getMessage()));
                 this.cancel();
             }
         }

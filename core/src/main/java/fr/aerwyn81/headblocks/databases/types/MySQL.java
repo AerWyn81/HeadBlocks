@@ -212,7 +212,7 @@ public final class MySQL implements Database {
     public void resetPlayer(UUID pUUID) throws InternalException {
         try (PreparedStatement ps = connection.prepareStatement(Requests.RESET_PLAYER)) {
             ps.setString(1, pUUID.toString());
-            ps.execute();
+            ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -222,13 +222,14 @@ public final class MySQL implements Database {
      * Remove a head
      *
      * @param hUUID head UUID
+     * @param withDelete should delete the head from the database
      * @throws InternalException SQL Exception
      */
     @Override
-    public void removeHead(UUID hUUID) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.REMOVE_HEAD_MYSQL)) {
+    public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.DELETE_HEAD : Requests.REMOVE_HEAD)) {
             ps.setString(1, hUUID.toString());
-            ps.execute();
+            ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -277,5 +278,28 @@ public final class MySQL implements Database {
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
+    }
+
+    /**
+     * Check player name
+     * @param pUUID player UUID
+     * @param pName player name
+     * @return boolean if player has renamed
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public boolean hasPlayerRenamed(UUID pUUID, String pName) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.CHECK_PLAYER_NAME)) {
+            ps.setString(1, pUUID.toString());
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return !pName.equals(rs.getString("pName"));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return true;
     }
 }

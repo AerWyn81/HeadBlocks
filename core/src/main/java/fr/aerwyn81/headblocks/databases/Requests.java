@@ -16,18 +16,21 @@ public class Requests {
 
     public static final String SAVE_PLAYERHEAD = "INSERT INTO hb_playerheads (pUUID, hUUID) VALUES (?, ?)";
 
-    public static final String HAS_HEAD = "SELECT 1 FROM hb_playerHeads hbph WHERE pUUID = ? AND hUUID = ?";
+    public static final String HAS_HEAD = "SELECT pUUID, hbh.hUUID, hbh.hExist FROM hb_playerHeads hbph INNER JOIN hb_heads hbh ON hbph.hUUID = hbh.hUUID WHERE pUUID = ? AND hbh.hUUID = ? AND hbh.hExist = True";
 
     public static final String CONTAINS_PLAYER = "SELECT 1 FROM hb_players WHERE pUUID = ?";
 
-    public static final String PLAYER_HEADS = "SELECT hUUID FROM hb_playerHeads hbph WHERE pUUID = ?";
+    public static final String PLAYER_HEADS = "SELECT hbh.hUUID FROM hb_playerHeads hbph INNER JOIN hb_heads hbh ON hbph.hUUID = hbh.hUUID WHERE pUUID = ? AND hbh.hExist = True";
 
     public static final String RESET_PLAYER = "DELETE FROM hb_playerHeads WHERE pUUID = ?";
 
-    public static final String REMOVE_HEAD = "INSERT OR REPLACE INTO hb_Heads (hUUID, hExist) VALUES (?, false)";
-    public static final String REMOVE_HEAD_MYSQL = "REPLACE INTO hb_Heads (hUUID, hExist) VALUES (?, false)";
+    public static final String REMOVE_HEAD = "UPDATE hb_heads SET hExist=False WHERE hUUID = ?";
 
-    public static final String ALL_PLAYERS = "SELECT `pUUID` FROM hb_players";
+    public static final String DELETE_HEAD = "DELETE FROM hb_heads WHERE hUUID = ?";
 
-    public static final String TOP_PLAYERS = "SELECT `pName`, COUNT(*) as hCount FROM hb_playerHeads hbph INNER JOIN hb_players hbp ON hbph.pUUID = hbp.pUUID GROUP BY pName ORDER BY hCount DESC LIMIT 1";
+    public static final String ALL_PLAYERS = "SELECT pUUID FROM hb_players";
+
+    public static final String TOP_PLAYERS = "SELECT pName, COUNT(*) as hCount FROM hb_playerHeads hbph INNER JOIN hb_players hbp ON hbph.pUUID = hbp.pUUID INNER JOIN hb_heads hbh ON hbph.hUUID = hbh.hUUID WHERE hbh.hExist = True GROUP BY pName ORDER BY hCount DESC LIMIT ?";
+
+    public static final String CHECK_PLAYER_NAME = "SELECT pName FROM hb_players WHERE pUUID = ?";
 }

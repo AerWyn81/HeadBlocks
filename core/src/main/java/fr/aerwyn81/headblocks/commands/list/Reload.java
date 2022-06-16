@@ -6,8 +6,6 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.runnables.ParticlesTask;
-import fr.aerwyn81.headblocks.utils.MessageUtils;
-import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
@@ -46,12 +44,8 @@ public class Reload implements Cmd {
 
         Bukkit.getScheduler().cancelTasks(main);
         if (configHandler.isParticlesEnabled()) {
-            if (Version.getCurrent().isOlderThan(Version.v1_13)) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("&cParticles is enabled but not supported before 1.13 included."));
-            } else {
-                main.setParticlesTask(new ParticlesTask(main));
-                main.getParticlesTask().runTaskTimer(main, 0, configHandler.getParticlesDelay());
-            }
+            main.setParticlesTask(new ParticlesTask(main));
+            main.getParticlesTask().runTaskTimer(main, 0, configHandler.getParticlesDelay());
         }
 
         if (main.getStorageHandler().hasStorageError()) {

@@ -7,7 +7,6 @@ import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -111,12 +110,7 @@ public class Give implements Cmd {
     public int getEmptySlots(Player player) {
         int i = 0;
 
-        ItemStack[] items;
-        if (Version.getCurrent() == Version.v1_8) {
-            items = (ItemStack[]) main.getLegacySupport().getInventoryContent(player);
-        } else {
-            items = player.getInventory().getStorageContents();
-        }
+        ItemStack[] items = player.getInventory().getStorageContents();
 
         for (ItemStack is : items) {
             if (is != null && is.getType() != Material.AIR)

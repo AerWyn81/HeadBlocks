@@ -28,9 +28,11 @@ public interface Database {
 
     void resetPlayer(UUID pUUID) throws InternalException;
 
-    void removeHead(UUID hUUID) throws InternalException;
+    void removeHead(UUID hUUID, boolean withDelete) throws InternalException;
 
     ArrayList<UUID> getAllPlayers() throws InternalException;
 
     ArrayList<Pair<String, Integer>> getTopPlayers(int limit) throws InternalException;
+
+    boolean hasPlayerRenamed(UUID pUUID, String playerName) throws InternalException;
 }

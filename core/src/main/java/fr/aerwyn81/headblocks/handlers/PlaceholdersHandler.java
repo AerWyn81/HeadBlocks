@@ -26,6 +26,9 @@ public class PlaceholdersHandler {
     public static String parse(Player player, String message) {
         String progress;
 
+        message = message.replaceAll("%player%", player.getName())
+                .replaceAll("%prefix%", languageHandler.getPrefix());
+
         if (message.contains("%progress%") || message.contains("%current%") || message.contains("%max%") || message.contains("%left%")) {
             int current;
             try {
@@ -55,9 +58,6 @@ public class PlaceholdersHandler {
                 message = message.replaceAll("%left%", String.valueOf(total - current));
             }
         }
-
-        message = message.replaceAll("%player%", player.getName())
-                .replaceAll("%prefix%", languageHandler.getPrefix());
 
         if (!HeadBlocks.isPlaceholderApiActive)
             return MessageUtils.centerMessage(message);

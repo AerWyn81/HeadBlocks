@@ -3,10 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.utils.HeadUtils;
-import fr.aerwyn81.headblocks.utils.ParticlesUtils;
-import fr.aerwyn81.headblocks.utils.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.Version;
+import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -15,7 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
@@ -55,11 +51,18 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        UUID headUuid = main.getHeadHandler().addLocation(headLocation);
+        UUID headUuid = main.getHeadHandler().generateNewUuid();
 
-        if (Version.getCurrent().isNewerOrSameThan(Version.v1_13)) {
-            ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
+        try {
+            main.getStorageHandler().createNewHead(headUuid);
+        } catch (InternalException ex) {
+            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
         }
+
+        main.getHeadHandler().addLocation(headUuid, headLocation);
+
+        ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
 
         player.sendMessage(languageHandler.getMessage("Messages.HeadPlaced")
                 .replaceAll("%x%", String.valueOf(headBlock.getX()))
@@ -71,10 +74,6 @@ public class OnPlayerPlaceBlockEvent implements Listener {
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {
-        if (Version.getCurrent() == Version.v1_8) {
-            return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), (ItemStack) main.getLegacySupport().getItemStackInHand(player)));
-        }
-
         return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
     }
 }

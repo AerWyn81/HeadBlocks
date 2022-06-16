@@ -37,19 +37,19 @@ public class OnPlayerInteractEvent implements Listener {
         Block block = e.getClickedBlock();
 
         // Check if the correct hand is used
-        if (block == null || !isMainHand(e)) {
+        if (block == null || e.getHand() != EquipmentSlot.HAND) {
             return;
         }
 
         // Check if clickedBlock is a head
-        if (!isClickedBlockIsHeadBlocks(block)) {
+        if (block.getType() != Material.PLAYER_WALL_HEAD && block.getType() != Material.PLAYER_HEAD) {
             return;
         }
 
         Location clickedLocation = block.getLocation();
-        UUID headUuid = main.getHeadHandler().getHeadAt(clickedLocation);
 
         // Check if the head is a head of the plugin
+        UUID headUuid = main.getHeadHandler().getHeadAt(clickedLocation);
         if (headUuid == null) {
             return;
         }
@@ -65,13 +65,11 @@ public class OnPlayerInteractEvent implements Listener {
             }
 
             // If resetPlayerData is enabled, reset all player data for the head
-            if (configHandler.shouldResetPlayerData() && !main.getStorageHandler().hasStorageError()) {
-                try {
-                    main.getStorageHandler().removeHead(headUuid);
-                } catch (InternalException ex) {
-                    player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to remove a head (" + headUuid + ") from the storage: " + ex.getMessage()));
-                }
+            try {
+                main.getStorageHandler().removeHead(headUuid, configHandler.shouldResetPlayerData());
+            } catch (InternalException ex) {
+                player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to remove a head (" + headUuid + ") from the storage: " + ex.getMessage()));
             }
 
             // Remove the head from the ground
@@ -120,7 +118,7 @@ public class OnPlayerInteractEvent implements Listener {
                 }
 
                 // Already own particles if enabled
-                if (Version.getCurrent().isNewerOrSameThan(Version.v1_13) && configHandler.isHeadClickParticlesEnabled()) {
+                if (configHandler.isHeadClickParticlesEnabled()) {
                     String particleName = configHandler.getHeadClickParticlesAlreadyOwnType();
                     int amount = configHandler.getHeadClickParticlesAmount();
                     ArrayList<String> colors = configHandler.getHeadClickParticlesColors();
@@ -162,7 +160,7 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Send title to the player if enabled
-        if (configHandler.isHeadClickTitleEnabled() && Version.getCurrent().isNewerThan(Version.v1_10)) {
+        if (configHandler.isHeadClickTitleEnabled()) {
             String firstLine = PlaceholdersHandler.parse(player, configHandler.getHeadClickTitleFirstLine());
             String subTitle = PlaceholdersHandler.parse(player, configHandler.getHeadClickTitleSubTitle());
             int fadeIn = configHandler.getHeadClickTitleFadeIn();
@@ -182,7 +180,7 @@ public class OnPlayerInteractEvent implements Listener {
             Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
 
             FireworkUtils.launchFirework(loc, isFlickering,
-                    colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power, isHeadWalled(block));
+                    colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
         }
 
         // Prevent trigger commands rewards if current is contained in tieredRewards and enabled in config
@@ -209,30 +207,5 @@ public class OnPlayerInteractEvent implements Listener {
 
         // Trigger the event HeadClick with success
         Bukkit.getPluginManager().callEvent(new HeadClickEvent(headUuid, player, clickedLocation, true));
-    }
-
-    private boolean isMainHand(PlayerInteractEvent e) {
-        if (Version.getCurrent() == Version.v1_8) {
-            return true;
-        }
-
-        return e.getHand() == EquipmentSlot.HAND;
-    }
-
-    private boolean isClickedBlockIsHeadBlocks(Block block) {
-        // Specific case where we only check if the block type if a skull
-        if (Version.getCurrent().isOlderOrSameThan(Version.v1_12)) {
-            return block.getType().name().equals("SKULL");
-        }
-
-        return block.getType() == Material.PLAYER_WALL_HEAD || block.getType() == Material.PLAYER_HEAD;
-    }
-
-    private boolean isHeadWalled(Block block) {
-        if (Version.getCurrent().isOlderOrSameThan(Version.v1_12)) {
-            return true;
-        }
-
-        return block.getType() == Material.PLAYER_WALL_HEAD;
     }
 }

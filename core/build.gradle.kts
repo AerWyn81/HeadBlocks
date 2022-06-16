@@ -2,8 +2,8 @@ import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
 
 plugins {
     id("java")
-    id("com.github.johnrengelman.shadow") version "6.1.0"
-    id("net.minecrell.plugin-yml.bukkit") version "0.5.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("net.minecrell.plugin-yml.bukkit") version "0.5.2"
 }
 
 version = rootProject.version
@@ -17,13 +17,10 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.1")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
-    implementation("redis.clients:jedis:3.6.3")
+    implementation("redis.clients:jedis:4.2.3")
     implementation("de.tr7zw:item-nbt-api:2.10.0")
-    implementation("com.zaxxer:HikariCP:4.0.3")
+    implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("org.javatuples:javatuples:1.2")
-    implementation("org.yaml:snakeyaml:1.30")
-    implementation(project(":common"))
-    implementation(project(":legacy"))
 }
 
 tasks {

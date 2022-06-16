@@ -8,7 +8,6 @@ import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
-import fr.aerwyn81.headblocks.utils.Version;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -89,17 +88,19 @@ public class HeadHandler {
         });
     }
 
-    public UUID addLocation(Location location) {
+    public UUID generateNewUuid() {
         UUID uniqueUuid = UUID.randomUUID();
         while (getHeadByUUID(uniqueUuid) != null) {
             uniqueUuid = UUID.randomUUID();
         }
 
+        return uniqueUuid;
+    }
+
+    public void addLocation(UUID uniqueUuid, Location location) {
         headLocations.add(new Pair<>(uniqueUuid, location));
         saveLocations();
         saveConfig();
-
-        return uniqueUuid;
     }
 
     public void removeHead(UUID headUuid) {
@@ -149,13 +150,7 @@ public class HeadHandler {
                 continue;
             }
 
-            ItemStack head;
-
-            if (Version.getCurrent().isOlderOrSameThan(Version.v1_12)) {
-                head = new ItemStack(Material.valueOf("SKULL_ITEM"), 1, (short) 3);
-            } else {
-                head = new ItemStack(Material.PLAYER_HEAD, 1);
-            }
+            ItemStack head = new ItemStack(Material.PLAYER_HEAD, 1);
 
             ItemMeta headMeta = head.getItemMeta();
             headMeta.setDisplayName(languageHandler.getMessage("Head.Name"));
