@@ -20,12 +20,8 @@ import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
-import org.javatuples.Pair;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @HBAnnotations(command = "stats", permission = "headblocks.admin")
@@ -60,7 +56,7 @@ public class Stats implements Cmd {
             return true;
         }
 
-        ArrayList<Pair<UUID, Location>> playerHeads;
+        ArrayList<Map.Entry<UUID, Location>> playerHeads;
         try {
             playerHeads = storageHandler.getHeadsPlayer(player.getUniqueId()).stream()
                     .map(headHandler::getHeadByUUID)
@@ -72,7 +68,7 @@ public class Stats implements Cmd {
             return true;
         }
 
-        ArrayList<Pair<UUID, Location>> headsSpawned = headHandler.getHeadLocations();
+        ArrayList<Map.Entry<UUID, Location>> headsSpawned = new ArrayList<>(headHandler.getHeadLocations().entrySet());
         if (headsSpawned.size() == 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
             return true;
@@ -94,8 +90,8 @@ public class Stats implements Cmd {
         }
 
         for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
-            UUID uuid = headsSpawned.get(i).getValue0();
-            Location location = headsSpawned.get(i).getValue1();
+            UUID uuid = headsSpawned.get(i).getKey();
+            Location location = headsSpawned.get(i).getValue();
 
             String hover = languageHandler.getMessage("Chat.LineCoordinate")
                     .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.translate("&cUnknownWorld"))
@@ -108,7 +104,7 @@ public class Stats implements Cmd {
                 msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
 
                 TextComponent own;
-                if (playerHeads.stream().anyMatch(s -> s.getValue0() == uuid)) {
+                if (playerHeads.stream().anyMatch(s -> s.getKey() == uuid)) {
                     own = new TextComponent(languageHandler.getMessage("Chat.Box.Own"));
                     own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.Own")).create()));
                 } else {
@@ -123,7 +119,7 @@ public class Stats implements Cmd {
                 TextComponent space = new TextComponent(" ");
                 cpu.addLine(own, space, tp, space, msg, space);
             } else {
-                sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getValue0() == uuid) ?
+                sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getKey() == uuid) ?
                                 languageHandler.getMessage("Chat.Box.Own") : languageHandler.getMessage("Chat.Box.NotOwn")) + " " +
                                 MessageUtils.translate("&6" + uuid));
             }

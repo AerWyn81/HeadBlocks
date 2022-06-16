@@ -14,9 +14,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.javatuples.Pair;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 @HBAnnotations(command = "top", permission = "headblocks.admin")
 public class Top implements Cmd {
@@ -46,9 +46,9 @@ public class Top implements Cmd {
             limit = 10;
         }
 
-        ArrayList<Pair<String, Integer>> top;
+        ArrayList<Map.Entry<String, Integer>> top;
         try {
-            top = main.getStorageHandler().getTopPlayers(limit);
+            top = new ArrayList<>(main.getStorageHandler().getTopPlayers(limit).entrySet());
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while retrieving top players from the storage: " + ex.getMessage()));
@@ -74,16 +74,16 @@ public class Top implements Cmd {
 
         for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
             int pos = i + 1;
-            Pair<String, Integer> currentScore = top.get(i);
+            Map.Entry<String, Integer> currentScore = top.get(i);
 
             message = languageHandler.getMessage("Chat.LineTop")
                     .replaceAll("%pos%", String.valueOf(pos))
-                    .replaceAll("%player%", currentScore.getValue0())
-                    .replaceAll("%count%", String.valueOf(currentScore.getValue1()));
+                    .replaceAll("%player%", currentScore.getKey())
+                    .replaceAll("%count%", String.valueOf(currentScore.getValue()));
 
             if (sender instanceof Player) {
                 TextComponent msg = new TextComponent(message);
-                msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + currentScore.getValue0()));
+                msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + currentScore.getKey()));
                 msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.LineTop")).create()));
 
                 cpu.addLine(msg);

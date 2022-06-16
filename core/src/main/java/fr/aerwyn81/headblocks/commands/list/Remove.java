@@ -12,9 +12,9 @@ import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.javatuples.Pair;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -43,23 +43,23 @@ public class Remove implements Cmd {
             return true;
         }
 
-        Pair<UUID, Location> head = headHandler.getHeadByUUID(UUID.fromString(args[1]));
+        Map.Entry<UUID, Location> head = headHandler.getHeadByUUID(UUID.fromString(args[1]));
         if (head == null) {
             player.sendMessage(languageHandler.getMessage("Messages.RemoveLocationError"));
             return true;
         }
 
         try {
-            storageHandler.removeHead(head.getValue0(), configHandler.shouldResetPlayerData());
+            storageHandler.removeHead(head.getKey(), configHandler.shouldResetPlayerData());
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getValue0() + " at " + head.getValue1().toString() + ") from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getKey().toString() + " at " + head.getValue().toString() + ") from the storage: " + ex.getMessage()));
             return true;
         }
 
-        headHandler.removeHead(head.getValue0());
+        headHandler.removeHead(head.getKey());
 
-        Location loc = head.getValue1();
+        Location loc = head.getValue();
         player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")
                 .replaceAll("%world%", loc.getWorld() != null ? loc.getWorld().getName() : languageHandler.getMessage("Messages.UnknownWorld"))
                 .replaceAll("%x%", String.valueOf(loc.getBlockX()))
@@ -71,8 +71,7 @@ public class Remove implements Cmd {
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 ? main.getHeadHandler().getHeadLocations().stream()
-                .map(Pair::getValue0)
+        return args.length == 2 ? main.getHeadHandler().getHeadLocations().keySet().stream()
                 .map(UUID::toString)
                 .collect(Collectors.toCollection(ArrayList::new)) : new ArrayList<>();
     }

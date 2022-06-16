@@ -1,9 +1,9 @@
 package fr.aerwyn81.headblocks.databases;
 
 import fr.aerwyn81.headblocks.utils.InternalException;
-import org.javatuples.Pair;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 
 public interface Database {
@@ -32,7 +32,7 @@ public interface Database {
 
     ArrayList<UUID> getAllPlayers() throws InternalException;
 
-    ArrayList<Pair<String, Integer>> getTopPlayers(int limit) throws InternalException;
+    Map<String, Integer> getTopPlayers(int limit) throws InternalException;
 
     boolean hasPlayerRenamed(UUID pUUID, String playerName) throws InternalException;
 }

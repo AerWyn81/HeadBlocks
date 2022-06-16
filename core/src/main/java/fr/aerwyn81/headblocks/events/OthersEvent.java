@@ -42,8 +42,8 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent e) {
-        if (e.getBlocks().stream().anyMatch(b -> main.getHeadHandler().getHeadLocations().stream()
-                .anyMatch(p -> HeadUtils.areEquals(p.getValue1(), b.getLocation())))) {
+        if (e.getBlocks().stream().anyMatch(b -> main.getHeadHandler().getHeadLocations().entrySet().stream()
+                .anyMatch(p -> HeadUtils.areEquals(p.getValue(), b.getLocation())))) {
             e.setCancelled(true);
         }
     }

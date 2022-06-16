@@ -3,10 +3,11 @@ package fr.aerwyn81.headblocks.databases.types;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.Requests;
 import fr.aerwyn81.headblocks.utils.InternalException;
-import org.javatuples.Pair;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @SuppressWarnings({"DuplicatedCode", "SqlResolve"})
@@ -267,15 +268,15 @@ public class SQLite implements Database {
      * @throws InternalException SQL Exception
      */
     @Override
-    public ArrayList<Pair<String, Integer>> getTopPlayers(int limit) throws InternalException {
-        ArrayList<Pair<String, Integer>> top = new ArrayList<>();
+    public Map<String, Integer> getTopPlayers(int limit) throws InternalException {
+        Map<String, Integer> top = new LinkedHashMap<>();
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.TOP_PLAYERS)) {
             ps.setInt(1, limit);
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                top.add(new Pair<>(rs.getString("pUUID"), rs.getInt("hCount")));
+                top.put(rs.getString("pName"), rs.getInt("hCount"));
             }
 
             return top;

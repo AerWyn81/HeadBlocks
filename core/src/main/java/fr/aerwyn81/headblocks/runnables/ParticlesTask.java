@@ -11,11 +11,9 @@ import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ParticlesTask extends BukkitRunnable {
@@ -32,20 +30,23 @@ public class ParticlesTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        headHandler.getHeadLocations().forEach(h -> {
-            Pair<List<Player>, List<Player>> players = playersInRange(h);
+        headHandler.getHeadLocations().forEach((uuid, location) -> {
+            List<Player> players = playersInRange(location);
 
-            if (players.getValue0().size() != 0) {
-                spawnParticles(h.getValue1(), Particle.valueOf(configHandler.getParticlesFoundType()),
-                        configHandler.getParticlesFoundAmount(), configHandler.getParticlesFoundColors(),
-                        players.getValue0().toArray(new Player[0]));
-            }
-
-            if (players.getValue1().size() != 0) {
-                spawnParticles(h.getValue1(), Particle.valueOf(configHandler.getParticlesNotFoundType()),
-                        configHandler.getParticlesNotFoundAmount(), configHandler.getParticlesNotFoundColors(),
-                        players.getValue1().toArray(new Player[0]));
-            }
+            players.forEach(p -> {
+                try {
+                    if (storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuid)){
+                        spawnParticles(location, Particle.valueOf(configHandler.getParticlesFoundType()),
+                                configHandler.getParticlesFoundAmount(), configHandler.getParticlesFoundColors(), p);
+                    } else {
+                        spawnParticles(location, Particle.valueOf(configHandler.getParticlesNotFoundType()),
+                                configHandler.getParticlesNotFoundAmount(), configHandler.getParticlesNotFoundColors(), p);
+                    }
+                } catch (InternalException ex) {
+                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to communicate with the storage : " + ex.getMessage()));
+                    this.cancel();
+                }
+            });
         });
     }
 
@@ -59,25 +60,8 @@ public class ParticlesTask extends BukkitRunnable {
         }
     }
 
-    private Pair<List<Player>, List<Player>> playersInRange(Pair<UUID, Location> uuidLocPair) {
+    private List<Player> playersInRange(Location loc) {
         int range = configHandler.getParticlesPlayerViewDistance();
-        Location loc = uuidLocPair.getValue1();
-
-        List<Player> playersFound = new ArrayList<>();
-        List<Player> playersNotFound = new ArrayList<>();
-        for (Player p : loc.getWorld().getNearbyEntities(loc, range, range, range).stream().filter(Player.class::isInstance).map(e -> (Player) e).collect(Collectors.toList())) {
-            try {
-                if (storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuidLocPair.getValue0())){
-                    playersFound.add(p);
-                } else {
-                    playersNotFound.add(p);
-                }
-            } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to communicate with the storage : " + ex.getMessage()));
-                this.cancel();
-            }
-        }
-
-        return new Pair<>(playersFound, playersNotFound);
+        return loc.getWorld().getNearbyEntities(loc, range, range, range).stream().filter(Player.class::isInstance).map(e -> (Player) e).collect(Collectors.toList());
     }
 }

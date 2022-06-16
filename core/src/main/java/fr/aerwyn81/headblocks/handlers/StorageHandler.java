@@ -9,10 +9,9 @@ import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
-import org.javatuples.Pair;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class StorageHandler {
@@ -129,7 +128,7 @@ public class StorageHandler {
         return database.getAllPlayers();
     }
 
-    public ArrayList<Pair<String, Integer>> getTopPlayers(int limit) throws InternalException {
+    public Map<String, Integer> getTopPlayers(int limit) throws InternalException {
         return database.getTopPlayers(limit);
     }
 

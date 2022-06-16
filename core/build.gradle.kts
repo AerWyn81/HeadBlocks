@@ -20,7 +20,6 @@ dependencies {
     implementation("redis.clients:jedis:4.2.3")
     implementation("de.tr7zw:item-nbt-api:2.10.0")
     implementation("com.zaxxer:HikariCP:5.0.1")
-    implementation("org.javatuples:javatuples:1.2")
 }
 
 tasks {

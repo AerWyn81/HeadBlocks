@@ -11,10 +11,10 @@ import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
-import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
@@ -33,7 +33,7 @@ public class RemoveAll implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        ArrayList<Pair<UUID, Location>> headLocations = headHandler.getHeadLocations();
+        ArrayList<Map.Entry<UUID, Location>> headLocations = new ArrayList<>(headHandler.getHeadLocations().entrySet());
         int headCount = headLocations.size();
 
         if (headLocations.size() == 0) {
@@ -45,16 +45,16 @@ public class RemoveAll implements Cmd {
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
 
-            for (Pair<UUID, Location> head : new ArrayList<>(headLocations)) {
+            for (Map.Entry<UUID, Location> head : new ArrayList<>(headLocations)) {
                 try {
-                    storageHandler.removeHead(head.getValue0(), configHandler.shouldResetPlayerData());
+                    storageHandler.removeHead(head.getKey(), configHandler.shouldResetPlayerData());
                 } catch (InternalException ex) {
                     sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getValue0() + " at " + head.getValue1().toString() + ") from the storage: " + ex.getMessage()));
+                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getKey().toString() + " at " + head.getValue().toString() + ") from the storage: " + ex.getMessage()));
                     continue;
                 }
 
-                headHandler.removeHead(head.getValue0());
+                headHandler.removeHead(head.getKey());
                 headRemoved++;
             }
 

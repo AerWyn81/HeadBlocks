@@ -18,14 +18,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.javatuples.Pair;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 public class HeadHandler {
@@ -37,7 +33,7 @@ public class HeadHandler {
     private FileConfiguration config;
 
     private final ArrayList<HBHead> heads;
-    private ArrayList<Pair<UUID, Location>> headLocations;
+    private LinkedHashMap<UUID, Location> headLocations;
 
     public HeadHandler(HeadBlocks main, File configFile) {
         this.main = main;
@@ -45,7 +41,7 @@ public class HeadHandler {
         this.languageHandler = main.getLanguageHandler();
 
         this.heads = new ArrayList<>();
-        this.headLocations = new ArrayList<>();
+        this.headLocations = new LinkedHashMap<>();
     }
 
     public void loadConfiguration() {
@@ -69,7 +65,7 @@ public class HeadHandler {
         ConfigurationSection locations = config.getConfigurationSection("locations");
 
         if (locations == null) {
-            headLocations = new ArrayList<>();
+            headLocations = new LinkedHashMap<>();
             return;
         }
 
@@ -80,7 +76,7 @@ public class HeadHandler {
                 Map<String, Object> serializedLoc = configSection.getValues(false);
 
                 try {
-                    headLocations.add(new Pair<>(UUID.fromString(uuid), Location.deserialize(serializedLoc)));
+                    headLocations.put(UUID.fromString(uuid), Location.deserialize(serializedLoc));
                 } catch (Exception e) {
                     HeadBlocks.log.sendMessage(MessageUtils.translate("&cCannot deserialize location of head " + uuid));
                 }
@@ -98,37 +94,39 @@ public class HeadHandler {
     }
 
     public void addLocation(UUID uniqueUuid, Location location) {
-        headLocations.add(new Pair<>(uniqueUuid, location));
+        headLocations.put(uniqueUuid, location);
         saveLocations();
         saveConfig();
     }
 
     public void removeHead(UUID headUuid) {
-        Pair<UUID, Location> head = getHeadByUUID(headUuid);
+        Map.Entry<UUID, Location> head = getHeadByUUID(headUuid);
 
         if (head != null) {
-            head.getValue1().getBlock().setType(Material.AIR);
+            head.getValue().getBlock().setType(Material.AIR);
 
-            headLocations.remove(head);
+            headLocations.remove(head.getKey());
             saveLocations();
             saveConfig();
         }
     }
 
-    public Pair<UUID, Location> getHeadByUUID(UUID headUuid) {
-        return headLocations.stream().filter(p -> p.getValue0().equals(headUuid)).findFirst().orElse(null);
+    public Map.Entry<UUID, Location> getHeadByUUID(UUID headUuid) {
+        return headLocations.entrySet().stream().filter(p -> p.getKey().equals(headUuid)).findFirst().orElse(null);
     }
 
     public UUID getHeadAt(Location location) {
-        return headLocations.stream().filter(l -> HeadUtils.areEquals(l.getValue1(), location))
-                .map(Pair::getValue0)
-                .findFirst().orElse(null);
+        return headLocations.entrySet().stream()
+                .filter(l -> HeadUtils.areEquals(l.getValue(), location))
+                .findFirst()
+                .map(Map.Entry::getKey)
+                .orElse(null);
     }
 
     public void saveLocations() {
         config.set("locations", new ArrayList<>());
 
-        headLocations.forEach(key -> config.set("locations." + key.getValue0().toString(), key.getValue1().serialize()));
+        headLocations.forEach((uuid, location) -> config.set("locations." + uuid.toString(), location.serialize()));
 
         saveConfig();
     }
@@ -199,7 +197,7 @@ public class HeadHandler {
         return heads;
     }
 
-    public ArrayList<Pair<UUID, Location>> getHeadLocations() {
+    public LinkedHashMap<UUID, Location> getHeadLocations() {
         return headLocations;
     }
 }

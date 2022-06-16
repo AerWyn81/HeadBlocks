@@ -14,9 +14,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.javatuples.Pair;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 
 @HBAnnotations(command = "list", permission = "headblocks.admin")
@@ -31,7 +31,7 @@ public class List implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        ArrayList<Pair<UUID, Location>> headLocations = headHandler.getHeadLocations();
+        ArrayList<Map.Entry<UUID, Location>> headLocations = new ArrayList<>(headHandler.getHeadLocations().entrySet());
 
         if (headLocations.size() == 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
@@ -51,8 +51,8 @@ public class List implements Cmd {
         }
 
         for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
-            UUID uuid = headLocations.get(i).getValue0();
-            Location location = headLocations.get(i).getValue1();
+            UUID uuid = headLocations.get(i).getKey();
+            Location location = headLocations.get(i).getValue();
 
             String hover = languageHandler.getMessage("Chat.LineCoordinate")
                     .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.translate("&cUnknownWorld"))
