@@ -27,7 +27,8 @@ public class RewardHandler {
                 return t.getLevel() ==
                         main.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size();
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to calculate tieredReward from the storage : " + ex.getMessage()));
+                p.sendMessage(main.getLanguageHandler().getMessage("Messages.StorageError"));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while retrieving heads of " + p.getName() + ": " + ex.getMessage()));
                 return false;
             }
         }).findFirst().orElse(null);

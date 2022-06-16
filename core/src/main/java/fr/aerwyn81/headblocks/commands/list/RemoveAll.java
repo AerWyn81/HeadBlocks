@@ -15,8 +15,8 @@ import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
 public class RemoveAll implements Cmd {
@@ -34,7 +34,7 @@ public class RemoveAll implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        List<Pair<UUID, Location>> headLocations = headHandler.getHeadLocations();
+        ArrayList<Pair<UUID, Location>> headLocations = headHandler.getHeadLocations();
         int headCount = headLocations.size();
 
         if (headLocations.size() == 0) {
@@ -42,20 +42,29 @@ public class RemoveAll implements Cmd {
             return true;
         }
 
+        AtomicInteger headRemoved = new AtomicInteger();
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
-            new ArrayList<>(headLocations).forEach(head -> {
+            headLocations.forEach(head -> {
                 if (configHandler.shouldResetPlayerData()) {
                     try {
                         storageHandler.removeHead(head.getValue0());
                     } catch (InternalException ex) {
-                        HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                        sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getValue0() + " at " + head.getValue1().toString() + ") from the storage: " + ex.getMessage()));
                         return;
                     }
                 }
 
                 headHandler.removeHead(head.getValue0());
+                headRemoved.getAndIncrement();
             });
+
+            if (headRemoved.get() == 0) {
+                sender.sendMessage(languageHandler.getMessage("Messages.RemoveAllError")
+                        .replaceAll("%headCount%", String.valueOf(headCount)));
+                return true;
+            }
 
             sender.sendMessage(languageHandler.getMessage("Messages.RemoveAllSuccess")
                     .replaceAll("%headCount%", String.valueOf(headCount)));

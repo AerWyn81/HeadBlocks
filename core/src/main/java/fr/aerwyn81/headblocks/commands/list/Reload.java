@@ -43,9 +43,6 @@ public class Reload implements Cmd {
         main.getStorageHandler().close();
 
         main.getStorageHandler().initStorage();
-        if (main.getStorageHandler().hasStorageError()) {
-            sender.sendMessage(MessageUtils.translate("&cError while configuring database connection."));
-        }
 
         Bukkit.getScheduler().cancelTasks(main);
         if (configHandler.isParticlesEnabled()) {
@@ -55,6 +52,11 @@ public class Reload implements Cmd {
                 main.setParticlesTask(new ParticlesTask(main));
                 main.getParticlesTask().runTaskTimer(main, 0, configHandler.getParticlesDelay());
             }
+        }
+
+        if (main.getStorageHandler().hasStorageError()) {
+            sender.sendMessage(languageHandler.getMessage("Messages.ReloadWithErrors"));
+            return true;
         }
 
         sender.sendMessage(languageHandler.getMessage("Messages.ReloadComplete"));

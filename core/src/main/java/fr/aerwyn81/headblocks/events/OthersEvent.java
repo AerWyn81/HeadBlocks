@@ -68,7 +68,7 @@ public class OthersEvent implements Listener {
         try {
             main.getStorageHandler().updatePlayerName(p.getUniqueId(), p.getName());
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to update player name with the storage : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to update player name from the storage: " + ex.getMessage()));
         }
     }
 }

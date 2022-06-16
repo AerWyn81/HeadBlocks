@@ -50,7 +50,8 @@ public class Top implements Cmd {
         try {
             top = main.getStorageHandler().getTopPlayers(limit);
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while retrieving top players from the storage: " + ex.getMessage()));
             return true;
         }
 

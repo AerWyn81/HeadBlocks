@@ -69,7 +69,8 @@ public class OnPlayerInteractEvent implements Listener {
                 try {
                     main.getStorageHandler().removeHead(headUuid);
                 } catch (InternalException ex) {
-                    HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to remove a head (" + headUuid + ") in the storage : " + ex.getMessage()));
+                    player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to remove a head (" + headUuid + ") from the storage: " + ex.getMessage()));
                 }
             }
 
@@ -81,7 +82,7 @@ public class OnPlayerInteractEvent implements Listener {
                     .replaceAll("%x%", String.valueOf(clickedLocation.getX()))
                     .replaceAll("%y%", String.valueOf(clickedLocation.getY()))
                     .replaceAll("%z%", String.valueOf(clickedLocation.getZ()))
-                    .replaceAll("%world%", clickedLocation.getWorld() != null ? clickedLocation.getWorld().getName() : MessageUtils.translate("&cUnknownWorld")));
+                    .replaceAll("%world%", clickedLocation.getWorld() != null ? clickedLocation.getWorld().getName() : languageHandler.getMessage("Messages.UnknownWorld")));
 
             // Trigger the event HeadDeleted
             Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headUuid, clickedLocation));
@@ -113,7 +114,8 @@ public class OnPlayerInteractEvent implements Listener {
                     try {
                         XSound.play(player, configHandler.getHeadClickAlreadyOwnSound());
                     } catch (Exception ex) {
-                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+                        player.sendMessage(languageHandler.getMessage("Messages.ErrorCannotPlaySound"));
+                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cError cannot play sound on head click: " + ex.getMessage()));
                     }
                 }
 
@@ -138,7 +140,8 @@ public class OnPlayerInteractEvent implements Listener {
             // Save player click in storage
             main.getStorageHandler().savePlayer(player.getUniqueId(), headUuid);
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to save a head found by " + player.getName() + " from the storage: " + ex.getMessage()));
             return;
         }
 
@@ -188,8 +191,8 @@ public class OnPlayerInteractEvent implements Listener {
             try {
                 playerHeads = main.getStorageHandler().getHeadsPlayer(player.getUniqueId()).size();
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
-                return;
+                player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));                return;
             }
 
             if (!main.getRewardHandler().currentIsContainedInTiered(playerHeads)) {

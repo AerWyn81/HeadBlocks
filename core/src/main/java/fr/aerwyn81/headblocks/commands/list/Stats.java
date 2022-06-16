@@ -48,7 +48,7 @@ public class Stats implements Cmd {
             player = Bukkit.getOfflinePlayer(args[1]).getPlayer();
         } else {
             if (sender instanceof ConsoleCommandSender) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("&cThis command cannot be performed by console without player in argument."));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cThis command cannot be performed by console without player in argument"));
                 return true;
             }
 
@@ -67,7 +67,8 @@ public class Stats implements Cmd {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+            sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while retrieving stats of the player " + player.getName() + " from the storage: " + ex.getMessage()));
             return true;
         }
 

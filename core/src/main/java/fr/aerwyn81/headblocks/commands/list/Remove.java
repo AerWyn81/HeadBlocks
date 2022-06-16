@@ -53,7 +53,8 @@ public class Remove implements Cmd {
             try {
                 storageHandler.removeHead(head.getValue0());
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
+                sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getValue0() + " at " + head.getValue1().toString() + ") from the storage: " + ex.getMessage()));
                 return true;
             }
         }
@@ -62,7 +63,7 @@ public class Remove implements Cmd {
 
         Location loc = head.getValue1();
         player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")
-                .replaceAll("%world%", loc.getWorld() != null ? loc.getWorld().getName() : MessageUtils.translate("&cUnknownWorld"))
+                .replaceAll("%world%", loc.getWorld() != null ? loc.getWorld().getName() : languageHandler.getMessage("Messages.UnknownWorld"))
                 .replaceAll("%x%", String.valueOf(loc.getBlockX()))
                 .replaceAll("%y%", String.valueOf(loc.getBlockY()))
                 .replaceAll("%z%", String.valueOf(loc.getBlockZ())));

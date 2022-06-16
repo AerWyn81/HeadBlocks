@@ -64,8 +64,6 @@ public class List implements Cmd {
             msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
 
             if (sender instanceof Player) {
-                Player player = (Player) sender;
-
                 TextComponent del = new TextComponent(languageHandler.getMessage("Chat.Box.Remove"));
                 del.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb remove " + uuid));
                 del.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.Remove")).create()));

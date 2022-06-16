@@ -31,8 +31,9 @@ public class PlaceholdersHandler {
             try {
                 current = storageHandler.getHeadsPlayer(player.getUniqueId()).size();
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while trying to communicate with the storage : " + ex.getMessage()));
-                current = 0;
+                player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
+                return MessageUtils.translate(message);
             }
 
             int total = headHandler.getHeadLocations().size();
