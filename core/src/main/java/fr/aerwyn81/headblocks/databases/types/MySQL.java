@@ -268,7 +268,7 @@ public final class MySQL implements Database {
         try (PreparedStatement ps = connection.prepareStatement(Requests.TOP_PLAYERS)) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                top.put(rs.getString("pUUID"), rs.getInt("hCount"));
+                top.put(rs.getString("pName"), rs.getInt("hCount"));
             }
 
             return top;
