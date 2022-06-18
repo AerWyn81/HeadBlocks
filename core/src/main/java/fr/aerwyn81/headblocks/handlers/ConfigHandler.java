@@ -211,8 +211,16 @@ public class ConfigHandler {
         return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
     }
 
-    public boolean isParticlesEnabled() {
-        return config.getBoolean("floatingParticles.enabled", false);
+    public boolean isParticlesFoundEnabled() {
+        return config.getBoolean("floatingParticles.found.enabled", true);
+    }
+
+    public boolean isParticlesNotFoundEnabled() {
+        return config.getBoolean("floatingParticles.notFound.enabled", false);
+    }
+
+    public boolean isFloatingParticlesEnabled() {
+        return isParticlesFoundEnabled() || isParticlesNotFoundEnabled();
     }
 
     public int getParticlesDelay() {

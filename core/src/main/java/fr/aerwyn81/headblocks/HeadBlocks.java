@@ -87,7 +87,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         this.rewardHandler = new RewardHandler(this);
 
-        if (configHandler.isParticlesEnabled()) {
+        if (configHandler.isFloatingParticlesEnabled()) {
             this.particlesTask = new ParticlesTask(this);
             particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
         }

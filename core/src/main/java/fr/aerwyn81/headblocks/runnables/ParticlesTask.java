@@ -35,12 +35,16 @@ public class ParticlesTask extends BukkitRunnable {
 
             players.forEach(p -> {
                 try {
-                    if (storageHandler.hasHead(p.getUniqueId(), uuid)){
-                        spawnParticles(location, Particle.valueOf(configHandler.getParticlesFoundType()),
-                                configHandler.getParticlesFoundAmount(), configHandler.getParticlesFoundColors(), p);
+                    if (storageHandler.hasHead(p.getUniqueId(), uuid)) {
+                        if (configHandler.isParticlesFoundEnabled()){
+                            spawnParticles(location, Particle.valueOf(configHandler.getParticlesFoundType()),
+                                    configHandler.getParticlesFoundAmount(), configHandler.getParticlesFoundColors(), p);
+                        }
                     } else {
-                        spawnParticles(location, Particle.valueOf(configHandler.getParticlesNotFoundType()),
-                                configHandler.getParticlesNotFoundAmount(), configHandler.getParticlesNotFoundColors(), p);
+                        if (configHandler.isParticlesNotFoundEnabled()) {
+                            spawnParticles(location, Particle.valueOf(configHandler.getParticlesNotFoundType()),
+                                    configHandler.getParticlesNotFoundAmount(), configHandler.getParticlesNotFoundColors(), p);
+                        }
                     }
                 } catch (InternalException ex) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to communicate with the storage : " + ex.getMessage()));
