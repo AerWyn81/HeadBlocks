@@ -64,16 +64,13 @@ public class OnPlayerInteractEvent implements Listener {
                 return;
             }
 
-            // If resetPlayerData is enabled, reset all player data for the head
+            // Remove the head
             try {
-                main.getStorageHandler().removeHead(headUuid, configHandler.shouldResetPlayerData());
+                main.getHeadHandler().removeHeadLocation(headUuid, configHandler.shouldResetPlayerData());
             } catch (InternalException ex) {
                 player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
                 HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to remove a head (" + headUuid + ") from the storage: " + ex.getMessage()));
             }
-
-            // Remove the head from the ground
-            main.getHeadHandler().removeHead(headUuid);
 
             // Send player success message
             player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")

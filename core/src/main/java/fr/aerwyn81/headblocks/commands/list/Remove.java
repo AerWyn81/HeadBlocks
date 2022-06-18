@@ -50,14 +50,12 @@ public class Remove implements Cmd {
         }
 
         try {
-            storageHandler.removeHead(head.getKey(), configHandler.shouldResetPlayerData());
+            headHandler.removeHeadLocation(head.getKey(), configHandler.shouldResetPlayerData());
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getKey().toString() + " at " + head.getValue().toString() + ") from the storage: " + ex.getMessage()));
             return true;
         }
-
-        headHandler.removeHead(head.getKey());
 
         Location loc = head.getValue();
         player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")

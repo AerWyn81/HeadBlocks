@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.utils.HeadUtils;
+import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -27,9 +28,10 @@ import java.util.logging.Level;
 public class HeadHandler {
 
     private final HeadBlocks main;
+    private final LanguageHandler languageHandler;
+    private final StorageHandler storageHandler;
 
     private final File configFile;
-    private final LanguageHandler languageHandler;
     private FileConfiguration config;
 
     private final ArrayList<HBHead> heads;
@@ -39,6 +41,7 @@ public class HeadHandler {
         this.main = main;
         this.configFile = configFile;
         this.languageHandler = main.getLanguageHandler();
+        this.storageHandler = main.getStorageHandler();
 
         this.heads = new ArrayList<>();
         this.headLocations = new LinkedHashMap<>();
@@ -55,7 +58,7 @@ public class HeadHandler {
         try {
             config.save(configFile);
         } catch (IOException e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Cannot save to {0}", configFile.getName());
+            Bukkit.getLogger().log(Level.SEVERE, "Cannot save the config file to {0}", configFile.getName());
         }
     }
 
@@ -84,31 +87,40 @@ public class HeadHandler {
         });
     }
 
-    public UUID generateNewUuid() {
+    public UUID saveHeadLocation(Location location) throws InternalException {
         UUID uniqueUuid = UUID.randomUUID();
         while (getHeadByUUID(uniqueUuid) != null) {
             uniqueUuid = UUID.randomUUID();
         }
 
-        return uniqueUuid;
-    }
+        storageHandler.createNewHead(uniqueUuid);
 
-    public void addLocation(UUID uniqueUuid, Location location) {
         headLocations.put(uniqueUuid, location);
         saveLocations();
         saveConfig();
+
+        return uniqueUuid;
     }
 
-    public void removeHead(UUID headUuid) {
+    public void removeHeadLocation(UUID headUuid, boolean withDelete) throws InternalException {
         Map.Entry<UUID, Location> head = getHeadByUUID(headUuid);
 
         if (head != null) {
+            storageHandler.removeHead(head.getKey(), withDelete);
+
             head.getValue().getBlock().setType(Material.AIR);
 
             headLocations.remove(head.getKey());
             saveLocations();
             saveConfig();
         }
+    }
+
+    public void saveLocations() {
+        config.set("locations", new ArrayList<>());
+
+        headLocations.forEach((uuid, location) -> config.set("locations." + uuid.toString(), location.serialize()));
+        saveConfig();
     }
 
     public Map.Entry<UUID, Location> getHeadByUUID(UUID headUuid) {
@@ -121,14 +133,6 @@ public class HeadHandler {
                 .findFirst()
                 .map(Map.Entry::getKey)
                 .orElse(null);
-    }
-
-    public void saveLocations() {
-        config.set("locations", new ArrayList<>());
-
-        headLocations.forEach((uuid, location) -> config.set("locations." + uuid.toString(), location.serialize()));
-
-        saveConfig();
     }
 
     private void loadHeads() {

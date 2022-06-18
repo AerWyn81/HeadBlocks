@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.storages;
 
 import fr.aerwyn81.headblocks.utils.InternalException;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 public interface Storage {
@@ -19,4 +20,6 @@ public interface Storage {
     void resetPlayer(UUID playerUuid) throws InternalException;
 
     void removeHead(UUID headUuid) throws InternalException;
+
+    ArrayList<UUID> getHeadsPlayer(UUID pUuid) throws InternalException;
 }

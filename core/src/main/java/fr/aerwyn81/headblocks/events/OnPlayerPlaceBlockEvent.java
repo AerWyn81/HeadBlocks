@@ -51,16 +51,14 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        UUID headUuid = main.getHeadHandler().generateNewUuid();
-
+        UUID headUuid;
         try {
-            main.getStorageHandler().createNewHead(headUuid);
+            headUuid = main.getHeadHandler().saveHeadLocation(headLocation);
         } catch (InternalException ex) {
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
+            return;
         }
-
-        main.getHeadHandler().addLocation(headUuid, headLocation);
 
         ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
 

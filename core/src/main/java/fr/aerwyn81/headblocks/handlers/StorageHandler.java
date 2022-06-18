@@ -37,7 +37,11 @@ public class StorageHandler {
 
     public void initStorage() {
         if (configHandler.isRedisEnabled()) {
-            storage = new Redis(main);
+            storage = new Redis(
+                    configHandler.getRedisHostname(),
+                    configHandler.getRedisPassword(),
+                    configHandler.getRedisPort(),
+                    configHandler.getRedisDatabase());
         } else {
             storage = new Memory();
         }

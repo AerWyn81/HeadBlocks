@@ -47,15 +47,12 @@ public class RemoveAll implements Cmd {
 
             for (Map.Entry<UUID, Location> head : new ArrayList<>(headLocations)) {
                 try {
-                    storageHandler.removeHead(head.getKey(), configHandler.shouldResetPlayerData());
+                    headHandler.removeHeadLocation(head.getKey(), configHandler.shouldResetPlayerData());
+                    headRemoved++;
                 } catch (InternalException ex) {
                     sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
                     HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getKey().toString() + " at " + head.getValue().toString() + ") from the storage: " + ex.getMessage()));
-                    continue;
                 }
-
-                headHandler.removeHead(head.getKey());
-                headRemoved++;
             }
 
             if (headRemoved == 0) {
