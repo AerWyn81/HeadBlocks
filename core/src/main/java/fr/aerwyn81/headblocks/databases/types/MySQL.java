@@ -189,7 +189,7 @@ public final class MySQL implements Database {
      * @throws InternalException SQL Exception
      */
     @Override
-    public void savePlayer(UUID pUUID, UUID hUUID) throws InternalException {
+    public void addHead(UUID pUUID, UUID hUUID) throws InternalException {
         try (PreparedStatement ps = connection.prepareStatement(Requests.SAVE_PLAYERHEAD)) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, hUUID.toString());

@@ -51,12 +51,18 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
+        // Check if there is a storage issue
+        if (main.getStorageHandler().hasStorageError()) {
+            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            return;
+        }
+
         UUID headUuid;
         try {
             headUuid = main.getHeadHandler().saveHeadLocation(headLocation);
         } catch (InternalException ex) {
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
             return;
         }
 

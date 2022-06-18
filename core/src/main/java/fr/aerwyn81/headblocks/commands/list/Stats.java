@@ -44,7 +44,7 @@ public class Stats implements Cmd {
             player = Bukkit.getOfflinePlayer(args[1]).getPlayer();
         } else {
             if (sender instanceof ConsoleCommandSender) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("&cThis command cannot be performed by console without player in argument"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cThis command cannot be performed by console without player in argument"));
                 return true;
             }
 
@@ -52,7 +52,8 @@ public class Stats implements Cmd {
         }
 
         if (player == null) {
-            sender.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound"));
+            sender.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound")
+                    .replaceAll("%player%", args[1]));
             return true;
         }
 
@@ -64,7 +65,7 @@ public class Stats implements Cmd {
                     .collect(Collectors.toCollection(ArrayList::new));
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while retrieving stats of the player " + player.getName() + " from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving stats of the player " + player.getName() + " from the storage: " + ex.getMessage()));
             return true;
         }
 
@@ -94,13 +95,13 @@ public class Stats implements Cmd {
             Location location = headsSpawned.get(i).getValue();
 
             String hover = languageHandler.getMessage("Chat.LineCoordinate")
-                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.translate("&cUnknownWorld"))
+                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.colorize("&cUnknownWorld"))
                     .replaceAll("%x%", String.valueOf(location.getBlockX()))
                     .replaceAll("%y%", String.valueOf(location.getBlockY()))
                     .replaceAll("%z%", String.valueOf(location.getBlockZ()));
 
             if (sender instanceof Player) {
-                TextComponent msg = new TextComponent(MessageUtils.translate("&6" + uuid));
+                TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + uuid));
                 msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
 
                 TextComponent own;
@@ -121,7 +122,7 @@ public class Stats implements Cmd {
             } else {
                 sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getKey() == uuid) ?
                                 languageHandler.getMessage("Chat.Box.Own") : languageHandler.getMessage("Chat.Box.NotOwn")) + " " +
-                                MessageUtils.translate("&6" + uuid));
+                                MessageUtils.colorize("&6" + uuid));
             }
         }
 

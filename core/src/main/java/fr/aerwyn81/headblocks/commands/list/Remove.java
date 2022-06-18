@@ -53,7 +53,7 @@ public class Remove implements Cmd {
             headHandler.removeHeadLocation(head.getKey(), configHandler.shouldResetPlayerData());
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while removing the head (" + head.getKey().toString() + " at " + head.getValue().toString() + ") from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getKey().toString() + " at " + head.getValue().toString() + ") from the storage: " + ex.getMessage()));
             return true;
         }
 

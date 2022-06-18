@@ -87,7 +87,7 @@ public class ConfigHandler {
                 String[] s = color.split(",");
                 colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.colorize(
                         "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
             }
         });
@@ -107,7 +107,7 @@ public class ConfigHandler {
                 String[] s = color.split(",");
                 colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.colorize(
                         "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
             }
         });
@@ -273,7 +273,7 @@ public class ConfigHandler {
                     tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages));
                 }
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate(
+                HeadBlocks.log.sendMessage(MessageUtils.colorize(
                         "&cCannot read tiered rewards of \"" + level + "\". Error message :" + ex.getMessage()));
             }
         }

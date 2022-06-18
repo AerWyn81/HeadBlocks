@@ -43,7 +43,7 @@ public class Help implements Cmd {
                     .replaceAll("all", "All");
 
             if (!languageHandler.hasMessage("Help." + command)) {
-                sender.sendMessage(MessageUtils.translate("&6/hb " + registeredCommands.get(i).getCommand() + " &8: &c&oNo help message found. Please report to developer!"));
+                sender.sendMessage(MessageUtils.colorize("&6/hb " + registeredCommands.get(i).getCommand() + " &8: &c&oNo help message found. Please report to developer!"));
             } else {
                 message = languageHandler.getMessage("Help." + command);
                 if (sender instanceof Player) {

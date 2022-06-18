@@ -2,16 +2,14 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.HeadUtils;
-import fr.aerwyn81.headblocks.utils.InternalException;
-import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.UUID;
 
@@ -50,16 +48,11 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        Player p = e.getPlayer();
+        main.getStorageHandler().loadPlayer(e.getPlayer());
+    }
 
-        try {
-            boolean hasRenamed = main.getStorageHandler().hasPlayerRenamed(p.getUniqueId(), p.getName());
-
-            if (hasRenamed) {
-                main.getStorageHandler().updatePlayerName(p.getUniqueId(), p.getName());
-            }
-        } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to update player name from the storage: " + ex.getMessage()));
-        }
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        main.getStorageHandler().unloadPlayer(e.getPlayer());
     }
 }

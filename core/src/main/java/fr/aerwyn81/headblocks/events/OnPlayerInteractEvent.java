@@ -56,6 +56,12 @@ public class OnPlayerInteractEvent implements Listener {
 
         Player player = e.getPlayer();
 
+        // Check if there is a storage issue
+        if (main.getStorageHandler().hasStorageError()) {
+            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            return;
+        }
+
         // Actions to destroy the head only if player has the permission and the creative gamemode
         if (e.getAction() == Action.LEFT_CLICK_BLOCK && player.getGameMode() == GameMode.CREATIVE && PlayerUtils.hasPermission(player, "headblocks.admin")) {
             if (!player.isSneaking()) {
@@ -69,7 +75,7 @@ public class OnPlayerInteractEvent implements Listener {
                 main.getHeadHandler().removeHeadLocation(headUuid, configHandler.shouldResetPlayerData());
             } catch (InternalException ex) {
                 player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to remove a head (" + headUuid + ") from the storage: " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headUuid + ") from the storage: " + ex.getMessage()));
             }
 
             // Send player success message
@@ -96,7 +102,7 @@ public class OnPlayerInteractEvent implements Listener {
 
         try {
             // Check if the player has already clicked on the head
-            if (main.getStorageHandler().hasAlreadyClaimedHead(player.getUniqueId(), headUuid)) {
+            if (main.getStorageHandler().hasHead(player.getUniqueId(), headUuid)) {
                 String message = PlaceholdersHandler.parse(player, languageHandler.getMessage("Messages.AlreadyClaimHead"));
 
                 if (!message.trim().isEmpty()) {
@@ -110,7 +116,7 @@ public class OnPlayerInteractEvent implements Listener {
                         XSound.play(player, configHandler.getHeadClickAlreadyOwnSound());
                     } catch (Exception ex) {
                         player.sendMessage(languageHandler.getMessage("Messages.ErrorCannotPlaySound"));
-                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cError cannot play sound on head click: " + ex.getMessage()));
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click: " + ex.getMessage()));
                     }
                 }
 
@@ -123,7 +129,7 @@ public class OnPlayerInteractEvent implements Listener {
                     try {
                         ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
                     } catch (Exception ex) {
-                        HeadBlocks.log.sendMessage(MessageUtils.translate("&cError particle name " + particleName + " cannot be parsed!"));
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError particle name " + particleName + " cannot be parsed!"));
                     }
                 }
 
@@ -133,10 +139,10 @@ public class OnPlayerInteractEvent implements Listener {
             }
 
             // Save player click in storage
-            main.getStorageHandler().savePlayer(player.getUniqueId(), headUuid);
+            main.getStorageHandler().addHead(player.getUniqueId(), headUuid);
         } catch (InternalException ex) {
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to save a head found by " + player.getName() + " from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to save a head found by " + player.getName() + " from the storage: " + ex.getMessage()));
             return;
         }
 
@@ -152,7 +158,7 @@ public class OnPlayerInteractEvent implements Listener {
             try {
                 XSound.play(player, songName);
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError cannot play sound on head click! Cannot parse provided name..."));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click! Cannot parse provided name..."));
             }
         }
 
@@ -187,7 +193,7 @@ public class OnPlayerInteractEvent implements Listener {
                 playerHeads = main.getStorageHandler().getHeadsPlayer(player.getUniqueId()).size();
             } catch (InternalException ex) {
                 player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));                return;
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));                return;
             }
 
             if (!main.getRewardHandler().currentIsContainedInTiered(playerHeads)) {

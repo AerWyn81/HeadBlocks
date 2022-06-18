@@ -35,7 +35,7 @@ public class ParticlesTask extends BukkitRunnable {
 
             players.forEach(p -> {
                 try {
-                    if (storageHandler.hasAlreadyClaimedHead(p.getUniqueId(), uuid)){
+                    if (storageHandler.hasHead(p.getUniqueId(), uuid)){
                         spawnParticles(location, Particle.valueOf(configHandler.getParticlesFoundType()),
                                 configHandler.getParticlesFoundAmount(), configHandler.getParticlesFoundColors(), p);
                     } else {
@@ -43,7 +43,7 @@ public class ParticlesTask extends BukkitRunnable {
                                 configHandler.getParticlesNotFoundAmount(), configHandler.getParticlesNotFoundColors(), p);
                     }
                 } catch (InternalException ex) {
-                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to communicate with the storage : " + ex.getMessage()));
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to communicate with the storage : " + ex.getMessage()));
                     this.cancel();
                 }
             });
@@ -54,8 +54,8 @@ public class ParticlesTask extends BukkitRunnable {
         try {
             ParticlesUtils.spawn(location, particle, amount, colors, players);
         } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cTo prevent log spamming, particles is disabled until reload"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cTo prevent log spamming, particles is disabled until reload"));
             this.cancel();
         }
     }

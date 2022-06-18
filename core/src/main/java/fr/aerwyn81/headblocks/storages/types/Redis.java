@@ -46,7 +46,7 @@ public class Redis implements Storage {
     }
 
     @Override
-    public boolean hasAlreadyClaimedHead(UUID playerUuid, UUID headUuid) throws InternalException {
+    public boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
             return redis.lrange("headblocks:" + playerUuid.toString(), 0, -1).stream().anyMatch(e -> e.equals(headUuid.toString()));
         } catch (Exception ex) {
@@ -64,7 +64,7 @@ public class Redis implements Storage {
     }
 
     @Override
-    public void savePlayer(UUID playerUuid, UUID headUuid) throws InternalException {
+    public void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
             redis.rpush("headblocks:" + playerUuid.toString(), headUuid.toString());
         } catch (Exception ex) {

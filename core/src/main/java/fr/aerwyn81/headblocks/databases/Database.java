@@ -24,7 +24,7 @@ public interface Database {
 
     ArrayList<UUID> getHeadsPlayer(UUID pUUID) throws InternalException;
 
-    void savePlayer(UUID pUUID, UUID hUUID) throws InternalException;
+    void addHead(UUID pUUID, UUID hUUID) throws InternalException;
 
     void resetPlayer(UUID pUUID) throws InternalException;
 

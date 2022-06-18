@@ -51,7 +51,7 @@ public class Top implements Cmd {
             top = new ArrayList<>(main.getStorageHandler().getTopPlayers(limit).entrySet());
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while retrieving top players from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving top players from the storage: " + ex.getMessage()));
             return true;
         }
 
@@ -88,7 +88,7 @@ public class Top implements Cmd {
 
                 cpu.addLine(msg);
             } else {
-                sender.sendMessage(MessageUtils.translate("&6" + message));
+                sender.sendMessage(MessageUtils.colorize("&6" + message));
             }
         }
 

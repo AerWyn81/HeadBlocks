@@ -37,15 +37,16 @@ public class Give implements Cmd {
             Player pTemp = Bukkit.getPlayer(args[1]);
 
             if (pTemp == null) {
-                player.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound"));
+                player.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound")
+                        .replaceAll("%player%", args[1]));
                 return true;
             }
 
             player = pTemp;
         }
 
-        ArrayList<HBHead> HBHeads = headHandler.getHeads();
-        if (HBHeads.size() == 0) {
+        ArrayList<HBHead> hbHeads = headHandler.getHeads();
+        if (hbHeads.size() == 0) {
             player.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
@@ -53,6 +54,8 @@ public class Give implements Cmd {
         ArrayList<HBHead> headsToGive = new ArrayList<>();
         if (args.length > 2 && args[2].equals("*")) {
             headsToGive = headHandler.getHeads();
+        } else if (args.length >= 1 && hbHeads.size() == 1) {
+            headsToGive.add(headHandler.getHeads().get(0));
         } else if (args.length > 2) {
             int id;
 
@@ -67,7 +70,7 @@ public class Give implements Cmd {
             }
 
             int finalId = --id;
-            if (finalId > HBHeads.size() - 1) {
+            if (finalId > hbHeads.size() - 1) {
                 player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
                 return true;
             }
@@ -128,13 +131,18 @@ public class Give implements Cmd {
                     .collect(Collectors.toCollection(ArrayList::new));
         }
 
+        int headCount = main.getHeadHandler().getHeads().size();
+
         ArrayList<String> items = new ArrayList<>();
-        if (args.length == 3 && main.getHeadHandler().getHeads().size() > 0) {
-            items.add("*");
-            items.addAll(IntStream.range(1, main.getHeadHandler().getHeads().size() + 1)
-                    .boxed()
-                    .map(Object::toString)
-                    .collect(Collectors.toList()));
+        if (args.length == 3 && headCount > 0) {
+            if (headCount > 1) {
+                items.add("*");
+
+                items.addAll(IntStream.range(1, headCount + 1)
+                        .boxed()
+                        .map(Object::toString)
+                        .collect(Collectors.toList()));
+            }
         }
 
         return items;

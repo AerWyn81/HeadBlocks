@@ -23,7 +23,7 @@ public class Memory implements Storage {
     public void close() throws InternalException { }
 
     @Override
-    public boolean hasAlreadyClaimedHead(UUID playerUuid, UUID headUuid) {
+    public boolean hasHead(UUID playerUuid, UUID headUuid) {
         return containsPlayer(playerUuid) && headsFound.get(playerUuid).contains(headUuid);
     }
 
@@ -33,7 +33,7 @@ public class Memory implements Storage {
     }
 
     @Override
-    public void savePlayer(UUID playerUuid, UUID headUuid) {
+    public void addHead(UUID playerUuid, UUID headUuid) {
         if (!containsPlayer(playerUuid)) {
             headsFound.put(playerUuid, new ArrayList<>(Collections.singletonList(headUuid)));
             return;

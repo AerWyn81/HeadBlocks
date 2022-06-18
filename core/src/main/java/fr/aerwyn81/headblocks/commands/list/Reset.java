@@ -29,7 +29,8 @@ public class Reset implements Cmd {
         Player pTemp = Bukkit.getOfflinePlayer(args[1]).getPlayer();
 
         if (pTemp == null) {
-            sender.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound"));
+            sender.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound")
+                    .replaceAll("%player%", args[1]));
             return true;
         }
 
@@ -42,7 +43,7 @@ public class Reset implements Cmd {
             storageHandler.resetPlayer(pTemp.getUniqueId());
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while resetting the player " + pTemp.getName() + " from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player " + pTemp.getName() + " from the storage: " + ex.getMessage()));
             return true;
         }
 

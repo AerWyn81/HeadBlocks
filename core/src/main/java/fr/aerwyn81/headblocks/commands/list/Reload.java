@@ -40,7 +40,7 @@ public class Reload implements Cmd {
 
         main.getStorageHandler().close();
 
-        main.getStorageHandler().initStorage();
+        main.getStorageHandler().init();
 
         Bukkit.getScheduler().cancelTasks(main);
         if (configHandler.isParticlesEnabled()) {

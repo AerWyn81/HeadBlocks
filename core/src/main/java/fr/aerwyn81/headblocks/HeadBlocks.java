@@ -44,7 +44,7 @@ public final class HeadBlocks extends JavaPlugin {
         instance = this;
         log = Bukkit.getConsoleSender();
 
-        log.sendMessage(MessageUtils.translate("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
+        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
 
         File configFile = new File(getDataFolder(), "config.yml");
         File locationFile = new File(getDataFolder(), "locations.yml");
@@ -53,18 +53,18 @@ public final class HeadBlocks extends JavaPlugin {
         try {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads"));
         } catch (IOException e) {
-            log.sendMessage(MessageUtils.translate("&cError while loading config file: " + e.getMessage()));
+            log.sendMessage(MessageUtils.colorize("&cError while loading config file: " + e.getMessage()));
             this.setEnabled(false);
             return;
         }
         reloadConfig();
 
         if (Version.getCurrent().isOlderOrSameThan(Version.v1_15)) {
-            log.sendMessage(MessageUtils.translate("&c***** --------------------------------------- *****"));
-            log.sendMessage(MessageUtils.translate("&cHeadBlocks version 2 does not support your Minecraft Server version: " + Version.getCurrentFormatted()));
-            log.sendMessage(MessageUtils.translate("&cIf you are using a version below Minecraft 1.16, use the version 1.6 of the plugin"));
-            log.sendMessage(MessageUtils.translate("&cVersion 1.6 will not receive any new features but may receive corrective updates."));
-            log.sendMessage(MessageUtils.translate("&c***** --------------------------------------- *****"));
+            log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
+            log.sendMessage(MessageUtils.colorize("&cHeadBlocks version 2 does not support your Minecraft Server version: " + Version.getCurrentFormatted()));
+            log.sendMessage(MessageUtils.colorize("&cIf you are using a version below Minecraft 1.16, use the version 1.6 of the plugin"));
+            log.sendMessage(MessageUtils.colorize("&cVersion 1.6 will not receive any new features but may receive corrective updates."));
+            log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
             this.setEnabled(false);
             return;
         }
@@ -79,11 +79,11 @@ public final class HeadBlocks extends JavaPlugin {
             new Metrics(this, 15495);
         }
 
+        this.storageHandler = new StorageHandler(this);
+        this.storageHandler.init();
+
         this.headHandler = new HeadHandler(this, locationFile);
         this.headHandler.loadConfiguration();
-
-        this.storageHandler = new StorageHandler(this);
-        this.storageHandler.initStorage();
 
         this.rewardHandler = new RewardHandler(this);
 
@@ -121,7 +121,7 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new OthersEvent(this), this);
 
-        log.sendMessage(MessageUtils.translate("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
+        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
     }
 
     @Override
@@ -132,7 +132,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         Bukkit.getScheduler().cancelTasks(this);
 
-        log.sendMessage(MessageUtils.translate("&6HeadBlocks &cdisabled!"));
+        log.sendMessage(MessageUtils.colorize("&6HeadBlocks &cdisabled!"));
     }
 
     public void loadHeadsHDB() {

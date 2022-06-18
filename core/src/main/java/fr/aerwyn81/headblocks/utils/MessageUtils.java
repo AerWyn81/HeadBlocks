@@ -21,7 +21,7 @@ public class MessageUtils {
 	 * @param message with {#RRGGBB}
 	 * @return Formatted string to be displayed by SpigotAPI
 	 */
-	public static String translate(String message) {
+	public static String colorize(String message) {
 		String replaced = message;
 		Matcher m = hexPattern.matcher(replaced);
 		while (m.find()) {
@@ -42,7 +42,7 @@ public class MessageUtils {
 	 * @return clean message translated
 	 */
 	public static String centerMessage(String message) {
-		String translated = translate(message);
+		String translated = colorize(message);
 		return message.contains("{center}") ? sendCenteredString(translated.replaceAll("\\{center}", "")) : translated;
 	}
 
@@ -61,7 +61,7 @@ public class MessageUtils {
 		float percent = (float) current / max;
 		int progressBars = (int) (totalBars * percent);
 
-		return translate(Strings.repeat(completedColor + symbol, progressBars) +
+		return colorize(Strings.repeat(completedColor + symbol, progressBars) +
 				Strings.repeat(notCompletedColor + symbol, totalBars - progressBars));
 	}
 

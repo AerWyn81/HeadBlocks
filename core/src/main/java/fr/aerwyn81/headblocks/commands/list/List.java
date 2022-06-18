@@ -55,12 +55,12 @@ public class List implements Cmd {
             Location location = headLocations.get(i).getValue();
 
             String hover = languageHandler.getMessage("Chat.LineCoordinate")
-                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.translate("&cUnknownWorld"))
+                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.colorize("&cUnknownWorld"))
                     .replaceAll("%x%", String.valueOf(location.getBlockX()))
                     .replaceAll("%y%", String.valueOf(location.getBlockY()))
                     .replaceAll("%z%", String.valueOf(location.getBlockZ()));
 
-            TextComponent msg = new TextComponent(MessageUtils.translate("&6" + uuid));
+            TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + uuid));
             msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
 
             if (sender instanceof Player) {
@@ -76,7 +76,7 @@ public class List implements Cmd {
 
                 cpu.addLine(del, space, tp, space, msg, space);
             } else {
-                sender.sendMessage(MessageUtils.translate("&6" + uuid));
+                sender.sendMessage(MessageUtils.colorize("&6" + uuid));
             }
         }
 

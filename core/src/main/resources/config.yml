@@ -102,18 +102,18 @@ floatingParticles:
     # Colors is only for REDSTONE type
     # Support multiple colors (ex: 12,16,18)
     colors:
-      - 255,0,0
-      - 255,50,0
-      - 255,0,50
+      - 0,255,0
+      - 50,255,0
+      - 0,255,50
     amount: 3
   found:
     type: REDSTONE
     # Colors is only for REDSTONE type
     # Support multiple colors (ex: 12,16,18)
     colors:
-      - 0,255,0
-      - 50,255,0
-      - 0,255,50
+      - 255,0,0
+      - 255,50,0
+      - 255,0,50
     amount: 3
 
 # If true, when a Headblocks is destroyed, it will delete all player data related to it

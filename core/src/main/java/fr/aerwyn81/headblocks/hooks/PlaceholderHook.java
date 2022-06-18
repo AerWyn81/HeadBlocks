@@ -58,7 +58,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
             try {
                 current = main.getStorageHandler().getHeadsPlayer(player.getUniqueId()).size();
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
                 return "-1";
             }
 

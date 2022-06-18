@@ -28,7 +28,7 @@ public class RewardHandler {
                         main.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size();
             } catch (InternalException ex) {
                 p.sendMessage(main.getLanguageHandler().getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while retrieving heads of " + p.getName() + ": " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + p.getName() + ": " + ex.getMessage()));
                 return false;
             }
         }).findFirst().orElse(null);

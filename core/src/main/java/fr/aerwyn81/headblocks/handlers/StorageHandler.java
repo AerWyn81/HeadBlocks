@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
+import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,13 @@ public class StorageHandler {
         return storageError;
     }
 
-    public void initStorage() {
+    public void init() {
+        if (configHandler.isRedisEnabled() && !configHandler.isDatabaseEnabled()) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError you can't use Redis without setting up an SQL database"));
+            storageError = true;
+            return;
+        }
+
         if (configHandler.isRedisEnabled()) {
             storage = new Redis(
                     configHandler.getRedisHostname(),
@@ -45,7 +52,7 @@ public class StorageHandler {
         } else {
             storage = new Memory();
         }
-        
+
         if (configHandler.isDatabaseEnabled()) {
             database = new MySQL(
                     configHandler.getDatabaseUsername(),
@@ -62,16 +69,59 @@ public class StorageHandler {
         try {
             storage.init();
         } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to initialize the storage: " + ex.getMessage()));
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to initialize the storage : " + ex.getMessage()));
+            return;
         }
 
         try {
             database.open();
             database.load();
         } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to connect to the SQL database: " + ex.getMessage()));
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to connect to the SQL database : " + ex.getMessage()));
+        }
+    }
+
+    public void loadPlayer(Player player) {
+        UUID pUuid = player.getUniqueId();
+        String playerName = player.getName();
+
+        try {
+            boolean isExist = database.containsPlayer(pUuid);
+
+            if (isExist) {
+                boolean hasRenamed = main.getStorageHandler().hasPlayerRenamed(pUuid, playerName);
+
+                if (hasRenamed) {
+                    main.getStorageHandler().updatePlayerName(pUuid, playerName);
+                }
+
+                for (UUID hUuid : database.getHeadsPlayer(pUuid)) {
+                    storage.addHead(pUuid, hUuid);
+                }
+            } else {
+                main.getStorageHandler().updatePlayerName(pUuid, playerName);
+            }
+        } catch (InternalException ex) {
+            storageError = true;
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to load player " + playerName + " from SQL database: " + ex.getMessage()));
+        }
+    }
+
+    public void unloadPlayer(Player player) {
+        UUID uuid = player.getUniqueId();
+        String playerName = player.getName();
+
+        try {
+            boolean isExist = storage.containsPlayer(uuid);
+
+            if (isExist) {
+                storage.resetPlayer(uuid);
+            }
+        } catch (InternalException ex) {
+            storageError = true;
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to unload player " + playerName + " from SQL database: " + ex.getMessage()));
         }
     }
 
@@ -80,34 +130,24 @@ public class StorageHandler {
             storage.close();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to close the REDIS connection : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to close the REDIS connection : " + ex.getMessage()));
         }
 
         try {
             database.close();
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while trying to close the SQL connection : " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to close the SQL connection : " + ex.getMessage()));
         }
     }
 
-    public boolean hasAlreadyClaimedHead(UUID playerUuid, UUID headUuid) throws InternalException {
-        boolean isFoundInRedis = storage.hasAlreadyClaimedHead(playerUuid, headUuid);
-        if (isFoundInRedis) {
-            return true;
-        }
-
-        boolean isFoundInDatabase = database.hasHead(playerUuid, headUuid);
-        if (isFoundInDatabase) {
-            storage.savePlayer(playerUuid, headUuid);
-        }
-
-        return isFoundInDatabase;
+    public boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        return storage.hasHead(playerUuid, headUuid);
     }
 
-    public void savePlayer(UUID playerUuid, UUID headUuid) throws InternalException {
-        storage.savePlayer(playerUuid, headUuid);
-        database.savePlayer(playerUuid, headUuid);
+    public void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        storage.addHead(playerUuid, headUuid);
+        database.addHead(playerUuid, headUuid);
     }
 
     public boolean containsPlayer(UUID playerUuid) throws InternalException {

@@ -35,8 +35,8 @@ public class PlaceholdersHandler {
                 current = storageHandler.getHeadsPlayer(player.getUniqueId()).size();
             } catch (InternalException ex) {
                 player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.translate("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
-                return MessageUtils.translate(message);
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
+                return MessageUtils.colorize(message);
             }
 
             int total = headHandler.getHeadLocations().size();

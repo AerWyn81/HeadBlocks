@@ -32,7 +32,7 @@ public class ResetAll implements Cmd {
             allPlayers = storageHandler.getAllPlayers();
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while retrieving all players from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving all players from the storage: " + ex.getMessage()));
             return true;
         }
 
@@ -49,7 +49,7 @@ public class ResetAll implements Cmd {
                     storageHandler.resetPlayer(uuid);
                 } catch (InternalException ex) {
                     sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-                    HeadBlocks.log.sendMessage(MessageUtils.translate("&cError while resetting the player UUID " + uuid.toString() + " from the storage: " + ex.getMessage()));
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + uuid.toString() + " from the storage: " + ex.getMessage()));
                     return true;
                 }
             }

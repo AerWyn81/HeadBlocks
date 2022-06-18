@@ -37,7 +37,7 @@ public class LanguageHandler {
 	}
 
 	public String getPrefix() {
-		return MessageUtils.translate(messages.get("Prefix").toString());
+		return MessageUtils.colorize(messages.get("Prefix").toString());
 	}
 
 	public boolean hasMessage(String message) {
@@ -45,11 +45,11 @@ public class LanguageHandler {
 	}
 
 	public String getMessage(String message) {
-		return MessageUtils.translate(messages.get(message).toString().replaceAll("%prefix%", getPrefix()));
+		return MessageUtils.colorize(messages.get(message).toString().replaceAll("%prefix%", getPrefix()));
 	}
 
 	public List<String> getMessages(String message) {
-		return ((List<String>) messages.get(message)).stream().map(MessageUtils::translate).collect(Collectors.toList());
+		return ((List<String>) messages.get(message)).stream().map(MessageUtils::colorize).collect(Collectors.toList());
 	}
 
 	public String checkLanguage(String lang) {
