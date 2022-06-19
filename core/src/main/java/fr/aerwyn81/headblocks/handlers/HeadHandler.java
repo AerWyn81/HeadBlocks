@@ -196,10 +196,11 @@ public class HeadHandler {
                     break;
                 case "hdb":
                     if (!HeadBlocks.isHeadDatabaseActive) {
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot load hdb head type " + configHead + " without HeadDatabase installed"));
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot load hdb head " + configHead + " without HeadDatabase installed"));
                         continue;
                     }
 
+                    head.setItemMeta(headMeta);
                     heads.add(new HBHeadHDB(head, parts[1]));
                     break;
                 default:

@@ -75,7 +75,7 @@ public final class MySQL implements Database {
             statement = connection.prepareStatement(Requests.CREATE_TABLE_HEADS_MYSQL);
             statement.execute();
 
-            statement = connection.prepareStatement(Requests.CREATE_TABLE_PLAYERHEADS);
+            statement = connection.prepareStatement(Requests.CREATE_TABLE_PLAYERHEADS_MYSQL);
             statement.execute();
         } catch (SQLException ex) {
             throw new InternalException(ex);
@@ -266,6 +266,8 @@ public final class MySQL implements Database {
         Map<String, Integer> top = new LinkedHashMap<>();
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.TOP_PLAYERS)) {
+            ps.setInt(1, limit);
+
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 top.put(rs.getString("pName"), rs.getInt("hCount"));

@@ -6,7 +6,7 @@ public class HBCommand {
     private final String permission;
     private final boolean isPlayerCommand;
     private final String[] args;
-    private final boolean tabVisible;
+    private final boolean visible;
 
     public HBCommand(Object command) {
         this.cmdClass = (Cmd) command;
@@ -14,7 +14,7 @@ public class HBCommand {
         this.permission = cmdClass.getClass().getAnnotation(HBAnnotations.class).permission();
         this.isPlayerCommand = cmdClass.getClass().getAnnotation(HBAnnotations.class).isPlayerCommand();
         this.args = cmdClass.getClass().getAnnotation(HBAnnotations.class).args();
-        this.tabVisible = cmdClass.getClass().getAnnotation(HBAnnotations.class).isTabVisible();
+        this.visible = cmdClass.getClass().getAnnotation(HBAnnotations.class).isVisible();
     }
 
     public Cmd getCmdClass() {
@@ -33,5 +33,5 @@ public class HBCommand {
 
     public String[] getArgs() { return args; }
 
-    public boolean isTabVisible() { return tabVisible; }
+    public boolean isVisible() { return visible; }
 }

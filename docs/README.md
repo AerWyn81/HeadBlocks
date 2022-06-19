@@ -18,7 +18,7 @@ ___
 - Possibility to send multi-line message on click
 - Possibility to customize a firework or an explosion at the head with any colors
 - Possibility to send a title customizable to the player
-- Possibility to add particles on head already found and not found (1.13+)
+- Possibility to add particles on head already found and not found
 - Can be used on a lobby, on a single server or even on several servers simultaneously (with Redis)
 - Storage of player data in SQLite or MySQL
 - Everything is almost translatable

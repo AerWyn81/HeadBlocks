@@ -46,6 +46,14 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
+        Player player = e.getPlayer();
+
+        if (HeadBlocks.isReloadInProgress) {
+            e.setCancelled(true);
+            player.sendMessage(languageHandler.getMessage("Messages.PluginReloading"));
+            return;
+        }
+
         Location clickedLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
@@ -54,10 +62,9 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
-        Player player = e.getPlayer();
-
         // Check if there is a storage issue
         if (main.getStorageHandler().hasStorageError()) {
+            e.setCancelled(true);
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             return;
         }

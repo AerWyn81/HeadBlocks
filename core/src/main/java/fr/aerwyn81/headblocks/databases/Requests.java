@@ -8,6 +8,7 @@ public class Requests {
     public static final String CREATE_TABLE_HEADS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)))";
 
     public static final String CREATE_TABLE_PLAYERHEADS = "CREATE TABLE IF NOT EXISTS hb_playerHeads (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES hb_heads(hUUID) ON DELETE CASCADE, PRIMARY KEY(pUUID, hUUID))";
+    public static final String CREATE_TABLE_PLAYERHEADS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_playerHeads (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36), FOREIGN KEY (`hUUID`) REFERENCES hb_heads (`hUUID`) ON DELETE CASCADE)";
 
     public static final String UPDATE_PLAYER = "INSERT OR REPLACE INTO hb_players (pUUID, pName) VALUES (?, ?)";
     public static final String UPDATE_PLAYER_MYSQL = "REPLACE INTO hb_players (pUUID, pName) VALUES (?, ?)";

@@ -8,6 +8,7 @@ import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.runnables.ParticlesTask;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 
@@ -25,6 +26,8 @@ public class Reload implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
+        HeadBlocks.isReloadInProgress = true;
+
         main.reloadConfig();
         main.getConfigHandler().loadConfiguration();
 
@@ -43,6 +46,10 @@ public class Reload implements Cmd {
         main.getStorageHandler().close();
 
         main.getStorageHandler().init();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            main.getStorageHandler().unloadPlayer(player);
+            main.getStorageHandler().loadPlayer(player);
+        }
 
         Bukkit.getScheduler().cancelTasks(main);
         if (configHandler.isFloatingParticlesEnabled()) {
@@ -54,6 +61,8 @@ public class Reload implements Cmd {
             sender.sendMessage(languageHandler.getMessage("Messages.ReloadWithErrors"));
             return true;
         }
+
+        HeadBlocks.isReloadInProgress = false;
 
         sender.sendMessage(languageHandler.getMessage("Messages.ReloadComplete"));
         return true;

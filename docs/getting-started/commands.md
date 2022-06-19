@@ -16,3 +16,4 @@
 | **/hb stats**                      | Any        | `(player) (page)`                           | headblocks.admin | Show heads found for the player (same display as list)   |
 | **/hb top**                        | Any        | `(limit)`                                   | headblocks.admin | Show the leaderboard of heads found (with limit)         |
 | **/hb reload**                     | Any        |                                             | headblocks.admin | Reload configuration and language file                   |
+| **/hb move**                       | Player     | `--confirm / --cancel`                      | headblocks.admin | Move the HeadBlock targeted to another location          |

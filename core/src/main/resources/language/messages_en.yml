@@ -49,6 +49,7 @@ Messages:
   HeadMoveAlready: "%prefix% &cYou already have a HeadBlock move in progress, use the command &e/hb move --cancel &cfirst to cancel"
   HeadMoveCancel: "%prefix% &cYou have cancelled the move of the HeadBlock"
   TargetBlockMoved: "%prefix% &aThe HeadBlock has been correctly moved at &e%world%&a, &e%x%&a, &e%y%&a, &e%z%"
+  PluginReloading: "%prefix% &cPlease wait, the plugin is reloading..."
   MeCommand:
     - ""
     - "&aNumber of heads collected : &e%current%&7/&e%max%"
@@ -69,13 +70,13 @@ Chat:
     Remove: "&7| &8[&c✘&8]"
     Own: "&7| &8[&2✔&8]"
     NotOwn: "&7| &8[&c✘&8]"
-  StatsTitleLine: "&7-----------[ &eData of &6%player% &8» &6%headCount%&8/&6%max% &eheads &7]------------"
-  LineTitle: "&7-------------------[ &6&lH&e&lead&6&lB&e&llocks&7 ]------------------"
+  StatsTitleLine: "&7---[ &eData of &6%player% &8» &6%headCount%&8/&6%max% &eheads &7]---"
+  LineTitle: "&7-----------------[ &6&lH&e&lead&6&lB&e&llocks&7 ]----------------"
   TopTitle: "&7-----------[ &6&lH&e&lead&6&lB&e&llocks&7 &7- &6&6&lL&eeaderboard &7]-----------"
   LineTop: "&6%pos% &7- &e%player% &8(&7%count%&8)"
-  LineCoordinate: "&6World &8: &e%worldName% &8[&6X&8: &e%x%&8, &6Y&8: &e%y%&8, &6Z&8: &e%z%&8]"
-  PreviousPage: "&7----------[&8<<<&7]---------"
-  NextPage: "&7----------[&8>>>&7]----------"
+  LineCoordinate: "&6World &8: &e%world% &8[&6X&8: &e%x%&8, &6Y&8: &e%y%&8, &6Z&8: &e%z%&8]"
+  PreviousPage: "&7--------[&8<<<&7]--------"
+  NextPage: "&7--------[&8>>>&7]--------"
   PageFooter: " &8[ &e%pageNumber%&7/&e%totalPage% &8] "
 
 Help:
@@ -91,3 +92,5 @@ Help:
   Stats: "&6/hb stats <player> <page> &8 &7&oDisplays the list of owned and missing heads of the <player>"
   Reload: "&6/hb reload &8: &7&oReload the configuration"
   Version: "&6/hb version &8: &7&oDisplays the version of the plugin"
+  Top: "&6/hb top <number> &8: &7&oDisplays the top leaderboard of <number> first players"
+  Move: "&6/hb move &8: &7&oMove the HeadBlock to another location"

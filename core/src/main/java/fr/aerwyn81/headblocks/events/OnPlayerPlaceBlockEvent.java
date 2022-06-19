@@ -51,8 +51,15 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
+        if (HeadBlocks.isReloadInProgress) {
+            e.setCancelled(true);
+            player.sendMessage(languageHandler.getMessage("Messages.PluginReloading"));
+            return;
+        }
+
         // Check if there is a storage issue
         if (main.getStorageHandler().hasStorageError()) {
+            e.setCancelled(true);
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             return;
         }

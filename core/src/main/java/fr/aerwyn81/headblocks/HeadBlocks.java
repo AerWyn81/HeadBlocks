@@ -29,6 +29,7 @@ public final class HeadBlocks extends JavaPlugin {
     private static HeadBlocks instance;
     public static boolean isPlaceholderApiActive;
     public static boolean isHeadDatabaseActive;
+    public static boolean isReloadInProgress;
 
     private ConfigHandler configHandler;
     private LanguageHandler languageHandler;
@@ -69,6 +70,9 @@ public final class HeadBlocks extends JavaPlugin {
             return;
         }
 
+        isPlaceholderApiActive = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
+        isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
+
         this.configHandler = new ConfigHandler(configFile);
         this.configHandler.loadConfiguration();
 
@@ -92,12 +96,10 @@ public final class HeadBlocks extends JavaPlugin {
             particlesTask.runTaskTimer(this, 0, configHandler.getParticlesDelay());
         }
 
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+        if (isPlaceholderApiActive) {
             new PlaceholderHook(this).register();
-            isPlaceholderApiActive = true;
         }
 
-        isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
         if (isHeadDatabaseActive) {
             headDatabaseAPI = new HeadDatabaseAPI();
             Bukkit.getPluginManager().registerEvents(new OnHeadDatabaseLoaded(this), this);

@@ -13,5 +13,5 @@ public @interface HBAnnotations {
     String permission() default "";
     boolean isPlayerCommand() default false;
     String[] args() default {};
-    boolean isTabVisible() default true;
+    boolean isVisible() default true;
 }
