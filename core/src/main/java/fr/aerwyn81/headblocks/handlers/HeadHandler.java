@@ -1,6 +1,6 @@
 package fr.aerwyn81.headblocks.handlers;
 
-import de.tr7zw.changeme.nbtapi.NBTItem;
+import de.tr7zw.changeme.nbtapi.NBTTileEntity;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
@@ -11,16 +11,17 @@ import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.LocationUtils;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.Skull;
+import org.bukkit.block.data.Rotatable;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +40,8 @@ public class HeadHandler {
     private final ArrayList<HBHead> heads;
     private final HashMap<UUID, HeadMove> headMoves;
     private LinkedHashMap<UUID, Location> headLocations;
+
+    public static String HB_KEY = "HB_HEAD";
 
     public HeadHandler(HeadBlocks main, File configFile) {
         this.main = main;
@@ -161,13 +164,14 @@ public class HeadHandler {
             ItemStack head = new ItemStack(Material.PLAYER_HEAD, 1);
 
             ItemMeta headMeta = head.getItemMeta();
+            if (headMeta == null) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError trying to get meta of the head " + head + ". Is your server version supported?"));
+                continue;
+            }
+
             headMeta.setDisplayName(languageHandler.getMessage("Head.Name"));
             headMeta.setLore(languageHandler.getMessages("Head.Lore"));
-
-            head.setItemMeta(headMeta);
-
-            NBTItem nbtItem = new NBTItem(head, true);
-            nbtItem.setBoolean("HB_HEAD", true);
+            headMeta.getPersistentDataContainer().set(new NamespacedKey(main, HB_KEY), PersistentDataType.STRING, "");
 
             switch (parts[0]) {
                 case "player":
@@ -180,14 +184,15 @@ public class HeadHandler {
                         continue;
                     }
 
-                    SkullMeta meta = (SkullMeta) head.getItemMeta();
+                    SkullMeta meta = (SkullMeta) headMeta;
                     meta.setOwningPlayer(p);
                     head.setItemMeta(meta);
 
                     heads.add(new HBHeadPlayer(head));
                     break;
                 case "default":
-                    heads.add(HeadUtils.applyTexture(new HBHeadDefault(head), parts[1]));
+                    head.setItemMeta(headMeta);
+                    heads.add(HeadUtils.createHead(new HBHeadDefault(head), parts[1]));
                     break;
                 case "hdb":
                     if (!HeadBlocks.isHeadDatabaseActive) {
@@ -215,12 +220,24 @@ public class HeadHandler {
         return headMoves;
     }
 
-    public void changeHeadLocation(UUID hUuid, Location oldLocation, Location newLocation) {
-        headLocations.put(hUuid, newLocation);
+    public void changeHeadLocation(UUID hUuid, Block oldBlock, Block newBlock) {
+        headLocations.put(hUuid, newBlock.getLocation());
 
-        //Todo: Keep texture
+        Skull oldSkull = (Skull) oldBlock.getState();
+        Rotatable skullRotation = (Rotatable) oldSkull.getBlockData();
 
-        oldLocation.getBlock().setType(Material.AIR);
+        newBlock.setType(Material.PLAYER_HEAD);
+
+        Skull newSkull = (Skull) newBlock.getState();
+
+        Rotatable rotatable = (Rotatable) newSkull.getBlockData();
+        rotatable.setRotation(skullRotation.getRotation());
+        newSkull.setBlockData(rotatable);
+        newSkull.update(true);
+
+        new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
+
+        oldBlock.setType(Material.AIR);
 
         saveLocations();
     }

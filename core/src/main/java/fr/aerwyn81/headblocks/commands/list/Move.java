@@ -86,7 +86,7 @@ public class Move implements Cmd {
             return true;
         }
 
-        headHandler.changeHeadLocation(headMove.gethUuid(), headMove.getOldLoc(), newHeadBlockLoc);
+        headHandler.changeHeadLocation(headMove.gethUuid(), headMove.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
         headHandler.getHeadMoves().remove(player.getUniqueId());
 
         player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));

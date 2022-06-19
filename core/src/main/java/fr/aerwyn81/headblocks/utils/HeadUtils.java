@@ -3,14 +3,19 @@ package fr.aerwyn81.headblocks.utils;
 import de.tr7zw.changeme.nbtapi.NBTCompound;
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import de.tr7zw.changeme.nbtapi.NBTListCompound;
+import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.UUID;
 
 public class HeadUtils {
-    public static HBHead applyTexture(HBHead head, String texture) {
+    public static HBHead createHead(HBHead head, String texture) {
         NBTItem nbti = new NBTItem(head.getItemStack());
         NBTCompound skull = nbti.addCompound("SkullOwner");
         skull.setString("Name", "HeadBlocks");
@@ -33,10 +38,12 @@ public class HeadUtils {
             return false;
         }
 
-        NBTItem nbtItem = new NBTItem(i1);
-        NBTItem nbtItem2 = new NBTItem(i2);
+        ItemMeta i1Meta = i1.getItemMeta();
+        ItemMeta i2Meta = i2.getItemMeta();
 
-        return nbtItem.hasKey("HB_HEAD") && nbtItem2.hasKey("HB_HEAD");
+        return i1Meta != null && i2Meta != null &&
+                i1Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadHandler.HB_KEY), PersistentDataType.STRING) &&
+                i2Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadHandler.HB_KEY), PersistentDataType.STRING);
     }
 
     private static boolean isValidItemStack(ItemStack i) {

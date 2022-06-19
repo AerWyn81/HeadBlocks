@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
+    compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.1")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
     implementation("redis.clients:jedis:4.2.3")
@@ -35,7 +35,6 @@ tasks {
 
     shadowJar {
         relocate("de.tr7zw.changeme.nbtapi", "fr.aerwyn81.headblocks.bukkit.shaded.nbtapi")
-        relocate("org.yaml.snakeyaml", "fr.aerwyn81.headblocks.bukkit.shaded.snakeyaml")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")

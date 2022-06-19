@@ -59,10 +59,10 @@ public final class HeadBlocks extends JavaPlugin {
         }
         reloadConfig();
 
-        if (Version.getCurrent().isOlderOrSameThan(Version.v1_15)) {
+        if (Version.getCurrent().isOlderOrSameThan(Version.v1_16)) {
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
             log.sendMessage(MessageUtils.colorize("&cHeadBlocks version 2 does not support your Minecraft Server version: " + Version.getCurrentFormatted()));
-            log.sendMessage(MessageUtils.colorize("&cIf you are using a version below Minecraft 1.16, use the version 1.6 of the plugin"));
+            log.sendMessage(MessageUtils.colorize("&cIf you are using a version below Minecraft 1.17, use the version 1.6 of the plugin"));
             log.sendMessage(MessageUtils.colorize("&cVersion 1.6 will not receive any new features but may receive corrective updates."));
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
             this.setEnabled(false);
@@ -143,7 +143,7 @@ public final class HeadBlocks extends JavaPlugin {
                 .map(h -> (HBHeadHDB) h)
                 .filter(h -> !h.isLoaded())
                 .forEach(h -> {
-                    HeadUtils.applyTexture(h, headDatabaseAPI.getBase64(h.getId()));
+                    HeadUtils.createHead(h, headDatabaseAPI.getBase64(h.getId()));
                     h.setLoaded(true);
                 });
     }
