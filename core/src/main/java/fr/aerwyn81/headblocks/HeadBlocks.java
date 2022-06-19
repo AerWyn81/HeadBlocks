@@ -130,6 +130,8 @@ public final class HeadBlocks extends JavaPlugin {
             storageHandler.close();
         }
 
+        headHandler.getHeadMoves().clear();
+
         Bukkit.getScheduler().cancelTasks(this);
 
         log.sendMessage(MessageUtils.colorize("&6HeadBlocks &cdisabled!"));

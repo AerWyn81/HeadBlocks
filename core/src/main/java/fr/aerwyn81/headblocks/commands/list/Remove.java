@@ -58,12 +58,7 @@ public class Remove implements Cmd {
         }
 
         Location loc = head.getValue();
-        player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")
-                .replaceAll("%world%", loc.getWorld() != null ? loc.getWorld().getName() : languageHandler.getMessage("Messages.UnknownWorld"))
-                .replaceAll("%x%", String.valueOf(loc.getBlockX()))
-                .replaceAll("%y%", String.valueOf(loc.getBlockY()))
-                .replaceAll("%z%", String.valueOf(loc.getBlockZ())));
-
+        player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.HeadRemoved"), loc));
         return true;
     }
 

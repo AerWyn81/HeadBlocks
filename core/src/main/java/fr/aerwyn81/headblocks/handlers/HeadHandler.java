@@ -2,12 +2,14 @@ package fr.aerwyn81.headblocks.handlers;
 
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.utils.HeadUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.LocationUtils;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -35,6 +37,7 @@ public class HeadHandler {
     private FileConfiguration config;
 
     private final ArrayList<HBHead> heads;
+    private final HashMap<UUID, HeadMove> headMoves;
     private LinkedHashMap<UUID, Location> headLocations;
 
     public HeadHandler(HeadBlocks main, File configFile) {
@@ -45,6 +48,7 @@ public class HeadHandler {
 
         this.heads = new ArrayList<>();
         this.headLocations = new LinkedHashMap<>();
+        this.headMoves = new HashMap<>();
     }
 
     public void loadConfiguration() {
@@ -113,6 +117,8 @@ public class HeadHandler {
             headLocations.remove(head.getKey());
             saveLocations();
             saveConfig();
+
+            headMoves.entrySet().removeIf(hM -> headUuid.equals(hM.getKey()));
         }
     }
 
@@ -129,7 +135,7 @@ public class HeadHandler {
 
     public UUID getHeadAt(Location location) {
         return headLocations.entrySet().stream()
-                .filter(l -> HeadUtils.areEquals(l.getValue(), location))
+                .filter(l -> LocationUtils.areEquals(l.getValue(), location))
                 .findFirst()
                 .map(Map.Entry::getKey)
                 .orElse(null);
@@ -203,5 +209,19 @@ public class HeadHandler {
 
     public LinkedHashMap<UUID, Location> getHeadLocations() {
         return headLocations;
+    }
+
+    public HashMap<UUID, HeadMove> getHeadMoves() {
+        return headMoves;
+    }
+
+    public void changeHeadLocation(UUID hUuid, Location oldLocation, Location newLocation) {
+        headLocations.put(hUuid, newLocation);
+
+        //Todo: Keep texture
+
+        oldLocation.getBlock().setType(Material.AIR);
+
+        saveLocations();
     }
 }

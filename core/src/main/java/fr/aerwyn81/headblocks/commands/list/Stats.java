@@ -94,11 +94,7 @@ public class Stats implements Cmd {
             UUID uuid = headsSpawned.get(i).getKey();
             Location location = headsSpawned.get(i).getValue();
 
-            String hover = languageHandler.getMessage("Chat.LineCoordinate")
-                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.colorize("&cUnknownWorld"))
-                    .replaceAll("%x%", String.valueOf(location.getBlockX()))
-                    .replaceAll("%y%", String.valueOf(location.getBlockY()))
-                    .replaceAll("%z%", String.valueOf(location.getBlockZ()));
+            String hover = MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Chat.LineCoordinate"), location);
 
             if (sender instanceof Player) {
                 TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + uuid));

@@ -68,11 +68,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
 
-        player.sendMessage(languageHandler.getMessage("Messages.HeadPlaced")
-                .replaceAll("%x%", String.valueOf(headBlock.getX()))
-                .replaceAll("%y%", String.valueOf(headBlock.getY()))
-                .replaceAll("%z%", String.valueOf(headBlock.getZ()))
-                .replaceAll("%world%", headBlock.getWorld().getName()));
+        player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
 
         Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
     }

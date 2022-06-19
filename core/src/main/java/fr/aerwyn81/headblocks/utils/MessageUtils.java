@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.utils;
 import com.google.common.base.Strings;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Color;
+import org.bukkit.Location;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,6 +35,19 @@ public class MessageUtils {
 			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) { }
 		}
 		return ChatColor.translateAlternateColorCodes('&', replaced);
+	}
+
+	/**
+	 * Replace placeholders x y z world by location in string
+	 * @param message string
+	 * @param location location for replace
+	 * @return parsed string
+	 */
+	public static String parseLocationPlaceholders(String message, Location location) {
+		return message.replaceAll("%x%", String.valueOf(location.getBlockX()))
+				.replaceAll("%y%", String.valueOf(location.getBlockY()))
+				.replaceAll("%z%", String.valueOf(location.getBlockZ()))
+				.replaceAll("%world%", location.getWorld() != null ? location.getWorld().getName() : colorize("&cUnknownWorld"));
 	}
 
 	/**

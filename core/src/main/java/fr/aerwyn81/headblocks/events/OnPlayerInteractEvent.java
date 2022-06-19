@@ -79,11 +79,7 @@ public class OnPlayerInteractEvent implements Listener {
             }
 
             // Send player success message
-            player.sendMessage(languageHandler.getMessage("Messages.HeadRemoved")
-                    .replaceAll("%x%", String.valueOf(clickedLocation.getX()))
-                    .replaceAll("%y%", String.valueOf(clickedLocation.getY()))
-                    .replaceAll("%z%", String.valueOf(clickedLocation.getZ()))
-                    .replaceAll("%world%", clickedLocation.getWorld() != null ? clickedLocation.getWorld().getName() : languageHandler.getMessage("Messages.UnknownWorld")));
+            player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.HeadRemoved"), clickedLocation));
 
             // Trigger the event HeadDeleted
             Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headUuid, clickedLocation));

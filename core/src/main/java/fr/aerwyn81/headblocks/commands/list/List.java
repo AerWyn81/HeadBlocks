@@ -54,11 +54,7 @@ public class List implements Cmd {
             UUID uuid = headLocations.get(i).getKey();
             Location location = headLocations.get(i).getValue();
 
-            String hover = languageHandler.getMessage("Chat.LineCoordinate")
-                    .replaceAll("%worldName%", location.getWorld() != null ? location.getWorld().getName() : MessageUtils.colorize("&cUnknownWorld"))
-                    .replaceAll("%x%", String.valueOf(location.getBlockX()))
-                    .replaceAll("%y%", String.valueOf(location.getBlockY()))
-                    .replaceAll("%z%", String.valueOf(location.getBlockZ()));
+            String hover = MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Chat.LineCoordinate"), location);
 
             TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + uuid));
             msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));

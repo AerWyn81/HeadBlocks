@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.utils.HeadUtils;
+import fr.aerwyn81.headblocks.utils.LocationUtils;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
@@ -41,7 +41,7 @@ public class OthersEvent implements Listener {
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent e) {
         if (e.getBlocks().stream().anyMatch(b -> main.getHeadHandler().getHeadLocations().entrySet().stream()
-                .anyMatch(p -> HeadUtils.areEquals(p.getValue(), b.getLocation())))) {
+                .anyMatch(p -> LocationUtils.areEquals(p.getValue(), b.getLocation())))) {
             e.setCancelled(true);
         }
     }
@@ -54,5 +54,6 @@ public class OthersEvent implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         main.getStorageHandler().unloadPlayer(e.getPlayer());
+        main.getHeadHandler().getHeadMoves().remove(e.getPlayer().getUniqueId());
     }
 }
