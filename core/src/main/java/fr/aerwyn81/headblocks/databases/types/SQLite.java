@@ -307,4 +307,16 @@ public class SQLite implements Database {
 
         return true;
     }
+
+    @Override
+    public boolean isHeadExist(UUID hUUID) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.HEAD_EXIST)) {
+            ps.setString(1, hUUID.toString());
+            ResultSet rs = ps.executeQuery();
+
+            return rs.next();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
 }

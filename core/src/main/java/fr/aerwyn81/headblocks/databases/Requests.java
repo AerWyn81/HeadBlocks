@@ -34,4 +34,6 @@ public class Requests {
     public static final String TOP_PLAYERS = "SELECT pName, COUNT(*) as hCount FROM hb_playerHeads hbph INNER JOIN hb_players hbp ON hbph.pUUID = hbp.pUUID INNER JOIN hb_heads hbh ON hbph.hUUID = hbh.hUUID WHERE hbh.hExist = True GROUP BY pName ORDER BY hCount DESC LIMIT ?";
 
     public static final String CHECK_PLAYER_NAME = "SELECT pName FROM hb_players WHERE pUUID = ?";
+
+    public static final String HEAD_EXIST = "SELECT 1 FROM hb_heads WHERE hUUID = ? AND hExist = True";
 }

@@ -85,10 +85,20 @@ public class HeadHandler {
             if (configSection != null) {
                 Map<String, Object> serializedLoc = configSection.getValues(false);
 
+                UUID headUuid = UUID.fromString(uuid);
+
                 try {
-                    headLocations.put(UUID.fromString(uuid), Location.deserialize(serializedLoc));
-                } catch (Exception e) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head " + uuid));
+                    if (!storageHandler.isHeadExist(headUuid)) {
+                        storageHandler.createNewHead(headUuid);
+                    }
+
+                    try {
+                        headLocations.put(headUuid, Location.deserialize(serializedLoc));
+                    } catch (Exception e) {
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head " + uuid));
+                    }
+                } catch (Exception ex) {
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
                 }
             }
         });

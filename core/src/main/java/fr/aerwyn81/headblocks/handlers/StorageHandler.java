@@ -187,4 +187,8 @@ public class StorageHandler {
     public void createNewHead(UUID headUuid) throws InternalException {
         database.createNewHead(headUuid);
     }
+
+    public boolean isHeadExist(UUID headUuid) throws InternalException {
+        return database.isHeadExist(headUuid);
+    }
 }
