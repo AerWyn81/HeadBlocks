@@ -59,10 +59,12 @@ public class PlaceholdersHandler {
             }
         }
 
-        if (!HeadBlocks.isPlaceholderApiActive)
-            return MessageUtils.centerMessage(message);
+        message = MessageUtils.colorize(message);
 
-        return PlaceholderAPI.setPlaceholders(player, message);
+        if (HeadBlocks.isPlaceholderApiActive)
+            return PlaceholderAPI.setPlaceholders(player, message);
+
+        return MessageUtils.centerMessage(message);
     }
 
     public static String[] parse(Player player, List<String> messages) {

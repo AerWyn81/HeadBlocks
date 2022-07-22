@@ -56,8 +56,7 @@ public class MessageUtils {
 	 * @return clean message translated
 	 */
 	public static String centerMessage(String message) {
-		String translated = colorize(message);
-		return message.contains("{center}") ? sendCenteredString(translated.replaceAll("\\{center}", "")) : translated;
+		return message.contains("{center}") ? sendCenteredString(message.replaceAll("\\{center}", "")) : message;
 	}
 
 	/**
