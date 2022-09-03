@@ -13,7 +13,7 @@ Welcome to the **Headblocks** official code repository.
   link: [Spigot](https://www.spigotmc.org/resources/headblocks-1-8-1-17.97630/)
 * If you want technical information about the plugin, you are at the right place!
 
-The plugin is compatible with servers running in **1.8 to 1.18+** and is compiled with **Java 8**.
+The plugin is compatible with servers running in **1.17 to 1.19+** and is compiled with **Java 17**.
 
 I'm using some third party libraries:
 
@@ -34,36 +34,7 @@ ___
 
 ### API:
 
-#### Using Maven:
-
-```
-<repositories>
-  <repository>
-    <id>jitpack.io</id>
-    <url>https://jitpack.io</url>
-  </repository>
-</repositories>
-
-<dependency>
-  <groupId>com.github.AerWyn81</groupId>
-  <artifactId>HeadBlocks</artifactId>
-  <version>1.6.4</version>
-</dependency>
-```
-
-#### Using Gradle:
-
-```
-repositories {
-  maven { url 'https://jitpack.io' }
-}
-
-dependencies {
-  implementation 'com.github.AerWyn81:HeadBlocks:1.6.4'
-}
-```
-
-#### Now you can get the HeadBlocks plugin instance:
+#### You can get the HeadBlocks plugin instance:
 
 ```
 package package.artifactId;
@@ -92,13 +63,6 @@ Events  | Explanations
 HeadClickEvent | _Event triggered when a head is clicked_
 HeadCreatedEvent | _Event called when a head is created_
 HeadDeletedEvent | _Event to trigger when a head is deleted_
-
-Methods  | Explanations
-------------- | -------------
-`getPlayerHeads(UUID playerUuid)` | _Return a `List<UUID>` of all related head found by the player_
-`getTotalHeadSpawnCount()` | _Return an `int` which corresponds to the total of heads placed_
-`getLeftPlayerHeadToMax(UUID playerUuid)` | _Return an `int` showing the amount of remaining heads to be found_
-___
 
 ### WIKI:
 

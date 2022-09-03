@@ -26,6 +26,7 @@ ___
 - Contains several placeholders (see below)
 - Automatic configuration updates
 - Supports Minecraft 1.16+ colors
+- Show holograms on heads
 
 ___
 
