@@ -150,10 +150,20 @@ public class HeadLocation {
 
         String name = section.getString("locations." + hUUID + ".name");
 
-        var x = section.getInt("locations." + hUUID + ".location.x");
-        var y = section.getInt("locations." + hUUID + ".location.y");
-        var z = section.getInt("locations." + hUUID + ".location.z");
-        var worldName = section.getString("locations." + hUUID + ".location.world", "");
+        int x, y, z;
+        String worldName;
+
+        if (name != null) {
+           x = section.getInt("locations." + hUUID + ".location.x");
+           y = section.getInt("locations." + hUUID + ".location.y");
+           z = section.getInt("locations." + hUUID + ".location.z");
+           worldName = section.getString("locations." + hUUID + ".location.world", "");
+        } else {
+            x = section.getInt("locations." + hUUID + ".x");
+            y = section.getInt("locations." + hUUID + ".y");
+            z = section.getInt("locations." + hUUID + ".z");
+            worldName = section.getString("locations." + hUUID + ".world", "");
+        }
 
         int hitCount = -1;
         if (section.contains("locations." + hUUID + ".hitCount")) {

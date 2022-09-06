@@ -47,7 +47,12 @@ public class MessageUtils {
 		return message.replaceAll("%x%", String.valueOf(location.getBlockX()))
 				.replaceAll("%y%", String.valueOf(location.getBlockY()))
 				.replaceAll("%z%", String.valueOf(location.getBlockZ()))
-				.replaceAll("%world%", location.getWorld() != null ? location.getWorld().getName() : colorize("&cUnknownWorld"));
+				.replaceAll("%world%", parseWorld(location))
+				.replaceAll("%worldName%", parseWorld(location));
+	}
+
+	private static String parseWorld(Location location) {
+		return location.getWorld() != null ? location.getWorld().getName() : colorize("&cUnknownWorld");
 	}
 
 	/**
