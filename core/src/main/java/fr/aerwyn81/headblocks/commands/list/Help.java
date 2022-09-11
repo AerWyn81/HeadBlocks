@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 
-@HBAnnotations(command = "help")
+@HBAnnotations(command = "help", permission = "headblocks.use")
 public class Help implements Cmd {
     private final LanguageHandler languageHandler;
     private final ArrayList<HBCommand> registeredCommands;
