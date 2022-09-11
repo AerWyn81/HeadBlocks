@@ -2,10 +2,7 @@ package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
-import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
-import fr.aerwyn81.headblocks.events.OnPlayerInteractEvent;
-import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
-import fr.aerwyn81.headblocks.events.OthersEvent;
+import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.handlers.*;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
@@ -126,6 +123,7 @@ public final class HeadBlocks extends JavaPlugin {
         getCommand("headblocks").setExecutor(new HBCommandExecutor(this));
 
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(this), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new OthersEvent(this), this);
 

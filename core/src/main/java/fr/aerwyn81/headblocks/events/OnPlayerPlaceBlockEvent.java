@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
@@ -33,11 +34,19 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
+        if (HeadBlocks.isReloadInProgress) {
+            e.setCancelled(true);
+            player.sendMessage(languageHandler.getMessage("Messages.PluginReloading"));
             return;
         }
 
-        if (!player.isSneaking()) {
+        if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
+            e.setCancelled(true);
+            player.sendMessage(languageHandler.getMessage("Messages.NoPermissionBlock"));
+            return;
+        }
+
+        if (!player.isSneaking() || player.getGameMode() != GameMode.CREATIVE) {
             e.setCancelled(true);
             player.sendMessage(languageHandler.getMessage("Messages.CreativeSneakAddHead"));
             return;
@@ -48,12 +57,6 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         if (main.getHeadHandler().getHeadAt(headLocation) != null) {
             e.setCancelled(true);
             player.sendMessage(languageHandler.getMessage("Messages.HeadAlreadyExistHere"));
-            return;
-        }
-
-        if (HeadBlocks.isReloadInProgress) {
-            e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.PluginReloading"));
             return;
         }
 

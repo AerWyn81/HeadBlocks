@@ -2,7 +2,6 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
-import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
@@ -48,6 +47,11 @@ public class OnPlayerInteractEvent implements Listener {
 
         Player player = e.getPlayer();
 
+        // Prevent interactions with players in gamemode creative
+        if (player.getGameMode() == GameMode.CREATIVE && e.getAction() == Action.LEFT_CLICK_BLOCK) {
+            return;
+        }
+
         if (HeadBlocks.isReloadInProgress) {
             e.setCancelled(true);
             player.sendMessage(languageHandler.getMessage("Messages.PluginReloading"));
@@ -66,30 +70,6 @@ public class OnPlayerInteractEvent implements Listener {
         if (main.getStorageHandler().hasStorageError()) {
             e.setCancelled(true);
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-            return;
-        }
-
-        // Actions to destroy the head only if player has the permission and the creative gamemode
-        if (e.getAction() == Action.LEFT_CLICK_BLOCK && player.getGameMode() == GameMode.CREATIVE && PlayerUtils.hasPermission(player, "headblocks.admin")) {
-            if (!player.isSneaking()) {
-                e.setCancelled(true);
-                player.sendMessage(languageHandler.getMessage("Messages.CreativeSneakRemoveHead"));
-                return;
-            }
-
-            // Remove the head
-            try {
-                main.getHeadHandler().removeHeadLocation(headLocation, configHandler.shouldResetPlayerData());
-            } catch (InternalException ex) {
-                player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));
-            }
-
-            // Send player success message
-            player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.HeadRemoved"), clickedLocation));
-
-            // Trigger the event HeadDeleted
-            Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), clickedLocation));
             return;
         }
 
