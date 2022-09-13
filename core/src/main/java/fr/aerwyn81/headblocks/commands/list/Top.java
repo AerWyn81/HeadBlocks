@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
+import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -18,7 +19,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Map;
 
-@HBAnnotations(command = "top", permission = "headblocks.admin")
+@HBAnnotations(command = "top", permission = "headblocks.use")
 public class Top implements Cmd {
     private final HeadBlocks main;
     private final LanguageHandler languageHandler;
@@ -83,8 +84,11 @@ public class Top implements Cmd {
 
             if (sender instanceof Player) {
                 TextComponent msg = new TextComponent(message);
-                msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + currentScore.getKey()));
-                msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.LineTop")).create()));
+
+                if (PlayerUtils.hasPermission(sender, "headblocks.admin")) {
+                    msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + currentScore.getKey()));
+                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.LineTop")).create()));
+                }
 
                 cpu.addLine(msg);
             } else {
