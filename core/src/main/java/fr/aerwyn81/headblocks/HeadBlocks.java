@@ -29,7 +29,6 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isReloadInProgress;
     public static boolean isProtocolLibActive;
 
-    private RewardHandler rewardHandler;
     private StorageHandler storageHandler;
 
     private GlobalTask globalTask;
@@ -84,8 +83,6 @@ public final class HeadBlocks extends JavaPlugin {
         HologramService.initialise();
 
         HeadService.initialise(locationFile);
-
-        this.rewardHandler = new RewardHandler(this);
 
         this.globalTask = new GlobalTask(this);
         globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
@@ -145,10 +142,6 @@ public final class HeadBlocks extends JavaPlugin {
 
     public static HeadBlocks getInstance() {
         return instance;
-    }
-
-    public RewardHandler getRewardHandler() {
-        return rewardHandler;
     }
     
     public StorageHandler getStorageHandler() {

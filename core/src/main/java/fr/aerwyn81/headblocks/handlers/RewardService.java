@@ -9,23 +9,18 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public class RewardHandler {
-
-    private final HeadBlocks main;
-
-    public RewardHandler(HeadBlocks main) {
-        this.main = main;
-    }
-
-    public void giveReward(Player p) {
+public class RewardService {
+    public static void giveReward(Player p) {
         if (ConfigService.getTieredRewards().size() == 0) {
             return;
         }
 
+        var plugin = HeadBlocks.getInstance();
+
         TieredReward tieredReward = ConfigService.getTieredRewards().stream().filter(t -> {
             try {
                 return t.getLevel() ==
-                        main.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size();
+                        plugin.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size();
             } catch (InternalException ex) {
                 p.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + p.getName() + ": " + ex.getMessage()));
@@ -42,21 +37,21 @@ public class RewardHandler {
             p.sendMessage(PlaceholdersService.parse(p, messages));
         }
 
-        Bukkit.getScheduler().runTaskLater(main, () -> {
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
             List<String> commands = tieredReward.getCommands();
             commands.forEach(command ->
-                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), PlaceholdersService.parse(p, command)));
+                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p, command)));
 
             List<String> broadcastMessages = tieredReward.getBroadcastMessages();
             if (broadcastMessages.size() != 0) {
                 for (String message : broadcastMessages) {
-                    main.getServer().broadcastMessage(PlaceholdersService.parse(p, message));
+                    plugin.getServer().broadcastMessage(PlaceholdersService.parse(p, message));
                 }
             }
         }, 1L);
     }
 
-    public boolean currentIsContainedInTiered(int playerHeads) {
+    public static boolean currentIsContainedInTiered(int playerHeads) {
         return ConfigService.getTieredRewards().stream().anyMatch(t -> t.getLevel() == playerHeads);
     }
 }

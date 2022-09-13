@@ -172,7 +172,7 @@ public class OnPlayerInteractEvent implements Listener {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));                return;
             }
 
-            if (!main.getRewardHandler().currentIsContainedInTiered(playerHeads)) {
+            if (!RewardService.currentIsContainedInTiered(playerHeads)) {
                 // Commands list if not empty
                 if (ConfigService.getHeadClickCommands().size() != 0) {
                     Bukkit.getScheduler().runTaskLater(main, () -> ConfigService.getHeadClickCommands().forEach(reward ->
@@ -185,7 +185,7 @@ public class OnPlayerInteractEvent implements Listener {
         HologramService.showFoundTo(player, clickedLocation);
 
         // Check and reward if triggerRewards is used
-        main.getRewardHandler().giveReward(player);
+        RewardService.giveReward(player);
 
         // Trigger the event HeadClick with success
         Bukkit.getPluginManager().callEvent(new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true));
