@@ -13,6 +13,7 @@ import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -94,6 +95,13 @@ public class OthersEvent implements Listener {
 
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));
             head.setCharged(true);
+        }
+    }
+
+    @EventHandler
+    public void onBlockChange(BlockFromToEvent e) {
+        if (e.getBlock().isLiquid() && main.getHeadHandler().getHeadAt(e.getToBlock().getLocation()) != null) {
+            e.setCancelled(true);
         }
     }
 }
