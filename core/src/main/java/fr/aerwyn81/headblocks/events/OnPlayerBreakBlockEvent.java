@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
@@ -19,11 +19,9 @@ import org.bukkit.event.block.BlockBreakEvent;
 
 public class OnPlayerBreakBlockEvent implements Listener {
     private final HeadBlocks main;
-    private final LanguageHandler languageHandler;
 
     public OnPlayerBreakBlockEvent(HeadBlocks main) {
         this.main = main;
-        this.languageHandler = main.getLanguageHandler();
     }
 
     @EventHandler
@@ -46,27 +44,27 @@ public class OnPlayerBreakBlockEvent implements Listener {
 
         if (HeadBlocks.isReloadInProgress) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.PluginReloading"));
+            player.sendMessage(LanguageService.getMessage("Messages.PluginReloading"));
             return;
         }
 
         if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.NoPermissionBlock"));
+            player.sendMessage(LanguageService.getMessage("Messages.NoPermissionBlock"));
             return;
         }
 
         // Destroying HeadBlock require creative gamemode and sneaking
         if (!player.isSneaking() || player.getGameMode() != GameMode.CREATIVE) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.CreativeSneakRemoveHead"));
+            player.sendMessage(LanguageService.getMessage("Messages.CreativeSneakRemoveHead"));
             return;
         }
 
         // Check if there is a storage issue
         if (main.getStorageHandler().hasStorageError()) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             return;
         }
 
@@ -74,12 +72,12 @@ public class OnPlayerBreakBlockEvent implements Listener {
         try {
             HeadService.removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
-            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));
         }
 
         // Send player success message
-        player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.HeadRemoved"), blockLocation));
+        player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadRemoved"), blockLocation));
 
         // Trigger the event HeadDeleted
         Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation));

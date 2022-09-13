@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.command.CommandSender;
@@ -16,11 +16,6 @@ import java.util.Collections;
 
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
 public class RemoveAll implements Cmd {
-    private final LanguageHandler languageHandler;
-
-    public RemoveAll(HeadBlocks main) {
-        this.languageHandler = main.getLanguageHandler();
-    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
@@ -28,7 +23,7 @@ public class RemoveAll implements Cmd {
         int headCount = headLocations.size();
 
         if (headLocations.size() == 0) {
-            sender.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
+            sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 
@@ -41,23 +36,23 @@ public class RemoveAll implements Cmd {
                     HeadService.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
                     headRemoved++;
                 } catch (InternalException ex) {
-                    sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                    sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getUuid().toString() + " at " + head.getLocation().toString() + ") from the storage: " + ex.getMessage()));
                 }
             }
 
             if (headRemoved == 0) {
-                sender.sendMessage(languageHandler.getMessage("Messages.RemoveAllError")
+                sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllError")
                         .replaceAll("%headCount%", String.valueOf(headCount)));
                 return true;
             }
 
-            sender.sendMessage(languageHandler.getMessage("Messages.RemoveAllSuccess")
+            sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllSuccess")
                     .replaceAll("%headCount%", String.valueOf(headCount)));
             return true;
         }
 
-        sender.sendMessage(languageHandler.getMessage("Messages.RemoveAllConfirm")
+        sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllConfirm")
                 .replaceAll("%headCount%", String.valueOf(headCount)));
 
         return true;

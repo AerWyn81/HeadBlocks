@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.commands;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.list.*;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -18,30 +18,28 @@ import java.util.stream.Collectors;
 public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     private final HashMap<String, HBCommand> registeredCommands;
 
-    private final LanguageHandler languageHandler;
     private final Help helpCommand;
 
     public HBCommandExecutor(HeadBlocks main) {
-        this.languageHandler = main.getLanguageHandler();
         this.registeredCommands = new HashMap<>();
 
         this.helpCommand = new Help(main);
 
         this.register(helpCommand);
-        this.register(new Give(main));
+        this.register(new Give());
         this.register(new Reload(main));
-        this.register(new List(main));
-        this.register(new Me(main));
-        this.register(new Remove(main));
-        this.register(new RemoveAll(main));
+        this.register(new List());
+        this.register(new Me());
+        this.register(new Remove());
+        this.register(new RemoveAll());
         this.register(new Reset(main));
         this.register(new ResetAll(main));
         this.register(new Version(main));
         this.register(new Stats(main));
         this.register(new Top(main));
         this.register(new Tp());
-        this.register(new Move(main));
-        this.register(new Options(main));
+        this.register(new Move());
+        this.register(new Options());
         this.register(new Export(main));
     }
 
@@ -58,31 +56,31 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command c, String s, String[] args) {
         if (args.length <= 0) {
-            sender.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
+            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return false;
         }
 
         HBCommand command = registeredCommands.get(args[0].toLowerCase());
 
         if (command == null) {
-            sender.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
+            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return false;
         }
 
         if (!PlayerUtils.hasPermission(sender, command.getPermission())) {
-            sender.sendMessage(languageHandler.getMessage("Messages.NoPermission"));
+            sender.sendMessage(LanguageService.getMessage("Messages.NoPermission"));
             return false;
         }
 
         if (command.isPlayerCommand() && !(sender instanceof Player)) {
-            sender.sendMessage(languageHandler.getMessage("Messages.PlayerOnly"));
+            sender.sendMessage(LanguageService.getMessage("Messages.PlayerOnly"));
             return false;
         }
 
         String[] argsWithoutCmd = Arrays.copyOfRange(args, 1, args.length);
 
         if (argsWithoutCmd.length < command.getArgs().length) {
-            sender.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
+            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return false;
         }
 

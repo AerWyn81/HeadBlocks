@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
@@ -30,11 +30,9 @@ import java.util.stream.Collectors;
 
 @HBAnnotations(command = "stats", permission = "headblocks.admin")
 public class Stats implements Cmd {
-    private final LanguageHandler languageHandler;
     private final StorageHandler storageHandler;
 
     public Stats(HeadBlocks main) {
-        this.languageHandler = main.getLanguageHandler();
         this.storageHandler = main.getStorageHandler();
     }
 
@@ -54,14 +52,14 @@ public class Stats implements Cmd {
         }
 
         if (player == null) {
-            sender.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound")
+            sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound")
                     .replaceAll("%player%", args[1]));
             return true;
         }
 
         ArrayList<HeadLocation> headsSpawned = new ArrayList<>(HeadService.getChargedHeadLocations());
         if (headsSpawned.size() == 0) {
-            sender.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
+            sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 
@@ -72,20 +70,20 @@ public class Stats implements Cmd {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
         } catch (InternalException ex) {
-            sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving stats of the player " + player.getName() + " from the storage: " + ex.getMessage()));
             return true;
         }
 
         headsSpawned.sort(Comparator.comparingInt(playerHeads::indexOf));
 
-        ChatPageUtils cpu = new ChatPageUtils(languageHandler, sender)
+        ChatPageUtils cpu = new ChatPageUtils(sender)
                 .entriesCount(headsSpawned.size())
                 .currentPage(args);
 
-        String message = languageHandler.getMessage("Chat.LineTitle");
+        String message = LanguageService.getMessage("Chat.LineTitle");
         if (sender instanceof Player) {
-            TextComponent titleComponent = new TextComponent(PlaceholdersHandler.parse(player, languageHandler.getMessage("Chat.StatsTitleLine")
+            TextComponent titleComponent = new TextComponent(PlaceholdersHandler.parse(player, LanguageService.getMessage("Chat.StatsTitleLine")
                     .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
             cpu.addTitleLine(titleComponent);
         } else {
@@ -96,7 +94,7 @@ public class Stats implements Cmd {
             UUID uuid = headsSpawned.get(i).getUuid();
             Location location = headsSpawned.get(i).getLocation();
 
-            String hover = MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Chat.LineCoordinate"), location);
+            String hover = MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), location);
 
             if (sender instanceof Player) {
                 TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + uuid));
@@ -104,22 +102,22 @@ public class Stats implements Cmd {
 
                 TextComponent own;
                 if (playerHeads.stream().anyMatch(s -> s.getUuid() == uuid)) {
-                    own = new TextComponent(languageHandler.getMessage("Chat.Box.Own"));
-                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.Own")).create()));
+                    own = new TextComponent(LanguageService.getMessage("Chat.Box.Own"));
+                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.Own")).create()));
                 } else {
-                    own = new TextComponent(languageHandler.getMessage("Chat.Box.NotOwn"));
-                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.NotOwn")).create()));
+                    own = new TextComponent(LanguageService.getMessage("Chat.Box.NotOwn"));
+                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.NotOwn")).create()));
                 }
 
-                TextComponent tp = new TextComponent(languageHandler.getMessage("Chat.Box.Teleport"));
+                TextComponent tp = new TextComponent(LanguageService.getMessage("Chat.Box.Teleport"));
                 tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb tp " + location.getWorld().getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
-                tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(languageHandler.getMessage("Chat.Hover.Teleport")).create()));
+                tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.Teleport")).create()));
 
                 TextComponent space = new TextComponent(" ");
                 cpu.addLine(own, space, tp, space, msg, space);
             } else {
                 sender.sendMessage((playerHeads.stream().anyMatch(s -> s.equals(uuid)) ?
-                                languageHandler.getMessage("Chat.Box.Own") : languageHandler.getMessage("Chat.Box.NotOwn")) + " " +
+                                LanguageService.getMessage("Chat.Box.Own") : LanguageService.getMessage("Chat.Box.NotOwn")) + " " +
                                 MessageUtils.colorize("&6" + uuid));
             }
         }

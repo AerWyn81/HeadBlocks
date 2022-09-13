@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.HologramService;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -20,11 +20,9 @@ import java.util.UUID;
 
 public class OnPlayerPlaceBlockEvent implements Listener {
     private final HeadBlocks main;
-    private final LanguageHandler languageHandler;
 
     public OnPlayerPlaceBlockEvent(HeadBlocks main) {
         this.main = main;
-        this.languageHandler = main.getLanguageHandler();
     }
 
     @EventHandler
@@ -38,19 +36,19 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         if (HeadBlocks.isReloadInProgress) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.PluginReloading"));
+            player.sendMessage(LanguageService.getMessage("Messages.PluginReloading"));
             return;
         }
 
         if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.NoPermissionBlock"));
+            player.sendMessage(LanguageService.getMessage("Messages.NoPermissionBlock"));
             return;
         }
 
         if (!player.isSneaking() || player.getGameMode() != GameMode.CREATIVE) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.CreativeSneakAddHead"));
+            player.sendMessage(LanguageService.getMessage("Messages.CreativeSneakAddHead"));
             return;
         }
 
@@ -58,14 +56,14 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         if (HeadService.getHeadAt(headLocation) != null) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.HeadAlreadyExistHere"));
+            player.sendMessage(LanguageService.getMessage("Messages.HeadAlreadyExistHere"));
             return;
         }
 
         // Check if there is a storage issue
         if (main.getStorageHandler().hasStorageError()) {
             e.setCancelled(true);
-            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             return;
         }
 
@@ -73,7 +71,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         try {
             headUuid = HeadService.saveHeadLocation(headLocation);
         } catch (InternalException ex) {
-            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
             return;
         }
@@ -82,7 +80,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
 
-        player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
+        player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
 
         Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
     }

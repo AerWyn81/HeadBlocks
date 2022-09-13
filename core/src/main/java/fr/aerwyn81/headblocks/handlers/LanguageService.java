@@ -15,51 +15,47 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored", "ConstantConditions"})
-public class LanguageHandler {
+public class LanguageService {
+	private static String language;
+	private static HashMap<String, Object> messages;
 
-	private String language;
+	public static void initialize(String lang) {
+		new File(HeadBlocks.getInstance().getDataFolder() + "/language").mkdirs();
 
-	private final HashMap<String, Object> messages;
-
-	private final HeadBlocks main;
-
-	public LanguageHandler(HeadBlocks main, String language) {
-		this.main = main;
-		new File(main.getDataFolder() + "/language").mkdirs();
 		loadLanguage("en");
 		loadLanguage("fr");
-		this.language = checkLanguage(language);
-		this.messages = new HashMap<>();
+		language = checkLanguage(lang);
+		messages = new HashMap<>();
 	}
 
-	public void setLanguage(String language) {
-		this.language = language;
+	public static void setLanguage(String lang) {
+		language = lang;
 	}
 
-	public String getPrefix() {
+	public static String getPrefix() {
 		return MessageUtils.colorize(messages.get("Prefix").toString());
 	}
 
-	public boolean hasMessage(String message) {
+	public static boolean hasMessage(String message) {
 		return messages.containsKey(message);
 	}
 
-	public String getMessage(String message) {
+	public static String getMessage(String message) {
 		return MessageUtils.colorize(messages.get(message).toString().replaceAll("%prefix%", getPrefix()));
 	}
 
-	public List<String> getMessages(String message) {
+	public static List<String> getMessages(String message) {
 		return ((List<String>) messages.get(message)).stream().map(MessageUtils::colorize).collect(Collectors.toList());
 	}
 
-	public String checkLanguage(String lang) {
+	public static String checkLanguage(String lang) {
 		File f = new File("plugins/HeadBlocks/language/messages_" + lang + ".yml");
 		if (f.exists())
 			return lang;
 		return "en";
 	}
 
-	public void pushMessages() {
+	public static void pushMessages() {
 		File f = new File("plugins/HeadBlocks/language/messages_" + language + ".yml");
 		YamlConfiguration c = YamlConfiguration.loadConfiguration(f);
 
@@ -72,8 +68,8 @@ public class LanguageHandler {
 		});
 	}
 
-	public void loadLanguage(String lang) {
-		File file = new File(main.getDataFolder() + "/language/messages_" + lang + ".yml");
+	public static void loadLanguage(String lang) {
+		File file = new File(HeadBlocks.getInstance().getDataFolder() + "/language/messages_" + lang + ".yml");
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
@@ -87,7 +83,7 @@ public class LanguageHandler {
 
 		Map<String, Object> msgDefaults = new LinkedHashMap<>();
 
-		InputStreamReader input = new InputStreamReader(main.getResource("language/messages_" + lang + ".yml"), StandardCharsets.UTF_8);
+		InputStreamReader input = new InputStreamReader(HeadBlocks.getInstance().getResource("language/messages_" + lang + ".yml"), StandardCharsets.UTF_8);
 		FileConfiguration data = YamlConfiguration.loadConfiguration(input);
 
 		for(String key : data.getKeys(true)) {
@@ -121,7 +117,7 @@ public class LanguageHandler {
 		}
 
 		try {
-			ConfigUpdater.update(main, "language/messages_" + lang + ".yml", new File(main.getDataFolder() + "/language/messages_" + lang + ".yml"), Collections.emptyList());
+			ConfigUpdater.update(HeadBlocks.getInstance(), "language/messages_" + lang + ".yml", new File(HeadBlocks.getInstance().getDataFolder() + "/language/messages_" + lang + ".yml"), Collections.emptyList());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

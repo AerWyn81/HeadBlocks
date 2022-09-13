@@ -33,7 +33,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class HeadService {
-    private static LanguageHandler languageHandler;
     private static StorageHandler storageHandler;
 
     private static File configFile;
@@ -49,7 +48,6 @@ public class HeadService {
         configFile = file;
 
         var main = HeadBlocks.getInstance();
-        languageHandler = main.getLanguageHandler();
         storageHandler = main.getStorageHandler();
 
         heads = new ArrayList<>();
@@ -194,8 +192,8 @@ public class HeadService {
                 continue;
             }
 
-            headMeta.setDisplayName(languageHandler.getMessage("Head.Name"));
-            headMeta.setLore(languageHandler.getMessages("Head.Lore"));
+            headMeta.setDisplayName(LanguageService.getMessage("Head.Name"));
+            headMeta.setLore(LanguageService.getMessages("Head.Lore"));
             headMeta.getPersistentDataContainer().set(new NamespacedKey(HeadBlocks.getInstance(), HB_KEY), PersistentDataType.STRING, "");
 
             switch (parts[0]) {

@@ -29,7 +29,6 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isReloadInProgress;
     public static boolean isProtocolLibActive;
 
-    private LanguageHandler languageHandler;
     private RewardHandler rewardHandler;
     private StorageHandler storageHandler;
 
@@ -72,8 +71,8 @@ public final class HeadBlocks extends JavaPlugin {
 
         ConfigService.initialise(configFile);
 
-        this.languageHandler = new LanguageHandler(this, ConfigService.getLanguage());
-        this.languageHandler.pushMessages();
+        LanguageService.initialize(ConfigService.getLanguage());
+        LanguageService.pushMessages();
 
         if (ConfigService.isMetricsEnabled()) {
             new Metrics(this, 15495);
@@ -146,10 +145,6 @@ public final class HeadBlocks extends JavaPlugin {
 
     public static HeadBlocks getInstance() {
         return instance;
-    }
-
-    public LanguageHandler getLanguageHandler() {
-        return languageHandler;
     }
 
     public RewardHandler getRewardHandler() {

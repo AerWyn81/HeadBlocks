@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.command.CommandSender;
 
@@ -24,11 +24,9 @@ import java.util.stream.Stream;
 @HBAnnotations(command = "export", permission = "headblocks.admin", args = { "database" })
 public class Export implements Cmd {
     private final HeadBlocks main;
-    private final LanguageHandler languageHandler;
 
     public Export(HeadBlocks main) {
         this.main = main;
-        this.languageHandler = main.getLanguageHandler();
     }
 
     @Override
@@ -41,14 +39,14 @@ public class Export implements Cmd {
         }
 
         if (args.length != 3) {
-            sender.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
+            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return true;
         }
 
         EnumTypeDatabase typeDatabase = EnumTypeDatabase.Of(args[2]);
 
         if (typeDatabase == null) {
-            sender.sendMessage(MessageUtils.colorize(languageHandler.getPrefix() + " &cThe SQL type &e" + args[2] + " &cis not supported!"));
+            sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cThe SQL type &e" + args[2] + " &cis not supported!"));
             return true;
         }
 
@@ -74,11 +72,11 @@ public class Export implements Cmd {
 
             ps.close();
         } catch (Exception ex) {
-            sender.sendMessage(MessageUtils.colorize(languageHandler.getMessage("Messages.ExportError") + ex.getMessage()));
+            sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportError") + ex.getMessage()));
             return true;
         }
 
-        sender.sendMessage(MessageUtils.colorize(languageHandler.getMessage("Messages.ExportSuccess")).replaceAll("%fileName%", fileName));
+        sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportSuccess")).replaceAll("%fileName%", fileName));
         return true;
     }
 

@@ -10,18 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlaceholdersHandler {
-    private static final LanguageHandler languageHandler;
     private static final StorageHandler storageHandler;
 
     static {
         HeadBlocks instance = HeadBlocks.getInstance();
-        languageHandler = instance.getLanguageHandler();
         storageHandler = instance.getStorageHandler();
     }
 
     public static String parse(Player player, String message) {
         message = message.replaceAll("%player%", player.getName())
-                .replaceAll("%prefix%", languageHandler.getPrefix());
+                .replaceAll("%prefix%", LanguageService.getPrefix());
 
         if (message.contains("%progress%") || message.contains("%current%") || message.contains("%max%") || message.contains("%left%")) {
             message = parseInternal(player, message);
@@ -42,7 +40,7 @@ public class PlaceholdersHandler {
         try {
             current = storageHandler.getHeadsPlayer(player.getUniqueId()).size();
         } catch (InternalException ex) {
-            player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
             return MessageUtils.colorize(message);
         }

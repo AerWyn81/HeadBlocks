@@ -1,12 +1,11 @@
 package fr.aerwyn81.headblocks.commands.list;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.utils.LocationUtils;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.Location;
@@ -20,11 +19,6 @@ import java.util.Arrays;
 
 @HBAnnotations(command = "move", permission = "headblocks.admin", isPlayerCommand = true)
 public class Move implements Cmd {
-    private final LanguageHandler languageHandler;
-
-    public Move(HeadBlocks main) {
-        this.languageHandler = main.getLanguageHandler();
-    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
@@ -36,13 +30,13 @@ public class Move implements Cmd {
         if (hasCancelInCommand) {
             HeadMove hd = HeadService.getHeadMoves().remove(player.getUniqueId());
             if (hd != null) {
-                player.sendMessage(languageHandler.getMessage("Messages.HeadMoveCancel"));
+                player.sendMessage(LanguageService.getMessage("Messages.HeadMoveCancel"));
             }
             return true;
         }
 
         if (!hasConfirmInCommand && HeadService.getHeadMoves().containsKey(player.getUniqueId())) {
-            player.sendMessage(languageHandler.getMessage("Messages.HeadMoveAlready"));
+            player.sendMessage(LanguageService.getMessage("Messages.HeadMoveAlready"));
             return true;
         }
 
@@ -52,11 +46,11 @@ public class Move implements Cmd {
             HeadLocation headLocation = HeadService.getHeadAt(targetLoc);
 
             if (headLocation == null) {
-                player.sendMessage(languageHandler.getMessage("Messages.NoTargetHeadBlock"));
+                player.sendMessage(LanguageService.getMessage("Messages.NoTargetHeadBlock"));
                 return true;
             }
 
-            String message = languageHandler.getMessage("Messages.TargetBlockInfo")
+            String message = LanguageService.getMessage("Messages.TargetBlockInfo")
                     .replaceAll("%uuid%", headLocation.getUuid().toString());
 
             HeadService.getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), targetLoc));
@@ -68,26 +62,26 @@ public class Move implements Cmd {
         HeadMove headMove = HeadService.getHeadMoves().getOrDefault(player.getUniqueId(), null);
 
         if (headMove == null) {
-            player.sendMessage(languageHandler.getMessage("Messages.HeadMoveNoPlayer"));
+            player.sendMessage(LanguageService.getMessage("Messages.HeadMoveNoPlayer"));
             return true;
         }
 
         Location newHeadBlockLoc = targetLoc.clone().add(0, 1, 0);
 
         if (LocationUtils.areEquals(newHeadBlockLoc, headMove.getOldLoc())) {
-            player.sendMessage(languageHandler.getMessage("Messages.HeadMoveOtherLoc"));
+            player.sendMessage(LanguageService.getMessage("Messages.HeadMoveOtherLoc"));
             return true;
         }
 
         if (isTargetBlockInvalid(targetLoc.getBlock()) || !newHeadBlockLoc.getBlock().isEmpty()) {
-            player.sendMessage(languageHandler.getMessage("Messages.TargetBlockInvalid"));
+            player.sendMessage(LanguageService.getMessage("Messages.TargetBlockInvalid"));
             return true;
         }
 
         HeadService.changeHeadLocation(headMove.gethUuid(), headMove.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
         HeadService.getHeadMoves().remove(player.getUniqueId());
 
-        player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));
+        player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));
         return true;
     }
 

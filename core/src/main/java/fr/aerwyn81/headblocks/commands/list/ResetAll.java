@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -16,11 +16,9 @@ import java.util.UUID;
 
 @HBAnnotations(command = "resetall", permission = "headblocks.admin")
 public class ResetAll implements Cmd {
-    private final LanguageHandler languageHandler;
     private final StorageHandler storageHandler;
 
     public ResetAll(HeadBlocks main) {
-        this.languageHandler = main.getLanguageHandler();
         this.storageHandler = main.getStorageHandler();
     }
 
@@ -31,13 +29,13 @@ public class ResetAll implements Cmd {
         try {
             allPlayers = storageHandler.getAllPlayers();
         } catch (InternalException ex) {
-            sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+            sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving all players from the storage: " + ex.getMessage()));
             return true;
         }
 
         if (allPlayers.size() == 0) {
-            sender.sendMessage(languageHandler.getMessage("Messages.ResetAllNoData"));
+            sender.sendMessage(LanguageService.getMessage("Messages.ResetAllNoData"));
             return true;
         }
 
@@ -48,18 +46,18 @@ public class ResetAll implements Cmd {
                 try {
                     storageHandler.resetPlayer(uuid);
                 } catch (InternalException ex) {
-                    sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
+                    sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + uuid.toString() + " from the storage: " + ex.getMessage()));
                     return true;
                 }
             }
 
-            sender.sendMessage(languageHandler.getMessage("Messages.ResetAllSuccess")
+            sender.sendMessage(LanguageService.getMessage("Messages.ResetAllSuccess")
                     .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
             return true;
         }
 
-        sender.sendMessage(languageHandler.getMessage("Messages.ResetAllConfirm")
+        sender.sendMessage(LanguageService.getMessage("Messages.ResetAllConfirm")
                 .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
 
         return true;

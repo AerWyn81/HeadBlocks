@@ -1,12 +1,11 @@
 package fr.aerwyn81.headblocks.commands.list;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
+import fr.aerwyn81.headblocks.handlers.LanguageService;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -19,13 +18,6 @@ import java.util.stream.IntStream;
 
 @HBAnnotations(command = "give", permission = "headblocks.admin", isPlayerCommand = true)
 public class Give implements Cmd {
-    private final HeadBlocks main;
-    private final LanguageHandler languageHandler;
-
-    public Give(HeadBlocks main) {
-        this.main = main;
-        this.languageHandler = main.getLanguageHandler();
-    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
@@ -35,7 +27,7 @@ public class Give implements Cmd {
             Player pTemp = Bukkit.getPlayer(args[1]);
 
             if (pTemp == null) {
-                player.sendMessage(languageHandler.getMessage("Messages.PlayerNotFound")
+                player.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound")
                         .replaceAll("%player%", args[1]));
                 return true;
             }
@@ -45,7 +37,7 @@ public class Give implements Cmd {
 
         ArrayList<HBHead> hbHeads = HeadService.getHeads();
         if (hbHeads.size() == 0) {
-            player.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
+            player.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 
@@ -69,18 +61,18 @@ public class Give implements Cmd {
 
             int finalId = --id;
             if (finalId > hbHeads.size() - 1) {
-                player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
+                player.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
                 return true;
             }
 
             headsToGive.add(hbHeads.get(finalId));
         } else {
-            player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
+            player.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return true;
         }
 
         if (getEmptySlots(player) < headsToGive.size()) {
-            player.sendMessage(languageHandler.getMessage("Messages.InventoryFull"));
+            player.sendMessage(LanguageService.getMessage("Messages.InventoryFull"));
             return true;
         }
 
@@ -90,7 +82,7 @@ public class Give implements Cmd {
                 HBHeadHDB headHDB = (HBHeadHDB) head;
 
                 if (!headHDB.isLoaded()) {
-                    player.sendMessage(languageHandler.getMessage("Messages.HeadNotYetLoaded")
+                    player.sendMessage(LanguageService.getMessage("Messages.HeadNotYetLoaded")
                             .replaceAll("%id%", String.valueOf(headHDB.getId())));
                     continue;
                 }
@@ -102,7 +94,7 @@ public class Give implements Cmd {
 
 
         if (headGiven != 0) {
-            player.sendMessage(languageHandler.getMessage("Messages.HeadGiven"));
+            player.sendMessage(LanguageService.getMessage("Messages.HeadGiven"));
         }
 
         return true;
