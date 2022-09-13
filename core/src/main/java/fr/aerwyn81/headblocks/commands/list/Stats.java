@@ -61,6 +61,12 @@ public class Stats implements Cmd {
             return true;
         }
 
+        ArrayList<HeadLocation> headsSpawned = new ArrayList<>(headHandler.getChargedHeadLocations());
+        if (headsSpawned.size() == 0) {
+            sender.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
+            return true;
+        }
+
         ArrayList<HeadLocation> playerHeads;
         try {
             playerHeads = storageHandler.getHeadsPlayer(player.getUniqueId()).stream()
@@ -70,12 +76,6 @@ public class Stats implements Cmd {
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving stats of the player " + player.getName() + " from the storage: " + ex.getMessage()));
-            return true;
-        }
-
-        ArrayList<HeadLocation> headsSpawned = new ArrayList<>(headHandler.getChargedHeadLocations());
-        if (headsSpawned.size() == 0) {
-            sender.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 
@@ -120,7 +120,7 @@ public class Stats implements Cmd {
                 TextComponent space = new TextComponent(" ");
                 cpu.addLine(own, space, tp, space, msg, space);
             } else {
-                sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getUuid() == uuid) ?
+                sender.sendMessage((playerHeads.stream().anyMatch(s -> s.equals(uuid)) ?
                                 languageHandler.getMessage("Chat.Box.Own") : languageHandler.getMessage("Chat.Box.NotOwn")) + " " +
                                 MessageUtils.colorize("&6" + uuid));
             }

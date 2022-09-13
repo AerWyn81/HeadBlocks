@@ -72,7 +72,7 @@ Chat:
     Remove: "&7| &8[&c✘&8]"
     Own: "&7| &8[&2✔&8]"
     NotOwn: "&7| &8[&c✘&8]"
-  StatsTitleLine: "&7---[ &eDonnées de &6%player% &8» &6%headCount%&8/&6%max% &etêtes &7]---"
+  StatsTitleLine: "&7---------[ &eDonnées de &6%player% &8» &6%headCount%&8/&6%max% &etêtes &7]---------"
   LineTitle: "&7----------------[ &6&lH&e&lead&6&lB&e&llocks&7 ]---------------"
   TopTitle: "&7------[ &6&lH&e&lead&6&lB&e&llocks&7 &7- &6&6&lC&elassement &7]-------"
   LineTop: "&6%pos% &7- &e%player% &8(&7%count%&8)"

@@ -155,7 +155,7 @@ public class HeadHandler {
     }
 
     public HeadLocation getHeadByUUID(UUID headUuid) {
-        return headLocations.stream().filter(h -> h.getUuid() == headUuid)
+        return headLocations.stream().filter(h -> h.getUuid().equals(headUuid))
                 .findFirst()
                 .orElse(null);
     }
@@ -164,11 +164,6 @@ public class HeadHandler {
         return headLocations.stream().filter(h -> LocationUtils.areEquals(h.getLocation(), location))
                 .findFirst()
                 .orElse(null);
-    }
-
-    public ArrayList<HeadLocation> getHeadsByConfigWorld(String worldName) {
-        return headLocations.stream().filter(h -> worldName.equals(h.getConfigWorldName()))
-                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void loadHeads() {
