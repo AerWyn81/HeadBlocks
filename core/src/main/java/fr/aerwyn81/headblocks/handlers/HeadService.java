@@ -33,10 +33,8 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class HeadService {
-    private static HeadBlocks main;
     private static LanguageHandler languageHandler;
     private static StorageHandler storageHandler;
-    private static HologramHandler hologramHandler;
 
     private static File configFile;
     private static YamlConfiguration config;
@@ -48,12 +46,11 @@ public class HeadService {
     public static String HB_KEY = "HB_HEAD";
 
     public static void initialise(File file) {
-        main = HeadBlocks.getInstance();
         configFile = file;
 
+        var main = HeadBlocks.getInstance();
         languageHandler = main.getLanguageHandler();
         storageHandler = main.getStorageHandler();
-        hologramHandler = main.getHologramHandler();
 
         heads = new ArrayList<>();
         headLocations = new ArrayList<>();
@@ -112,7 +109,7 @@ public class HeadService {
                     headLocations.add(headLocation);
 
                     if (ConfigService.isHologramsEnabled()) {
-                        hologramHandler.createHolograms(headLocation.getLocation());
+                        HologramService.createHolograms(headLocation.getLocation());
                     }
                 } catch (Exception e) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head " + uuid));
@@ -130,7 +127,7 @@ public class HeadService {
         storageHandler.createNewHead(uniqueUuid);
 
         if (ConfigService.isHologramsEnabled()) {
-            hologramHandler.createHolograms(location);
+            HologramService.createHolograms(location);
         }
 
         var headLocation = new HeadLocation("", uniqueUuid, location);
@@ -148,7 +145,7 @@ public class HeadService {
             headLocation.getLocation().getBlock().setType(Material.AIR);
 
             if (ConfigService.isHologramsEnabled()) {
-                hologramHandler.removeHologram(headLocation.getLocation());
+                HologramService.removeHolograms(headLocation.getLocation());
             }
 
             headLocations.remove(headLocation);
@@ -199,7 +196,7 @@ public class HeadService {
 
             headMeta.setDisplayName(languageHandler.getMessage("Head.Name"));
             headMeta.setLore(languageHandler.getMessages("Head.Lore"));
-            headMeta.getPersistentDataContainer().set(new NamespacedKey(main, HB_KEY), PersistentDataType.STRING, "");
+            headMeta.getPersistentDataContainer().set(new NamespacedKey(HeadBlocks.getInstance(), HB_KEY), PersistentDataType.STRING, "");
 
             switch (parts[0]) {
                 case "player":
@@ -283,7 +280,7 @@ public class HeadService {
 
         headLocations.set(indexOfOld, headLocation);
 
-        hologramHandler.removeHologram(oldBlock.getLocation());
-        hologramHandler.createHolograms(newBlock.getLocation());
+        HologramService.removeHolograms(oldBlock.getLocation());
+        HologramService.createHolograms(newBlock.getLocation());
     }
 }

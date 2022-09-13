@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadService;
+import fr.aerwyn81.headblocks.handlers.HologramService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import org.bukkit.Bukkit;
@@ -33,9 +34,7 @@ public class Reload implements Cmd {
         main.getLanguageHandler().setLanguage(ConfigService.getLanguage());
         main.getLanguageHandler().pushMessages();
 
-        if (ConfigService.isHologramsEnabled()) {
-            main.getHologramHandler().unload();
-        }
+        HologramService.load();
 
         HeadService.load();
 

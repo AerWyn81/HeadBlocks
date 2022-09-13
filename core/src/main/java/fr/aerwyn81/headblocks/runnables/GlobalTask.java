@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.HologramHandler;
+import fr.aerwyn81.headblocks.handlers.HologramService;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -20,11 +20,9 @@ import java.util.stream.Collectors;
 
 public class GlobalTask extends BukkitRunnable {
     private final StorageHandler storageHandler;
-    private final HologramHandler hologramHandler;
 
     public GlobalTask(HeadBlocks main) {
         this.storageHandler = main.getStorageHandler();
-        this.hologramHandler = main.getHologramHandler();
     }
 
     @Override
@@ -49,7 +47,7 @@ public class GlobalTask extends BukkitRunnable {
                         }
 
                         if (ConfigService.isHologramsFoundEnabled()) {
-                            hologramHandler.showFoundTo(p, location);
+                            HologramService.showFoundTo(p, location);
                         }
                     } else {
                         if (ConfigService.isParticlesNotFoundEnabled()) {
@@ -58,7 +56,7 @@ public class GlobalTask extends BukkitRunnable {
                         }
 
                         if (ConfigService.isHologramsNotFoundEnabled()) {
-                            hologramHandler.showNotFoundTo(p, location);
+                            HologramService.showNotFoundTo(p, location);
                         }
                     }
                 } catch (InternalException ex) {

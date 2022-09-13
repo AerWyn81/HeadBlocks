@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.HologramHandler;
+import fr.aerwyn81.headblocks.handlers.HologramService;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.LocationUtils;
 import org.bukkit.Location;
@@ -24,12 +24,10 @@ import java.util.stream.Collectors;
 public class OthersEvent implements Listener {
     private final HeadBlocks main;
     private final StorageHandler storageHandler;
-    private final HologramHandler hologramHandler;
 
     public OthersEvent(HeadBlocks main) {
         this.main = main;
         this.storageHandler = main.getStorageHandler();
-        this.hologramHandler = main.getHologramHandler();
     }
 
     @EventHandler
@@ -62,9 +60,7 @@ public class OthersEvent implements Listener {
     public void onJoin(PlayerJoinEvent e) {
         storageHandler.loadPlayer(e.getPlayer());
 
-        if (ConfigService.isHologramsEnabled()) {
-            hologramHandler.addExcludedPlayer(e.getPlayer());
-        }
+        HologramService.addExcludedPlayer(e.getPlayer());
     }
 
     @EventHandler
@@ -72,9 +68,7 @@ public class OthersEvent implements Listener {
         storageHandler.unloadPlayer(e.getPlayer());
         HeadService.getHeadMoves().remove(e.getPlayer().getUniqueId());
 
-        if (ConfigService.isHologramsEnabled()) {
-            hologramHandler.removeExcludedPlayer(e.getPlayer());
-        }
+        HologramService.removeExcludedPlayer(e.getPlayer());
     }
 
     @EventHandler
@@ -86,7 +80,7 @@ public class OthersEvent implements Listener {
 
         for (HeadLocation head : headsInWorld) {
             if (ConfigService.isHologramsEnabled()) {
-                hologramHandler.createHolograms(head.getLocation());
+                HologramService.createHolograms(head.getLocation());
             }
 
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));

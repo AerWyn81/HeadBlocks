@@ -12,31 +12,34 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
-public class HologramHandler {
-    private final HeadBlocks main;
+public class HologramService {
+    private static HologramPool hologramPool;
 
-    private HologramPool hologramPool;
+    private static HashMap<Location, Hologram> foundHolograms;
+    private static HashMap<Location, Hologram> notFoundHolograms;
 
-    private final HashMap<Location, Hologram> foundHolograms;
-    private final HashMap<Location, Hologram> notFoundHolograms;
-
-    public HologramHandler(HeadBlocks main) {
-        this.main = main;
-
-        this.foundHolograms = new HashMap<>();
-        this.notFoundHolograms = new HashMap<>();
+    private static boolean isEnabled() {
+        return HeadBlocks.isProtocolLibActive && ConfigService.isHologramsEnabled();
     }
 
-    public void load() {
-        if (!HeadBlocks.isProtocolLibActive) {
+    public static void initialise() {
+        foundHolograms = new HashMap<>();
+        notFoundHolograms = new HashMap<>();
+
+        load();
+    }
+
+    public static void load() {
+        if (!isEnabled()) {
             return;
         }
 
-        this.hologramPool = new HologramPool(main, 16, 0, 0);
+        unload();
+        hologramPool = new HologramPool(HeadBlocks.getInstance(), 16, 0, 0);
     }
 
-    public void unload() {
-        if (!HeadBlocks.isProtocolLibActive) {
+    public static void unload() {
+        if (!isEnabled()) {
             return;
         }
 
@@ -44,8 +47,8 @@ public class HologramHandler {
         notFoundHolograms.values().forEach(h -> hologramPool.remove(h));
     }
 
-    public void createHolograms(Location location) {
-        if (location == null || !HeadBlocks.isProtocolLibActive) {
+    public static void createHolograms(Location location) {
+        if (location == null || !isEnabled()) {
             return;
         }
 
@@ -72,7 +75,7 @@ public class HologramHandler {
         }
     }
 
-    private Hologram internalCreateHologram(Location location, ArrayList<String> lines) {
+    private static Hologram internalCreateHologram(Location location, ArrayList<String> lines) {
         location = location.clone();
         location.add(0.5, -0.9 + ConfigService.getHologramsHeightAboveHead(), 0.5);
 
@@ -86,8 +89,8 @@ public class HologramHandler {
         return holoBuilder.build(hologramPool);
     }
 
-    public void removeHologram(Location location) {
-        if (location == null || !HeadBlocks.isProtocolLibActive) {
+    public static void removeHolograms(Location location) {
+        if (location == null || !isEnabled()) {
             return;
         }
 
@@ -105,15 +108,15 @@ public class HologramHandler {
         }
     }
 
-    public Hologram getHoloFound(Location loc) {
+    public static Hologram getHoloFound(Location loc) {
         return foundHolograms.get(loc);
     }
 
-    public Hologram getHoloNotFound(Location loc) {
+    public static Hologram getHoloNotFound(Location loc) {
         return notFoundHolograms.get(loc);
     }
 
-    public void showFoundTo(Player player, Location location) {
+    public static void showFoundTo(Player player, Location location) {
         Hologram holo = getHoloFound(location);
         if (holo != null) {
             holo.removeExcludedPlayer(player);
@@ -125,7 +128,7 @@ public class HologramHandler {
         }
     }
 
-    public void showNotFoundTo(Player player, Location location) {
+    public static void showNotFoundTo(Player player, Location location) {
         Hologram holo = getHoloNotFound(location);
         if (holo != null) {
             holo.removeExcludedPlayer(player);
@@ -137,16 +140,16 @@ public class HologramHandler {
         }
     }
 
-    public HashMap<Location, Hologram> getFoundHolograms() {
+    public static HashMap<Location, Hologram> getFoundHolograms() {
         return foundHolograms;
     }
 
-    public HashMap<Location, Hologram> getNotFoundHolograms() {
+    public static HashMap<Location, Hologram> getNotFoundHolograms() {
         return notFoundHolograms;
     }
 
-    public void addExcludedPlayer(Player player) {
-        if (!HeadBlocks.isProtocolLibActive) {
+    public static void addExcludedPlayer(Player player) {
+        if (!isEnabled()) {
             return;
         }
 
@@ -154,8 +157,8 @@ public class HologramHandler {
         getNotFoundHolograms().values().forEach(h -> h.addExcludedPlayer(player));
     }
 
-    public void removeExcludedPlayer(Player player) {
-        if (!HeadBlocks.isProtocolLibActive) {
+    public static void removeExcludedPlayer(Player player) {
+        if (!isEnabled()) {
             return;
         }
 

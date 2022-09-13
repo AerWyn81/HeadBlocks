@@ -32,7 +32,6 @@ public final class HeadBlocks extends JavaPlugin {
     private LanguageHandler languageHandler;
     private RewardHandler rewardHandler;
     private StorageHandler storageHandler;
-    private HologramHandler hologramHandler;
 
     private GlobalTask globalTask;
     private HeadDatabaseAPI headDatabaseAPI;
@@ -83,14 +82,9 @@ public final class HeadBlocks extends JavaPlugin {
         this.storageHandler = new StorageHandler(this);
         this.storageHandler.init();
 
-        this.hologramHandler = new HologramHandler(this);
-
-        if (ConfigService.isHologramsEnabled()) {
-            this.hologramHandler.load();
-        }
+        HologramService.initialise();
 
         HeadService.initialise(locationFile);
-        HeadService.load();
 
         this.rewardHandler = new RewardHandler(this);
 
@@ -173,6 +167,4 @@ public final class HeadBlocks extends JavaPlugin {
     public GlobalTask getParticlesTask() {
         return globalTask;
     }
-
-    public HologramHandler getHologramHandler() { return hologramHandler; }
 }

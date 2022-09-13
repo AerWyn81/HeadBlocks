@@ -3,10 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
+import fr.aerwyn81.headblocks.handlers.*;
 import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -185,6 +182,9 @@ public class OnPlayerInteractEvent implements Listener {
                 }
             }
         }
+
+        // Show hologram
+        HologramService.showFoundTo(player, clickedLocation);
 
         // Check and reward if triggerRewards is used
         main.getRewardHandler().giveReward(player);

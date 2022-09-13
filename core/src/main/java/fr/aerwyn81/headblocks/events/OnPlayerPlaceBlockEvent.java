@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.handlers.HeadService;
+import fr.aerwyn81.headblocks.handlers.HologramService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.Bukkit;
@@ -76,6 +77,8 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
             return;
         }
+
+        HologramService.showNotFoundTo(player, headLocation);
 
         ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
 
