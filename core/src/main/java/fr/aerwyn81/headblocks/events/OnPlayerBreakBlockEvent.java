@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigHandler;
+import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -18,12 +18,10 @@ import org.bukkit.event.block.BlockBreakEvent;
 
 public class OnPlayerBreakBlockEvent implements Listener {
     private final HeadBlocks main;
-    private final ConfigHandler configHandler;
     private final LanguageHandler languageHandler;
 
     public OnPlayerBreakBlockEvent(HeadBlocks main) {
         this.main = main;
-        this.configHandler = main.getConfigHandler();
         this.languageHandler = main.getLanguageHandler();
     }
 
@@ -73,7 +71,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
 
         // Remove the head
         try {
-            main.getHeadHandler().removeHeadLocation(headLocation, configHandler.shouldResetPlayerData());
+            main.getHeadHandler().removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));

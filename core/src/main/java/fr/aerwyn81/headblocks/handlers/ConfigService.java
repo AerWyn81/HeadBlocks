@@ -12,70 +12,70 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConfigHandler {
+public class ConfigService {
+    private static File configFile;
+    private static FileConfiguration config;
 
-    private final File configFile;
-    private FileConfiguration config;
-
-    public ConfigHandler(File configFile) {
-        this.configFile = configFile;
+    public static void initialise(File file) {
+        configFile = file;
+        load();
     }
 
-    public void loadConfiguration() {
-        this.config = YamlConfiguration.loadConfiguration(configFile);
+    public static void load() {
+        config = YamlConfiguration.loadConfiguration(configFile);
     }
 
-    public String getLanguage() {
+    public static String getLanguage() {
         return config.getString("language", "en").toLowerCase();
     }
 
-    public boolean isMetricsEnabled() { return config.getBoolean("metrics", true); }
+    public static boolean isMetricsEnabled() { return config.getBoolean("metrics", true); }
 
-    public List<String> getHeads() {
+    public static List<String> getHeads() {
         return config.getStringList("heads");
     }
 
-    public String getHeadClickAlreadyOwnSound() {
+    public static String getHeadClickAlreadyOwnSound() {
         return config.getString("headClick.sounds.alreadyOwn");
     }
 
-    public String getHeadClickNotOwnSound() {
+    public static String getHeadClickNotOwnSound() {
         return config.getString("headClick.sounds.notOwn");
     }
 
-    public List<String> getHeadClickMessages() {
+    public static List<String> getHeadClickMessages() {
         return config.getStringList("headClick.messages");
     }
 
-    public boolean isHeadClickTitleEnabled() {
+    public static boolean isHeadClickTitleEnabled() {
         return config.getBoolean("headClick.title.enabled", false);
     }
 
-    public String getHeadClickTitleFirstLine() {
+    public static String getHeadClickTitleFirstLine() {
         return config.getString("headClick.title.firstLine", "");
     }
 
-    public String getHeadClickTitleSubTitle() {
+    public static String getHeadClickTitleSubTitle() {
         return config.getString("headClick.title.subTitle", "");
     }
 
-    public int getHeadClickTitleFadeIn() {
+    public static int getHeadClickTitleFadeIn() {
         return config.getInt("headClick.title.fadeIn", 0);
     }
 
-    public int getHeadClickTitleStay() {
+    public static int getHeadClickTitleStay() {
         return config.getInt("headClick.title.stay", 50);
     }
 
-    public int getHeadClickTitleFadeOut() {
+    public static int getHeadClickTitleFadeOut() {
         return config.getInt("headClick.title.fadeOut", 0);
     }
 
-    public boolean isFireworkEnabled() {
+    public static boolean isFireworkEnabled() {
         return config.getBoolean("headClick.firework.enabled", false);
     }
 
-    public List<Color> getHeadClickFireworkColors() {
+    public static List<Color> getHeadClickFireworkColors() {
         List<Color> colors = new ArrayList<>();
 
         if (!config.contains("headClick.firework.colors")) {
@@ -95,7 +95,7 @@ public class ConfigHandler {
         return colors;
     }
 
-    public List<Color> getHeadClickFireworkFadeColors() {
+    public static List<Color> getHeadClickFireworkFadeColors() {
         List<Color> colors = new ArrayList<>();
 
         if (!config.contains("headClick.firework.fadeColors")) {
@@ -115,139 +115,135 @@ public class ConfigHandler {
         return colors;
     }
 
-    public boolean isFireworkFlickerEnabled() {
+    public static boolean isFireworkFlickerEnabled() {
         return config.getBoolean("headClick.firework.flicker", true);
     }
 
-    public int getHeadClickFireworkPower() {
+    public static int getHeadClickFireworkPower() {
         return config.getInt("headClick.firework.power", 0);
     }
 
-    public boolean isHeadClickParticlesEnabled() {
+    public static boolean isHeadClickParticlesEnabled() {
         return config.getBoolean("headClick.particles.enabled", false);
     }
 
-    public String getHeadClickParticlesAlreadyOwnType() {
+    public static String getHeadClickParticlesAlreadyOwnType() {
         return config.getString("headClick.particles.alreadyOwn.type", "VILLAGER_ANGRY");
     }
 
-    public int getHeadClickParticlesAmount() {
+    public static int getHeadClickParticlesAmount() {
         return config.getInt("headClick.particles.alreadyOwn.amount", 1);
     }
 
-    public ArrayList<String> getHeadClickParticlesColors() { return new ArrayList<>(config.getStringList("headClick.particles.alreadyOwn.colors")); }
+    public static ArrayList<String> getHeadClickParticlesColors() { return new ArrayList<>(config.getStringList("headClick.particles.alreadyOwn.colors")); }
 
-    public List<String> getHeadClickCommands() {
+    public static List<String> getHeadClickCommands() {
         return config.getStringList("headClick.commands");
     }
 
-    public boolean shouldResetPlayerData() {
+    public static boolean shouldResetPlayerData() {
         return config.getBoolean("shouldResetPlayerData", true);
     }
 
-    public int getProgressBarBars() {
+    public static int getProgressBarBars() {
         return config.getInt("progressBar.totalBars", 100);
     }
 
-    public String getProgressBarSymbol() {
+    public static String getProgressBarSymbol() {
         return config.getString("progressBar.symbol");
     }
 
-    public String getProgressBarNotCompletedColor() {
+    public static String getProgressBarNotCompletedColor() {
         return config.getString("progressBar.notCompletedColor");
     }
 
-    public String getProgressBarCompletedColor() {
+    public static String getProgressBarCompletedColor() {
         return config.getString("progressBar.completedColor");
     }
 
-    public boolean isRedisEnabled() {
+    public static boolean isRedisEnabled() {
         return config.getBoolean("redis.enable", false);
     }
 
-    public String getRedisHostname() {
+    public static String getRedisHostname() {
         return config.getString("redis.settings.hostname", Protocol.DEFAULT_HOST);
     }
 
-    public int getRedisDatabase() {
+    public static int getRedisDatabase() {
         return config.getInt("redis.settings.database", Protocol.DEFAULT_DATABASE);
     }
 
-    public String getRedisPassword() {
+    public static String getRedisPassword() {
         return config.getString("redis.settings.password", "");
     }
 
-    public int getRedisPort() {
+    public static int getRedisPort() {
         return config.getInt("redis.settings.port", Protocol.DEFAULT_PORT);
     }
 
-    public boolean isDatabaseEnabled() {
+    public static boolean isDatabaseEnabled() {
         return config.getBoolean("database.enable", false);
     }
 
-    public String getDatabaseHostname() {
+    public static String getDatabaseHostname() {
         return config.getString("database.settings.hostname", "localhost");
     }
 
-    public String getDatabaseName() {
+    public static String getDatabaseName() {
         return config.getString("database.settings.database");
     }
 
-    public String getDatabaseUsername() {
+    public static String getDatabaseUsername() {
         return config.getString("database.settings.username");
     }
 
-    public String getDatabasePassword() {
+    public static String getDatabasePassword() {
         return config.getString("database.settings.password");
     }
 
-    public int getDatabasePort() {
+    public static int getDatabasePort() {
         return config.getInt("database.settings.port", 3306);
     }
 
-    public boolean getDatabaseSsl() { return config.getBoolean("database.settings.ssl", false); }
+    public static boolean getDatabaseSsl() { return config.getBoolean("database.settings.ssl", false); }
 
-    public boolean isPreventCommandsOnTieredRewardsLevel() {
+    public static boolean isPreventCommandsOnTieredRewardsLevel() {
         return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
     }
 
-    public boolean isParticlesFoundEnabled() {
+    public static boolean isParticlesFoundEnabled() {
         return config.getBoolean("floatingParticles.found.enabled", true);
     }
 
-    public boolean isParticlesNotFoundEnabled() {
+    public static boolean isParticlesNotFoundEnabled() {
         return config.getBoolean("floatingParticles.notFound.enabled", false);
     }
 
-    public boolean isFloatingParticlesEnabled() {
-        return isParticlesFoundEnabled() || isParticlesNotFoundEnabled();
-    }
-
-    public String getParticlesNotFoundType() {
+    public static String getParticlesNotFoundType() {
         return config.getString("floatingParticles.notFound.type", "REDSTONE");
     }
 
-    public ArrayList<String> getParticlesNotFoundColors() {
+    public static ArrayList<String> getParticlesNotFoundColors() {
         return new ArrayList<>(config.getStringList("floatingParticles.notFound.colors"));
     }
 
-    public int getParticlesNotFoundAmount() {
+    public static int getParticlesNotFoundAmount() {
         return config.getInt("floatingParticles.notFound.amount", 3);
     }
 
-    public String getParticlesFoundType() {
+    public static String getParticlesFoundType() {
         return config.getString("floatingParticles.found.type", "REDSTONE");
     }
 
-    public ArrayList<String> getParticlesFoundColors() {
+    public static ArrayList<String> getParticlesFoundColors() {
         return new ArrayList<>(config.getStringList("floatingParticles.found.colors"));
     }
 
-    public int getParticlesFoundAmount() {
+    public static int getParticlesFoundAmount() {
         return config.getInt("floatingParticles.found.amount", 3);
     }
 
-    public List<TieredReward> getTieredRewards() {
+    public static List<TieredReward> getTieredRewards() {
         List<TieredReward> tieredRewards = new ArrayList<>();
 
         if (!config.contains("tieredRewards")) {
@@ -283,35 +279,35 @@ public class ConfigHandler {
         return tieredRewards;
     }
 
-    public int getHologramParticlePlayerViewDistance() {
+    public static int getHologramParticlePlayerViewDistance() {
         return config.getInt("internalTask.hologramParticlePlayerViewDistance", 16);
     }
 
-    public int getDelayGlobalTask() {
+    public static int getDelayGlobalTask() {
         return config.getInt("internalTask.delay", 20);
     }
 
-    public double getHologramsHeightAboveHead() {
+    public static double getHologramsHeightAboveHead() {
         return config.getDouble("holograms.heightAboveHead", 0.5);
     }
 
-    public boolean isHologramsEnabled() {
+    public static boolean isHologramsEnabled() {
         return isHologramsFoundEnabled() || isHologramsNotFoundEnabled();
     }
 
-    public boolean isHologramsFoundEnabled() {
+    public static boolean isHologramsFoundEnabled() {
         return config.getBoolean("holograms.found.enabled", true);
     }
 
-    public boolean isHologramsNotFoundEnabled() {
+    public static boolean isHologramsNotFoundEnabled() {
         return config.getBoolean("holograms.notFound.enabled", true);
     }
 
-    public ArrayList<String> getHologramsFoundLines() {
+    public static ArrayList<String> getHologramsFoundLines() {
         return new ArrayList<>(config.getStringList("holograms.found.lines"));
     }
 
-    public ArrayList<String> getHologramsNotFoundLines() {
+    public static ArrayList<String> getHologramsNotFoundLines() {
         return new ArrayList<>(config.getStringList("holograms.notFound.lines"));
     }
 }

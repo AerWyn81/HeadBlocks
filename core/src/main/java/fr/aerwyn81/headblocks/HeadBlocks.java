@@ -29,7 +29,6 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isReloadInProgress;
     public static boolean isProtocolLibActive;
 
-    private ConfigHandler configHandler;
     private LanguageHandler languageHandler;
     private HeadHandler headHandler;
     private RewardHandler rewardHandler;
@@ -73,13 +72,12 @@ public final class HeadBlocks extends JavaPlugin {
         isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
         isProtocolLibActive = Bukkit.getPluginManager().isPluginEnabled("ProtocolLib");
 
-        this.configHandler = new ConfigHandler(configFile);
-        this.configHandler.loadConfiguration();
+        ConfigService.initialise(configFile);
 
-        this.languageHandler = new LanguageHandler(this, configHandler.getLanguage());
+        this.languageHandler = new LanguageHandler(this, ConfigService.getLanguage());
         this.languageHandler.pushMessages();
 
-        if (configHandler.isMetricsEnabled()) {
+        if (ConfigService.isMetricsEnabled()) {
             new Metrics(this, 15495);
         }
 
@@ -88,7 +86,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         this.hologramHandler = new HologramHandler(this);
 
-        if (configHandler.isHologramsEnabled()) {
+        if (ConfigService.isHologramsEnabled()) {
             this.hologramHandler.load();
         }
 
@@ -99,7 +97,7 @@ public final class HeadBlocks extends JavaPlugin {
         this.rewardHandler = new RewardHandler(this);
 
         this.globalTask = new GlobalTask(this);
-        globalTask.runTaskTimer(this, 0, configHandler.getDelayGlobalTask());
+        globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
 
         if (isPlaceholderApiActive) {
             new PlaceholderHook(this).register();
@@ -156,10 +154,6 @@ public final class HeadBlocks extends JavaPlugin {
 
     public static HeadBlocks getInstance() {
         return instance;
-    }
-
-    public ConfigHandler getConfigHandler() {
-        return configHandler;
     }
 
     public LanguageHandler getLanguageHandler() {

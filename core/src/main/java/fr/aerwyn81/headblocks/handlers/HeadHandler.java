@@ -105,7 +105,7 @@ public class HeadHandler {
                     var headLocation = HeadLocation.fromConfig(config, headUuid);
                     headLocations.add(headLocation);
 
-                    if (main.getConfigHandler().isHologramsEnabled()) {
+                    if (ConfigService.isHologramsEnabled()) {
                         hologramHandler.createHolograms(headLocation.getLocation());
                     }
                 } catch (Exception e) {
@@ -123,7 +123,7 @@ public class HeadHandler {
 
         storageHandler.createNewHead(uniqueUuid);
 
-        if (main.getConfigHandler().isHologramsEnabled()) {
+        if (ConfigService.isHologramsEnabled()) {
             hologramHandler.createHolograms(location);
         }
 
@@ -141,7 +141,7 @@ public class HeadHandler {
 
             headLocation.getLocation().getBlock().setType(Material.AIR);
 
-            if (main.getConfigHandler().isHologramsEnabled()) {
+            if (ConfigService.isHologramsEnabled()) {
                 hologramHandler.removeHologram(headLocation.getLocation());
             }
 
@@ -167,7 +167,7 @@ public class HeadHandler {
     }
 
     private void loadHeads() {
-        List<String> headsConfig = main.getConfigHandler().getHeads();
+        List<String> headsConfig = ConfigService.getHeads();
 
         for (int i = 0; i < headsConfig.size(); i++) {
             String configHead = headsConfig.get(i);

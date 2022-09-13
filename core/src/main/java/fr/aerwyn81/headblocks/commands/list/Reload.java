@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.handlers.ConfigHandler;
+import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import org.bukkit.Bukkit;
@@ -15,12 +15,10 @@ import java.util.ArrayList;
 @HBAnnotations(command = "reload", permission = "headblocks.admin")
 public class Reload implements Cmd {
     private final HeadBlocks main;
-    private final ConfigHandler configHandler;
     private final LanguageHandler languageHandler;
 
     public Reload(HeadBlocks main) {
         this.main = main;
-        this.configHandler = main.getConfigHandler();
         this.languageHandler = main.getLanguageHandler();
     }
 
@@ -29,12 +27,12 @@ public class Reload implements Cmd {
         HeadBlocks.isReloadInProgress = true;
 
         main.reloadConfig();
-        main.getConfigHandler().loadConfiguration();
+        ConfigService.load();
 
-        main.getLanguageHandler().setLanguage(main.getConfigHandler().getLanguage());
+        main.getLanguageHandler().setLanguage(ConfigService.getLanguage());
         main.getLanguageHandler().pushMessages();
 
-        if (configHandler.isHologramsEnabled()) {
+        if (ConfigService.isHologramsEnabled()) {
             main.getHologramHandler().unload();
         }
 
@@ -58,7 +56,7 @@ public class Reload implements Cmd {
         main.getParticlesTask().cancel();
 
         main.setParticlesTask(new GlobalTask(main));
-        main.getParticlesTask().runTaskTimer(main, 0, configHandler.getDelayGlobalTask());
+        main.getParticlesTask().runTaskTimer(main, 0, ConfigService.getDelayGlobalTask());
 
         if (main.getStorageHandler().hasStorageError()) {
             sender.sendMessage(languageHandler.getMessage("Messages.ReloadWithErrors"));

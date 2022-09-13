@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigHandler;
+import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.HologramHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
@@ -23,14 +23,12 @@ import java.util.stream.Collectors;
 
 public class OthersEvent implements Listener {
     private final HeadBlocks main;
-    private final ConfigHandler configHandler;
     private final HeadHandler headHandler;
     private final StorageHandler storageHandler;
     private final HologramHandler hologramHandler;
 
     public OthersEvent(HeadBlocks main) {
         this.main = main;
-        this.configHandler = main.getConfigHandler();
         this.headHandler = main.getHeadHandler();
         this.storageHandler = main.getStorageHandler();
         this.hologramHandler = main.getHologramHandler();
@@ -66,7 +64,7 @@ public class OthersEvent implements Listener {
     public void onJoin(PlayerJoinEvent e) {
         storageHandler.loadPlayer(e.getPlayer());
 
-        if (configHandler.isHologramsEnabled()) {
+        if (ConfigService.isHologramsEnabled()) {
             hologramHandler.addExcludedPlayer(e.getPlayer());
         }
     }
@@ -76,7 +74,7 @@ public class OthersEvent implements Listener {
         storageHandler.unloadPlayer(e.getPlayer());
         headHandler.getHeadMoves().remove(e.getPlayer().getUniqueId());
 
-        if (configHandler.isHologramsEnabled()) {
+        if (ConfigService.isHologramsEnabled()) {
             hologramHandler.removeExcludedPlayer(e.getPlayer());
         }
     }
@@ -89,7 +87,7 @@ public class OthersEvent implements Listener {
                 .collect(Collectors.toList());
 
         for (HeadLocation head : headsInWorld) {
-            if (main.getConfigHandler().isHologramsEnabled()) {
+            if (ConfigService.isHologramsEnabled()) {
                 hologramHandler.createHolograms(head.getLocation());
             }
 

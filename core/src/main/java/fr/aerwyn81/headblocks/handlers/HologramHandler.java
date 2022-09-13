@@ -14,7 +14,6 @@ import java.util.HashMap;
 
 public class HologramHandler {
     private final HeadBlocks main;
-    private final ConfigHandler config;
 
     private HologramPool hologramPool;
 
@@ -23,7 +22,6 @@ public class HologramHandler {
 
     public HologramHandler(HeadBlocks main) {
         this.main = main;
-        this.config = main.getConfigHandler();
 
         this.foundHolograms = new HashMap<>();
         this.notFoundHolograms = new HashMap<>();
@@ -52,14 +50,14 @@ public class HologramHandler {
         }
 
         Hologram hologramFound = null;
-        if (config.isHologramsFoundEnabled()) {
-            hologramFound = internalCreateHologram(location, config.getHologramsFoundLines());
+        if (ConfigService.isHologramsFoundEnabled()) {
+            hologramFound = internalCreateHologram(location, ConfigService.getHologramsFoundLines());
             foundHolograms.put(location, hologramFound);
         }
 
         Hologram hologramNotFound = null;
-        if (config.isHologramsNotFoundEnabled()) {
-            hologramNotFound = internalCreateHologram(location, config.getHologramsNotFoundLines());
+        if (ConfigService.isHologramsNotFoundEnabled()) {
+            hologramNotFound = internalCreateHologram(location, ConfigService.getHologramsNotFoundLines());
             notFoundHolograms.put(location, hologramNotFound);
         }
 
@@ -76,7 +74,7 @@ public class HologramHandler {
 
     private Hologram internalCreateHologram(Location location, ArrayList<String> lines) {
         location = location.clone();
-        location.add(0.5, -0.9 + config.getHologramsHeightAboveHead(), 0.5);
+        location.add(0.5, -0.9 + ConfigService.getHologramsHeightAboveHead(), 0.5);
 
         Hologram.Builder holoBuilder = Hologram.builder()
                 .location(location);

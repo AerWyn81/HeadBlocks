@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigHandler;
+import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
@@ -20,13 +20,11 @@ import java.util.stream.Collectors;
 @HBAnnotations(command = "remove", permission = "headblocks.admin")
 public class Remove implements Cmd {
     private final HeadBlocks main;
-    private final ConfigHandler configHandler;
     private final LanguageHandler languageHandler;
     private final HeadHandler headHandler;
 
     public Remove(HeadBlocks main) {
         this.main = main;
-        this.configHandler = main.getConfigHandler();
         this.languageHandler = main.getLanguageHandler();
         this.headHandler = main.getHeadHandler();
     }
@@ -60,7 +58,7 @@ public class Remove implements Cmd {
         }
 
         try {
-            headHandler.removeHeadLocation(head, configHandler.shouldResetPlayerData());
+            headHandler.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getUuid().toString() + " at " + head.getLocation().toString() + ") from the storage: " + ex.getMessage()));

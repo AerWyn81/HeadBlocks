@@ -18,11 +18,11 @@ public class RewardHandler {
     }
 
     public void giveReward(Player p) {
-        if (main.getConfigHandler().getTieredRewards().size() == 0) {
+        if (ConfigService.getTieredRewards().size() == 0) {
             return;
         }
 
-        TieredReward tieredReward = main.getConfigHandler().getTieredRewards().stream().filter(t -> {
+        TieredReward tieredReward = ConfigService.getTieredRewards().stream().filter(t -> {
             try {
                 return t.getLevel() ==
                         main.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size();
@@ -57,6 +57,6 @@ public class RewardHandler {
     }
 
     public boolean currentIsContainedInTiered(int playerHeads) {
-        return main.getConfigHandler().getTieredRewards().stream().anyMatch(t -> t.getLevel() == playerHeads);
+        return ConfigService.getTieredRewards().stream().anyMatch(t -> t.getLevel() == playerHeads);
     }
 }

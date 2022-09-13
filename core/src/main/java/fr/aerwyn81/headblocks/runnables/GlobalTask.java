@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.runnables;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigHandler;
+import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.HologramHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
@@ -19,14 +19,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class GlobalTask extends BukkitRunnable {
-
-    private final ConfigHandler configHandler;
     private final HeadHandler headHandler;
     private final StorageHandler storageHandler;
     private final HologramHandler hologramHandler;
 
     public GlobalTask(HeadBlocks main) {
-        this.configHandler = main.getConfigHandler();
         this.headHandler = main.getHeadHandler();
         this.storageHandler = main.getStorageHandler();
         this.hologramHandler = main.getHologramHandler();
@@ -48,21 +45,21 @@ public class GlobalTask extends BukkitRunnable {
             players.forEach(p -> {
                 try {
                     if (storageHandler.hasHead(p.getUniqueId(), headLocation.getUuid())) {
-                        if (configHandler.isParticlesFoundEnabled()) {
-                            spawnParticles(location, Particle.valueOf(configHandler.getParticlesFoundType()),
-                                    configHandler.getParticlesFoundAmount(), configHandler.getParticlesFoundColors(), p);
+                        if (ConfigService.isParticlesFoundEnabled()) {
+                            spawnParticles(location, Particle.valueOf(ConfigService.getParticlesFoundType()),
+                                    ConfigService.getParticlesFoundAmount(), ConfigService.getParticlesFoundColors(), p);
                         }
 
-                        if (configHandler.isHologramsFoundEnabled()) {
+                        if (ConfigService.isHologramsFoundEnabled()) {
                             hologramHandler.showFoundTo(p, location);
                         }
                     } else {
-                        if (configHandler.isParticlesNotFoundEnabled()) {
-                            spawnParticles(location, Particle.valueOf(configHandler.getParticlesNotFoundType()),
-                                    configHandler.getParticlesNotFoundAmount(), configHandler.getParticlesNotFoundColors(), p);
+                        if (ConfigService.isParticlesNotFoundEnabled()) {
+                            spawnParticles(location, Particle.valueOf(ConfigService.getParticlesNotFoundType()),
+                                    ConfigService.getParticlesNotFoundAmount(), ConfigService.getParticlesNotFoundColors(), p);
                         }
 
-                        if (configHandler.isHologramsNotFoundEnabled()) {
+                        if (ConfigService.isHologramsNotFoundEnabled()) {
                             hologramHandler.showNotFoundTo(p, location);
                         }
                     }
@@ -85,7 +82,7 @@ public class GlobalTask extends BukkitRunnable {
     }
 
     private List<Player> playersInRange(Location loc) {
-        int range = configHandler.getHologramParticlePlayerViewDistance();
+        int range = ConfigService.getHologramParticlePlayerViewDistance();
         return loc.getWorld().getNearbyEntities(loc, range, range, range).stream().filter(Player.class::isInstance).map(e -> (Player) e).collect(Collectors.toList());
     }
 }

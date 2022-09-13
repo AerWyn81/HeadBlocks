@@ -10,14 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlaceholdersHandler {
-    private static final ConfigHandler configHandler;
     private static final LanguageHandler languageHandler;
     private static final HeadHandler headHandler;
     private static final StorageHandler storageHandler;
 
     static {
         HeadBlocks instance = HeadBlocks.getInstance();
-        configHandler = instance.getConfigHandler();
         languageHandler = instance.getLanguageHandler();
         headHandler = instance.getHeadHandler();
         storageHandler = instance.getStorageHandler();
@@ -58,10 +56,10 @@ public class PlaceholdersHandler {
 
         if (message.contains("%progress%")) {
             progress = MessageUtils.createProgressBar(current, total,
-                    configHandler.getProgressBarBars(),
-                    configHandler.getProgressBarSymbol(),
-                    configHandler.getProgressBarCompletedColor(),
-                    configHandler.getProgressBarNotCompletedColor());
+                    ConfigService.getProgressBarBars(),
+                    ConfigService.getProgressBarSymbol(),
+                    ConfigService.getProgressBarCompletedColor(),
+                    ConfigService.getProgressBarNotCompletedColor());
 
             message = message.replaceAll("%progress%", progress);
         }

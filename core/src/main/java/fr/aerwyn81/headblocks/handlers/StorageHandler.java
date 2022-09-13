@@ -17,9 +17,7 @@ import java.io.File;
 import java.util.*;
 
 public class StorageHandler {
-
     private final HeadBlocks main;
-    private final ConfigHandler configHandler;
 
     private Storage storage;
     private Database database;
@@ -28,8 +26,7 @@ public class StorageHandler {
 
     public StorageHandler(HeadBlocks main) {
         this.main = main;
-        this.configHandler = main.getConfigHandler();
-        
+
         this.storageError = false;
     }
 
@@ -38,18 +35,18 @@ public class StorageHandler {
     }
 
     public void init() {
-        if (configHandler.isRedisEnabled() && !configHandler.isDatabaseEnabled()) {
+        if (ConfigService.isRedisEnabled() && !ConfigService.isDatabaseEnabled()) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError you can't use Redis without setting up an SQL database"));
             storageError = true;
             return;
         }
 
-        if (configHandler.isRedisEnabled()) {
+        if (ConfigService.isRedisEnabled()) {
             storage = new Redis(
-                    configHandler.getRedisHostname(),
-                    configHandler.getRedisPassword(),
-                    configHandler.getRedisPort(),
-                    configHandler.getRedisDatabase());
+                    ConfigService.getRedisHostname(),
+                    ConfigService.getRedisPassword(),
+                    ConfigService.getRedisPort(),
+                    ConfigService.getRedisDatabase());
         } else {
             storage = new Memory();
         }
@@ -57,14 +54,14 @@ public class StorageHandler {
         String pathToDatabase = main.getDataFolder() + "\\headblocks.db";
         var isFileExist = new File(pathToDatabase).exists();
 
-        if (configHandler.isDatabaseEnabled()) {
+        if (ConfigService.isDatabaseEnabled()) {
             database = new MySQL(
-                    configHandler.getDatabaseUsername(),
-                    configHandler.getDatabasePassword(),
-                    configHandler.getDatabaseHostname(),
-                    configHandler.getDatabasePort(),
-                    configHandler.getDatabaseName(),
-                    configHandler.getDatabaseSsl());
+                    ConfigService.getDatabaseUsername(),
+                    ConfigService.getDatabasePassword(),
+                    ConfigService.getDatabaseHostname(),
+                    ConfigService.getDatabasePort(),
+                    ConfigService.getDatabaseName(),
+                    ConfigService.getDatabaseSsl());
         } else {
             database = new SQLite(pathToDatabase);
         }
@@ -91,7 +88,7 @@ public class StorageHandler {
         }
 
         if (!storageError) {
-            if (configHandler.isDatabaseEnabled()) {
+            if (ConfigService.isDatabaseEnabled()) {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&aMySQL storage properly connected!"));
             } else {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&aSQLite storage properly connected!"));

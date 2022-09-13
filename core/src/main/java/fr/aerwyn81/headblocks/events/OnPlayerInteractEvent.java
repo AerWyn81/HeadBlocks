@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigHandler;
+import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
 import fr.aerwyn81.headblocks.utils.*;
@@ -20,14 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OnPlayerInteractEvent implements Listener {
-
     private final HeadBlocks main;
-    private final ConfigHandler configHandler;
     private final LanguageHandler languageHandler;
 
     public OnPlayerInteractEvent(HeadBlocks main) {
         this.main = main;
-        this.configHandler = main.getConfigHandler();
         this.languageHandler = main.getLanguageHandler();
     }
 
@@ -93,10 +90,10 @@ public class OnPlayerInteractEvent implements Listener {
                 }
 
                 // Already own song if not empty
-                String songName = configHandler.getHeadClickAlreadyOwnSound();
+                String songName = ConfigService.getHeadClickAlreadyOwnSound();
                 if (!songName.trim().isEmpty()) {
                     try {
-                        XSound.play(player, configHandler.getHeadClickAlreadyOwnSound());
+                        XSound.play(player, ConfigService.getHeadClickAlreadyOwnSound());
                     } catch (Exception ex) {
                         player.sendMessage(languageHandler.getMessage("Messages.ErrorCannotPlaySound"));
                         HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click: " + ex.getMessage()));
@@ -104,10 +101,10 @@ public class OnPlayerInteractEvent implements Listener {
                 }
 
                 // Already own particles if enabled
-                if (configHandler.isHeadClickParticlesEnabled()) {
-                    String particleName = configHandler.getHeadClickParticlesAlreadyOwnType();
-                    int amount = configHandler.getHeadClickParticlesAmount();
-                    ArrayList<String> colors = configHandler.getHeadClickParticlesColors();
+                if (ConfigService.isHeadClickParticlesEnabled()) {
+                    String particleName = ConfigService.getHeadClickParticlesAlreadyOwnType();
+                    int amount = ConfigService.getHeadClickParticlesAmount();
+                    ArrayList<String> colors = ConfigService.getHeadClickParticlesColors();
 
                     try {
                         ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
@@ -130,13 +127,13 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Success messages if not empty
-        List<String> messages = configHandler.getHeadClickMessages();
+        List<String> messages = ConfigService.getHeadClickMessages();
         if (messages.size() != 0) {
             player.sendMessage(PlaceholdersHandler.parse(player, messages));
         }
 
         // Success song if not empty
-        String songName = configHandler.getHeadClickNotOwnSound();
+        String songName = ConfigService.getHeadClickNotOwnSound();
         if (!songName.trim().isEmpty()) {
             try {
                 XSound.play(player, songName);
@@ -146,22 +143,22 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Send title to the player if enabled
-        if (configHandler.isHeadClickTitleEnabled()) {
-            String firstLine = PlaceholdersHandler.parse(player, configHandler.getHeadClickTitleFirstLine());
-            String subTitle = PlaceholdersHandler.parse(player, configHandler.getHeadClickTitleSubTitle());
-            int fadeIn = configHandler.getHeadClickTitleFadeIn();
-            int stay = configHandler.getHeadClickTitleStay();
-            int fadeOut = configHandler.getHeadClickTitleFadeOut();
+        if (ConfigService.isHeadClickTitleEnabled()) {
+            String firstLine = PlaceholdersHandler.parse(player, ConfigService.getHeadClickTitleFirstLine());
+            String subTitle = PlaceholdersHandler.parse(player, ConfigService.getHeadClickTitleSubTitle());
+            int fadeIn = ConfigService.getHeadClickTitleFadeIn();
+            int stay = ConfigService.getHeadClickTitleStay();
+            int fadeOut = ConfigService.getHeadClickTitleFadeOut();
 
             player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
         }
 
         // Fire firework if enabled
-        if (configHandler.isFireworkEnabled()) {
-            List<Color> colors = configHandler.getHeadClickFireworkColors();
-            List<Color> fadeColors = configHandler.getHeadClickFireworkFadeColors();
-            boolean isFlickering = configHandler.isFireworkFlickerEnabled();
-            int power = configHandler.getHeadClickFireworkPower();
+        if (ConfigService.isFireworkEnabled()) {
+            List<Color> colors = ConfigService.getHeadClickFireworkColors();
+            List<Color> fadeColors = ConfigService.getHeadClickFireworkFadeColors();
+            boolean isFlickering = ConfigService.isFireworkFlickerEnabled();
+            int power = ConfigService.getHeadClickFireworkPower();
 
             Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
 
@@ -170,7 +167,7 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Prevent trigger commands rewards if current is contained in tieredRewards and enabled in config
-        if (!main.getConfigHandler().isPreventCommandsOnTieredRewardsLevel()) {
+        if (!ConfigService.isPreventCommandsOnTieredRewardsLevel()) {
             int playerHeads;
             try {
                 playerHeads = main.getStorageHandler().getHeadsPlayer(player.getUniqueId()).size();
@@ -181,8 +178,8 @@ public class OnPlayerInteractEvent implements Listener {
 
             if (!main.getRewardHandler().currentIsContainedInTiered(playerHeads)) {
                 // Commands list if not empty
-                if (configHandler.getHeadClickCommands().size() != 0) {
-                    Bukkit.getScheduler().runTaskLater(main, () -> configHandler.getHeadClickCommands().forEach(reward ->
+                if (ConfigService.getHeadClickCommands().size() != 0) {
+                    Bukkit.getScheduler().runTaskLater(main, () -> ConfigService.getHeadClickCommands().forEach(reward ->
                             main.getServer().dispatchCommand(main.getServer().getConsoleSender(), PlaceholdersHandler.parse(player, reward))), 1L);
                 }
             }

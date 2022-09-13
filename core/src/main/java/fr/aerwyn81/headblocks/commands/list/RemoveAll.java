@@ -4,10 +4,9 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigHandler;
+import fr.aerwyn81.headblocks.handlers.ConfigService;
 import fr.aerwyn81.headblocks.handlers.HeadHandler;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
-import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.command.CommandSender;
@@ -17,16 +16,12 @@ import java.util.Collections;
 
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
 public class RemoveAll implements Cmd {
-    private final ConfigHandler configHandler;
     private final LanguageHandler languageHandler;
     private final HeadHandler headHandler;
-    private final StorageHandler storageHandler;
 
     public RemoveAll(HeadBlocks main) {
-        this.configHandler = main.getConfigHandler();
         this.languageHandler = main.getLanguageHandler();
         this.headHandler = main.getHeadHandler();
-        this.storageHandler = main.getStorageHandler();
     }
 
     @Override
@@ -45,7 +40,7 @@ public class RemoveAll implements Cmd {
 
             for (HeadLocation head : new ArrayList<>(headLocations)) {
                 try {
-                    headHandler.removeHeadLocation(head, configHandler.shouldResetPlayerData());
+                    headHandler.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
                     headRemoved++;
                 } catch (InternalException ex) {
                     sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
