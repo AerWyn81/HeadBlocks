@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -17,16 +17,14 @@ import java.util.Collections;
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
 public class RemoveAll implements Cmd {
     private final LanguageHandler languageHandler;
-    private final HeadHandler headHandler;
 
     public RemoveAll(HeadBlocks main) {
         this.languageHandler = main.getLanguageHandler();
-        this.headHandler = main.getHeadHandler();
     }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        ArrayList<HeadLocation> headLocations = new ArrayList<>(headHandler.getChargedHeadLocations());
+        ArrayList<HeadLocation> headLocations = new ArrayList<>(HeadService.getChargedHeadLocations());
         int headCount = headLocations.size();
 
         if (headLocations.size() == 0) {
@@ -40,7 +38,7 @@ public class RemoveAll implements Cmd {
 
             for (HeadLocation head : new ArrayList<>(headLocations)) {
                 try {
-                    headHandler.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
+                    HeadService.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
                     headRemoved++;
                 } catch (InternalException ex) {
                     sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));

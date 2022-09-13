@@ -5,7 +5,7 @@ import de.tr7zw.changeme.nbtapi.NBTItem;
 import de.tr7zw.changeme.nbtapi.NBTListCompound;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -42,8 +42,8 @@ public class HeadUtils {
         ItemMeta i2Meta = i2.getItemMeta();
 
         return i1Meta != null && i2Meta != null &&
-                i1Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadHandler.HB_KEY), PersistentDataType.STRING) &&
-                i2Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadHandler.HB_KEY), PersistentDataType.STRING);
+                i1Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_KEY), PersistentDataType.STRING) &&
+                i2Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_KEY), PersistentDataType.STRING);
     }
 
     private static boolean isValidItemStack(ItemStack i) {

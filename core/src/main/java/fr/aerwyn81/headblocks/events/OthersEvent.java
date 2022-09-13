@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.HologramHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.LocationUtils;
@@ -23,13 +23,11 @@ import java.util.stream.Collectors;
 
 public class OthersEvent implements Listener {
     private final HeadBlocks main;
-    private final HeadHandler headHandler;
     private final StorageHandler storageHandler;
     private final HologramHandler hologramHandler;
 
     public OthersEvent(HeadBlocks main) {
         this.main = main;
-        this.headHandler = main.getHeadHandler();
         this.storageHandler = main.getStorageHandler();
         this.hologramHandler = main.getHologramHandler();
     }
@@ -44,7 +42,7 @@ public class OthersEvent implements Listener {
         }
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = headHandler.getHeadAt(block.getLocation());
+        HeadLocation headLocation = HeadService.getHeadAt(block.getLocation());
         if (headLocation == null) {
             return;
         }
@@ -54,7 +52,7 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent e) {
-        if (e.getBlocks().stream().anyMatch(b -> headHandler.getChargedHeadLocations().stream()
+        if (e.getBlocks().stream().anyMatch(b -> HeadService.getChargedHeadLocations().stream()
                 .anyMatch(p -> LocationUtils.areEquals(p.getLocation(), b.getLocation())))) {
             e.setCancelled(true);
         }
@@ -72,7 +70,7 @@ public class OthersEvent implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         storageHandler.unloadPlayer(e.getPlayer());
-        headHandler.getHeadMoves().remove(e.getPlayer().getUniqueId());
+        HeadService.getHeadMoves().remove(e.getPlayer().getUniqueId());
 
         if (ConfigService.isHologramsEnabled()) {
             hologramHandler.removeExcludedPlayer(e.getPlayer());
@@ -81,7 +79,7 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onWorldLoaded(WorldLoadEvent e) {
-        var headsInWorld = headHandler.getHeadLocations()
+        var headsInWorld = HeadService.getHeadLocations()
                 .stream()
                 .filter(h -> !h.isCharged() && e.getWorld().getName().equals(h.getConfigWorldName()))
                 .collect(Collectors.toList());
@@ -98,7 +96,7 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onBlockChange(BlockFromToEvent e) {
-        if (e.getBlock().isLiquid() && main.getHeadHandler().getHeadAt(e.getToBlock().getLocation()) != null) {
+        if (e.getBlock().isLiquid() && HeadService.getHeadAt(e.getToBlock().getLocation()) != null) {
             e.setCancelled(true);
         }
     }

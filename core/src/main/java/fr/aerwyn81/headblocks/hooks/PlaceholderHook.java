@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -65,12 +66,12 @@ public class PlaceholderHook extends PlaceholderExpansion {
             if (identifier.equals("current")) {
                 return "" + current;
             } else {
-                return "" + (main.getHeadHandler().getChargedHeadLocations().size() - current);
+                return "" + (HeadService.getChargedHeadLocations().size() - current);
             }
         }
 
         if (identifier.equals("max")) {
-            return "" +  main.getHeadHandler().getChargedHeadLocations().size();
+            return "" +  HeadService.getChargedHeadLocations().size();
         }
 
         return null;

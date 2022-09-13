@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import org.bukkit.Bukkit;
@@ -36,10 +37,7 @@ public class Reload implements Cmd {
             main.getHologramHandler().unload();
         }
 
-        main.getHeadHandler().loadConfiguration();
-        main.getHeadHandler().loadLocations();
-
-        main.getHeadHandler().getHeadMoves().clear();
+        HeadService.load();
 
         if (HeadBlocks.isHeadDatabaseActive) {
             main.loadHeadsHDB();

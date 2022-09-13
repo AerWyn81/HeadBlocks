@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -21,12 +21,10 @@ import java.util.stream.IntStream;
 public class Give implements Cmd {
     private final HeadBlocks main;
     private final LanguageHandler languageHandler;
-    private final HeadHandler headHandler;
 
     public Give(HeadBlocks main) {
         this.main = main;
         this.languageHandler = main.getLanguageHandler();
-        this.headHandler = main.getHeadHandler();
     }
 
     @Override
@@ -45,7 +43,7 @@ public class Give implements Cmd {
             player = pTemp;
         }
 
-        ArrayList<HBHead> hbHeads = headHandler.getHeads();
+        ArrayList<HBHead> hbHeads = HeadService.getHeads();
         if (hbHeads.size() == 0) {
             player.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
             return true;
@@ -53,9 +51,9 @@ public class Give implements Cmd {
 
         ArrayList<HBHead> headsToGive = new ArrayList<>();
         if (args.length > 2 && args[2].equals("*")) {
-            headsToGive = headHandler.getHeads();
+            headsToGive = hbHeads;
         } else if (args.length >= 1 && hbHeads.size() == 1) {
-            headsToGive.add(headHandler.getHeads().get(0));
+            headsToGive.add(hbHeads.get(0));
         } else if (args.length > 2) {
             int id;
 
@@ -75,7 +73,7 @@ public class Give implements Cmd {
                 return true;
             }
 
-            headsToGive.add(headHandler.getHeads().get(finalId));
+            headsToGive.add(hbHeads.get(finalId));
         } else {
             player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
             return true;
@@ -131,7 +129,7 @@ public class Give implements Cmd {
                     .collect(Collectors.toCollection(ArrayList::new));
         }
 
-        int headCount = main.getHeadHandler().getHeads().size();
+        int headCount = HeadService.getHeads().size();
 
         ArrayList<String> items = new ArrayList<>();
         if (args.length == 3 && headCount > 0) {

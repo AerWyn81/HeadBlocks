@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.runnables;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.HologramHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
@@ -19,22 +19,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class GlobalTask extends BukkitRunnable {
-    private final HeadHandler headHandler;
     private final StorageHandler storageHandler;
     private final HologramHandler hologramHandler;
 
     public GlobalTask(HeadBlocks main) {
-        this.headHandler = main.getHeadHandler();
         this.storageHandler = main.getStorageHandler();
         this.hologramHandler = main.getHologramHandler();
     }
 
     @Override
     public void run() {
-        if (headHandler.getChargedHeadLocations().isEmpty())
+        if (HeadService.getChargedHeadLocations().isEmpty())
             return;
 
-        for (HeadLocation headLocation : headHandler.getChargedHeadLocations()) {
+        for (HeadLocation headLocation : HeadService.getChargedHeadLocations()) {
             Location location = headLocation.getLocation();
 
             if (!location.getChunk().isLoaded())

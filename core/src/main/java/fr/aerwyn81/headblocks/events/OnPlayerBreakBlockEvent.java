@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -38,7 +39,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
         Location blockLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = main.getHeadHandler().getHeadAt(blockLocation);
+        HeadLocation headLocation = HeadService.getHeadAt(blockLocation);
         if (headLocation == null) {
             return;
         }
@@ -71,7 +72,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
 
         // Remove the head
         try {
-            main.getHeadHandler().removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
+            HeadService.removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));

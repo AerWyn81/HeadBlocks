@@ -32,42 +32,48 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public class HeadHandler {
+public class HeadService {
+    private static HeadBlocks main;
+    private static LanguageHandler languageHandler;
+    private static StorageHandler storageHandler;
+    private static HologramHandler hologramHandler;
 
-    private final HeadBlocks main;
-    private final LanguageHandler languageHandler;
-    private final StorageHandler storageHandler;
-    private final HologramHandler hologramHandler;
+    private static File configFile;
+    private static YamlConfiguration config;
 
-    private final File configFile;
-    private YamlConfiguration config;
-
-    private final ArrayList<HBHead> heads;
-    private final HashMap<UUID, HeadMove> headMoves;
-    private ArrayList<HeadLocation> headLocations;
+    private static ArrayList<HBHead> heads;
+    private static HashMap<UUID, HeadMove> headMoves;
+    private static ArrayList<HeadLocation> headLocations;
 
     public static String HB_KEY = "HB_HEAD";
 
-    public HeadHandler(HeadBlocks main, File configFile) {
-        this.main = main;
-        this.configFile = configFile;
-        this.languageHandler = main.getLanguageHandler();
-        this.storageHandler = main.getStorageHandler();
-        this.hologramHandler = main.getHologramHandler();
+    public static void initialise(File file) {
+        main = HeadBlocks.getInstance();
+        configFile = file;
 
-        this.heads = new ArrayList<>();
-        this.headLocations = new ArrayList<>();
-        this.headMoves = new HashMap<>();
+        languageHandler = main.getLanguageHandler();
+        storageHandler = main.getStorageHandler();
+        hologramHandler = main.getHologramHandler();
+
+        heads = new ArrayList<>();
+        headLocations = new ArrayList<>();
+        headMoves = new HashMap<>();
+
+        load();
     }
 
-    public void loadConfiguration() {
+    public static void load() {
         config = YamlConfiguration.loadConfiguration(configFile);
 
         heads.clear();
+        headLocations.clear();
+        headMoves.clear();
+
         loadHeads();
+        loadLocations();
     }
 
-    private void saveConfig() {
+    private static void saveConfig() {
         try {
             config.save(configFile);
         } catch (IOException e) {
@@ -75,7 +81,7 @@ public class HeadHandler {
         }
     }
 
-    public void loadLocations() {
+    public static void loadLocations() {
         headLocations.clear();
 
         ConfigurationSection locations = config.getConfigurationSection("locations");
@@ -115,7 +121,7 @@ public class HeadHandler {
         });
     }
 
-    public UUID saveHeadLocation(Location location) throws InternalException {
+    public static UUID saveHeadLocation(Location location) throws InternalException {
         UUID uniqueUuid = UUID.randomUUID();
         while (getHeadByUUID(uniqueUuid) != null) {
             uniqueUuid = UUID.randomUUID();
@@ -135,7 +141,7 @@ public class HeadHandler {
         return uniqueUuid;
     }
 
-    public void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
+    public static void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
         if (headLocation != null) {
             storageHandler.removeHead(headLocation.getUuid(), withDelete);
 
@@ -154,19 +160,19 @@ public class HeadHandler {
         }
     }
 
-    public HeadLocation getHeadByUUID(UUID headUuid) {
+    public static HeadLocation getHeadByUUID(UUID headUuid) {
         return headLocations.stream().filter(h -> h.getUuid().equals(headUuid))
                 .findFirst()
                 .orElse(null);
     }
 
-    public HeadLocation getHeadAt(Location location) {
+    public static HeadLocation getHeadAt(Location location) {
         return headLocations.stream().filter(h -> LocationUtils.areEquals(h.getLocation(), location))
                 .findFirst()
                 .orElse(null);
     }
 
-    private void loadHeads() {
+    private static void loadHeads() {
         List<String> headsConfig = ConfigService.getHeads();
 
         for (int i = 0; i < headsConfig.size(); i++) {
@@ -231,23 +237,27 @@ public class HeadHandler {
         }
     }
 
-    public ArrayList<HBHead> getHeads() {
+    public static ArrayList<HBHead> getHeads() {
         return heads;
     }
 
-    public ArrayList<HeadLocation> getChargedHeadLocations() {
+    public static ArrayList<HeadLocation> getChargedHeadLocations() {
         return headLocations.stream().filter(HeadLocation::isCharged).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public ArrayList<HeadLocation> getHeadLocations() {
+    public static ArrayList<HeadLocation> getHeadLocations() {
         return headLocations;
     }
 
-    public HashMap<UUID, HeadMove> getHeadMoves() {
+    public static HashMap<UUID, HeadMove> getHeadMoves() {
         return headMoves;
     }
 
-    public void changeHeadLocation(UUID hUuid, Block oldBlock, Block newBlock) {
+    public static void clearHeadMoves() {
+        headMoves.clear();
+    }
+
+    public static void changeHeadLocation(UUID hUuid, Block oldBlock, Block newBlock) {
         Skull oldSkull = (Skull) oldBlock.getState();
         Rotatable skullRotation = (Rotatable) oldSkull.getBlockData();
 

@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
@@ -31,12 +31,10 @@ import java.util.stream.Collectors;
 @HBAnnotations(command = "stats", permission = "headblocks.admin")
 public class Stats implements Cmd {
     private final LanguageHandler languageHandler;
-    private final HeadHandler headHandler;
     private final StorageHandler storageHandler;
 
     public Stats(HeadBlocks main) {
         this.languageHandler = main.getLanguageHandler();
-        this.headHandler = main.getHeadHandler();
         this.storageHandler = main.getStorageHandler();
     }
 
@@ -61,7 +59,7 @@ public class Stats implements Cmd {
             return true;
         }
 
-        ArrayList<HeadLocation> headsSpawned = new ArrayList<>(headHandler.getChargedHeadLocations());
+        ArrayList<HeadLocation> headsSpawned = new ArrayList<>(HeadService.getChargedHeadLocations());
         if (headsSpawned.size() == 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
             return true;
@@ -70,7 +68,7 @@ public class Stats implements Cmd {
         ArrayList<HeadLocation> playerHeads;
         try {
             playerHeads = storageHandler.getHeadsPlayer(player.getUniqueId()).stream()
-                    .map(headHandler::getHeadByUUID)
+                    .map(HeadService::getHeadByUUID)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
         } catch (InternalException ex) {

@@ -30,7 +30,6 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isProtocolLibActive;
 
     private LanguageHandler languageHandler;
-    private HeadHandler headHandler;
     private RewardHandler rewardHandler;
     private StorageHandler storageHandler;
     private HologramHandler hologramHandler;
@@ -90,9 +89,8 @@ public final class HeadBlocks extends JavaPlugin {
             this.hologramHandler.load();
         }
 
-        this.headHandler = new HeadHandler(this, locationFile);
-        this.headHandler.loadConfiguration();
-        this.headHandler.loadLocations();
+        HeadService.initialise(locationFile);
+        HeadService.load();
 
         this.rewardHandler = new RewardHandler(this);
 
@@ -134,7 +132,7 @@ public final class HeadBlocks extends JavaPlugin {
             storageHandler.close();
         }
 
-        headHandler.getHeadMoves().clear();
+        HeadService.clearHeadMoves();
 
         Bukkit.getScheduler().cancelTasks(this);
 
@@ -142,7 +140,7 @@ public final class HeadBlocks extends JavaPlugin {
     }
 
     public void loadHeadsHDB() {
-        this.getHeadHandler().getHeads().stream()
+        HeadService.getHeads().stream()
                 .filter(h -> h instanceof HBHeadHDB)
                 .map(h -> (HBHeadHDB) h)
                 .filter(h -> !h.isLoaded())
@@ -158,10 +156,6 @@ public final class HeadBlocks extends JavaPlugin {
 
     public LanguageHandler getLanguageHandler() {
         return languageHandler;
-    }
-
-    public HeadHandler getHeadHandler() {
-        return headHandler;
     }
 
     public RewardHandler getRewardHandler() {

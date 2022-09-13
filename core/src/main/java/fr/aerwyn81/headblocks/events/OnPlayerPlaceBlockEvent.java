@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.Bukkit;
@@ -54,7 +55,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         Location headLocation = headBlock.getLocation();
 
-        if (main.getHeadHandler().getHeadAt(headLocation) != null) {
+        if (HeadService.getHeadAt(headLocation) != null) {
             e.setCancelled(true);
             player.sendMessage(languageHandler.getMessage("Messages.HeadAlreadyExistHere"));
             return;
@@ -69,7 +70,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         UUID headUuid;
         try {
-            headUuid = main.getHeadHandler().saveHeadLocation(headLocation);
+            headUuid = HeadService.saveHeadLocation(headLocation);
         } catch (InternalException ex) {
             player.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
@@ -84,6 +85,6 @@ public class OnPlayerPlaceBlockEvent implements Listener {
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {
-        return main.getHeadHandler().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
+        return HeadService.getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
     }
 }

@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.LocationUtils;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -21,11 +21,9 @@ import java.util.Arrays;
 @HBAnnotations(command = "move", permission = "headblocks.admin", isPlayerCommand = true)
 public class Move implements Cmd {
     private final LanguageHandler languageHandler;
-    private final HeadHandler headHandler;
 
     public Move(HeadBlocks main) {
         this.languageHandler = main.getLanguageHandler();
-        this.headHandler = main.getHeadHandler();
     }
 
     @Override
@@ -36,14 +34,14 @@ public class Move implements Cmd {
         boolean hasCancelInCommand = args.length > 1 && args[1].equals("--cancel");
 
         if (hasCancelInCommand) {
-            HeadMove hd = headHandler.getHeadMoves().remove(player.getUniqueId());
+            HeadMove hd = HeadService.getHeadMoves().remove(player.getUniqueId());
             if (hd != null) {
                 player.sendMessage(languageHandler.getMessage("Messages.HeadMoveCancel"));
             }
             return true;
         }
 
-        if (!hasConfirmInCommand && headHandler.getHeadMoves().containsKey(player.getUniqueId())) {
+        if (!hasConfirmInCommand && HeadService.getHeadMoves().containsKey(player.getUniqueId())) {
             player.sendMessage(languageHandler.getMessage("Messages.HeadMoveAlready"));
             return true;
         }
@@ -51,7 +49,7 @@ public class Move implements Cmd {
         Location targetLoc = player.getTargetBlock(null, 100).getLocation();
 
         if (!hasConfirmInCommand) {
-            HeadLocation headLocation = headHandler.getHeadAt(targetLoc);
+            HeadLocation headLocation = HeadService.getHeadAt(targetLoc);
 
             if (headLocation == null) {
                 player.sendMessage(languageHandler.getMessage("Messages.NoTargetHeadBlock"));
@@ -61,13 +59,13 @@ public class Move implements Cmd {
             String message = languageHandler.getMessage("Messages.TargetBlockInfo")
                     .replaceAll("%uuid%", headLocation.getUuid().toString());
 
-            headHandler.getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), targetLoc));
+            HeadService.getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), targetLoc));
 
             player.sendMessage(MessageUtils.parseLocationPlaceholders(message, targetLoc));
             return true;
         }
 
-        HeadMove headMove = headHandler.getHeadMoves().getOrDefault(player.getUniqueId(), null);
+        HeadMove headMove = HeadService.getHeadMoves().getOrDefault(player.getUniqueId(), null);
 
         if (headMove == null) {
             player.sendMessage(languageHandler.getMessage("Messages.HeadMoveNoPlayer"));
@@ -86,8 +84,8 @@ public class Move implements Cmd {
             return true;
         }
 
-        headHandler.changeHeadLocation(headMove.gethUuid(), headMove.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
-        headHandler.getHeadMoves().remove(player.getUniqueId());
+        HeadService.changeHeadLocation(headMove.gethUuid(), headMove.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
+        HeadService.getHeadMoves().remove(player.getUniqueId());
 
         player.sendMessage(MessageUtils.parseLocationPlaceholders(languageHandler.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));
         return true;
@@ -99,7 +97,7 @@ public class Move implements Cmd {
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 && headHandler.getHeadMoves().containsKey(((Player) sender).getUniqueId()) ?
+        return args.length == 2 && HeadService.getHeadMoves().containsKey(((Player) sender).getUniqueId()) ?
                 new ArrayList<>(Arrays.asList("--confirm", "--cancel")) : new ArrayList<>();
     }
 }

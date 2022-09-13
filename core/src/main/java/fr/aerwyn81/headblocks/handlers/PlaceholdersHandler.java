@@ -11,13 +11,11 @@ import java.util.List;
 
 public class PlaceholdersHandler {
     private static final LanguageHandler languageHandler;
-    private static final HeadHandler headHandler;
     private static final StorageHandler storageHandler;
 
     static {
         HeadBlocks instance = HeadBlocks.getInstance();
         languageHandler = instance.getLanguageHandler();
-        headHandler = instance.getHeadHandler();
         storageHandler = instance.getStorageHandler();
     }
 
@@ -49,7 +47,7 @@ public class PlaceholdersHandler {
             return MessageUtils.colorize(message);
         }
 
-        int total = headHandler.getChargedHeadLocations().size();
+        int total = HeadService.getChargedHeadLocations().size();
 
         message = message.replaceAll("%current%", String.valueOf(current))
                 .replaceAll("%max%", String.valueOf(total));

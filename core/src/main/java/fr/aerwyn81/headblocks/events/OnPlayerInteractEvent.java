@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
 import fr.aerwyn81.headblocks.utils.*;
@@ -58,7 +59,7 @@ public class OnPlayerInteractEvent implements Listener {
         Location clickedLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = main.getHeadHandler().getHeadAt(clickedLocation);
+        HeadLocation headLocation = HeadService.getHeadAt(clickedLocation);
         if (headLocation == null) {
             return;
         }

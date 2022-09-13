@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -19,14 +19,10 @@ import java.util.stream.Collectors;
 
 @HBAnnotations(command = "remove", permission = "headblocks.admin")
 public class Remove implements Cmd {
-    private final HeadBlocks main;
     private final LanguageHandler languageHandler;
-    private final HeadHandler headHandler;
 
     public Remove(HeadBlocks main) {
-        this.main = main;
         this.languageHandler = main.getLanguageHandler();
-        this.headHandler = main.getHeadHandler();
     }
 
     @Override
@@ -41,7 +37,7 @@ public class Remove implements Cmd {
         HeadLocation head;
 
         if (args.length == 1) {
-            var targetHead = headHandler.getHeadAt(player.getTargetBlock(null, 25).getLocation());
+            var targetHead = HeadService.getHeadAt(player.getTargetBlock(null, 25).getLocation());
 
             if (targetHead == null) {
                 player.sendMessage(languageHandler.getMessage("Messages.TargetBlockNotHead"));
@@ -50,7 +46,7 @@ public class Remove implements Cmd {
 
             head = targetHead;
         } else {
-            head = headHandler.getHeadByUUID(UUID.fromString(args[1]));
+            head = HeadService.getHeadByUUID(UUID.fromString(args[1]));
             if (head == null) {
                 player.sendMessage(languageHandler.getMessage("Messages.RemoveLocationError"));
                 return true;
@@ -58,7 +54,7 @@ public class Remove implements Cmd {
         }
 
         try {
-            headHandler.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
+            HeadService.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
             sender.sendMessage(languageHandler.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getUuid().toString() + " at " + head.getLocation().toString() + ") from the storage: " + ex.getMessage()));
@@ -72,7 +68,7 @@ public class Remove implements Cmd {
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 ? main.getHeadHandler().getChargedHeadLocations().stream()
+        return args.length == 2 ? HeadService.getChargedHeadLocations().stream()
                 .map(h -> h.getUuid().toString())
                 .collect(Collectors.toCollection(ArrayList::new)) : new ArrayList<>();
     }

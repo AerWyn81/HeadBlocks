@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.HeadHandler;
+import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageHandler;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -20,16 +20,14 @@ import java.util.ArrayList;
 @HBAnnotations(command = "list", permission = "headblocks.admin")
 public class List implements Cmd {
     private final LanguageHandler languageHandler;
-    private final HeadHandler headHandler;
 
     public List(HeadBlocks main) {
         this.languageHandler = main.getLanguageHandler();
-        this.headHandler = main.getHeadHandler();
     }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        ArrayList<HeadLocation> headLocations = new ArrayList<>(headHandler.getHeadLocations());
+        ArrayList<HeadLocation> headLocations = new ArrayList<>(HeadService.getHeadLocations());
 
         if (headLocations.size() == 0) {
             sender.sendMessage(languageHandler.getMessage("Messages.ListHeadEmpty"));
