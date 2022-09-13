@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.services.*;
 import org.bukkit.Bukkit;
@@ -26,14 +27,6 @@ public class Reload implements Cmd {
         LanguageService.setLanguage(ConfigService.getLanguage());
         LanguageService.pushMessages();
 
-        HologramService.load();
-
-        HeadService.load();
-
-        if (HeadBlocks.isHeadDatabaseActive) {
-            plugin.loadHeadsHDB();
-        }
-
         StorageService.close();
 
         StorageService.initialize();
@@ -43,6 +36,17 @@ public class Reload implements Cmd {
         }
 
         plugin.getParticlesTask().cancel();
+
+        HologramService.load();
+        HeadService.load();
+
+        if (plugin.isHeadDatabaseActive()) {
+            if (plugin.getHeadDatabaseHook() == null) {
+                plugin.setHeadDatabaseHook(new HeadDatabaseHook());
+            }
+
+            plugin.getHeadDatabaseHook().loadHeadsHDB();
+        }
 
         plugin.setParticlesTask(new GlobalTask());
         plugin.getParticlesTask().runTaskTimer(plugin, 0, ConfigService.getDelayGlobalTask());
