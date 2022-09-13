@@ -2,9 +2,9 @@ package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
-import fr.aerwyn81.headblocks.handlers.PlaceholdersService;
+import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 

@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.handlers;
+package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
@@ -16,7 +16,7 @@ public class ConfigService {
     private static File configFile;
     private static FileConfiguration config;
 
-    public static void initialise(File file) {
+    public static void initialize(File file) {
         configFile = file;
         load();
     }

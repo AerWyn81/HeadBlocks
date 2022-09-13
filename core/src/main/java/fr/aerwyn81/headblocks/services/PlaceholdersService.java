@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.handlers;
+package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.InternalException;
@@ -10,12 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlaceholdersService {
-    private static final StorageHandler storageHandler;
-
-    static {
-        HeadBlocks instance = HeadBlocks.getInstance();
-        storageHandler = instance.getStorageHandler();
-    }
 
     public static String parse(Player player, String message) {
         message = message.replaceAll("%player%", player.getName())
@@ -38,7 +32,7 @@ public class PlaceholdersService {
         int current;
 
         try {
-            current = storageHandler.getHeadsPlayer(player.getUniqueId()).size();
+            current = StorageService.getHeadsPlayer(player.getUniqueId()).size();
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));

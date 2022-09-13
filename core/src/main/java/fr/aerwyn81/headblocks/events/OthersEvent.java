@@ -1,11 +1,10 @@
 package fr.aerwyn81.headblocks.events;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.HologramService;
-import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.services.ConfigService;
+import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HologramService;
+import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.LocationUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -22,13 +21,6 @@ import org.bukkit.event.world.WorldLoadEvent;
 import java.util.stream.Collectors;
 
 public class OthersEvent implements Listener {
-    private final HeadBlocks main;
-    private final StorageHandler storageHandler;
-
-    public OthersEvent(HeadBlocks main) {
-        this.main = main;
-        this.storageHandler = main.getStorageHandler();
-    }
 
     @EventHandler
     public void onPlayerInteract(BlockBreakEvent e) {
@@ -58,14 +50,14 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        storageHandler.loadPlayer(e.getPlayer());
+        StorageService.loadPlayer(e.getPlayer());
 
         HologramService.addExcludedPlayer(e.getPlayer());
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        storageHandler.unloadPlayer(e.getPlayer());
+        StorageService.unloadPlayer(e.getPlayer());
         HeadService.getHeadMoves().remove(e.getPlayer().getUniqueId());
 
         HologramService.removeExcludedPlayer(e.getPlayer());

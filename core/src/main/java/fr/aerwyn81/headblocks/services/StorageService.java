@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.handlers;
+package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.databases.Database;
@@ -16,25 +16,15 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.*;
 
-public class StorageHandler {
-    private final HeadBlocks main;
+public class StorageService {
+    private static Storage storage;
+    private static Database database;
 
-    private Storage storage;
-    private Database database;
+    private static boolean storageError;
 
-    private boolean storageError;
+    public static void initialize() {
+        storageError = false;
 
-    public StorageHandler(HeadBlocks main) {
-        this.main = main;
-
-        this.storageError = false;
-    }
-
-    public boolean hasStorageError() {
-        return storageError;
-    }
-
-    public void init() {
         if (ConfigService.isRedisEnabled() && !ConfigService.isDatabaseEnabled()) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError you can't use Redis without setting up an SQL database"));
             storageError = true;
@@ -51,7 +41,7 @@ public class StorageHandler {
             storage = new Memory();
         }
 
-        String pathToDatabase = main.getDataFolder() + "\\headblocks.db";
+        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + "\\headblocks.db";
         var isFileExist = new File(pathToDatabase).exists();
 
         if (ConfigService.isDatabaseEnabled()) {
@@ -96,7 +86,11 @@ public class StorageHandler {
         }
     }
 
-    private void verifyDatabaseMigration() throws InternalException {
+    public static boolean hasStorageError() {
+        return storageError;
+    }
+
+    private static void verifyDatabaseMigration() throws InternalException {
         int dbVersion = database.checkVersion();
 
         if (dbVersion == -1) {
@@ -109,7 +103,7 @@ public class StorageHandler {
         }
     }
 
-    public void loadPlayer(Player player) {
+    public static void loadPlayer(Player player) {
         UUID pUuid = player.getUniqueId();
         String playerName = player.getName();
 
@@ -117,17 +111,17 @@ public class StorageHandler {
             boolean isExist = database.containsPlayer(pUuid);
 
             if (isExist) {
-                boolean hasRenamed = main.getStorageHandler().hasPlayerRenamed(pUuid, playerName);
+                boolean hasRenamed = hasPlayerRenamed(pUuid, playerName);
 
                 if (hasRenamed) {
-                    main.getStorageHandler().updatePlayerName(pUuid, playerName);
+                    updatePlayerName(pUuid, playerName);
                 }
 
                 for (UUID hUuid : database.getHeadsPlayer(pUuid)) {
                     storage.addHead(pUuid, hUuid);
                 }
             } else {
-                main.getStorageHandler().updatePlayerName(pUuid, playerName);
+                updatePlayerName(pUuid, playerName);
             }
         } catch (InternalException ex) {
             storageError = true;
@@ -135,7 +129,7 @@ public class StorageHandler {
         }
     }
 
-    public void unloadPlayer(Player player) {
+    public static void unloadPlayer(Player player) {
         UUID uuid = player.getUniqueId();
         String playerName = player.getName();
 
@@ -151,7 +145,7 @@ public class StorageHandler {
         }
     }
 
-    public void close() {
+    public static void close() {
         try {
             storage.close();
         } catch (InternalException ex) {
@@ -167,58 +161,58 @@ public class StorageHandler {
         }
     }
 
-    public boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
+    public static boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
         return storage.hasHead(playerUuid, headUuid);
     }
 
-    public void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
+    public static void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
         storage.addHead(playerUuid, headUuid);
         database.addHead(playerUuid, headUuid);
     }
 
-    public boolean containsPlayer(UUID playerUuid) throws InternalException {
+    public static boolean containsPlayer(UUID playerUuid) throws InternalException {
         return storage.containsPlayer(playerUuid) || database.containsPlayer(playerUuid);
     }
 
-    public List<UUID> getHeadsPlayer(UUID playerUuid) throws InternalException {
+    public static List<UUID> getHeadsPlayer(UUID playerUuid) throws InternalException {
         return database.getHeadsPlayer(playerUuid);
     }
 
-    public void resetPlayer(UUID playerUuid) throws InternalException {
+    public static void resetPlayer(UUID playerUuid) throws InternalException {
         storage.resetPlayer(playerUuid);
         database.resetPlayer(playerUuid);
     }
 
-    public void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
+    public static void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
         storage.removeHead(headUuid);
         database.removeHead(headUuid, withDelete);
     }
 
-    public List<UUID> getAllPlayers() throws InternalException {
+    public static List<UUID> getAllPlayers() throws InternalException {
         return database.getAllPlayers();
     }
 
-    public Map<String, Integer> getTopPlayers(int limit) throws InternalException {
+    public static Map<String, Integer> getTopPlayers(int limit) throws InternalException {
         return database.getTopPlayers(limit);
     }
 
-    public void updatePlayerName(UUID playerUuid, String playerName) throws InternalException {
+    public static void updatePlayerName(UUID playerUuid, String playerName) throws InternalException {
         database.updatePlayerInfo(playerUuid, playerName);
     }
 
-    public boolean hasPlayerRenamed(UUID playerUuid, String playerName) throws InternalException {
+    public static boolean hasPlayerRenamed(UUID playerUuid, String playerName) throws InternalException {
         return database.hasPlayerRenamed(playerUuid, playerName);
     }
 
-    public void createNewHead(UUID headUuid) throws InternalException {
+    public static void createNewHead(UUID headUuid) throws InternalException {
         database.createNewHead(headUuid);
     }
 
-    public boolean isHeadExist(UUID headUuid) throws InternalException {
+    public static boolean isHeadExist(UUID headUuid) throws InternalException {
         return database.isHeadExist(headUuid);
     }
 
-    public ArrayList<String> getInstructionsExport(EnumTypeDatabase type) throws InternalException {
+    public static ArrayList<String> getInstructionsExport(EnumTypeDatabase type) throws InternalException {
         ArrayList<String> instructions = new ArrayList<>();
 
         // Table : hb_heads

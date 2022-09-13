@@ -3,9 +3,9 @@ package fr.aerwyn81.headblocks;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.events.*;
-import fr.aerwyn81.headblocks.handlers.*;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.*;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.arcaniax.hdb.enums.CategoryEnum;
@@ -28,8 +28,6 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isHeadDatabaseActive;
     public static boolean isReloadInProgress;
     public static boolean isProtocolLibActive;
-
-    private StorageHandler storageHandler;
 
     private GlobalTask globalTask;
     private HeadDatabaseAPI headDatabaseAPI;
@@ -68,27 +66,24 @@ public final class HeadBlocks extends JavaPlugin {
         isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
         isProtocolLibActive = Bukkit.getPluginManager().isPluginEnabled("ProtocolLib");
 
-        ConfigService.initialise(configFile);
-
-        LanguageService.initialize(ConfigService.getLanguage());
-        LanguageService.pushMessages();
-
         if (ConfigService.isMetricsEnabled()) {
             new Metrics(this, 15495);
         }
 
-        this.storageHandler = new StorageHandler(this);
-        this.storageHandler.init();
+        ConfigService.initialize(configFile);
 
-        HologramService.initialise();
+        LanguageService.initialize(ConfigService.getLanguage());
+        LanguageService.pushMessages();
 
-        HeadService.initialise(locationFile);
+        StorageService.initialize();
+        HologramService.initialize();
+        HeadService.initialize(locationFile);
 
-        this.globalTask = new GlobalTask(this);
+        this.globalTask = new GlobalTask();
         globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
 
         if (isPlaceholderApiActive) {
-            new PlaceholderHook(this).register();
+            new PlaceholderHook().register();
         }
 
         if (isHeadDatabaseActive) {
@@ -106,22 +101,19 @@ public final class HeadBlocks extends JavaPlugin {
             } catch (Exception ignored) { }
         }
 
-        getCommand("headblocks").setExecutor(new HBCommandExecutor(this));
+        getCommand("headblocks").setExecutor(new HBCommandExecutor());
 
-        Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new OthersEvent(this), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new OthersEvent(), this);
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
     }
 
     @Override
     public void onDisable() {
-        if (storageHandler != null) {
-            storageHandler.close();
-        }
-
+        StorageService.close();
         HeadService.clearHeadMoves();
 
         Bukkit.getScheduler().cancelTasks(this);
@@ -142,10 +134,6 @@ public final class HeadBlocks extends JavaPlugin {
 
     public static HeadBlocks getInstance() {
         return instance;
-    }
-    
-    public StorageHandler getStorageHandler() {
-        return storageHandler;
     }
 
     public void setParticlesTask(GlobalTask globalTask) {

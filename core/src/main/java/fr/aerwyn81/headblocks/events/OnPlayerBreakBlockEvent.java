@@ -3,9 +3,10 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
+import fr.aerwyn81.headblocks.services.ConfigService;
+import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
@@ -18,11 +19,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 
 public class OnPlayerBreakBlockEvent implements Listener {
-    private final HeadBlocks main;
-
-    public OnPlayerBreakBlockEvent(HeadBlocks main) {
-        this.main = main;
-    }
 
     @EventHandler
     public void OnBlockBreakEvent(BlockBreakEvent e) {
@@ -62,7 +58,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
         }
 
         // Check if there is a storage issue
-        if (main.getStorageHandler().hasStorageError()) {
+        if (StorageService.hasStorageError()) {
             e.setCancelled(true);
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             return;

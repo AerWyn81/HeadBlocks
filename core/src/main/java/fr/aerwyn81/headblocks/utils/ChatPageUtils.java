@@ -1,6 +1,6 @@
 package fr.aerwyn81.headblocks.utils;
 
-import fr.aerwyn81.headblocks.handlers.LanguageService;
+import fr.aerwyn81.headblocks.services.LanguageService;
 import net.md_5.bungee.api.chat.*;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.command.CommandSender;

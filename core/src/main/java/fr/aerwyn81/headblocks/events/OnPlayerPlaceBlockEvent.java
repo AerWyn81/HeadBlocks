@@ -2,9 +2,10 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
-import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.HologramService;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
+import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HologramService;
+import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -19,11 +20,6 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import java.util.UUID;
 
 public class OnPlayerPlaceBlockEvent implements Listener {
-    private final HeadBlocks main;
-
-    public OnPlayerPlaceBlockEvent(HeadBlocks main) {
-        this.main = main;
-    }
 
     @EventHandler
     public void onPlayerPlaceBlock(BlockPlaceEvent e) {
@@ -61,7 +57,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         }
 
         // Check if there is a storage issue
-        if (main.getStorageHandler().hasStorageError()) {
+        if (StorageService.hasStorageError()) {
             e.setCancelled(true);
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             return;

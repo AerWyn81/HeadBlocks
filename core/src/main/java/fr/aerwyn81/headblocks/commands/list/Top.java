@@ -3,7 +3,8 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
+import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -21,12 +22,6 @@ import java.util.Map;
 
 @HBAnnotations(command = "top", permission = "headblocks.use")
 public class Top implements Cmd {
-    private final HeadBlocks main;
-
-    public Top(HeadBlocks main) {
-        this.main = main;
-    }
-
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         int limit;
@@ -47,7 +42,7 @@ public class Top implements Cmd {
 
         ArrayList<Map.Entry<String, Integer>> top;
         try {
-            top = new ArrayList<>(main.getStorageHandler().getTopPlayers(limit).entrySet());
+            top = new ArrayList<>(StorageService.getTopPlayers(limit).entrySet());
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving top players from the storage: " + ex.getMessage()));

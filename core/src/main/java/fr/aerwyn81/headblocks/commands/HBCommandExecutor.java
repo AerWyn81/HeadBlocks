@@ -1,8 +1,7 @@
 package fr.aerwyn81.headblocks.commands;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.list.*;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
+import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.PlayerUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -20,27 +19,27 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
 
     private final Help helpCommand;
 
-    public HBCommandExecutor(HeadBlocks main) {
+    public HBCommandExecutor() {
         this.registeredCommands = new HashMap<>();
 
-        this.helpCommand = new Help(main);
+        this.helpCommand = new Help();
 
         this.register(helpCommand);
         this.register(new Give());
-        this.register(new Reload(main));
+        this.register(new Reload());
         this.register(new List());
         this.register(new Me());
         this.register(new Remove());
         this.register(new RemoveAll());
-        this.register(new Reset(main));
-        this.register(new ResetAll(main));
-        this.register(new Version(main));
-        this.register(new Stats(main));
-        this.register(new Top(main));
+        this.register(new Reset());
+        this.register(new ResetAll());
+        this.register(new Version());
+        this.register(new Stats());
+        this.register(new Top());
         this.register(new Tp());
         this.register(new Move());
         this.register(new Options());
-        this.register(new Export(main));
+        this.register(new Export());
     }
 
     private void register(Cmd c) {

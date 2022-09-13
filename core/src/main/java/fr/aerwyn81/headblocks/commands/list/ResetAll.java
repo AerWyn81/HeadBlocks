@@ -3,8 +3,8 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
-import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import org.bukkit.command.CommandSender;
@@ -16,18 +16,12 @@ import java.util.UUID;
 
 @HBAnnotations(command = "resetall", permission = "headblocks.admin")
 public class ResetAll implements Cmd {
-    private final StorageHandler storageHandler;
-
-    public ResetAll(HeadBlocks main) {
-        this.storageHandler = main.getStorageHandler();
-    }
-
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         List<UUID> allPlayers;
 
         try {
-            allPlayers = storageHandler.getAllPlayers();
+            allPlayers = StorageService.getAllPlayers();
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving all players from the storage: " + ex.getMessage()));
@@ -44,7 +38,7 @@ public class ResetAll implements Cmd {
 
             for (UUID uuid : allPlayers) {
                 try {
-                    storageHandler.resetPlayer(uuid);
+                    StorageService.resetPlayer(uuid);
                 } catch (InternalException ex) {
                     sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + uuid.toString() + " from the storage: " + ex.getMessage()));

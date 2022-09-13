@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.handlers;
+package fr.aerwyn81.headblocks.services;
 
 import com.github.unldenis.hologram.Hologram;
 import com.github.unldenis.hologram.HologramPool;
@@ -22,7 +22,7 @@ public class HologramService {
         return HeadBlocks.isProtocolLibActive && ConfigService.isHologramsEnabled();
     }
 
-    public static void initialise() {
+    public static void initialize() {
         foundHolograms = new HashMap<>();
         notFoundHolograms = new HashMap<>();
 

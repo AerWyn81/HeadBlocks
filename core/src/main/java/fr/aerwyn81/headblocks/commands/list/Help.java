@@ -1,10 +1,9 @@
 package fr.aerwyn81.headblocks.commands.list;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.commands.HBCommand;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
+import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -18,7 +17,7 @@ import java.util.ArrayList;
 public class Help implements Cmd {
     private final ArrayList<HBCommand> registeredCommands;
 
-    public Help(HeadBlocks main) {
+    public Help() {
         this.registeredCommands = new ArrayList<>();
     }
 

@@ -3,30 +3,24 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.HologramService;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
+import fr.aerwyn81.headblocks.services.*;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 @HBAnnotations(command = "reload", permission = "headblocks.admin")
 public class Reload implements Cmd {
-    private final HeadBlocks main;
-
-    public Reload(HeadBlocks main) {
-        this.main = main;
-    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
+        var plugin = HeadBlocks.getInstance();
         HeadBlocks.isReloadInProgress = true;
 
-        main.reloadConfig();
+        plugin.reloadConfig();
         ConfigService.load();
 
         LanguageService.setLanguage(ConfigService.getLanguage());
@@ -37,23 +31,23 @@ public class Reload implements Cmd {
         HeadService.load();
 
         if (HeadBlocks.isHeadDatabaseActive) {
-            main.loadHeadsHDB();
+            plugin.loadHeadsHDB();
         }
 
-        main.getStorageHandler().close();
+        StorageService.close();
 
-        main.getStorageHandler().init();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            main.getStorageHandler().unloadPlayer(player);
-            main.getStorageHandler().loadPlayer(player);
+        StorageService.initialize();
+        for (Player player : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
+            StorageService.unloadPlayer(player);
+            StorageService.loadPlayer(player);
         }
 
-        main.getParticlesTask().cancel();
+        plugin.getParticlesTask().cancel();
 
-        main.setParticlesTask(new GlobalTask(main));
-        main.getParticlesTask().runTaskTimer(main, 0, ConfigService.getDelayGlobalTask());
+        plugin.setParticlesTask(new GlobalTask());
+        plugin.getParticlesTask().runTaskTimer(plugin, 0, ConfigService.getDelayGlobalTask());
 
-        if (main.getStorageHandler().hasStorageError()) {
+        if (StorageService.hasStorageError()) {
             sender.sendMessage(LanguageService.getMessage("Messages.ReloadWithErrors"));
             return true;
         }

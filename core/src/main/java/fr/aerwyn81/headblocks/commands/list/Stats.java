@@ -4,10 +4,10 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.LanguageService;
-import fr.aerwyn81.headblocks.handlers.PlaceholdersService;
-import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.services.PlaceholdersService;
+import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
@@ -30,12 +30,6 @@ import java.util.stream.Collectors;
 
 @HBAnnotations(command = "stats", permission = "headblocks.admin")
 public class Stats implements Cmd {
-    private final StorageHandler storageHandler;
-
-    public Stats(HeadBlocks main) {
-        this.storageHandler = main.getStorageHandler();
-    }
-
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         Player player;
@@ -65,7 +59,7 @@ public class Stats implements Cmd {
 
         ArrayList<HeadLocation> playerHeads;
         try {
-            playerHeads = storageHandler.getHeadsPlayer(player.getUniqueId()).stream()
+            playerHeads = StorageService.getHeadsPlayer(player.getUniqueId()).stream()
                     .map(HeadService::getHeadByUUID)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));

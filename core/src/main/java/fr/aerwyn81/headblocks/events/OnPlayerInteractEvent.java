@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.*;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -18,11 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OnPlayerInteractEvent implements Listener {
-    private final HeadBlocks main;
-
-    public OnPlayerInteractEvent(HeadBlocks main) {
-        this.main = main;
-    }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
@@ -60,7 +55,7 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Check if there is a storage issue
-        if (main.getStorageHandler().hasStorageError()) {
+        if (StorageService.hasStorageError()) {
             e.setCancelled(true);
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             return;
@@ -78,7 +73,7 @@ public class OnPlayerInteractEvent implements Listener {
 
         try {
             // Check if the player has already clicked on the head
-            if (main.getStorageHandler().hasHead(player.getUniqueId(), headLocation.getUuid())) {
+            if (StorageService.hasHead(player.getUniqueId(), headLocation.getUuid())) {
                 String message = PlaceholdersService.parse(player, LanguageService.getMessage("Messages.AlreadyClaimHead"));
 
                 if (!message.trim().isEmpty()) {
@@ -115,7 +110,7 @@ public class OnPlayerInteractEvent implements Listener {
             }
 
             // Save player click in storage
-            main.getStorageHandler().addHead(player.getUniqueId(), headLocation.getUuid());
+            StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to save a head found by " + player.getName() + " from the storage: " + ex.getMessage()));
@@ -166,7 +161,7 @@ public class OnPlayerInteractEvent implements Listener {
         if (!ConfigService.isPreventCommandsOnTieredRewardsLevel()) {
             int playerHeads;
             try {
-                playerHeads = main.getStorageHandler().getHeadsPlayer(player.getUniqueId()).size();
+                playerHeads = StorageService.getHeadsPlayer(player.getUniqueId()).size();
             } catch (InternalException ex) {
                 player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));                return;
@@ -175,8 +170,9 @@ public class OnPlayerInteractEvent implements Listener {
             if (!RewardService.currentIsContainedInTiered(playerHeads)) {
                 // Commands list if not empty
                 if (ConfigService.getHeadClickCommands().size() != 0) {
-                    Bukkit.getScheduler().runTaskLater(main, () -> ConfigService.getHeadClickCommands().forEach(reward ->
-                            main.getServer().dispatchCommand(main.getServer().getConsoleSender(), PlaceholdersService.parse(player, reward))), 1L);
+                    var plugin = HeadBlocks.getInstance();
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
+                            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(player, reward))), 1L);
                 }
             }
         }

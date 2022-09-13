@@ -2,10 +2,10 @@ package fr.aerwyn81.headblocks.runnables;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.handlers.ConfigService;
-import fr.aerwyn81.headblocks.handlers.HeadService;
-import fr.aerwyn81.headblocks.handlers.HologramService;
-import fr.aerwyn81.headblocks.handlers.StorageHandler;
+import fr.aerwyn81.headblocks.services.ConfigService;
+import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HologramService;
+import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import fr.aerwyn81.headblocks.utils.ParticlesUtils;
@@ -19,11 +19,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class GlobalTask extends BukkitRunnable {
-    private final StorageHandler storageHandler;
-
-    public GlobalTask(HeadBlocks main) {
-        this.storageHandler = main.getStorageHandler();
-    }
 
     @Override
     public void run() {
@@ -40,7 +35,7 @@ public class GlobalTask extends BukkitRunnable {
 
             players.forEach(p -> {
                 try {
-                    if (storageHandler.hasHead(p.getUniqueId(), headLocation.getUuid())) {
+                    if (StorageService.hasHead(p.getUniqueId(), headLocation.getUuid())) {
                         if (ConfigService.isParticlesFoundEnabled()) {
                             spawnParticles(location, Particle.valueOf(ConfigService.getParticlesFoundType()),
                                     ConfigService.getParticlesFoundAmount(), ConfigService.getParticlesFoundColors(), p);

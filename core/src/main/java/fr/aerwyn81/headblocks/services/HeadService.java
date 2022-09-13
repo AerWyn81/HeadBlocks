@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.handlers;
+package fr.aerwyn81.headblocks.services;
 
 import de.tr7zw.changeme.nbtapi.NBTTileEntity;
 import fr.aerwyn81.headblocks.HeadBlocks;
@@ -33,8 +33,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class HeadService {
-    private static StorageHandler storageHandler;
-
     private static File configFile;
     private static YamlConfiguration config;
 
@@ -44,11 +42,10 @@ public class HeadService {
 
     public static String HB_KEY = "HB_HEAD";
 
-    public static void initialise(File file) {
+    public static void initialize(File file) {
         configFile = file;
 
         var main = HeadBlocks.getInstance();
-        storageHandler = main.getStorageHandler();
 
         heads = new ArrayList<>();
         headLocations = new ArrayList<>();
@@ -93,9 +90,9 @@ public class HeadService {
                 UUID headUuid = UUID.fromString(uuid);
 
                 try {
-                    boolean isExist = storageHandler.isHeadExist(headUuid);
+                    boolean isExist = StorageService.isHeadExist(headUuid);
                     if (!isExist) {
-                        storageHandler.createNewHead(headUuid);
+                        StorageService.createNewHead(headUuid);
                     }
                 } catch (Exception ex) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
@@ -122,7 +119,7 @@ public class HeadService {
             uniqueUuid = UUID.randomUUID();
         }
 
-        storageHandler.createNewHead(uniqueUuid);
+        StorageService.createNewHead(uniqueUuid);
 
         if (ConfigService.isHologramsEnabled()) {
             HologramService.createHolograms(location);
@@ -138,7 +135,7 @@ public class HeadService {
 
     public static void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
         if (headLocation != null) {
-            storageHandler.removeHead(headLocation.getUuid(), withDelete);
+            StorageService.removeHead(headLocation.getUuid(), withDelete);
 
             headLocation.getLocation().getBlock().setType(Material.AIR);
 

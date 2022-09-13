@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.handlers;
+package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import java.util.List;
 
 public class RewardService {
+
     public static void giveReward(Player p) {
         if (ConfigService.getTieredRewards().size() == 0) {
             return;
@@ -20,7 +21,7 @@ public class RewardService {
         TieredReward tieredReward = ConfigService.getTieredRewards().stream().filter(t -> {
             try {
                 return t.getLevel() ==
-                        plugin.getStorageHandler().getHeadsPlayer(p.getUniqueId()).size();
+                        StorageService.getHeadsPlayer(p.getUniqueId()).size();
             } catch (InternalException ex) {
                 p.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + p.getName() + ": " + ex.getMessage()));

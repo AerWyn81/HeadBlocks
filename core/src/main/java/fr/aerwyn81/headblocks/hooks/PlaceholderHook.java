@@ -1,7 +1,8 @@
 package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.handlers.HeadService;
+import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.InternalException;
 import fr.aerwyn81.headblocks.utils.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -9,12 +10,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
 public class PlaceholderHook extends PlaceholderExpansion {
-
-    private final HeadBlocks main;
-
-    public PlaceholderHook(HeadBlocks main) {
-        this.main = main;
-    }
 
     @Override
     public boolean canRegister() {
@@ -57,7 +52,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         if (identifier.equals("current") || identifier.equals("left")) {
             int current;
             try {
-                current = main.getStorageHandler().getHeadsPlayer(player.getUniqueId()).size();
+                current = StorageService.getHeadsPlayer(player.getUniqueId()).size();
             } catch (InternalException ex) {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
                 return "-1";
