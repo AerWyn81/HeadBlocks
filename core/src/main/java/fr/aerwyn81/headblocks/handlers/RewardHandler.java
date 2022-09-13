@@ -39,18 +39,18 @@ public class RewardHandler {
 
         List<String> messages = tieredReward.getMessages();
         if (messages.size() != 0) {
-            p.sendMessage(PlaceholdersHandler.parse(p, messages));
+            p.sendMessage(PlaceholdersService.parse(p, messages));
         }
 
         Bukkit.getScheduler().runTaskLater(main, () -> {
             List<String> commands = tieredReward.getCommands();
             commands.forEach(command ->
-                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), PlaceholdersHandler.parse(p, command)));
+                    main.getServer().dispatchCommand(main.getServer().getConsoleSender(), PlaceholdersService.parse(p, command)));
 
             List<String> broadcastMessages = tieredReward.getBroadcastMessages();
             if (broadcastMessages.size() != 0) {
                 for (String message : broadcastMessages) {
-                    main.getServer().broadcastMessage(PlaceholdersHandler.parse(p, message));
+                    main.getServer().broadcastMessage(PlaceholdersService.parse(p, message));
                 }
             }
         }, 1L);

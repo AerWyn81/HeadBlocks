@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlaceholdersHandler {
+public class PlaceholdersService {
     private static final StorageHandler storageHandler;
 
     static {

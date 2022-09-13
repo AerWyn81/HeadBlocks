@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageService;
-import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
+import fr.aerwyn81.headblocks.handlers.PlaceholdersService;
 import fr.aerwyn81.headblocks.handlers.StorageHandler;
 import fr.aerwyn81.headblocks.utils.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.InternalException;
@@ -83,7 +83,7 @@ public class Stats implements Cmd {
 
         String message = LanguageService.getMessage("Chat.LineTitle");
         if (sender instanceof Player) {
-            TextComponent titleComponent = new TextComponent(PlaceholdersHandler.parse(player, LanguageService.getMessage("Chat.StatsTitleLine")
+            TextComponent titleComponent = new TextComponent(PlaceholdersService.parse(player, LanguageService.getMessage("Chat.StatsTitleLine")
                     .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
             cpu.addTitleLine(titleComponent);
         } else {

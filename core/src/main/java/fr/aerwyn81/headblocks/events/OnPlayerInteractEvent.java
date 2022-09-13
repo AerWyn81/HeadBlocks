@@ -79,7 +79,7 @@ public class OnPlayerInteractEvent implements Listener {
         try {
             // Check if the player has already clicked on the head
             if (main.getStorageHandler().hasHead(player.getUniqueId(), headLocation.getUuid())) {
-                String message = PlaceholdersHandler.parse(player, LanguageService.getMessage("Messages.AlreadyClaimHead"));
+                String message = PlaceholdersService.parse(player, LanguageService.getMessage("Messages.AlreadyClaimHead"));
 
                 if (!message.trim().isEmpty()) {
                     player.sendMessage(message);
@@ -125,7 +125,7 @@ public class OnPlayerInteractEvent implements Listener {
         // Success messages if not empty
         List<String> messages = ConfigService.getHeadClickMessages();
         if (messages.size() != 0) {
-            player.sendMessage(PlaceholdersHandler.parse(player, messages));
+            player.sendMessage(PlaceholdersService.parse(player, messages));
         }
 
         // Success song if not empty
@@ -140,8 +140,8 @@ public class OnPlayerInteractEvent implements Listener {
 
         // Send title to the player if enabled
         if (ConfigService.isHeadClickTitleEnabled()) {
-            String firstLine = PlaceholdersHandler.parse(player, ConfigService.getHeadClickTitleFirstLine());
-            String subTitle = PlaceholdersHandler.parse(player, ConfigService.getHeadClickTitleSubTitle());
+            String firstLine = PlaceholdersService.parse(player, ConfigService.getHeadClickTitleFirstLine());
+            String subTitle = PlaceholdersService.parse(player, ConfigService.getHeadClickTitleSubTitle());
             int fadeIn = ConfigService.getHeadClickTitleFadeIn();
             int stay = ConfigService.getHeadClickTitleStay();
             int fadeOut = ConfigService.getHeadClickTitleFadeOut();
@@ -176,7 +176,7 @@ public class OnPlayerInteractEvent implements Listener {
                 // Commands list if not empty
                 if (ConfigService.getHeadClickCommands().size() != 0) {
                     Bukkit.getScheduler().runTaskLater(main, () -> ConfigService.getHeadClickCommands().forEach(reward ->
-                            main.getServer().dispatchCommand(main.getServer().getConsoleSender(), PlaceholdersHandler.parse(player, reward))), 1L);
+                            main.getServer().dispatchCommand(main.getServer().getConsoleSender(), PlaceholdersService.parse(player, reward))), 1L);
                 }
             }
         }

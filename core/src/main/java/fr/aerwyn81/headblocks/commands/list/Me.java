@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.handlers.HeadService;
 import fr.aerwyn81.headblocks.handlers.LanguageService;
-import fr.aerwyn81.headblocks.handlers.PlaceholdersHandler;
+import fr.aerwyn81.headblocks.handlers.PlaceholdersService;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -27,7 +27,7 @@ public class Me implements Cmd {
         List<String> messages = LanguageService.getMessages("Messages.MeCommand");
         if (messages.size() != 0) {
             LanguageService.getMessages("Messages.MeCommand").forEach(msg ->
-                    player.sendMessage(PlaceholdersHandler.parse(player, msg)));
+                    player.sendMessage(PlaceholdersService.parse(player, msg)));
         }
 
         return true;
