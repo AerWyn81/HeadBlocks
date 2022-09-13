@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@HBAnnotations(command = "remove", permission = "headblocks.admin", args = { "headUUID" })
+@HBAnnotations(command = "remove", permission = "headblocks.admin")
 public class Remove implements Cmd {
     private final HeadBlocks main;
     private final ConfigHandler configHandler;
@@ -35,15 +35,28 @@ public class Remove implements Cmd {
     public boolean perform(CommandSender sender, String[] args) {
         Player player = (Player) sender;
 
-        if (args.length != 2) {
+        if (args.length > 2) {
             player.sendMessage(languageHandler.getMessage("Messages.ErrorCommand"));
             return true;
         }
 
-        HeadLocation head = headHandler.getHeadByUUID(UUID.fromString(args[1]));
-        if (head == null) {
-            player.sendMessage(languageHandler.getMessage("Messages.RemoveLocationError"));
-            return true;
+        HeadLocation head;
+
+        if (args.length == 1) {
+            var targetHead = headHandler.getHeadAt(player.getTargetBlock(null, 25).getLocation());
+
+            if (targetHead == null) {
+                player.sendMessage(languageHandler.getMessage("Messages.TargetBlockNotHead"));
+                return true;
+            }
+
+            head = targetHead;
+        } else {
+            head = headHandler.getHeadByUUID(UUID.fromString(args[1]));
+            if (head == null) {
+                player.sendMessage(languageHandler.getMessage("Messages.RemoveLocationError"));
+                return true;
+            }
         }
 
         try {

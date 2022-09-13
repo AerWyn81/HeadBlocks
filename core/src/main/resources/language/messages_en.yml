@@ -52,6 +52,7 @@ Messages:
   HeadMoveCancel: "%prefix% &cYou have cancelled the move of the HeadBlock"
   TargetBlockMoved: "%prefix% &aThe HeadBlock has been correctly moved at &e%world%&a, &e%x%&a, &e%y%&a, &e%z%"
   PluginReloading: "%prefix% &cPlease wait, the plugin is reloading..."
+  TargetBlockNotHead: "%prefix% &cTargeted block is not a HeadBlock"
   MeCommand:
     - ""
     - "&aNumber of heads collected : &e%current%&7/&e%max%"
@@ -86,7 +87,7 @@ Help:
   LineTop: "&7--------------------[ &e&lHelp &7]--------------------"
   Help: "&6/hb help &8: &7&oDisplay this message"
   Me: "&6/hb me &8: &7&oDisplays your progress"
-  Remove: "&6/hb remove <headUuid> &8: &7&oRemove head by it's <headUuid>"
+  Remove: "&6/hb remove (headUuid) &8: &7&oRemove head by it's <headUuid> or head targeted"
   RemoveAll: "&6/hb removeall &8: &7&oRemove all spawned head"
   Give: "&6/hb give <player> <*|number> &8: &7&oGives a HeadBlock to <player>. <number> when multi HeadBlocks are defined"
   Reset: "&6/hb reset <player> &8: &7&oReset data of the <player>"
