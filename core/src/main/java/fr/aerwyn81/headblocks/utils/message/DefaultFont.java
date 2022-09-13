@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.message;
 
 public enum DefaultFont {
     A('A', 5),
@@ -98,9 +98,8 @@ public enum DefaultFont {
     SPACE(' ', 3),
     DEFAULT('a', 4);
 
-    private char character;
-
-    private int length;
+    private final char character;
+    private final int length;
 
     DefaultFont(char character, int length) {
         this.character = character;

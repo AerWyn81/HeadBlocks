@@ -2,8 +2,8 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
-import fr.aerwyn81.headblocks.utils.InternalException;
-import fr.aerwyn81.headblocks.utils.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 

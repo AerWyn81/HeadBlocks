@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.HologramService;
 import fr.aerwyn81.headblocks.services.StorageService;
-import fr.aerwyn81.headblocks.utils.LocationUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;

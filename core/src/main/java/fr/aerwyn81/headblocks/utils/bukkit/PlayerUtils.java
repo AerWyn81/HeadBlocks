@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.bukkit;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.commands;
 
 import fr.aerwyn81.headblocks.commands.list.*;
 import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.utils.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

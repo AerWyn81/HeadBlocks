@@ -2,8 +2,8 @@ package fr.aerwyn81.headblocks.databases.types;
 
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.Requests;
-import fr.aerwyn81.headblocks.utils.InternalException;
-import fr.aerwyn81.headblocks.utils.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.sql.*;
 import java.util.*;

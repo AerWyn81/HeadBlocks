@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
-import fr.aerwyn81.headblocks.utils.MessageUtils;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.command.CommandSender;
 
 import java.io.File;

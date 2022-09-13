@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.message;
 
 import com.google.common.base.Strings;
 import net.md_5.bungee.api.ChatColor;

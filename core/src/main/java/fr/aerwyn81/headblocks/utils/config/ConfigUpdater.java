@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.config;
 
 import com.google.common.base.Preconditions;
 import org.bukkit.configuration.ConfigurationSection;

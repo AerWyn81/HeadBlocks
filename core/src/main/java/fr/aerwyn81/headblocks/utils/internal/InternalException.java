@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.internal;
 
 public class InternalException extends Exception {
     public InternalException() {

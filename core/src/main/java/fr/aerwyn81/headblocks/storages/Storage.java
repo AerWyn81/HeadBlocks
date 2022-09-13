@@ -1,6 +1,6 @@
 package fr.aerwyn81.headblocks.storages;
 
-import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.util.ArrayList;
 import java.util.UUID;

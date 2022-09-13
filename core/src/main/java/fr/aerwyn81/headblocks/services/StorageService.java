@@ -9,8 +9,8 @@ import fr.aerwyn81.headblocks.databases.types.SQLite;
 import fr.aerwyn81.headblocks.storages.Storage;
 import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
-import fr.aerwyn81.headblocks.utils.InternalException;
-import fr.aerwyn81.headblocks.utils.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.entity.Player;
 
 import java.io.File;

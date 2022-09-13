@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.bukkit;
 
 import de.tr7zw.changeme.nbtapi.NBTCompound;
 import de.tr7zw.changeme.nbtapi.NBTItem;
@@ -15,6 +15,7 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.UUID;
 
 public class HeadUtils {
+
     public static HBHead createHead(HBHead head, String texture) {
         NBTItem nbti = new NBTItem(head.getItemStack());
         NBTCompound skull = nbti.addCompound("SkullOwner");

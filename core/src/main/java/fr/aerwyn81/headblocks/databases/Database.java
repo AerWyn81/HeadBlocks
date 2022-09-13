@@ -1,6 +1,6 @@
 package fr.aerwyn81.headblocks.databases;
 
-import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.storages.types;
 
 import fr.aerwyn81.headblocks.storages.Storage;
-import fr.aerwyn81.headblocks.utils.InternalException;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;

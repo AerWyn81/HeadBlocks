@@ -1,8 +1,8 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.utils.ConfigUpdater;
-import fr.aerwyn81.headblocks.utils.MessageUtils;
+import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;

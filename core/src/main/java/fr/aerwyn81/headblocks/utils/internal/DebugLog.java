@@ -1,6 +1,7 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.internal;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 
 import java.io.File;
 import java.io.IOException;
