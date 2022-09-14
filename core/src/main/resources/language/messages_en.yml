@@ -83,6 +83,24 @@ Chat:
   NextPage: "&7-------[&8>>>&7]--------"
   PageFooter: " &8[ &e%pageNumber%&7/&e%totalPage% &8] "
 
+Gui:
+  TitleOptions: "&8HeadBlocks &7- &cOptions"
+  TitleOrder: "&8HeadBlocks &7- &3Order"
+  PreviousPage: "&cPrevious page"
+  NextPage: "&aNext page"
+  Close: "&cClose"
+  CloseLore:
+    - "&7Close this interface"
+  Back: "&cBack"
+  BackLore:
+    - "&7Back to previous interface"
+  Previous: "&cPrevious page"
+  PreviousLore:
+    - "&7Back to page %page%"
+  Next: "&aNext page"
+  NextLore:
+    - "&7Next to page %page%"
+
 Help:
   LineTop: "&7--------------------[ &e&lHelp &7]--------------------"
   Help: "&6/hb help&8: &7&oDisplay this message"

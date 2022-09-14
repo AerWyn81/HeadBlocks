@@ -1,10 +1,7 @@
 package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
-import fr.aerwyn81.headblocks.events.OnPlayerBreakBlockEvent;
-import fr.aerwyn81.headblocks.events.OnPlayerInteractEvent;
-import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
-import fr.aerwyn81.headblocks.events.OthersEvent;
+import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
@@ -70,11 +67,11 @@ public final class HeadBlocks extends JavaPlugin {
 
         isProtocolLibActive = Bukkit.getPluginManager().isPluginEnabled("ProtocolLib");
 
+        ConfigService.initialize(configFile);
+
         if (ConfigService.isMetricsEnabled()) {
             new Metrics(this, 15495);
         }
-
-        ConfigService.initialize(configFile);
 
         LanguageService.initialize(ConfigService.getLanguage());
         LanguageService.pushMessages();
@@ -82,6 +79,7 @@ public final class HeadBlocks extends JavaPlugin {
         StorageService.initialize();
         HologramService.initialize();
         HeadService.initialize(locationFile);
+        GuiService.initialize();
 
         this.globalTask = new GlobalTask();
         globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
@@ -96,6 +94,7 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OthersEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(), this);
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
     }

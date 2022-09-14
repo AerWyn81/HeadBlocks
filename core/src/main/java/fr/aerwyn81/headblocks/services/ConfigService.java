@@ -2,8 +2,10 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.utils.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Color;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import redis.clients.jedis.Protocol;
@@ -309,5 +311,25 @@ public class ConfigService {
 
     public static ArrayList<String> getHologramsNotFoundLines() {
         return new ArrayList<>(config.getStringList("holograms.notFound.lines"));
+    }
+
+    public static ItemBuilder getGuiBackIcon() {
+        return new ItemBuilder(Material.valueOf(config.getString("gui.backIcon.type", Material.SPRUCE_DOOR.name())));
+    }
+
+    public static ItemBuilder getGuiBorderIcon() {
+        return new ItemBuilder(Material.valueOf(config.getString("gui.borderIcon.type", Material.GRAY_STAINED_GLASS_PANE.name())));
+    }
+
+    public static ItemBuilder getGuiPreviousIcon() {
+        return new ItemBuilder(Material.valueOf(config.getString("gui.previousIcon.type", Material.ARROW.name())));
+    }
+
+    public static ItemBuilder getGuiNextIcon() {
+        return new ItemBuilder(Material.valueOf(config.getString("gui.nextIcon.type", Material.ARROW.name())));
+    }
+
+    public static ItemBuilder getGuiCloseIcon() {
+        return new ItemBuilder(Material.valueOf(config.getString("gui.closeIcon.type", Material.BARRIER.name())));
     }
 }

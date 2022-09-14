@@ -39,6 +39,7 @@ public class Reload implements Cmd {
 
         HologramService.load();
         HeadService.load();
+        GuiService.initialize();
 
         if (plugin.isHeadDatabaseActive()) {
             if (plugin.getHeadDatabaseHook() == null) {

@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface Database {
-    int version = 1;
+    int version = 2;
 
     void close() throws InternalException;
 
@@ -20,7 +20,7 @@ public interface Database {
 
     void updatePlayerInfo(UUID pUUID, String pName) throws InternalException;
 
-    void createNewHead(UUID hUUID) throws InternalException;
+    void createNewHead(UUID hUUID, String texture) throws InternalException;
 
     boolean containsPlayer(UUID pUUID) throws InternalException;
 
@@ -42,11 +42,15 @@ public interface Database {
 
     void migrate() throws InternalException;
 
-    void addTableVersion() throws InternalException;
+    void upsertTableVersion() throws InternalException;
 
     ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getHeads() throws InternalException;
 
     ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayerHeads() throws InternalException;
 
     ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayers() throws InternalException;
+
+    void addColumnHeadTexture() throws InternalException;
+
+    String getHeadTexture(UUID headUuid) throws InternalException;
 }

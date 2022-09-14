@@ -17,7 +17,12 @@ import java.util.UUID;
 public class HeadUtils {
 
     public static HBHead createHead(HBHead head, String texture) {
-        NBTItem nbti = new NBTItem(head.getItemStack());
+        head.setItemStack(applyTextureToItemStack(head.getItemStack(), texture));
+        return head;
+    }
+
+    public static ItemStack applyTextureToItemStack(ItemStack itemStack, String texture) {
+        NBTItem nbti = new NBTItem(itemStack);
         NBTCompound skull = nbti.addCompound("SkullOwner");
         skull.setString("Name", "HeadBlocks");
 
@@ -30,8 +35,16 @@ public class HeadUtils {
         NBTListCompound textCompound = skull.addCompound("Properties").getCompoundList("textures").addCompound();
         textCompound.setString("Value", texture);
 
-        head.setItemStack(nbti.getItem());
-        return head;
+        return nbti.getItem();
+    }
+
+    public static String getHeadTexture(ItemStack head) {
+        var nbtItem = new NBTItem(head);
+        try {
+            return nbtItem.getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value");
+        } catch (Exception ex) {
+            return "";
+        }
     }
 
     public static boolean areEquals(ItemStack i1, ItemStack i2) {

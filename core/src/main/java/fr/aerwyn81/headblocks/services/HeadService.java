@@ -90,7 +90,7 @@ public class HeadService {
                 try {
                     boolean isExist = StorageService.isHeadExist(headUuid);
                     if (!isExist) {
-                        StorageService.createNewHead(headUuid);
+                        StorageService.createNewHead(headUuid, "");
                     }
                 } catch (Exception ex) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
@@ -111,13 +111,13 @@ public class HeadService {
         });
     }
 
-    public static UUID saveHeadLocation(Location location) throws InternalException {
+    public static UUID saveHeadLocation(Location location, String texture) throws InternalException {
         UUID uniqueUuid = UUID.randomUUID();
         while (getHeadByUUID(uniqueUuid) != null) {
             uniqueUuid = UUID.randomUUID();
         }
 
-        StorageService.createNewHead(uniqueUuid);
+        StorageService.createNewHead(uniqueUuid, texture);
 
         if (ConfigService.isHologramsEnabled()) {
             HologramService.createHolograms(location);

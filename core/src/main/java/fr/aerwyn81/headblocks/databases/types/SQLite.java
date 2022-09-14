@@ -128,12 +128,14 @@ public class SQLite implements Database {
      * Create a head
      *
      * @param hUUID head UUID
+     * @param texture head texture
      * @throws InternalException SQL Exception
      */
     @Override
-    public void createNewHead(UUID hUUID) throws InternalException {
+    public void createNewHead(UUID hUUID, String texture) throws InternalException {
         try (PreparedStatement ps = connection.prepareStatement(Requests.CREATE_HEAD)) {
             ps.setString(1, hUUID.toString());
+            ps.setString(2, texture);
 
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -384,13 +386,14 @@ public class SQLite implements Database {
      * @throws InternalException SQL Exception
      */
     @Override
-    public void addTableVersion() throws InternalException {
+    public void upsertTableVersion() throws InternalException {
         try {
             PreparedStatement ps = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
             ps.execute();
 
             ps = connection.prepareStatement(Requests.INSERT_VERSION);
             ps.setInt(1, version);
+            ps.setInt(2, version - 1);
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -446,5 +449,31 @@ public class SQLite implements Database {
         }
 
         return playerHeads;
+    }
+
+    @Override
+    public void addColumnHeadTexture() throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.ADD_COLUMN_HEAD_TEXTURE)) {
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public String getHeadTexture(UUID headUuid) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_HEAD_TEXTURE)) {
+            ps.setString(1, headUuid.toString());
+
+            ResultSet rs  = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("hTexture");
+            }
+
+            return "";
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
     }
 }

@@ -67,9 +67,11 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
+        var headTexture = HeadUtils.getHeadTexture(e.getItemInHand());
+
         UUID headUuid;
         try {
-            headUuid = HeadService.saveHeadLocation(headLocation);
+            headUuid = HeadService.saveHeadLocation(headLocation, headTexture);
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
