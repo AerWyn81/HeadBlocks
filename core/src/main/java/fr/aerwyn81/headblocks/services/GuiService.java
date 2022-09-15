@@ -25,9 +25,11 @@ public class GuiService {
     private static HashMap<UUID, ItemStack> headItemCache;
 
     public static void initialize() {
-        if (headItemCache == null) {
-            headItemCache = new HashMap<>();
-        } else {
+        headItemCache = new HashMap<>();
+    }
+
+    public static void clearCache() {
+        if (headItemCache != null) {
             headItemCache.clear();
         }
     }

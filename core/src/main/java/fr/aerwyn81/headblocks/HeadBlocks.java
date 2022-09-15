@@ -103,6 +103,7 @@ public final class HeadBlocks extends JavaPlugin {
     public void onDisable() {
         StorageService.close();
         HeadService.clearHeadMoves();
+        GuiService.clearCache();
 
         Bukkit.getScheduler().cancelTasks(this);
 
