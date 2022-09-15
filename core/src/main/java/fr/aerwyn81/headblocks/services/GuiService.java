@@ -68,13 +68,13 @@ public class GuiService {
                 .toItemStack(), true)
                 .addOnClickEvent(e -> openClickCounterGui((Player) e.getWhoClicked())));
 
-        optionsMenu.setItem(0, 14,  new ItemGUI(new ItemBuilder(Material.DIAMOND)
-                .setName("Rewards")
-                .setLore("Lore")
-                .toItemStack(), true)
-                .addOnClickEvent(event -> {}));
+        //optionsMenu.setItem(0, 14,  new ItemGUI(new ItemBuilder(Material.DIAMOND)
+        //        .setName("Rewards")
+        //        .setLore("Lore")
+        //        .toItemStack(), true)
+        //        .addOnClickEvent(event -> {}));
 
-        int[] borders = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 9,  10, 11, 15, 16, 17 };
+        int[] borders = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 9,  10, 11, 14, 15, 16, 17 };
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> optionsMenu.setItem(0, borders[index], new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack()))
         );
