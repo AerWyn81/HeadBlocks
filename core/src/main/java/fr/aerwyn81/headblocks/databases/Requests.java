@@ -63,4 +63,6 @@ public class Requests {
     public static final String ADD_COLUMN_HEAD_TEXTURE = "ALTER TABLE hb_heads ADD COLUMN hTexture VARCHAR(300) DEFAULT ''";
 
     public static final String GET_HEAD_TEXTURE = "SELECT hTexture FROM hb_heads WHERE hUUID = (?)";
+
+    public static final String GET_PLAYERS_BY_HEAD = "SELECT pUUID FROM hb_playerheads WHERE hUUID = (?)";
 }

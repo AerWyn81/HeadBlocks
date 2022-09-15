@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.data;
 
 import fr.aerwyn81.headblocks.data.reward.Reward;
+import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -53,7 +54,7 @@ public class HeadLocation {
 
     public String getDisplayedName() {
         if (name.isEmpty())
-            return MessageUtils.colorize("&cUnnamed");
+            return LanguageService.getMessage("Gui.Unnamed");
 
         return name;
     }
@@ -68,6 +69,14 @@ public class HeadLocation {
 
     public void setHitCount(int hitCount) {
         this.hitCount = hitCount;
+    }
+
+    public String getDisplayedHitCount() {
+        if (hitCount == -1) {
+            return LanguageService.getMessage("Gui.Infinite");
+        }
+
+        return String.valueOf(hitCount);
     }
 
     public int getOrderIndex() {

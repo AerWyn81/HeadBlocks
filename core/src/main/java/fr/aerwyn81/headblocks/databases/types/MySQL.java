@@ -401,7 +401,7 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getHeads() throws InternalException {
+    public ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_HEADS)) {
@@ -418,7 +418,7 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayerHeads() throws InternalException {
+    public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayerHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_PLAYERHEADS)) {
@@ -435,7 +435,7 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayers() throws InternalException {
+    public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayers() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_PLAYER)) {
@@ -475,5 +475,23 @@ public final class MySQL implements Database {
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
+    }
+
+    @Override
+    public ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
+        var players = new ArrayList<UUID>();
+
+        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_PLAYERS_BY_HEAD)) {
+            ps.setString(1, headUuid.toString());
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                players.add(UUID.fromString(rs.getString("pUUID")));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return players;
     }
 }

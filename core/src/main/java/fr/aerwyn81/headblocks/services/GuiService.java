@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 
 public class GuiService {
 
-    private static HashMap<UUID, ItemBuilder> headItemCache;
+    private static HashMap<UUID, ItemStack> headItemCache;
 
     public static void initialize() {
         if (headItemCache == null) {
@@ -32,7 +32,7 @@ public class GuiService {
         }
     }
 
-    private static ItemBuilder getHeadItemStackFromCache(HeadLocation headLocation) {
+    private static ItemStack getHeadItemStackFromCache(HeadLocation headLocation) {
         var headUuid = headLocation.getUuid();
 
         if (!headItemCache.containsKey(headUuid)) {
@@ -43,11 +43,7 @@ public class GuiService {
                 texture = "";
             }
 
-            var headItem = HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), texture);
-
-            headItemCache.put(headUuid, new ItemBuilder(headItem)
-                    .setName(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.OrderItemName")
-                            .replaceAll("%headName%", headLocation.getDisplayedName()), headLocation.getLocation())));
+            headItemCache.put(headUuid, HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), texture));
         }
 
         return headItemCache.get(headLocation.getUuid());
@@ -65,10 +61,10 @@ public class GuiService {
                 .addOnClickEvent(e -> openOrderGui((Player) e.getWhoClicked())));
 
         optionsMenu.setItem(0, 13, new ItemGUI(new ItemBuilder(Material.CLOCK)
-                .setName("OneTime")
-                .setLore("Lore")
+                .setName(LanguageService.getMessage("Gui.ClickCounterName"))
+                .setLore(LanguageService.getMessages("Gui.ClickCounterLore"))
                 .toItemStack(), true)
-                .addOnClickEvent(event -> {}));
+                .addOnClickEvent(e -> openClickCounterGui((Player) e.getWhoClicked())));
 
         optionsMenu.setItem(0, 14,  new ItemGUI(new ItemBuilder(Material.DIAMOND)
                 .setName("Rewards")
@@ -95,13 +91,14 @@ public class GuiService {
         if (headLocations.size() == 0) {
             orderMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
                     .setName(LanguageService.getMessage("Gui.NoHeads"))
-                    .toItemStack(), true)
-                    .addOnClickEvent(event -> {}));
+                    .toItemStack(), true));
         } else {
             for (int i = 0; i < headLocations.size(); i++) {
                 HeadLocation headLocation = headLocations.get(i);
 
-                var orderItemGui = new ItemGUI(getHeadItemStackFromCache(headLocation)
+                var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
+                        .setName(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.OrderItemName")
+                                        .replaceAll("%headName%", headLocation.getDisplayedName()), headLocation.getLocation()))
                         .setLore(LanguageService.getMessages("Gui.OrderItemLore").stream().map(s ->
                                         s.replaceAll("%position%", headLocation.getDisplayedOrderIndex()))
                                 .collect(Collectors.toList())).toItemStack(), true)
@@ -126,6 +123,49 @@ public class GuiService {
         }
 
         p.openInventory(orderMenu.getInventory());
+    }
+
+    private static void openClickCounterGui(Player p) {
+        HBMenu clickCounterMenu = new HBMenu(HeadBlocks.getInstance(), LanguageService.getMessage("Gui.TitleClickCounter"), true, 5);
+
+        List<HeadLocation> headLocations = HeadService.getHeadLocations()
+                .stream()
+                .sorted(((o1, o2) -> o2.getOrderIndex() - o1.getOrderIndex()))
+                .collect(Collectors.toList());
+
+        if (headLocations.size() == 0) {
+            clickCounterMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
+                    .setName(LanguageService.getMessage("Gui.NoHeads"))
+                    .toItemStack(), true));
+        } else {
+            for (int i = 0; i < headLocations.size(); i++) {
+                HeadLocation headLocation = headLocations.get(i);
+
+                var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
+                        .setName(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.CounterClickItemName")
+                                .replaceAll("%headName%", headLocation.getDisplayedName()), headLocation.getLocation()))
+                        .setLore(LanguageService.getMessages("Gui.CounterClickItemLore").stream().map(s ->
+                                        s.replaceAll("%count%", headLocation.getDisplayedHitCount()))
+                                .collect(Collectors.toList())).toItemStack(), true)
+                        .addOnClickEvent(event -> {
+                            if (event.getClick() == ClickType.LEFT) {
+                                if (headLocation.getHitCount() != -1) {
+                                    headLocation.setHitCount(headLocation.getHitCount() - 1);
+                                    HeadService.saveHeadInConfig(headLocation);
+                                }
+                            } else if (event.getClick() == ClickType.RIGHT) {
+                                headLocation.setHitCount(headLocation.getHitCount() + 1);
+                                HeadService.saveHeadInConfig(headLocation);
+                            }
+
+                            openClickCounterGui((Player) event.getWhoClicked());
+                        });
+
+                clickCounterMenu.addItem(i, orderItemGui);
+            }
+        }
+
+        p.openInventory(clickCounterMenu.getInventory());
     }
 
     public static ItemGUI getDefaultPaginationButtonBuilder(HBPaginationButtonType type, HBMenu inventory) {

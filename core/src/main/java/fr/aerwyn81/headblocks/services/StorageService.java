@@ -228,7 +228,7 @@ public class StorageService {
             instructions.add(Requests.CREATE_TABLE_HEADS + ";");
         }
 
-        ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = database.getHeads();
+        ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = database.getTableHeads();
         for (AbstractMap.SimpleEntry<String, Boolean> head : heads) {
             instructions.add("INSERT INTO hb_heads (hUUID, hExist) VALUES ('" + head.getKey() +
                     "', " + (head.getValue() ? 1 : 0) + ");");
@@ -245,7 +245,7 @@ public class StorageService {
             instructions.add(Requests.CREATE_TABLE_PLAYERHEADS + ";");
         }
 
-        ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = database.getPlayerHeads();
+        ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = database.getTablePlayerHeads();
         for (AbstractMap.SimpleEntry<String, String> pHead : playerHeads) {
             instructions.add("INSERT INTO hb_playerHeads (pUUID, hUUID) VALUES ('" + pHead.getKey() +
                     "', '" + pHead.getValue() + "');");
@@ -262,7 +262,7 @@ public class StorageService {
             instructions.add(Requests.CREATE_TABLE_PLAYERS + ";");
         }
 
-        ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getPlayers();
+        ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getTablePlayers();
         for (AbstractMap.SimpleEntry<String, String> player : players) {
             instructions.add("INSERT INTO hb_players (pUUID, pName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "');");
         }
@@ -279,5 +279,9 @@ public class StorageService {
 
     public static String getHeadTexture(UUID headUuid) throws InternalException {
         return database.getHeadTexture(headUuid);
+    }
+
+    public static ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException  {
+        return database.getPlayers(headUuid);
     }
 }

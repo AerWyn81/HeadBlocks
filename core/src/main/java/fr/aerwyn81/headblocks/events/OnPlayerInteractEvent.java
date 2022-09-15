@@ -127,6 +127,16 @@ public class OnPlayerInteractEvent implements Listener {
                 }
             }
 
+            if (headLocation.getHitCount() != -1) {
+                var players = StorageService.getPlayers(headLocation.getUuid());
+
+                if (players.size() == headLocation.getHitCount()) {
+                    player.sendMessage(LanguageService.getMessage("Messages.HitClickMax")
+                            .replaceAll("%count%", headLocation.getDisplayedHitCount()));
+                    return;
+                }
+            }
+
             // Save player click in storage
             StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
         } catch (InternalException ex) {

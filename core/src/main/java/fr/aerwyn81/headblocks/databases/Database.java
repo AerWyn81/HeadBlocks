@@ -44,13 +44,15 @@ public interface Database {
 
     void upsertTableVersion() throws InternalException;
 
-    ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getHeads() throws InternalException;
+    ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException;
 
-    ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayerHeads() throws InternalException;
+    ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayerHeads() throws InternalException;
 
-    ArrayList<AbstractMap.SimpleEntry<String, String>> getPlayers() throws InternalException;
+    ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayers() throws InternalException;
 
     void addColumnHeadTexture() throws InternalException;
 
     String getHeadTexture(UUID headUuid) throws InternalException;
+
+    ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException;
 }
