@@ -114,6 +114,19 @@ public class OnPlayerInteractEvent implements Listener {
                 return;
             }
 
+            // Check head order
+            if (headLocation.getOrderIndex() != -1) {
+                var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId());
+
+                if (HeadService.getChargedHeadLocations().stream()
+                        .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
+                        .anyMatch(h -> h.getOrderIndex() >= headLocation.getOrderIndex())) {
+                    player.sendMessage(LanguageService.getMessage("Messages.OrderClickError")
+                            .replaceAll("%name%", headLocation.getDisplayedName()));
+                    return;
+                }
+            }
+
             // Save player click in storage
             StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
         } catch (InternalException ex) {

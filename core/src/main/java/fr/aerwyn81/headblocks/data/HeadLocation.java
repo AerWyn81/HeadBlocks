@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.data;
 
 import fr.aerwyn81.headblocks.data.reward.Reward;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -50,6 +51,13 @@ public class HeadLocation {
         return name;
     }
 
+    public String getDisplayedName() {
+        if (name.isEmpty())
+            return MessageUtils.colorize("&cUnnamed");
+
+        return name;
+    }
+
     public UUID getUuid() {
         return headUUID;
     }
@@ -64,6 +72,14 @@ public class HeadLocation {
 
     public int getOrderIndex() {
         return orderIndex;
+    }
+
+    public String getDisplayedOrderIndex() {
+        if (orderIndex == -1) {
+            return MessageUtils.colorize("&7No order");
+        }
+
+        return String.valueOf(orderIndex);
     }
 
     public void setOrderIndex(int orderIndex) {
@@ -136,7 +152,7 @@ public class HeadLocation {
             section.createSection("locations." + hUUID + ".rewards");
 
             for (Reward reward : rewards) {
-                reward.serialize(section.getConfigurationSection("locations." + hUUID + ".rewards"));
+                //todo
             }
         }
     }

@@ -8,52 +8,49 @@ import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class GuiService {
 
-    private static HashMap<String, ItemBuilder> headItemCache;
-    private static HashMap<UUID, String> headsTextureCache;
+    private static HashMap<UUID, ItemBuilder> headItemCache;
 
     public static void initialize() {
         if (headItemCache == null) {
             headItemCache = new HashMap<>();
-            headsTextureCache = new HashMap<>();
         } else {
             headItemCache.clear();
-            headsTextureCache.clear();
         }
     }
 
     private static ItemBuilder getHeadItemStackFromCache(HeadLocation headLocation) {
-        if (!headsTextureCache.containsKey(headLocation.getUuid())) {
+        var headUuid = headLocation.getUuid();
+
+        if (!headItemCache.containsKey(headUuid)) {
             String texture;
             try {
-                texture = StorageService.getHeadTexture(headLocation.getUuid());
+                texture = StorageService.getHeadTexture(headUuid);
             } catch (InternalException e) {
                 texture = "";
             }
 
-            headsTextureCache.put(headLocation.getUuid(), texture);
-        }
-
-        var texture = headsTextureCache.get(headLocation.getUuid());
-        if (!headItemCache.containsKey(texture)) {
             var headItem = HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), texture);
-            headItemCache.put(texture, new ItemBuilder(headItem)
-                    .setName(headLocation.getUuid().toString()));
+
+            headItemCache.put(headUuid, new ItemBuilder(headItem)
+                    .setName(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.OrderItemName")
+                            .replaceAll("%headName%", headLocation.getDisplayedName()), headLocation.getLocation())));
         }
 
-        return headItemCache.get(texture);
+        return headItemCache.get(headLocation.getUuid());
     }
 
     public static void openOptionsGui(Player p) {
@@ -61,26 +58,28 @@ public class GuiService {
 
         //Ordering, Removing, Per-head actions, One-time global head click
 
-        var orderItemGui = new ItemGUI(new ItemBuilder(Material.HOPPER)
-                .setName("Order")
-                .setLore("Lore")
+        optionsMenu.setItem(0, 12, new ItemGUI(new ItemBuilder(Material.HOPPER)
+                .setName(LanguageService.getMessage("Gui.OrderName"))
+                .setLore(LanguageService.getMessages("Gui.OrderLore"))
                 .toItemStack(), true)
-                .addOnClickEvent(e -> openOrderGui((Player) e.getWhoClicked()));
-        optionsMenu.setItem(0, 12, orderItemGui);
+                .addOnClickEvent(e -> openOrderGui((Player) e.getWhoClicked())));
 
-        var oneTimeItemGui = new ItemGUI(new ItemBuilder(Material.CLOCK)
+        optionsMenu.setItem(0, 13, new ItemGUI(new ItemBuilder(Material.CLOCK)
                 .setName("OneTime")
                 .setLore("Lore")
                 .toItemStack(), true)
-                .addOnClickEvent(event -> {});
-        optionsMenu.setItem(0, 13, oneTimeItemGui);
+                .addOnClickEvent(event -> {}));
 
-        var rewardsItemGui = new ItemGUI(new ItemBuilder(Material.DIAMOND)
+        optionsMenu.setItem(0, 14,  new ItemGUI(new ItemBuilder(Material.DIAMOND)
                 .setName("Rewards")
                 .setLore("Lore")
                 .toItemStack(), true)
-                .addOnClickEvent(event -> {});
-        optionsMenu.setItem(0, 14, rewardsItemGui);
+                .addOnClickEvent(event -> {}));
+
+        int[] borders = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 9,  10, 11, 15, 16, 17 };
+        IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
+                index -> optionsMenu.setItem(0, borders[index], new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack()))
+        );
 
         p.openInventory(optionsMenu.getInventory());
     }
@@ -90,29 +89,40 @@ public class GuiService {
 
         List<HeadLocation> headLocations = HeadService.getHeadLocations()
                 .stream()
-                .sorted(Comparator.comparingInt(HeadLocation::getOrderIndex))
+                .sorted(((o1, o2) -> o2.getOrderIndex() - o1.getOrderIndex()))
                 .collect(Collectors.toList());
 
-        for (int i = 0; i < headLocations.size(); i++) {
-            HeadLocation headLocation = headLocations.get(i);
+        if (headLocations.size() == 0) {
+            orderMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
+                    .setName(LanguageService.getMessage("Gui.NoHeads"))
+                    .toItemStack(), true)
+                    .addOnClickEvent(event -> {}));
+        } else {
+            for (int i = 0; i < headLocations.size(); i++) {
+                HeadLocation headLocation = headLocations.get(i);
 
-            var orderItemGui = new ItemGUI(getHeadItemStackFromCache(headLocation)
-                    .setLore(" " + headLocation.getOrderIndex()).toItemStack(), true)
-                    .addOnClickEvent(event -> {
-                        if (event.getClick() == ClickType.LEFT) {
-                            if (headLocation.getOrderIndex() != -1) {
-                                headLocation.setOrderIndex(headLocation.getOrderIndex() - 1);
+                var orderItemGui = new ItemGUI(getHeadItemStackFromCache(headLocation)
+                        .setLore(LanguageService.getMessages("Gui.OrderItemLore").stream().map(s ->
+                                        s.replaceAll("%position%", headLocation.getDisplayedOrderIndex()))
+                                .collect(Collectors.toList())).toItemStack(), true)
+                        .addOnClickEvent(event -> {
+                            if (event.getClick() == ClickType.LEFT) {
+                                if (headLocation.getOrderIndex() != -1) {
+                                    headLocation.setOrderIndex(headLocation.getOrderIndex() - 1);
+                                    HeadService.saveHeadInConfig(headLocation);
+                                }
+                            } else if (event.getClick() == ClickType.RIGHT) {
+                                if (headLocation.getOrderIndex() != headLocations.size() + 1) {
+                                    headLocation.setOrderIndex(headLocation.getOrderIndex() + 1);
+                                    HeadService.saveHeadInConfig(headLocation);
+                                }
                             }
-                        } else if (event.getClick() == ClickType.RIGHT) {
-                            if (headLocation.getOrderIndex() != headLocations.size() + 1) {
-                                headLocation.setOrderIndex(headLocation.getOrderIndex() + 1);
-                            }
-                        }
 
-                        openOrderGui((Player) event.getWhoClicked());
-                    });
+                            openOrderGui((Player) event.getWhoClicked());
+                        });
 
-            orderMenu.addItem(i, orderItemGui);
+                orderMenu.addItem(i, orderItemGui);
+            }
         }
 
         p.openInventory(orderMenu.getInventory());

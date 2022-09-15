@@ -124,11 +124,15 @@ public class HeadService {
         }
 
         var headLocation = new HeadLocation("", uniqueUuid, location);
-        headLocation.saveInConfig(config);
-        saveConfig();
+        saveHeadInConfig(headLocation);
 
         headLocations.add(headLocation);
         return uniqueUuid;
+    }
+
+    public static void saveHeadInConfig(HeadLocation headLocation) {
+        headLocation.saveInConfig(config);
+        saveConfig();
     }
 
     public static void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
@@ -268,8 +272,7 @@ public class HeadService {
         var indexOfOld = headLocations.indexOf(headLocation);
 
         headLocation.setLocation(newBlock.getLocation());
-        headLocation.saveInConfig(config);
-        saveConfig();
+        saveHeadInConfig(headLocation);
 
         headLocations.set(indexOfOld, headLocation);
 

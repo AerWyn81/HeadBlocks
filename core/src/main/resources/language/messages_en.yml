@@ -53,6 +53,7 @@ Messages:
   TargetBlockMoved: "%prefix% &aThe HeadBlock has been correctly moved at &e%world%&a, &e%x%&a, &e%y%&a, &e%z%"
   PluginReloading: "%prefix% &cPlease wait, the plugin is reloading..."
   TargetBlockNotHead: "%prefix% &cTargeted block is not a HeadBlock"
+  OrderClickError: "%prefix% &cAnother head need to be found before this one &7(%name%&7)"
   MeCommand:
     - ""
     - "&aNumber of heads collected: &e%current%&7/&e%max%"
@@ -84,8 +85,8 @@ Chat:
   PageFooter: " &8[ &e%pageNumber%&7/&e%totalPage% &8] "
 
 Gui:
-  TitleOptions: "&8HeadBlocks &7- &cOptions"
-  TitleOrder: "&8HeadBlocks &7- &3Order"
+  TitleOptions: "&8HeadBlocks &7- &c&lOptions"
+  TitleOrder: "&8HeadBlocks &7- &3&lOrder"
   PreviousPage: "&cPrevious page"
   NextPage: "&aNext page"
   Close: "&cClose"
@@ -100,6 +101,23 @@ Gui:
   Next: "&aNext page"
   NextLore:
     - "&7Next to page %page%"
+  NoHeads: "&cNo heads yet"
+  OrderName: "&7Set up &8- &6&lOrder"
+  OrderLore:
+    - ""
+    - "&e&lINFO:"
+    - "&7 This interface allows you to configure"
+    - "&7 the click order on the heads"
+  OrderItemName: "&6%headName% &7(%world%, %y%, %y%, %z%)"
+  OrderItemLore:
+    - ""
+    - "&e&lINFO:"
+    - "&7 Define the click order of this head"
+    - ""
+    - "&c&lLEFT CLICK&8: &7Decrease order position"
+    - "&a&lRIGHT CLICK&8: &7Increase order position"
+    - ""
+    - "&7Current position: &e%position%"
 
 Help:
   LineTop: "&7--------------------[ &e&lHelp &7]--------------------"
