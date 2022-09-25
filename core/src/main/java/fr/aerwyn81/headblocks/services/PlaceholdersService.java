@@ -29,6 +29,14 @@ public class PlaceholdersService {
         return MessageUtils.centerMessage(message);
     }
 
+    public static String[] parse(Player player, List<String> messages) {
+        List<String> msgs = new ArrayList<>();
+
+        messages.forEach(message -> msgs.add(parse(player.getName(), player.getUniqueId(), message)));
+
+        return msgs.toArray(new String[0]);
+    }
+
     public static String parseInternal(String pName, UUID pUuid, String message) {
         String progress;
         int current;
@@ -60,13 +68,5 @@ public class PlaceholdersService {
         }
 
         return MessageUtils.colorize(message);
-    }
-
-    public static String[] parse(Player player, List<String> messages) {
-        List<String> msgs = new ArrayList<>();
-
-        messages.forEach(message -> msgs.add(parse(player.getName(), player.getUniqueId(), message)));
-
-        return msgs.toArray(new String[0]);
     }
 }

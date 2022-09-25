@@ -52,14 +52,14 @@ public class KeyBuilder implements Cloneable {
         return builder.length() == 0;
     }
 
-    //Checks to see if the full key path represented by this instance is a sub-key of the key parameter
-    public boolean isSubKeyOf(String parentKey) {
-        return isSubKeyOf(parentKey, builder.toString(), separator);
-    }
-
     //Checks to see if subKey is a sub-key of the key path this instance represents
     public boolean isSubKey(String subKey) {
         return isSubKeyOf(builder.toString(), subKey, separator);
+    }
+
+    //Checks to see if the full key path represented by this instance is a sub-key of the key parameter
+    public boolean isSubKeyOf(String parentKey) {
+        return isSubKeyOf(parentKey, builder.toString(), separator);
     }
 
     public static boolean isSubKeyOf(String parentKey, String subKey, char separator) {

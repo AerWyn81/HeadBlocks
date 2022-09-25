@@ -192,7 +192,8 @@ public class OnPlayerInteractEvent implements Listener {
                 playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).size();
             } catch (InternalException ex) {
                 player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));                return;
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));
+                return;
             }
 
             if (!RewardService.currentIsContainedInTiered(playerHeads)) {
