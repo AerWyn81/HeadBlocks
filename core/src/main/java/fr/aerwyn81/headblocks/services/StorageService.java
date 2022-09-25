@@ -196,8 +196,8 @@ public class StorageService {
         return database.getAllPlayers();
     }
 
-    public static Map<String, Integer> getTopPlayers(int limit) throws InternalException {
-        return database.getTopPlayers(limit);
+    public static Map<String, Integer> getTopPlayers() throws InternalException {
+        return database.getTopPlayers();
     }
 
     public static void updatePlayerName(UUID playerUuid, String playerName) throws InternalException {

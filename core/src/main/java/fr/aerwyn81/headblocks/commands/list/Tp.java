@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 @HBAnnotations(command = "tp", permission = "headblocks.tp", isPlayerCommand = true, isVisible = false)
 public class Tp implements Cmd {
+
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         Player player = (Player) sender;

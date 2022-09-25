@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ItemBuilder {
+public class ItemBuilder implements Cloneable {
     private final ItemStack is;
 
     /**
@@ -31,21 +31,15 @@ public class ItemBuilder {
     }
 
     /**
-     * Clone ItemBuilder
-     *
-     * @return cloned instance {@link ItemBuilder}
-     */
-    public ItemBuilder clone() {
-        return new ItemBuilder(is);
-    }
-
-    /**
      * Set the name of the item
      *
      * @param name name
      */
     public ItemBuilder setName(String name) {
         ItemMeta im = is.getItemMeta();
+        if (im == null)
+            return this;
+
         im.setDisplayName(name);
         is.setItemMeta(im);
 
@@ -71,6 +65,9 @@ public class ItemBuilder {
      */
     public ItemBuilder addEnchant(Enchantment ench, int level) {
         ItemMeta im = is.getItemMeta();
+        if (im == null)
+            return this;
+
         im.addEnchant(ench, level, true);
         is.setItemMeta(im);
         return this;
@@ -93,6 +90,9 @@ public class ItemBuilder {
      */
     public ItemBuilder setLore(String... lore) {
         ItemMeta im = is.getItemMeta();
+        if (im == null)
+            return this;
+
         im.setLore(Arrays.asList(lore));
         is.setItemMeta(im);
         return this;
@@ -105,6 +105,9 @@ public class ItemBuilder {
      */
     public ItemBuilder setLore(List<String> lore) {
         ItemMeta im = is.getItemMeta();
+        if (im == null)
+            return this;
+
         im.setLore(lore);
         is.setItemMeta(im);
         return this;
@@ -117,5 +120,10 @@ public class ItemBuilder {
      */
     public ItemStack toItemStack() {
         return is;
+    }
+
+    @Override
+    public ItemBuilder clone() throws CloneNotSupportedException {
+        return (ItemBuilder) super.clone();
     }
 }

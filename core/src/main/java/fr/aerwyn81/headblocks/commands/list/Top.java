@@ -10,10 +10,9 @@ import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.apache.commons.lang.math.NumberUtils;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -22,27 +21,14 @@ import java.util.Map;
 
 @HBAnnotations(command = "top", permission = "headblocks.use")
 public class Top implements Cmd {
+
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        int limit;
-        if (args.length == 1) {
-            limit = 10;
-        } else if (NumberUtils.isDigits(args[args.length - 1])) {
-            try {
-                limit = NumberUtils.createInteger(args[args.length - 1]);
-            } catch (NumberFormatException exception) {
-                limit = 10;
-            }
-            if (limit <= 0) {
-                limit = 10;
-            }
-        } else {
-            limit = 10;
-        }
+        ChatPageUtils cpu = new ChatPageUtils(sender).currentPage(args);
 
         ArrayList<Map.Entry<String, Integer>> top;
         try {
-            top = new ArrayList<>(StorageService.getTopPlayers(limit).entrySet());
+            top = new ArrayList<>(StorageService.getTopPlayers().entrySet());
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving top players from the storage: " + ex.getMessage()));
@@ -54,9 +40,7 @@ public class Top implements Cmd {
             return true;
         }
 
-        ChatPageUtils cpu = new ChatPageUtils(sender)
-                .entriesCount(top.size())
-                .currentPage(args);
+        cpu.entriesCount(top.size());
 
         String message = LanguageService.getMessage("Chat.TopTitle");
         if (sender instanceof Player) {
@@ -80,7 +64,7 @@ public class Top implements Cmd {
 
                 if (PlayerUtils.hasPermission(sender, "headblocks.admin")) {
                     msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + currentScore.getKey()));
-                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.LineTop")).create()));
+                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.LineTop"))));
                 }
 
                 cpu.addLine(msg);

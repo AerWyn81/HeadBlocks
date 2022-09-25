@@ -13,6 +13,10 @@ import java.util.List;
 public class FireworkUtils {
 
     public static void launchFirework(Location loc, boolean isFlickering, boolean isColorsRandom, List<Color> colors, boolean isFadeColorsRandom, List<Color> fadeColors, int power, boolean isWalled) {
+        if (loc.getWorld() == null) {
+            return;
+        }
+
         Firework firework = (Firework) loc.getWorld().spawnEntity(loc.add(0.5, isWalled ? 0.5 : 0, 0.5), EntityType.FIREWORK);
         FireworkMeta fMeta = firework.getFireworkMeta();
 

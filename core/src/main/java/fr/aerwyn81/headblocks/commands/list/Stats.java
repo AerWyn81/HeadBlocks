@@ -12,9 +12,9 @@ import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 @HBAnnotations(command = "stats", permission = "headblocks.admin")
 public class Stats implements Cmd {
+
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         Player player;
@@ -92,25 +93,28 @@ public class Stats implements Cmd {
 
             if (sender instanceof Player) {
                 TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + uuid));
-                msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
+                msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
 
                 TextComponent own;
                 if (playerHeads.stream().anyMatch(s -> s.getUuid() == uuid)) {
                     own = new TextComponent(LanguageService.getMessage("Chat.Box.Own"));
-                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.Own")).create()));
+                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Own"))));
                 } else {
                     own = new TextComponent(LanguageService.getMessage("Chat.Box.NotOwn"));
-                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.NotOwn")).create()));
+                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.NotOwn"))));
                 }
 
                 TextComponent tp = new TextComponent(LanguageService.getMessage("Chat.Box.Teleport"));
-                tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb tp " + location.getWorld().getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
-                tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.Teleport")).create()));
+
+                if (location.getWorld() != null) {
+                    tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb tp " + location.getWorld().getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
+                }
+                tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Teleport"))));
 
                 TextComponent space = new TextComponent(" ");
                 cpu.addLine(own, space, tp, space, msg, space);
             } else {
-                sender.sendMessage((playerHeads.stream().anyMatch(s -> s.equals(uuid)) ?
+                sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getUuid().equals(uuid)) ?
                                 LanguageService.getMessage("Chat.Box.Own") : LanguageService.getMessage("Chat.Box.NotOwn")) + " " +
                                 MessageUtils.colorize("&6" + uuid));
             }

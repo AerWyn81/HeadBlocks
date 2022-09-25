@@ -2,7 +2,11 @@ package fr.aerwyn81.headblocks.utils.chat;
 
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
-import net.md_5.bungee.api.chat.*;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -49,18 +53,18 @@ public class ChatPageUtils  {
 
     public ChatPageUtils entriesCount(int size) {
         this.size = size;
+
+        totalPage = (size / pageHeight) + (size % pageHeight == 0 ? 0 : 1);
+        pageNumber = (totalPage < pageNumber) ? totalPage : Math.max(pageNumber, 1);
         return this;
     }
 
     public ChatPageUtils currentPage(String[] args) {
-        totalPage = (size / pageHeight) + (size % pageHeight == 0 ? 0 : 1);
-
         if (args.length == 1) {
             pageNumber = 1;
         } else if (NumberUtils.isDigits(args[args.length - 1])) {
             try {
                 pageNumber = NumberUtils.createInteger(args[args.length - 1]);
-                pageNumber = (totalPage < pageNumber) ? totalPage : Math.max(pageNumber, 1);
             } catch (NumberFormatException exception) {
                 pageNumber = 1;
             }
@@ -69,6 +73,10 @@ public class ChatPageUtils  {
             }
         } else {
             pageNumber = 1;
+        }
+
+        if (totalPage != 0) {
+            pageNumber = Math.min(totalPage, pageNumber);
         }
 
         return this;
@@ -99,11 +107,11 @@ public class ChatPageUtils  {
             if (!isConsoleSender && command != null && size > pageHeight) {
                 TextComponent c1 = new TextComponent(MessageUtils.colorize(LanguageService.getMessage("Chat.PreviousPage")));
                 c1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb " + command + " " + (pageNumber - 1)));
-                c1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.PreviousPage")).create()));
+                c1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.PreviousPage"))));
 
                 TextComponent c2 = new TextComponent(MessageUtils.colorize(LanguageService.getMessage("Chat.NextPage")));
                 c2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb " + command + " " + (pageNumber + 1)));
-                c2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.NextPage")).create()));
+                c2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.NextPage"))));
 
                 player.spigot().sendMessage(c1, new TextComponent(LanguageService.getMessage("Chat.PageFooter").replaceAll("%pageNumber%", String.valueOf(pageNumber)).replaceAll("%totalPage%", String.valueOf(totalPage))), c2);
             }

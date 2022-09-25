@@ -252,7 +252,12 @@ public class ConfigService {
             return tieredRewards;
         }
 
-        for (String level : config.getConfigurationSection("tieredRewards").getKeys(false)) {
+        var tieredSection = config.getConfigurationSection("tieredRewards");
+        if (tieredSection == null) {
+            return tieredRewards;
+        }
+
+        for (String level : tieredSection.getKeys(false)) {
             try {
                 List<String> messages = new ArrayList<>();
                 if (config.contains("tieredRewards." + level + ".messages")) {

@@ -16,6 +16,7 @@ import java.util.UUID;
 
 @HBAnnotations(command = "resetall", permission = "headblocks.admin")
 public class ResetAll implements Cmd {
+
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         List<UUID> allPlayers;

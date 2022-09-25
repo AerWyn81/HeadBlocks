@@ -34,7 +34,7 @@ public interface Database {
 
     ArrayList<UUID> getAllPlayers() throws InternalException;
 
-    Map<String, Integer> getTopPlayers(int limit) throws InternalException;
+    Map<String, Integer> getTopPlayers() throws InternalException;
 
     boolean hasPlayerRenamed(UUID pUUID, String playerName) throws InternalException;
 

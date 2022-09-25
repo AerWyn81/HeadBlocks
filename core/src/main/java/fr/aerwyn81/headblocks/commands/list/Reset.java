@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 @HBAnnotations(command = "reset", permission = "headblocks.admin", args = {"player"})
 public class Reset implements Cmd {
+
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         Player pTemp = Bukkit.getOfflinePlayer(args[1]).getPlayer();

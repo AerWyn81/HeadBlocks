@@ -8,9 +8,9 @@ import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -50,15 +50,19 @@ public class List implements Cmd {
                 if (sender instanceof Player) {
                     String hover = MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), headLocation.getLocation());
 
-                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
+                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
 
                     TextComponent del = new TextComponent(LanguageService.getMessage("Chat.Box.Remove"));
                     del.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb remove " + headLocation.getUuid()));
-                    del.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.Remove")).create()));
+                    del.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Remove"))));
 
                     TextComponent tp = new TextComponent(LanguageService.getMessage("Chat.Box.Teleport"));
-                    tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb tp " + headLocation.getLocation().getWorld().getName() + " " + (headLocation.getLocation().getX() + 0.5) + " " + (headLocation.getLocation().getY() + 1) + " " + (headLocation.getLocation().getZ() + 0.5 + " 0.0 90.0")));
-                    tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(LanguageService.getMessage("Chat.Hover.Teleport")).create()));
+
+                    if (headLocation.getLocation().getWorld() != null) {
+                        tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb tp " + headLocation.getLocation().getWorld().getName() + " " + (headLocation.getLocation().getX() + 0.5) + " " + (headLocation.getLocation().getY() + 1) + " " + (headLocation.getLocation().getZ() + 0.5 + " 0.0 90.0")));
+                    }
+
+                    tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Teleport"))));
 
                     cpu.addLine(del, space, tp, space, msg, space);
                 } else {
@@ -69,7 +73,7 @@ public class List implements Cmd {
                     String hover = MessageUtils.colorize(LanguageService.getMessage("Chat.LineWorldNotFound")
                             .replaceAll("%world%", headLocation.getConfigWorldName()));
 
-                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
+                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
                     cpu.addLine(msg, space);
                 } else {
                     sender.sendMessage(MessageUtils.colorize("&c&o" + headLocation.getUuid()));

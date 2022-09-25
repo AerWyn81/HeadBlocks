@@ -8,7 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface HBAnnotations {
-
     String command();
     String permission() default "";
     boolean isPlayerCommand() default false;

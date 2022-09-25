@@ -77,7 +77,7 @@ Chat:
     NotOwn: "&7| &8[&c✘&8]"
   StatsTitleLine: "&7---------[ &eData of &6%player% &8» &6%headCount%&8/&6%max% &eheads &7]---------"
   LineTitle: "&7----------------[ &6&lH&e&lead&6&lB&e&llocks&7 ]---------------"
-  TopTitle: "&7-----------[ &6&lH&e&lead&6&lB&e&llocks&7 &7- &6&6&lL&eeaderboard &7]-----------"
+  TopTitle: "&7---------[ &6&lH&e&lead&6&lB&e&llocks&7 &7- &6&6&lL&eeaderboard &7]---------"
   LineTop: "&6%pos% &7- &e%player% &8(&7%count%&8)"
   LineCoordinate: "&6World&8: &e%world% &8[&6X&8: &e%x%&8, &6Y&8: &e%y%&8, &6Z&8: &e%z%&8]"
   LineWorldNotFound: "&cWorld &7%world% &cnot found"

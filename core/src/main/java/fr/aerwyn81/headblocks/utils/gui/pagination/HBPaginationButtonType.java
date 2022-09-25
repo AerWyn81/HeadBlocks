@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.utils.gui.pagination;
 
 /**
  * All credits of this code go to @SamJakob (SpiGUI)
- * https://github.com/SamJakob/SpiGUI
+ * <a href="https://github.com/SamJakob/SpiGUI">...</a>
  */
 public enum HBPaginationButtonType {
 

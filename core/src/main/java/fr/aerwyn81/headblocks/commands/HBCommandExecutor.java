@@ -54,7 +54,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command c, String s, String[] args) {
-        if (args.length <= 0) {
+        if (args.length == 0) {
             sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return false;
         }
@@ -76,9 +76,9 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
             return false;
         }
 
-        String[] argsWithoutCmd = Arrays.copyOfRange(args, 1, args.length);
+        int argsWithoutCmd = Arrays.copyOfRange(args, 1, args.length).length;
 
-        if (argsWithoutCmd.length < command.getArgs().length) {
+        if (argsWithoutCmd < command.getArgs().length) {
             sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return false;
         }

@@ -267,17 +267,14 @@ public final class MySQL implements Database {
     /**
      * Retrieve top players with a limit
      *
-     * @param limit int limit
      * @return list of player name with head count
      * @throws InternalException SQL Exception
      */
     @Override
-    public Map<String, Integer> getTopPlayers(int limit) throws InternalException {
+    public Map<String, Integer> getTopPlayers() throws InternalException {
         Map<String, Integer> top = new LinkedHashMap<>();
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.TOP_PLAYERS)) {
-            ps.setInt(1, limit);
-
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 top.put(rs.getString("pName"), rs.getInt("hCount"));

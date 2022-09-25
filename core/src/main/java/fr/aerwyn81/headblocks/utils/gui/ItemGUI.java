@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 
 /**
  * All credits of this code go to @SamJakob (SpiGUI)
- * https://github.com/SamJakob/SpiGUI
+ * <a href="https://github.com/SamJakob/SpiGUI">...</a>
  */
 public class ItemGUI {
     private Consumer<InventoryClickEvent> onClickEvent;
