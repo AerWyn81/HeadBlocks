@@ -56,7 +56,7 @@ public class HeadLocation {
         if (name.isEmpty())
             return LanguageService.getMessage("Gui.Unnamed");
 
-        return name;
+        return MessageUtils.colorize(name);
     }
 
     public UUID getUuid() {
