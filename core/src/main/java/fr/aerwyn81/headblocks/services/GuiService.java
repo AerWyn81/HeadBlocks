@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -82,12 +83,12 @@ public class GuiService {
         p.openInventory(optionsMenu.getInventory());
     }
 
-    private static void openOrderGui(Player p) {
+    public static void openOrderGui(Player p) {
         HBMenu orderMenu = new HBMenu(HeadBlocks.getInstance(), LanguageService.getMessage("Gui.TitleOrder"), true, 5);
 
         List<HeadLocation> headLocations = HeadService.getHeadLocations()
                 .stream()
-                .sorted(((o1, o2) -> o2.getOrderIndex() - o1.getOrderIndex()))
+                .sorted((Comparator.comparingInt(HeadLocation::getOrderIndex)))
                 .collect(Collectors.toList());
 
         if (headLocations.size() == 0) {
@@ -127,7 +128,7 @@ public class GuiService {
         p.openInventory(orderMenu.getInventory());
     }
 
-    private static void openClickCounterGui(Player p) {
+    public static void openClickCounterGui(Player p) {
         HBMenu clickCounterMenu = new HBMenu(HeadBlocks.getInstance(), LanguageService.getMessage("Gui.TitleClickCounter"), true, 5);
 
         List<HeadLocation> headLocations = HeadService.getHeadLocations()

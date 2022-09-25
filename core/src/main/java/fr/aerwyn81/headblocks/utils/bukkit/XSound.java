@@ -1775,17 +1775,6 @@ public enum XSound {
 	}
 
 	/**
-	 * Plays a normal sound to an entity.
-	 *
-	 * @param entity the entity to play the sound to.
-	 *
-	 * @since 1.0.0
-	 */
-	public void play(Entity entity) {
-		play(entity, DEFAULT_VOLUME, DEFAULT_PITCH);
-	}
-
-	/**
 	 * Plays a sound to an entity with the given volume and pitch.
 	 *
 	 * @param entity the entity to play the sound to.

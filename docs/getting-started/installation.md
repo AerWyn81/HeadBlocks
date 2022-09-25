@@ -3,9 +3,9 @@
 ## Prerequisites
 
 HeadBlock can be used on any Minecraft server that requires Spigot, Paper or any other type of Minecraft server except
-Vanilla from version **1.16** to **1.19+**.  
+Vanilla from version **1.17** to **1.19+**.  
 
-If you want to use HeadBlocks in version **below 1.16**, you can use HeadBlocks versionUtils 1.6.x. Theses versions will not receive new features but will be updated to fix issues.
+If you want to use HeadBlocks in version **below 1.17**, you can use HeadBlocks versionUtils 1.6.x. Theses versions will not receive new features but will be updated to fix issues.
 
 **HeadBlocks can be downloaded on [Spigot](https://www.spigotmc.org/resources/headblocks.97630/)**
 

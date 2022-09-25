@@ -80,6 +80,6 @@ public class Top implements Cmd {
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return null;
+        return new ArrayList<>();
     }
 }

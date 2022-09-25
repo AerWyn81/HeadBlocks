@@ -7,18 +7,31 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 @HBAnnotations(command = "options", permission = "headblocks.admin", isPlayerCommand = true)
 public class Options implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
+        if (args.length > 1) {
+            switch (args[1])
+            {
+                case "order":
+                    GuiService.openOrderGui((Player) sender);
+                    return true;
+                case "counter":
+                    GuiService.openClickCounterGui((Player) sender);
+                    return true;
+            }
+        }
+
         GuiService.openOptionsGui((Player) sender);
         return true;
     }
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return new ArrayList<>();
+        return args.length == 2 ? new ArrayList<>(Arrays.asList("order", "counter")) : new ArrayList<>();
     }
 }
