@@ -170,15 +170,17 @@ public final class MySQL implements Database {
      * Retrieve heads for a player
      *
      * @param pUUID player UUID
+     * @param pName player Name
      * @return list of heads UUID
      * @throws InternalException SQL Exception
      */
     @Override
-    public ArrayList<UUID> getHeadsPlayer(UUID pUUID) throws InternalException {
+    public ArrayList<UUID> getHeadsPlayer(UUID pUUID, String pName) throws InternalException {
         ArrayList<UUID> heads = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.PLAYER_HEADS)) {
             ps.setString(1, pUUID.toString());
+            ps.setString(2, pName);
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -490,5 +492,22 @@ public final class MySQL implements Database {
         }
 
         return players;
+    }
+
+    @Override
+    public UUID getPlayer(String pName) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_PLAYER)) {
+            ps.setString(1, pName);
+
+            ResultSet rs  = ps.executeQuery();
+
+            if (rs.next()) {
+                return UUID.fromString(rs.getString("pName"));
+            }
+
+            return null;
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
     }
 }

@@ -24,7 +24,7 @@ public interface Database {
 
     boolean containsPlayer(UUID pUUID) throws InternalException;
 
-    ArrayList<UUID> getHeadsPlayer(UUID pUUID) throws InternalException;
+    ArrayList<UUID> getHeadsPlayer(UUID pUUID, String pName) throws InternalException;
 
     void addHead(UUID pUUID, UUID hUUID) throws InternalException;
 
@@ -55,4 +55,6 @@ public interface Database {
     String getHeadTexture(UUID headUuid) throws InternalException;
 
     ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException;
+
+    UUID getPlayer(String pName) throws InternalException;
 }

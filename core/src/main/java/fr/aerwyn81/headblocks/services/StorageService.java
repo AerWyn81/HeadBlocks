@@ -121,7 +121,7 @@ public class StorageService {
                     updatePlayerName(pUuid, playerName);
                 }
 
-                for (UUID hUuid : database.getHeadsPlayer(pUuid)) {
+                for (UUID hUuid : database.getHeadsPlayer(pUuid, playerName)) {
                     storage.addHead(pUuid, hUuid);
                 }
             } else {
@@ -178,8 +178,8 @@ public class StorageService {
         return storage.containsPlayer(playerUuid) || database.containsPlayer(playerUuid);
     }
 
-    public static List<UUID> getHeadsPlayer(UUID playerUuid) throws InternalException {
-        return database.getHeadsPlayer(playerUuid);
+    public static List<UUID> getHeadsPlayer(UUID playerUuid, String pName) throws InternalException {
+        return database.getHeadsPlayer(playerUuid, pName);
     }
 
     public static void resetPlayer(UUID playerUuid) throws InternalException {
@@ -281,7 +281,11 @@ public class StorageService {
         return database.getHeadTexture(headUuid);
     }
 
-    public static ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException  {
+    public static ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
         return database.getPlayers(headUuid);
+    }
+
+    public static UUID getPlayer(String pName) throws InternalException {
+        return database.getPlayer(pName);
     }
 }

@@ -4,38 +4,39 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.PlaceholderAPI;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class PlaceholdersService {
 
-    public static String parse(Player player, String message) {
-        message = message.replaceAll("%player%", player.getName())
+    public static String parse(String pName, UUID pUuid, String message) {
+        message = message.replaceAll("%player%", pName)
                 .replaceAll("%prefix%", LanguageService.getPrefix());
 
         if (message.contains("%progress%") || message.contains("%current%") || message.contains("%max%") || message.contains("%left%")) {
-            message = parseInternal(player, message);
+            message = parseInternal(pName, pUuid, message);
         } else {
             message = MessageUtils.colorize(message);
         }
 
         if (HeadBlocks.isPlaceholderApiActive)
-            return PlaceholderAPI.setPlaceholders(player, message);
+            return PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(pUuid), message);
 
         return MessageUtils.centerMessage(message);
     }
 
-    public static String parseInternal(Player player, String message) {
+    public static String parseInternal(String pName, UUID pUuid, String message) {
         String progress;
         int current;
 
         try {
-            current = StorageService.getHeadsPlayer(player.getUniqueId()).size();
+            current = StorageService.getHeadsPlayer(pUuid, pName).size();
         } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + pName + ": " + ex.getMessage()));
             return MessageUtils.colorize(message);
         }
 
@@ -64,7 +65,7 @@ public class PlaceholdersService {
     public static String[] parse(Player player, List<String> messages) {
         List<String> msgs = new ArrayList<>();
 
-        messages.forEach(message -> msgs.add(parse(player, message)));
+        messages.forEach(message -> msgs.add(parse(player.getName(), player.getUniqueId(), message)));
 
         return msgs.toArray(new String[0]);
     }

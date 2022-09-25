@@ -27,7 +27,7 @@ public class Me implements Cmd {
         List<String> messages = LanguageService.getMessages("Messages.MeCommand");
         if (messages.size() != 0) {
             LanguageService.getMessages("Messages.MeCommand").forEach(msg ->
-                    player.sendMessage(PlaceholdersService.parse(player, msg)));
+                    player.sendMessage(PlaceholdersService.parse(player.getName(), player.getUniqueId(), msg)));
         }
 
         return true;

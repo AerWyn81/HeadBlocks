@@ -28,7 +28,7 @@ public class GlobalTask extends BukkitRunnable {
         for (HeadLocation headLocation : HeadService.getChargedHeadLocations()) {
             Location location = headLocation.getLocation();
 
-            if (!location.getChunk().isLoaded())
+            if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
                 continue;
 
             List<Player> players = playersInRange(location);
@@ -78,6 +78,7 @@ public class GlobalTask extends BukkitRunnable {
         if (loc.getWorld() == null) {
             return new ArrayList<>();
         }
+
         return loc.getWorld().getNearbyEntities(loc, range, range, range).stream().filter(Player.class::isInstance).map(e -> (Player) e).collect(Collectors.toList());
     }
 }

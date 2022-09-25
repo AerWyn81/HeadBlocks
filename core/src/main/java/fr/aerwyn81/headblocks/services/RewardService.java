@@ -20,8 +20,7 @@ public class RewardService {
 
         TieredReward tieredReward = ConfigService.getTieredRewards().stream().filter(t -> {
             try {
-                return t.getLevel() ==
-                        StorageService.getHeadsPlayer(p.getUniqueId()).size();
+                return t.getLevel() == StorageService.getHeadsPlayer(p.getUniqueId(), p.getName()).size();
             } catch (InternalException ex) {
                 p.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + p.getName() + ": " + ex.getMessage()));
@@ -41,12 +40,12 @@ public class RewardService {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             List<String> commands = tieredReward.getCommands();
             commands.forEach(command ->
-                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p, command)));
+                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), command)));
 
             List<String> broadcastMessages = tieredReward.getBroadcastMessages();
             if (broadcastMessages.size() != 0) {
                 for (String message : broadcastMessages) {
-                    plugin.getServer().broadcastMessage(PlaceholdersService.parse(p, message));
+                    plugin.getServer().broadcastMessage(PlaceholdersService.parse(p.getName(), p.getUniqueId(), message));
                 }
             }
         }, 1L);

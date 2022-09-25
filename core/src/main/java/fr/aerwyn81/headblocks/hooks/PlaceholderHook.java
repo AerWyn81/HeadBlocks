@@ -52,7 +52,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         if (identifier.equals("current") || identifier.equals("left")) {
             int current;
             try {
-                current = StorageService.getHeadsPlayer(player.getUniqueId()).size();
+                current = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).size();
             } catch (InternalException ex) {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
                 return "-1";

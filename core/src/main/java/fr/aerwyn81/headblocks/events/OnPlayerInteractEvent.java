@@ -79,7 +79,7 @@ public class OnPlayerInteractEvent implements Listener {
         try {
             // Check if the player has already clicked on the head
             if (StorageService.hasHead(player.getUniqueId(), headLocation.getUuid())) {
-                String message = PlaceholdersService.parse(player, LanguageService.getMessage("Messages.AlreadyClaimHead"));
+                String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), LanguageService.getMessage("Messages.AlreadyClaimHead"));
 
                 if (!message.trim().isEmpty()) {
                     player.sendMessage(message);
@@ -116,7 +116,7 @@ public class OnPlayerInteractEvent implements Listener {
 
             // Check head order
             if (headLocation.getOrderIndex() != -1) {
-                var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId());
+                var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
 
                 if (HeadService.getChargedHeadLocations().stream()
                         .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
@@ -163,8 +163,8 @@ public class OnPlayerInteractEvent implements Listener {
 
         // Send title to the player if enabled
         if (ConfigService.isHeadClickTitleEnabled()) {
-            String firstLine = PlaceholdersService.parse(player, ConfigService.getHeadClickTitleFirstLine());
-            String subTitle = PlaceholdersService.parse(player, ConfigService.getHeadClickTitleSubTitle());
+            String firstLine = PlaceholdersService.parse(player.getName(), player.getUniqueId(), ConfigService.getHeadClickTitleFirstLine());
+            String subTitle = PlaceholdersService.parse(player.getName(), player.getUniqueId(), ConfigService.getHeadClickTitleSubTitle());
             int fadeIn = ConfigService.getHeadClickTitleFadeIn();
             int stay = ConfigService.getHeadClickTitleStay();
             int fadeOut = ConfigService.getHeadClickTitleFadeOut();
@@ -189,7 +189,7 @@ public class OnPlayerInteractEvent implements Listener {
         if (!ConfigService.isPreventCommandsOnTieredRewardsLevel()) {
             int playerHeads;
             try {
-                playerHeads = StorageService.getHeadsPlayer(player.getUniqueId()).size();
+                playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).size();
             } catch (InternalException ex) {
                 player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));                return;
@@ -200,7 +200,7 @@ public class OnPlayerInteractEvent implements Listener {
                 if (ConfigService.getHeadClickCommands().size() != 0) {
                     var plugin = HeadBlocks.getInstance();
                     Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
-                            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(player, reward))), 1L);
+                            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(player.getName(), player.getUniqueId(), reward))), 1L);
                 }
             }
         }
