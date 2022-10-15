@@ -9,6 +9,8 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
+import java.util.UUID;
+
 public class PlaceholderHook extends PlaceholderExpansion {
 
     @Override
@@ -67,6 +69,16 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         if (identifier.equals("max")) {
             return "" +  HeadService.getChargedHeadLocations().size();
+        }
+
+        // %headblocks_hasHead_uuid%
+        if (identifier.contains("hasHead")) {
+            var str = identifier.split("_");
+
+            try {
+                var hUUID = UUID.fromString(str[str.length - 1]);
+                return String.valueOf(StorageService.hasHead(player.getUniqueId(), hUUID));
+            } catch (Exception ignored) { }
         }
 
         return null;
