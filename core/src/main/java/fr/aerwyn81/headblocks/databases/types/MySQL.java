@@ -510,4 +510,14 @@ public final class MySQL implements Database {
             throw new InternalException(ex);
         }
     }
+
+    @Override
+    public boolean isDefaultTablesExist() {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.IS_TABLE_PLAYERS_EXIST_MYSQL)) {
+            ResultSet rs  = ps.executeQuery();
+            return rs.next();
+        } catch (Exception ex) {
+            return false;
+        }
+    }
 }

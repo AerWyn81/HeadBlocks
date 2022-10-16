@@ -1,13 +1,16 @@
 package fr.aerwyn81.headblocks.databases;
 
 public class Requests {
+    public static final String IS_TABLE_PLAYERS_EXIST_SQLITE = "SELECT name FROM sqlite_master WHERE type='table' AND name='hb_players'";
+    public static final String IS_TABLE_PLAYERS_EXIST_MYSQL = "SELECT TABLE_NAME FROM information_schema.tables WHERE table_name = 'hb_players' LIMIT 1";
+
     public static final String CREATE_TABLE_PLAYERS = "CREATE TABLE IF NOT EXISTS hb_players (`pId` INTEGER PRIMARY KEY AUTOINCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL)";
     public static final String CREATE_TABLE_PLAYERS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_players (`pId` INTEGER PRIMARY KEY AUTO_INCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL)";
     public static final String GET_TABLE_PLAYER = "SELECT pUUID, pName FROM hb_players";
 
     public static final String CREATE_TABLE_HEADS = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(36))";
     public static final String CONTAINS_TABLE_HEADS = "SELECT * FROM hb_heads LIMIT 1";
-    public static final String CREATE_TABLE_HEADS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)))";
+    public static final String CREATE_TABLE_HEADS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(36))";
     public static final String GET_TABLE_HEADS = "SELECT hUUID, hExist FROM hb_heads";
 
     public static final String CREATE_TABLE_PLAYERHEADS = "CREATE TABLE IF NOT EXISTS hb_playerHeads (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES hb_heads(hUUID) ON DELETE CASCADE, PRIMARY KEY(pUUID, hUUID))";

@@ -57,4 +57,6 @@ public interface Database {
     ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException;
 
     UUID getPlayer(String pName) throws InternalException;
+
+    boolean isDefaultTablesExist();
 }

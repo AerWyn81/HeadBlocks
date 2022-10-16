@@ -510,4 +510,14 @@ public class SQLite implements Database {
             throw new InternalException(ex);
         }
     }
+
+    @Override
+    public boolean isDefaultTablesExist() {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.IS_TABLE_PLAYERS_EXIST_SQLITE)) {
+            ps.executeQuery();
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
 }

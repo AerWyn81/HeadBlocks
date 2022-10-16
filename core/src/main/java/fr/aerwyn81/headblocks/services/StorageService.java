@@ -67,7 +67,7 @@ public class StorageService {
         try {
             database.open();
 
-            if (isFileExist) {
+            if (database instanceof MySQL || isFileExist) {
                 verifyDatabaseMigration();
             }
 
@@ -91,6 +91,10 @@ public class StorageService {
     }
 
     private static void verifyDatabaseMigration() throws InternalException {
+        if (!database.isDefaultTablesExist()) {
+            return;
+        }
+
         int dbVersion = database.checkVersion();
 
         if (dbVersion == -1) {
