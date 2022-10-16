@@ -29,7 +29,7 @@ public class Requests {
 
     public static final String CREATE_HEAD = "INSERT INTO hb_heads (hUUID, hExist, hTexture) VALUES (?, true, ?)";
 
-    public static final String SAVE_PLAYERHEAD = "INSERT INTO hb_playerheads (pUUID, hUUID) VALUES (?, ?)";
+    public static final String SAVE_PLAYERHEAD = "INSERT INTO hb_playerHeads (pUUID, hUUID) VALUES (?, ?)";
 
     public static final String CONTAINS_PLAYER = "SELECT 1 FROM hb_players WHERE pUUID = ?";
 
@@ -62,7 +62,7 @@ public class Requests {
 
     public static final String MIG_IMPORT_OLD_HEADS = "INSERT INTO hb_heads(`hUUID`, `hExist`) SELECT DISTINCT hUUID, True FROM hb_players_old";
 
-    public static final String MIG_REMAP = "INSERT INTO hb_playerheads SELECT * FROM hb_players_old";
+    public static final String MIG_REMAP = "INSERT INTO hb_playerHeads SELECT * FROM hb_players_old";
 
     public static final String MIG_DEL_ARCHIVE = "DROP TABLE hb_players_old";
 
@@ -71,7 +71,7 @@ public class Requests {
 
     public static final String GET_HEAD_TEXTURE = "SELECT hTexture FROM hb_heads WHERE hUUID = (?)";
 
-    public static final String GET_PLAYERS_BY_HEAD = "SELECT pUUID FROM hb_playerheads WHERE hUUID = (?)";
+    public static final String GET_PLAYERS_BY_HEAD = "SELECT pUUID FROM hb_playerHeads WHERE hUUID = (?)";
 
     public static final String GET_PLAYER = "SELECT pUUID FROM hb_players WHERE pName = (?)";
 }
