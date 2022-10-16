@@ -42,7 +42,7 @@ public interface Database {
 
     void migrate() throws InternalException;
 
-    void upsertTableVersion() throws InternalException;
+    void upsertTableVersion(int oldVersion) throws InternalException;
 
     ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException;
 
@@ -59,4 +59,6 @@ public interface Database {
     UUID getPlayer(String pName) throws InternalException;
 
     boolean isDefaultTablesExist();
+
+    void insertVersion() throws InternalException;
 }

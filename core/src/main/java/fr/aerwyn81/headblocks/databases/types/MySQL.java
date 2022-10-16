@@ -81,6 +81,10 @@ public final class MySQL implements Database {
 
             statement = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
             statement.execute();
+
+            if (checkVersion() == 0) {
+                insertVersion();
+            }
         } catch (SQLException ex) {
             throw new InternalException(ex);
         }
@@ -105,7 +109,10 @@ public final class MySQL implements Database {
         try {
             statement = connection.prepareStatement(Requests.GET_TABLE_VERSION);
             ResultSet rs = statement.executeQuery();
-            return rs.getInt("current");
+            if (rs.next()) {
+                return rs.getInt("current");
+            } else
+                return 0;
         } catch (Exception ex) {
             return 0;
         }
@@ -380,19 +387,32 @@ public final class MySQL implements Database {
         }
     }
 
-    /**
-     * Add table version
-     * @throws InternalException SQL Exception
-     */
-    @Override
-    public void upsertTableVersion() throws InternalException {
+    public void insertVersion() throws InternalException {
         try {
             PreparedStatement ps = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
             ps.execute();
 
             ps = connection.prepareStatement(Requests.INSERT_VERSION);
             ps.setInt(1, version);
-            ps.setInt(2, version - 1);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
+     * Add table version
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public void upsertTableVersion(int oldVersion) throws InternalException {
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
+            ps.execute();
+
+            ps = connection.prepareStatement(Requests.UPSERT_VERSION);
+            ps.setInt(1, version);
+            ps.setInt(2, oldVersion);
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -452,8 +472,19 @@ public final class MySQL implements Database {
 
     @Override
     public void addColumnHeadTexture() throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.ADD_COLUMN_HEAD_TEXTURE)) {
-            ps.executeUpdate();
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.TABLE_HEADS_COLUMNS_MYSQL);
+            ResultSet rs = ps.executeQuery();
+
+            int colCount = 0;
+            if (rs.next()) {
+                colCount = rs.getInt("count");
+            }
+
+            if (colCount == 3) {
+                ps = connection.prepareStatement(Requests.ADD_COLUMN_HEAD_TEXTURE_MYSQL);
+                ps.executeUpdate();
+            }
         } catch (Exception ex) {
             throw new InternalException(ex);
         }

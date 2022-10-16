@@ -2,15 +2,17 @@ package fr.aerwyn81.headblocks.databases;
 
 public class Requests {
     public static final String IS_TABLE_PLAYERS_EXIST_SQLITE = "SELECT name FROM sqlite_master WHERE type='table' AND name='hb_players'";
+    public static final String TABLE_HEADS_COLUMNS_SQLITE = "SELECT COUNT(*) AS count FROM pragma_table_info('hb_heads');";
     public static final String IS_TABLE_PLAYERS_EXIST_MYSQL = "SELECT TABLE_NAME FROM information_schema.tables WHERE table_name = 'hb_players' LIMIT 1";
+    public static final String TABLE_HEADS_COLUMNS_MYSQL = "SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = 'hb_heads'";
 
     public static final String CREATE_TABLE_PLAYERS = "CREATE TABLE IF NOT EXISTS hb_players (`pId` INTEGER PRIMARY KEY AUTOINCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL)";
     public static final String CREATE_TABLE_PLAYERS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_players (`pId` INTEGER PRIMARY KEY AUTO_INCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL)";
     public static final String GET_TABLE_PLAYER = "SELECT pUUID, pName FROM hb_players";
 
-    public static final String CREATE_TABLE_HEADS = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(36))";
+    public static final String CREATE_TABLE_HEADS = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255))";
     public static final String CONTAINS_TABLE_HEADS = "SELECT * FROM hb_heads LIMIT 1";
-    public static final String CREATE_TABLE_HEADS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(36))";
+    public static final String CREATE_TABLE_HEADS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255))";
     public static final String GET_TABLE_HEADS = "SELECT hUUID, hExist FROM hb_heads";
 
     public static final String CREATE_TABLE_PLAYERHEADS = "CREATE TABLE IF NOT EXISTS hb_playerHeads (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES hb_heads(hUUID) ON DELETE CASCADE, PRIMARY KEY(pUUID, hUUID))";
@@ -19,7 +21,8 @@ public class Requests {
 
     public static final String CREATE_TABLE_VERSION = "CREATE TABLE IF NOT EXISTS hb_version (`current` INTEGER)";
     public static final String GET_TABLE_VERSION = "SELECT current FROM hb_version";
-    public static final String INSERT_VERSION = "UPDATE hb_version SET current = (?) WHERE current = (?)";
+    public static final String INSERT_VERSION = "INSERT INTO hb_version VALUES (?)";
+    public static final String UPSERT_VERSION = "UPDATE hb_version SET current = (?) WHERE current = (?)";
 
     public static final String UPDATE_PLAYER = "INSERT OR REPLACE INTO hb_players (pUUID, pName) VALUES (?, ?)";
     public static final String UPDATE_PLAYER_MYSQL = "REPLACE INTO hb_players (pUUID, pName) VALUES (?, ?)";
@@ -63,7 +66,8 @@ public class Requests {
 
     public static final String MIG_DEL_ARCHIVE = "DROP TABLE hb_players_old";
 
-    public static final String ADD_COLUMN_HEAD_TEXTURE = "ALTER TABLE hb_heads ADD COLUMN hTexture VARCHAR(300) DEFAULT ''";
+    public static final String ADD_COLUMN_HEAD_TEXTURE_MYSQL = "ALTER TABLE hb_heads ADD COLUMN IF NOT EXISTS hTexture VARCHAR(255) DEFAULT ''";
+    public static final String ADD_COLUMN_HEAD_TEXTURE_SQLITE = "ALTER TABLE hb_heads ADD COLUMN hTexture VARCHAR(255) DEFAULT ''";
 
     public static final String GET_HEAD_TEXTURE = "SELECT hTexture FROM hb_heads WHERE hUUID = (?)";
 

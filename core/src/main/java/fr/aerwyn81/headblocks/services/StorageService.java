@@ -41,7 +41,7 @@ public class StorageService {
             storage = new Memory();
         }
 
-        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + "\\headblocks.db";
+        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + "/headblocks.db";
         var isFileExist = new File(pathToDatabase).exists();
 
         if (ConfigService.isDatabaseEnabled()) {
@@ -99,15 +99,21 @@ public class StorageService {
 
         if (dbVersion == -1) {
             database.migrate();
-            dbVersion = database.checkVersion();
+            dbVersion = database.version;
+        }
+
+        if (dbVersion == 0) {
+            database.insertVersion();
+            database.addColumnHeadTexture();
+            dbVersion = database.version;
         }
 
         if (dbVersion == 1) {
             database.addColumnHeadTexture();
         }
 
-        if (dbVersion > 0) {
-            database.upsertTableVersion();
+        if (dbVersion != database.version) {
+            database.upsertTableVersion(dbVersion);
         }
     }
 
@@ -276,7 +282,7 @@ public class StorageService {
         // Table : hb_version
         instructions.add("DROP TABLE IF EXISTS hb_version;");
         instructions.add(Requests.CREATE_TABLE_VERSION + ";");
-        instructions.add(Requests.INSERT_VERSION.replaceAll("\\?", String.valueOf(database.version)) + ";");
+        instructions.add(Requests.UPSERT_VERSION.replaceAll("\\?", String.valueOf(database.version)) + ";");
 
         return instructions;
     }
