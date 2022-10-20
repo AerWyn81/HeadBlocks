@@ -41,7 +41,7 @@ public class StorageService {
             storage = new Memory();
         }
 
-        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + "/headblocks.db";
+        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + File.separator + "headblocks.db";
         var isFileExist = new File(pathToDatabase).exists();
 
         if (ConfigService.isDatabaseEnabled()) {
