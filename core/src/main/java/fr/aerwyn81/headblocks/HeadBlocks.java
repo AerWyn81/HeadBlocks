@@ -37,9 +37,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         try {
             Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception ignored) { }
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
 
