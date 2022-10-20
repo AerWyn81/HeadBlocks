@@ -35,6 +35,12 @@ public final class HeadBlocks extends JavaPlugin {
         instance = this;
         log = Bukkit.getConsoleSender();
 
+        try {
+            Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
 
         File configFile = new File(getDataFolder(), "config.yml");
