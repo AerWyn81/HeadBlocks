@@ -161,19 +161,19 @@ public class StorageService {
     }
 
     public static void close() {
-        if (storage == null || database == null) {
-            return;
-        }
-
         try {
-            storage.close();
+            if (storage != null) {
+                storage.close();
+            }
         } catch (InternalException ex) {
             storageError = true;
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to close the REDIS connection : " + ex.getMessage()));
         }
 
         try {
-            database.close();
+            if (database != null) {
+                database.close();
+            }
         } catch (InternalException ex) {
             storageError = true;
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to close the SQL connection : " + ex.getMessage()));
@@ -181,7 +181,7 @@ public class StorageService {
     }
 
     public static boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
-            return storage.hasHead(playerUuid, headUuid);
+        return storage.hasHead(playerUuid, headUuid);
     }
 
     public static void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
