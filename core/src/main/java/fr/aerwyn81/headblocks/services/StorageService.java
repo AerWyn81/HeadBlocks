@@ -58,6 +58,7 @@ public class StorageService {
 
         try {
             storage.init();
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&aRedis cache properly connected!"));
         } catch (InternalException ex) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to initialize the storage: " + ex.getMessage()));
             storageError = true;
@@ -160,6 +161,10 @@ public class StorageService {
     }
 
     public static void close() {
+        if (storage == null || database == null) {
+            return;
+        }
+
         try {
             storage.close();
         } catch (InternalException ex) {
@@ -176,7 +181,7 @@ public class StorageService {
     }
 
     public static boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
-        return storage.hasHead(playerUuid, headUuid);
+            return storage.hasHead(playerUuid, headUuid);
     }
 
     public static void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
