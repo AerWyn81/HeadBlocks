@@ -27,6 +27,7 @@ public class Reload implements Cmd {
         LanguageService.setLanguage(ConfigService.getLanguage());
         LanguageService.pushMessages();
 
+        HologramService.unload();
         StorageService.close();
 
         StorageService.initialize();
