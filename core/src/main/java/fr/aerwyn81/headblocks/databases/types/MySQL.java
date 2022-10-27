@@ -68,6 +68,10 @@ public final class MySQL implements Database {
      */
     @Override
     public void load() throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         PreparedStatement statement;
         try {
             statement = connection.prepareStatement(Requests.CREATE_TABLE_PLAYERS_MYSQL);
@@ -100,6 +104,10 @@ public final class MySQL implements Database {
         PreparedStatement statement;
 
         try {
+            if (!checkAlive()) {
+                open();
+            }
+
             statement = connection.prepareStatement(Requests.CONTAINS_TABLE_HEADS);
             statement.executeQuery();
         } catch (Exception ex) {
@@ -127,11 +135,15 @@ public final class MySQL implements Database {
      */
     @Override
     public void updatePlayerInfo(UUID pUUID, String pName) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.UPDATE_PLAYER_MYSQL)) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, pName);
             ps.executeUpdate();
-        } catch (Exception ex) {
+        } catch (SQLException ex) {
             throw new InternalException(ex);
         }
     }
@@ -145,6 +157,10 @@ public final class MySQL implements Database {
      */
     @Override
     public void createNewHead(UUID hUUID, String texture) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.CREATE_HEAD)) {
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
@@ -163,6 +179,10 @@ public final class MySQL implements Database {
      */
     @Override
     public boolean containsPlayer(UUID pUUID) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.CONTAINS_PLAYER)) {
             ps.setString(1, pUUID.toString());
             ResultSet rs = ps.executeQuery();
@@ -184,6 +204,10 @@ public final class MySQL implements Database {
     @Override
     public ArrayList<UUID> getHeadsPlayer(UUID pUUID, String pName) throws InternalException {
         ArrayList<UUID> heads = new ArrayList<>();
+
+        if (!checkAlive()) {
+            open();
+        }
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.PLAYER_HEADS)) {
             ps.setString(1, pUUID.toString());
@@ -209,6 +233,10 @@ public final class MySQL implements Database {
      */
     @Override
     public void addHead(UUID pUUID, UUID hUUID) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.SAVE_PLAYERHEAD)) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, hUUID.toString());
@@ -226,6 +254,10 @@ public final class MySQL implements Database {
      */
     @Override
     public void resetPlayer(UUID pUUID) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.RESET_PLAYER)) {
             ps.setString(1, pUUID.toString());
             ps.executeUpdate();
@@ -243,6 +275,10 @@ public final class MySQL implements Database {
      */
     @Override
     public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.DELETE_HEAD : Requests.REMOVE_HEAD)) {
             ps.setString(1, hUUID.toString());
             ps.executeUpdate();
@@ -260,6 +296,10 @@ public final class MySQL implements Database {
     @Override
     public ArrayList<UUID> getAllPlayers() throws InternalException {
         ArrayList<UUID> players = new ArrayList<>();
+
+        if (!checkAlive()) {
+            open();
+        }
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.ALL_PLAYERS)) {
             ResultSet rs = ps.executeQuery();
@@ -283,6 +323,10 @@ public final class MySQL implements Database {
     public Map<String, Integer> getTopPlayers() throws InternalException {
         Map<String, Integer> top = new LinkedHashMap<>();
 
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.TOP_PLAYERS)) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -304,6 +348,10 @@ public final class MySQL implements Database {
      */
     @Override
     public boolean hasPlayerRenamed(UUID pUUID, String pName) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.CHECK_PLAYER_NAME)) {
             ps.setString(1, pUUID.toString());
             ResultSet rs = ps.executeQuery();
@@ -326,6 +374,10 @@ public final class MySQL implements Database {
      */
     @Override
     public boolean isHeadExist(UUID hUUID) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.HEAD_EXIST)) {
             ps.setString(1, hUUID.toString());
             ResultSet rs = ps.executeQuery();
@@ -343,6 +395,10 @@ public final class MySQL implements Database {
     @Override
     public void migrate() throws InternalException {
         try {
+            if (!checkAlive()) {
+                open();
+            }
+
             // Create of the archive table
             PreparedStatement ps = connection.prepareStatement(Requests.MIG_ARCHIVE_TABLE);
             ps.executeUpdate();
@@ -388,6 +444,10 @@ public final class MySQL implements Database {
     }
 
     public void insertVersion() throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try {
             PreparedStatement ps = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
             ps.execute();
@@ -406,6 +466,10 @@ public final class MySQL implements Database {
      */
     @Override
     public void upsertTableVersion(int oldVersion) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try {
             PreparedStatement ps = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
             ps.execute();
@@ -422,6 +486,10 @@ public final class MySQL implements Database {
     @Override
     public ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = new ArrayList<>();
+
+        if (!checkAlive()) {
+            open();
+        }
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_HEADS)) {
             ResultSet rs = ps.executeQuery();
@@ -440,6 +508,10 @@ public final class MySQL implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayerHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_PLAYERHEADS)) {
             ResultSet rs = ps.executeQuery();
 
@@ -457,6 +529,10 @@ public final class MySQL implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayers() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_TABLE_PLAYER)) {
             ResultSet rs = ps.executeQuery();
 
@@ -472,6 +548,10 @@ public final class MySQL implements Database {
 
     @Override
     public void addColumnHeadTexture() throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try {
             PreparedStatement ps = connection.prepareStatement(Requests.TABLE_HEADS_COLUMNS_MYSQL);
             ResultSet rs = ps.executeQuery();
@@ -492,6 +572,10 @@ public final class MySQL implements Database {
 
     @Override
     public String getHeadTexture(UUID headUuid) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_HEAD_TEXTURE)) {
             ps.setString(1, headUuid.toString());
 
@@ -511,6 +595,10 @@ public final class MySQL implements Database {
     public ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
         var players = new ArrayList<UUID>();
 
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_PLAYERS_BY_HEAD)) {
             ps.setString(1, headUuid.toString());
             ResultSet rs = ps.executeQuery();
@@ -527,6 +615,10 @@ public final class MySQL implements Database {
 
     @Override
     public UUID getPlayer(String pName) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
         try (PreparedStatement ps = connection.prepareStatement(Requests.GET_PLAYER)) {
             ps.setString(1, pName);
 
@@ -544,10 +636,27 @@ public final class MySQL implements Database {
 
     @Override
     public boolean isDefaultTablesExist() {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.IS_TABLE_PLAYERS_EXIST_MYSQL)) {
+        try {
+            if (!checkAlive()) {
+                open();
+            }
+
+            PreparedStatement ps = connection.prepareStatement(Requests.IS_TABLE_PLAYERS_EXIST_MYSQL);
             ResultSet rs  = ps.executeQuery();
             return rs.next();
         } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private boolean checkAlive() {
+        if (connection == null) {
+            return false;
+        }
+
+        try {
+            return connection.isValid(0);
+        } catch (SQLException e) {
             return false;
         }
     }
