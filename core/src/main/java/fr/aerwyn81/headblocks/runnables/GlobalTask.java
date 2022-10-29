@@ -22,8 +22,13 @@ public class GlobalTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        if (HeadService.getChargedHeadLocations().isEmpty())
+        if (HeadService.getChargedHeadLocations().isEmpty()) {
             return;
+        }
+
+        if (!ConfigService.isHologramsEnabled() && !ConfigService.isParticlesEnabled()) {
+            return;
+        }
 
         for (HeadLocation headLocation : HeadService.getChargedHeadLocations()) {
             Location location = headLocation.getLocation();

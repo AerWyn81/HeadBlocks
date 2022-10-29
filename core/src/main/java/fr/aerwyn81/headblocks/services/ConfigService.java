@@ -213,6 +213,10 @@ public class ConfigService {
         return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
     }
 
+    public static boolean isParticlesEnabled() {
+        return isParticlesFoundEnabled() || isParticlesNotFoundEnabled();
+    }
+
     public static boolean isParticlesFoundEnabled() {
         return config.getBoolean("floatingParticles.found.enabled", true);
     }
