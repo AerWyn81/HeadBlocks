@@ -16,10 +16,10 @@ Minecraft native color:
 `&6&lH&e&lead&6&lB&e&llocks`
 
 Hexadecimal color:  
-`<SOLID:FFFF00>HeadBlocks`
+`\<SOLID:FFFF00\>HeadBlocks`
 
 Gradient:  
-`<GRADIENT:ff0000>HeadBlocks</GRADIENT:ffff00>`
+`\<GRADIENT:ff0000\>HeadBlocks</GRADIENT:ffff00>`
 
 Bonus Rainbow:  
 `<RAINBOW1>HeadBlocks</RAINBOW>`
