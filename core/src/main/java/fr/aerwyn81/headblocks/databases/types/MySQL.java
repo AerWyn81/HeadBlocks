@@ -625,7 +625,7 @@ public final class MySQL implements Database {
             ResultSet rs  = ps.executeQuery();
 
             if (rs.next()) {
-                return UUID.fromString(rs.getString("pName"));
+                return UUID.fromString(rs.getString("pUUID"));
             }
 
             return null;
