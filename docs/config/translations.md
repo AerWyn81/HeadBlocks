@@ -6,6 +6,29 @@ To add a translation, simply duplicate the `messages_en.yml` in language folder 
 the `_xx.yml` somewhere.  
 Make your translations and then in the [config.yml](config.md) file, add the previous `xx` in language section.
 
+### Colors
+
+HeadBlocks supports Minecraft legacy colors, hexadecimal and gradients thanks to [IridiumColorAPI](https://github.com/Iridium-Development/IridiumColorAPI).
+
+**How to:**
+
+Minecraft native color:  
+`&6&lH&e&lead&6&lB&e&llocks`
+
+Hexadecimal color:  
+`&lt;SOLID:FFFF00&gt;HeadBlocks`
+
+Gradient:  
+`&lt;GRADIENT:ff0000&gt;HeadBlocks&lt;/GRADIENT:ffff00&gt;`
+
+Bonus Rainbow:  
+`<RAINBOW1>HeadBlocks</RAINBOW>`
+
+Gradient saturation:  
+`<RAINBOW100>HeadBlocks</RAINBOW>`
+
+---
+
 ```
 Prefix: '&6&lH&e&lead&6&lB&e&llocks &7»&r'
 
