@@ -1,10 +1,7 @@
 package fr.aerwyn81.headblocks.utils.message.color;
 
 import com.google.common.collect.ImmutableMap;
-import fr.aerwyn81.headblocks.utils.message.color.patterns.GradientPattern;
-import fr.aerwyn81.headblocks.utils.message.color.patterns.Pattern;
-import fr.aerwyn81.headblocks.utils.message.color.patterns.RainbowPattern;
-import fr.aerwyn81.headblocks.utils.message.color.patterns.SolidPattern;
+import fr.aerwyn81.headblocks.utils.message.color.patterns.*;
 import net.md_5.bungee.api.ChatColor;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
@@ -65,7 +62,7 @@ public class IridiumColorAPI {
      *
      * @since 1.0.2
      */
-    private static final List<Pattern> PATTERNS = Arrays.asList(new GradientPattern(), new SolidPattern(), new RainbowPattern());
+    private static final List<Pattern> PATTERNS = Arrays.asList(new GradientPattern(), new SolidPattern(), new RainbowPattern(), new OldHBPattern());
 
     /**
      * Processes a string to add color to it.
