@@ -19,30 +19,23 @@ public class Reset implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        Player pTemp = Bukkit.getOfflinePlayer(args[1]).getPlayer();
-
-        if (pTemp == null) {
-            sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound")
-                    .replaceAll("%player%", args[1]));
-            return true;
-        }
-
         try {
-            if (!StorageService.containsPlayer(pTemp.getUniqueId())) {
-                sender.sendMessage(LanguageService.getMessage("Messages.NoHeadFound"));
+            var playerUUID = StorageService.getPlayer(args[1]);
+            if (playerUUID == null) {
+                sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound")
+                        .replaceAll("%player%", args[1]));
                 return true;
             }
 
-            StorageService.resetPlayer(pTemp.getUniqueId());
+            StorageService.resetPlayer(playerUUID);
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player " + pTemp.getName() + " from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player " + args[1] + " from the storage: " + ex.getMessage()));
             return true;
         }
 
         sender.sendMessage(LanguageService.getMessage("Messages.PlayerReset")
-                .replaceAll("%player%", pTemp.getName()));
-
+                .replaceAll("%player%", args[1]));
         return true;
     }
 
