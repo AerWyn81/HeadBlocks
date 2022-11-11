@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.bukkit;
 
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;

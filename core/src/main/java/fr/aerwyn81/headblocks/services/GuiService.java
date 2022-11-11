@@ -2,8 +2,8 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.utils.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;

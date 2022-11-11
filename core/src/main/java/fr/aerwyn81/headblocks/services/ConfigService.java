@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
-import fr.aerwyn81.headblocks.utils.ItemBuilder;
+import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Color;
 import org.bukkit.Material;

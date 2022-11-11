@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.utils;
+package fr.aerwyn81.headblocks.utils.internal;
 
 /*
  * This Metrics class was auto-generated and can be copied into your project if you are

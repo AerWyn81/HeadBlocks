@@ -20,6 +20,7 @@ Messages:
   StorageError: "%prefix% &cUne erreur est survenue avec le système de stockage. Vérifiez les logs console"
   ExportSuccess: "%prefix% &aLe fichier SQL d'export de la base de données &7(%fileName%) &a été généré avec succès dans le dossier du plugin"
   ExportError: "%prefix% &cUne erreur s'est produite lors de la création du fichier sql : "
+  ExportInProgress: "%prefix% &aGénération de l'export du script SQL en cours..."
   ReloadComplete: "%prefix% &aLa configuration a été rechargée avec succès"
   ReloadWithErrors: "%prefix% &cErreurs lors du rechargement, vérifiez vos logs console"
   InventoryFull: "%prefix% &cIl n'y a pas assez de place dans l'inventaire du joueur pour donner un HeadBlock"
