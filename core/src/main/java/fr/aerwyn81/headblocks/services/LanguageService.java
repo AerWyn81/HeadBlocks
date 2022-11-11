@@ -41,7 +41,13 @@ public class LanguageService {
 	}
 
 	public static String getMessage(String message) {
-		return MessageUtils.colorize(messages.get(message).toString().replaceAll("%prefix%", getPrefix()));
+		return MessageUtils.colorize(messages.get(message).toString()
+				.replaceAll("%prefix%", getPrefix()));
+	}
+
+	public static String getMessage(String message, String playerName) {
+		return getMessage(message)
+				.replaceAll("%player%", playerName);
 	}
 
 	public static List<String> getMessages(String message) {

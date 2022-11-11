@@ -54,9 +54,8 @@ public class Top implements Cmd {
             int pos = i + 1;
             Map.Entry<String, Integer> currentScore = top.get(i);
 
-            message = LanguageService.getMessage("Chat.LineTop")
+            message = LanguageService.getMessage("Chat.LineTop", currentScore.getKey())
                     .replaceAll("%pos%", String.valueOf(pos))
-                    .replaceAll("%player%", currentScore.getKey())
                     .replaceAll("%count%", String.valueOf(currentScore.getValue()));
 
             if (sender instanceof Player) {

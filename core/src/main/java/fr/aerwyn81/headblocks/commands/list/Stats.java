@@ -57,8 +57,7 @@ public class Stats implements Cmd {
         }
 
         if (playerUuid == null) {
-            sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound")
-                    .replaceAll("%player%", args[1]));
+            sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound", args[1]));
             return true;
         }
 

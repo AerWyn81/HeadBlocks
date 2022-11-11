@@ -22,8 +22,7 @@ public class Reset implements Cmd {
         try {
             var playerUUID = StorageService.getPlayer(args[1]);
             if (playerUUID == null) {
-                sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound")
-                        .replaceAll("%player%", args[1]));
+                sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound", args[1]));
                 return true;
             }
 
@@ -34,8 +33,7 @@ public class Reset implements Cmd {
             return true;
         }
 
-        sender.sendMessage(LanguageService.getMessage("Messages.PlayerReset")
-                .replaceAll("%player%", args[1]));
+        sender.sendMessage(LanguageService.getMessage("Messages.PlayerReset", args[1]));
         return true;
     }
 

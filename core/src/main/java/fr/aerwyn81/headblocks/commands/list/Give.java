@@ -27,8 +27,7 @@ public class Give implements Cmd {
             Player pTemp = Bukkit.getPlayer(args[1]);
 
             if (pTemp == null) {
-                player.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound")
-                        .replaceAll("%player%", args[1]));
+                player.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound", args[1]));
                 return true;
             }
 
@@ -118,6 +117,7 @@ public class Give implements Cmd {
         if (args.length == 2) {
             return Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
+                    .filter(p -> p.toLowerCase().startsWith(args[1]))
                     .collect(Collectors.toCollection(ArrayList::new));
         }
 

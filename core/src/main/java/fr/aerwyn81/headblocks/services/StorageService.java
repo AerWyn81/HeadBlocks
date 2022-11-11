@@ -123,7 +123,7 @@ public class StorageService {
         String playerName = player.getName();
 
         try {
-            boolean isExist = database.containsPlayer(pUuid);
+            boolean isExist = containsPlayer(pUuid);
 
             if (isExist) {
                 boolean hasRenamed = hasPlayerRenamed(pUuid, playerName);
@@ -149,7 +149,7 @@ public class StorageService {
         String playerName = player.getName();
 
         try {
-            boolean isExist = storage.containsPlayer(uuid);
+            boolean isExist = containsPlayer(uuid);
 
             if (isExist) {
                 storage.resetPlayer(uuid);
