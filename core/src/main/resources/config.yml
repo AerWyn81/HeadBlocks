@@ -41,6 +41,11 @@ progressBar:
   notCompletedColor: '&7'
   completedColor: '&a'
 
+# This section allows to manage tracks
+# If enabled, when placing a HeadBlock, a GUI will appear to select or create a new track
+tracks:
+  enabled: true
+
 # Interactions on head click
 headClick:
   # A multiline message send to the player

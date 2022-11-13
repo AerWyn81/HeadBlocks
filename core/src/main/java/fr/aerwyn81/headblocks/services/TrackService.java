@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.head.HBRace;
+import fr.aerwyn81.headblocks.data.head.HBTrack;
 import fr.aerwyn81.headblocks.managers.HeadManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -24,27 +24,27 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class RaceService {
-    private static HashMap<String, HBRace> races;
-    private static HashMap<String, File> raceFiles;
-    private static HashMap<String, YamlConfiguration> raceConfigs;
+public class TrackService {
+    private static HashMap<String, HBTrack> tracks;
+    private static HashMap<String, File> trackFiles;
+    private static HashMap<String, YamlConfiguration> trackConfigs;
 
     public static void initialize() {
-        races = new HashMap<>();
-        raceFiles = new HashMap<>();
-        raceConfigs = new HashMap<>();
+        tracks = new HashMap<>();
+        trackFiles = new HashMap<>();
+        trackConfigs = new HashMap<>();
 
-        File directory = new File(HeadBlocks.getInstance().getDataFolder(), "races");
+        File directory = new File(HeadBlocks.getInstance().getDataFolder(), "tracks");
         if (!directory.exists()) {
             directory.mkdir();
         }
 
         migrateOldLocations();
-        loadRaces();
+        loadTracks();
     }
 
-    public static boolean createRace(String id) {
-        File file = new File(HeadBlocks.getInstance().getDataFolder(), "races/" + id + ".yml");
+    public static boolean createTrack(String id) {
+        File file = new File(HeadBlocks.getInstance().getDataFolder(), "tracks/" + id + ".yml");
 
         if (!file.exists()) {
             try {
@@ -53,17 +53,17 @@ public class RaceService {
                     throw new InternalException("A file with the same id already exist. Should never append.");
                 }
 
-                raceFiles.put(id, file);
-                raceConfigs.put(id, YamlConfiguration.loadConfiguration(file));
+                trackFiles.put(id, file);
+                trackConfigs.put(id, YamlConfiguration.loadConfiguration(file));
 
                 try {
-                    StorageService.createRace(id);
+                    StorageService.createTrack(id);
                 } catch (Exception ex) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove race " + id + " from the storage: " + ex.getMessage()));
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove track " + id + " from the storage: " + ex.getMessage()));
                 }
 
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while creating race " + id + ": " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while creating track " + id + ": " + ex.getMessage()));
                 return false;
             }
         }
@@ -71,17 +71,17 @@ public class RaceService {
         return true;
     }
 
-    public static boolean removeRace(String id) {
-        if (raceFiles.containsKey(id) && raceConfigs.containsKey(id)) {
-            File file = raceFiles.get(id);
+    public static boolean removeTrack(String id) {
+        if (trackFiles.containsKey(id) && trackConfigs.containsKey(id)) {
+            File file = trackFiles.get(id);
             var isDeleted = file.delete();
-            raceFiles.remove(id);
-            raceConfigs.remove(id);
+            trackFiles.remove(id);
+            trackConfigs.remove(id);
 
             try {
-                StorageService.removeRace(id);
+                StorageService.removeTrack(id);
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove race " + id + " from the storage: " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove track " + id + " from the storage: " + ex.getMessage()));
             }
 
             return isDeleted;
@@ -92,22 +92,22 @@ public class RaceService {
 
     public static void saveConfig(String id) {
         try {
-            File file = raceFiles.get(id);
+            File file = trackFiles.get(id);
             if (file.exists()) {
-                raceConfigs.get(id).save(file);
+                trackConfigs.get(id).save(file);
             }
         } catch (IOException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while saving race in config: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while saving track in config: " + ex.getMessage()));
         }
     }
 
-    private static void loadRaces() {
-        races.clear();
-        raceFiles.clear();
-        raceConfigs.clear();
+    private static void loadTracks() {
+        tracks.clear();
+        trackFiles.clear();
+        trackConfigs.clear();
 
-        HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eLoading races:"));
-        File[] allFiles = new File(HeadBlocks.getInstance().getDataFolder(), "races").listFiles();
+        HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eLoading tracks:"));
+        File[] allFiles = new File(HeadBlocks.getInstance().getDataFolder(), "tracks").listFiles();
 
         if (allFiles == null || allFiles.length == 0) {
             return;
@@ -117,34 +117,34 @@ public class RaceService {
             String id = file.getName().toLowerCase().replace(".yml", "");
 
             YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-            String name = config.getString("race.name");
+            String name = config.getString("track.name");
 
             if (!Character.isDigit(id.charAt(0))) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cCannot load race " + name + " because filename must be a number."));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cCannot load track " + name + " because filename must be a number."));
                 continue;
             }
 
-            String description = config.getString("race.description");
+            String description = config.getString("track.description");
 
             ItemStack iconItem;
             try {
-                iconItem = new ItemStack(Material.valueOf(config.getString("race.icon", "PAPER")));
+                iconItem = new ItemStack(Material.valueOf(config.getString("track.icon", "PAPER")));
             } catch (Exception ex) {
                 iconItem = new ItemStack(Material.PAPER);
             }
 
-            var race = new HBRace(id, name, description, iconItem);
-            race.getHeadManager().loadHeadLocations(config);
+            var track = new HBTrack(id, name, description, iconItem);
+            track.getHeadManager().loadHeadLocations(config);
 
-            races.put(id, race);
-            raceFiles.put(id, file);
-            raceConfigs.put(id, config);
+            tracks.put(id, track);
+            trackFiles.put(id, file);
+            trackConfigs.put(id, config);
         }
 
-        if (races.size() == 0) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cNo race has been loaded!"));
+        if (tracks.size() == 0) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cNo track has been loaded!"));
         } else {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &e" + races.size() + " &araces has been loaded!"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &e" + tracks.size() + " &atracks has been loaded!"));
         }
     }
 
@@ -157,7 +157,7 @@ public class RaceService {
         HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eFound old HeadBlocks locations configuration. Starting migration..."));
 
         String id;
-        File[] allFiles = new File(HeadBlocks.getInstance().getDataFolder(), "races").listFiles();
+        File[] allFiles = new File(HeadBlocks.getInstance().getDataFolder(), "tracks").listFiles();
         if (allFiles == null) {
             id = "1";
         }
@@ -177,7 +177,7 @@ public class RaceService {
             }
         }
 
-        var fileCreated = createRace(id);
+        var fileCreated = createTrack(id);
         if (!fileCreated) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cCritical error, cannot to migrate the old HeadBlocks configuration. Please ask developer. Plugin disabling..."));
             Bukkit.getPluginManager().disablePlugin(HeadBlocks.getInstance());
@@ -185,54 +185,54 @@ public class RaceService {
 
         var config = YamlConfiguration.loadConfiguration(locationsFile);
 
-        var defaultRace = new HBRace(id, "Default", "", new ItemStack(Material.PAPER));
-        defaultRace.getHeadManager().loadHeadLocations(config);
-        defaultRace.saveRace();
+        var defaultTrack = new HBTrack(id, "Default", "", new ItemStack(Material.PAPER));
+        defaultTrack.getHeadManager().loadHeadLocations(config);
+        defaultTrack.saveTrack();
 
         locationsFile.renameTo(new File(HeadBlocks.getInstance().getDataFolder(), "locations.yml.backup"));
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eMigration successfully completed of " +
-                defaultRace.getHeadManager().getHeadLocations().size() + " locations in a default race."));
+                defaultTrack.getHeadManager().getHeadLocations().size() + " locations in a default track."));
     }
 
-    private static UUID addHead(String raceId, Location location, String texture) throws InternalException {
-        var headManager = getHeadManager(raceId);
+    private static UUID addHead(String trackId, Location location, String texture) throws InternalException {
+        var headManager = getHeadManager(trackId);
 
         if (headManager == null) {
-            throw new RuntimeException("Head cannot be add No race with id: " + raceId);
+            throw new RuntimeException("Head cannot be add No track with id: " + trackId);
         }
 
         return headManager.addHeadLocation(location, texture);
     }
 
-    private static void removeHead(String raceId, HeadLocation headLocation, boolean withDelete) throws InternalException {
-        var headManager = getHeadManager(raceId);
+    private static void removeHead(String trackId, HeadLocation headLocation, boolean withDelete) throws InternalException {
+        var headManager = getHeadManager(trackId);
 
         if (headManager == null) {
-            throw new RuntimeException("No race with id: " + raceId);
+            throw new RuntimeException("No track with id: " + trackId);
         }
 
         headManager.removeHeadLocation(headLocation, withDelete);
     }
 
-    public static HashMap<String, HBRace> getRaces() {
-        return races;
+    public static HashMap<String, HBTrack> getTracks() {
+        return tracks;
     }
 
-    public static boolean isRaceExists(String raceId) {
-        return races.containsKey(raceId);
+    public static boolean isTrackExists(String trackId) {
+        return tracks.containsKey(trackId);
     }
 
     public static FileConfiguration getConfig(String id) {
-        return raceConfigs.get(id);
+        return trackConfigs.get(id);
     }
 
-    public static HBRace getRaceById(String raceId) {
-        return races.get(raceId);
+    public static HBTrack getTrackById(String trackId) {
+        return tracks.get(trackId);
     }
 
-    public static ArrayList<HeadLocation> getHeads(String raceId, boolean onlyCharged) {
-        var headManager = getHeadManager(raceId);
+    public static ArrayList<HeadLocation> getHeads(String trackId, boolean onlyCharged) {
+        var headManager = getHeadManager(trackId);
 
         if (headManager == null) {
             return new ArrayList<>();
@@ -247,10 +247,10 @@ public class RaceService {
     }
 
     @Nullable
-    public static HeadManager getHeadManager(String raceId) {
-        if (!isRaceExists(raceId))
+    public static HeadManager getHeadManager(String trackId) {
+        if (!isTrackExists(trackId))
             return null;
 
-        return getRaceById(raceId).getHeadManager();
+        return getTrackById(trackId).getHeadManager();
     }
 }

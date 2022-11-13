@@ -144,22 +144,22 @@ public class HeadLocation {
     public void saveInConfig(FileConfiguration config) {
         var hUUID = headUUID.toString();
 
-        config.set("race.locations." + hUUID + ".name", name);
-        config.set("race.locations." + hUUID + ".location.x", location.getBlockX());
-        config.set("race.locations." + hUUID + ".location.y", location.getBlockY());
-        config.set("race.locations." + hUUID + ".location.z", location.getBlockZ());
-        config.set("race.locations." + hUUID + ".location.world", location.getWorld().getName());
+        config.set("track.locations." + hUUID + ".name", name);
+        config.set("track.locations." + hUUID + ".location.x", location.getBlockX());
+        config.set("track.locations." + hUUID + ".location.y", location.getBlockY());
+        config.set("track.locations." + hUUID + ".location.z", location.getBlockZ());
+        config.set("track.locations." + hUUID + ".location.world", location.getWorld().getName());
 
         if (hitCount != -1) {
-            config.set("race.locations." + hUUID + ".hitCount", hitCount);
+            config.set("track.locations." + hUUID + ".hitCount", hitCount);
         }
 
         if (orderIndex != -1) {
-            config.set("race.locations." + hUUID + ".orderIndex", orderIndex);
+            config.set("track.locations." + hUUID + ".orderIndex", orderIndex);
         }
 
         if (rewards.size() != 0) {
-            config.createSection("race.locations." + hUUID + ".rewards");
+            config.createSection("track.locations." + hUUID + ".rewards");
 
             for (Reward reward : rewards) {
                 //todo

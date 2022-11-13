@@ -5,5 +5,5 @@ import org.bukkit.NamespacedKey;
 
 public class GlobalConstants {
     public static NamespacedKey HB_KEY = new NamespacedKey(HeadBlocks.getInstance(), "HB_HEAD");
-    public static NamespacedKey HB_RACE = new NamespacedKey(HeadBlocks.getInstance(), "HB_RACE");
+    public static NamespacedKey HB_TRACK = new NamespacedKey(HeadBlocks.getInstance(), "HB_TRACK");
 }

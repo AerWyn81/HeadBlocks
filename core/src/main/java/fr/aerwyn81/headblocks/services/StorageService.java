@@ -304,11 +304,11 @@ public class StorageService {
         return database.getPlayer(pName);
     }
 
-    public static void removeRace(String id) {
-        //return database.removeRace(id);
+    public static void removeTrack(String id) {
+        //return database.removeTrack(id);
     }
 
-    public static void createRace(String id) {
-        //return database.createRace(id);
+    public static void createTrack(String id) {
+        //return database.createTrack(id);
     }
 }

@@ -1,18 +1,18 @@
 package fr.aerwyn81.headblocks.data.head;
 
 import fr.aerwyn81.headblocks.managers.HeadManager;
-import fr.aerwyn81.headblocks.services.RaceService;
+import fr.aerwyn81.headblocks.services.TrackService;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 
-public class HBRace {
+public class HBTrack {
     private final String id;
     private final String name;
     private final String description;
     private final ItemStack icon;
     private final HeadManager headManager;
 
-    public HBRace(String id, String name, String description, ItemStack icon) {
+    public HBTrack(String id, String name, String description, ItemStack icon) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -40,19 +40,19 @@ public class HBRace {
         return headManager;
     }
 
-    public void saveRace() {
-        FileConfiguration config = RaceService.getConfig(id);
+    public void saveTrack() {
+        FileConfiguration config = TrackService.getConfig(id);
         if (config == null) {
             return;
         }
 
-        config.set("race.name", name);
-        config.set("race.description", description);
-        config.set("race.icon", icon.getType().name());
+        config.set("track.name", name);
+        config.set("track.description", description);
+        config.set("track.icon", icon.getType().name());
 
         headManager.saveHeadLocations(config);
 
-        RaceService.saveConfig(id);
+        TrackService.saveConfig(id);
     }
 
 

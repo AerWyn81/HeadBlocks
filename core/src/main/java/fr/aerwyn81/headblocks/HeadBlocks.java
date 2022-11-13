@@ -85,7 +85,7 @@ public final class HeadBlocks extends JavaPlugin {
         StorageService.initialize();
         HologramService.initialize();
         HeadService.initialize();
-        RaceService.initialize();
+        TrackService.initialize();
         GuiService.initialize();
 
         this.globalTask = new GlobalTask();

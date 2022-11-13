@@ -34,7 +34,7 @@ public class HeadManager {
     }
 
     public void loadHeadLocations(YamlConfiguration config) {
-        var section = "race.locations";
+        var section = "track.locations";
         ConfigurationSection locations = config.getConfigurationSection(section);
 
         if (locations == null) {
