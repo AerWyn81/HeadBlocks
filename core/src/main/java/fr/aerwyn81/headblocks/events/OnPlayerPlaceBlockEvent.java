@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.HologramService;
 import fr.aerwyn81.headblocks.services.LanguageService;
@@ -9,9 +8,7 @@ import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -20,8 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
-
-import java.util.UUID;
 
 public class OnPlayerPlaceBlockEvent implements Listener {
 
@@ -54,11 +49,11 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         Location headLocation = headBlock.getLocation();
 
-        if (HeadService.getHeadAt(headLocation) != null) {
-            e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.HeadAlreadyExistHere"));
-            return;
-        }
+        //if (HeadService.getHeadAt(headLocation) != null) {
+        //    e.setCancelled(true);
+        //    player.sendMessage(LanguageService.getMessage("Messages.HeadAlreadyExistHere"));
+        //    return;
+        //}
 
         // Check if there is a storage issue
         if (StorageService.hasStorageError()) {
@@ -69,14 +64,14 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         var headTexture = HeadUtils.getHeadTexture(e.getItemInHand());
 
-        UUID headUuid;
-        try {
-            headUuid = HeadService.saveHeadLocation(headLocation, headTexture);
-        } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
-            return;
-        }
+        //UUID headUuid;
+        //try {
+        //    headUuid = HeadService.saveHeadLocation(headLocation, headTexture);
+        //} catch (InternalException ex) {
+        //    player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+        //    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
+        //    return;
+        //}
 
         HologramService.showNotFoundTo(player, headLocation);
 
@@ -84,7 +79,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
 
-        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
+        //Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {

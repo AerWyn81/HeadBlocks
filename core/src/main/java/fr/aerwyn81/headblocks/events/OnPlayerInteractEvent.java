@@ -54,7 +54,7 @@ public class OnPlayerInteractEvent implements Listener {
         Location clickedLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = HeadService.getHeadAt(clickedLocation);
+        HeadLocation headLocation = null; /*HeadService.getHeadAt(clickedLocation);*/
         if (headLocation == null) {
             return;
         }
@@ -115,17 +115,17 @@ public class OnPlayerInteractEvent implements Listener {
             }
 
             // Check head order
-            if (headLocation.getOrderIndex() != -1) {
-                var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
-
-                if (HeadService.getChargedHeadLocations().stream()
-                        .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
-                        .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
-                    player.sendMessage(LanguageService.getMessage("Messages.OrderClickError")
-                            .replaceAll("%name%", headLocation.getDisplayedName()));
-                    return;
-                }
-            }
+            //if (headLocation.getOrderIndex() != -1) {
+            //    var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
+//
+            //    if (HeadService.getChargedHeadLocations().stream()
+            //            .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
+            //            .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
+            //        player.sendMessage(LanguageService.getMessage("Messages.OrderClickError")
+            //                .replaceAll("%name%", headLocation.getDisplayedName()));
+            //        return;
+            //    }
+            //}
 
             if (headLocation.getHitCount() != -1) {
                 var players = StorageService.getPlayers(headLocation.getUuid());

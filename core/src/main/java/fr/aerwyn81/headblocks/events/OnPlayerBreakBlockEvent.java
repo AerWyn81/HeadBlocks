@@ -1,16 +1,10 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
-import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.services.ConfigService;
-import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -33,10 +27,10 @@ public class OnPlayerBreakBlockEvent implements Listener {
         Location blockLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = HeadService.getHeadAt(blockLocation);
-        if (headLocation == null) {
-            return;
-        }
+        //HeadLocation headLocation = HeadService.getHeadAt(blockLocation);
+        //if (headLocation == null) {
+        //    return;
+        //}
 
         if (HeadBlocks.isReloadInProgress) {
             e.setCancelled(true);
@@ -65,17 +59,17 @@ public class OnPlayerBreakBlockEvent implements Listener {
         }
 
         // Remove the head
-        try {
-            HeadService.removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
-        } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));
-        }
+        //try {
+        //    HeadService.removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
+        //} catch (InternalException ex) {
+        //    player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+        //    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));
+        //}
 
         // Send player success message
         player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadRemoved"), blockLocation));
 
         // Trigger the event HeadDeleted
-        Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation));
+        //Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation));
     }
 }

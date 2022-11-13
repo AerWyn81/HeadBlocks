@@ -26,7 +26,7 @@ public class StorageService {
         storageError = false;
 
         if (ConfigService.isRedisEnabled() && !ConfigService.isDatabaseEnabled()) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError you can't use Redis without setting up an SQL database"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cError you can't use Redis without setting up an SQL database"));
             storageError = true;
             return;
         }
@@ -58,9 +58,9 @@ public class StorageService {
 
         try {
             storage.init();
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&aRedis cache properly connected!"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &aRedis cache properly connected!"));
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to initialize the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cError while trying to initialize the storage: " + ex.getMessage()));
             storageError = true;
             return;
         }
@@ -74,15 +74,15 @@ public class StorageService {
 
             database.load();
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to connect to the SQL database: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cError while trying to connect to the SQL database: " + ex.getMessage()));
             storageError = true;
         }
 
         if (!storageError) {
             if (ConfigService.isDatabaseEnabled()) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&aMySQL storage properly connected!"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &aMySQL storage properly connected!"));
             } else {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&aSQLite storage properly connected!"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &aSQLite storage properly connected!"));
             }
         }
     }
@@ -302,5 +302,13 @@ public class StorageService {
 
     public static UUID getPlayer(String pName) throws InternalException {
         return database.getPlayer(pName);
+    }
+
+    public static void removeRace(String id) {
+        //return database.removeRace(id);
+    }
+
+    public static void createRace(String id) {
+        //return database.createRace(id);
     }
 }

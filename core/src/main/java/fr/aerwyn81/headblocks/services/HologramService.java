@@ -36,6 +36,8 @@ public class HologramService {
 
         unload();
         hologramPool = new HologramPool(HeadBlocks.getInstance(), 16, 0, 0);
+
+        HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eHolograms loaded!"));
     }
 
     public static void unload() {

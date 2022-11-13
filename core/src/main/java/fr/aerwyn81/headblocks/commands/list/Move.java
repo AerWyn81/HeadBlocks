@@ -43,7 +43,7 @@ public class Move implements Cmd {
         Location targetLoc = player.getTargetBlock(null, 100).getLocation();
 
         if (!hasConfirmInCommand) {
-            HeadLocation headLocation = HeadService.getHeadAt(targetLoc);
+            HeadLocation headLocation = null; /*HeadService.getHeadAt(targetLoc)*/;
 
             if (headLocation == null) {
                 player.sendMessage(LanguageService.getMessage("Messages.NoTargetHeadBlock"));
@@ -78,7 +78,7 @@ public class Move implements Cmd {
             return true;
         }
 
-        HeadService.changeHeadLocation(headMove.gethUuid(), headMove.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
+        //HeadService.changeHeadLocation(headMove.gethUuid(), headMove.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
         HeadService.getHeadMoves().remove(player.getUniqueId());
 
         player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));

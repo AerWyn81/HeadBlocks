@@ -21,6 +21,7 @@ dependencies {
     implementation("de.tr7zw:item-nbt-api:2.10.0")
     implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("com.github.unldenis:Hologram-Lib:1.4.0")
+    implementation("com.google.code.findbugs:jsr305:3.0.2")
 }
 
 tasks {

@@ -26,6 +26,8 @@ public class LanguageService {
 		loadLanguage("fr");
 		language = checkLanguage(lang);
 		messages = new HashMap<>();
+
+		HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eLanguages loaded!"));
 	}
 
 	public static void setLanguage(String lang) {

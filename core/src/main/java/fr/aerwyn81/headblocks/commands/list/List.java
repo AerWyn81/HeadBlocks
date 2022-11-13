@@ -3,7 +3,6 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -21,7 +20,7 @@ public class List implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        ArrayList<HeadLocation> headLocations = new ArrayList<>(HeadService.getHeadLocations());
+        ArrayList<HeadLocation> headLocations = new ArrayList<>(/*HeadService.getHeadLocations()*/);
 
         if (headLocations.size() == 0) {
             sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));

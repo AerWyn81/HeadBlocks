@@ -21,6 +21,8 @@ public class ConfigService {
     public static void initialize(File file) {
         configFile = file;
         load();
+
+        HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eConfigurations loaded!"));
     }
 
     public static void load() {

@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks;
 
+import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
@@ -35,31 +36,32 @@ public final class HeadBlocks extends JavaPlugin {
         instance = this;
         log = Bukkit.getConsoleSender();
 
+        log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eInitializing..."));
+
+        MinecraftVersion.disableBStats();
+
         try {
             Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
         } catch (Exception ignored) { }
 
-        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
-
         File configFile = new File(getDataFolder(), "config.yml");
-        File locationFile = new File(getDataFolder(), "locations.yml");
 
         saveDefaultConfig();
         try {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads"));
         } catch (IOException e) {
-            log.sendMessage(MessageUtils.colorize("&cError while loading config file: " + e.getMessage()));
+            log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cCritical error while loading config file: " + e.getMessage() + ". Disabling plugin..."));
             this.setEnabled(false);
             return;
         }
         reloadConfig();
 
         if (VersionUtils.getCurrent().isOlderOrSameThan(VersionUtils.v1_16)) {
-            log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
-            log.sendMessage(MessageUtils.colorize("&cHeadBlocks version 2 does not support your Minecraft Server version: " + VersionUtils.getCurrentFormatted()));
-            log.sendMessage(MessageUtils.colorize("&cIf you are using a version below Minecraft 1.17, use the version 1.6 of the plugin"));
-            log.sendMessage(MessageUtils.colorize("&cVersion 1.6 will not receive any new features but may receive corrective updates."));
-            log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
+            log.sendMessage(MessageUtils.colorize("[HeadBlocks] &c***** --------------------------------------- *****"));
+            log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cHeadBlocks version 2 does not support your Minecraft Server version: " + VersionUtils.getCurrentFormatted()));
+            log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cIf you are using a version below Minecraft 1.17, use the version 1.6 of the plugin"));
+            log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cVersion 1.6 will not receive any new features but may receive corrective updates."));
+            log.sendMessage(MessageUtils.colorize("[HeadBlocks] &c***** --------------------------------------- *****"));
             this.setEnabled(false);
             return;
         }
@@ -82,7 +84,8 @@ public final class HeadBlocks extends JavaPlugin {
 
         StorageService.initialize();
         HologramService.initialize();
-        HeadService.initialize(locationFile);
+        HeadService.initialize();
+        RaceService.initialize();
         GuiService.initialize();
 
         this.globalTask = new GlobalTask();
@@ -100,7 +103,7 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OthersEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(), this);
 
-        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
+        log.sendMessage(MessageUtils.colorize("[HeadBlocks] &6&lH&e&lead&6&lB&e&llocks &asuccessfully started!"));
     }
 
     @Override

@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.ArrayList;
@@ -140,25 +141,25 @@ public class HeadLocation {
         return rewards;
     }
 
-    public void saveInConfig(YamlConfiguration section) {
+    public void saveInConfig(FileConfiguration config) {
         var hUUID = headUUID.toString();
 
-        section.set("locations." + hUUID + ".name", name);
-        section.set("locations." + hUUID + ".location.x", location.getBlockX());
-        section.set("locations." + hUUID + ".location.y", location.getBlockY());
-        section.set("locations." + hUUID + ".location.z", location.getBlockZ());
-        section.set("locations." + hUUID + ".location.world", location.getWorld().getName());
+        config.set("race.locations." + hUUID + ".name", name);
+        config.set("race.locations." + hUUID + ".location.x", location.getBlockX());
+        config.set("race.locations." + hUUID + ".location.y", location.getBlockY());
+        config.set("race.locations." + hUUID + ".location.z", location.getBlockZ());
+        config.set("race.locations." + hUUID + ".location.world", location.getWorld().getName());
 
         if (hitCount != -1) {
-            section.set("locations." + hUUID + ".hitCount", hitCount);
+            config.set("race.locations." + hUUID + ".hitCount", hitCount);
         }
 
         if (orderIndex != -1) {
-            section.set("locations." + hUUID + ".orderIndex", orderIndex);
+            config.set("race.locations." + hUUID + ".orderIndex", orderIndex);
         }
 
         if (rewards.size() != 0) {
-            section.createSection("locations." + hUUID + ".rewards");
+            config.createSection("race.locations." + hUUID + ".rewards");
 
             for (Reward reward : rewards) {
                 //todo

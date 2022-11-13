@@ -48,7 +48,7 @@ public class PlaceholdersService {
             return MessageUtils.colorize(message);
         }
 
-        int total = HeadService.getChargedHeadLocations().size();
+        int total = /*HeadService.getChargedHeadLocations().size()*/ 10;
 
         message = message.replaceAll("%current%", String.valueOf(current))
                 .replaceAll("%max%", String.valueOf(total));

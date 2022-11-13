@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command c, String s, String[] args) {
+    public boolean onCommand(@Nonnull CommandSender sender, @Nonnull Command c, @Nonnull String s, String[] args) {
         if (args.length == 0) {
             sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return false;
@@ -87,7 +88,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public ArrayList<String> onTabComplete(CommandSender sender, Command c, String s, String[] args) {
+    public ArrayList<String> onTabComplete(@Nonnull CommandSender sender, @Nonnull Command c, @Nonnull String s, String[] args) {
         if(args.length == 1) {
             return registeredCommands.keySet().stream()
                     .filter(arg -> arg.startsWith(args[0].toLowerCase()))

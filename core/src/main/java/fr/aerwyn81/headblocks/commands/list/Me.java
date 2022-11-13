@@ -2,7 +2,6 @@ package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import org.bukkit.command.CommandSender;
@@ -18,7 +17,7 @@ public class Me implements Cmd {
     public boolean perform(CommandSender sender, String[] args) {
         Player player = (Player) sender;
 
-        int max = HeadService.getChargedHeadLocations().size();
+        int max = /*HeadService.getChargedHeadLocations().size()*/ 10;
         if (max == 0) {
             player.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;

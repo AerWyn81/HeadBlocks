@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -9,6 +8,7 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
+import javax.annotation.Nonnull;
 import java.util.UUID;
 
 public class PlaceholderHook extends PlaceholderExpansion {
@@ -32,23 +32,26 @@ public class PlaceholderHook extends PlaceholderExpansion {
         return true;
     }
 
+    @Nonnull
     @Override
     public String getIdentifier() {
         return "headblocks";
     }
 
+    @Nonnull
     @Override
     public String getAuthor() {
         return "AerWyn81";
     }
 
+    @Nonnull
     @Override
     public String getVersion() {
         return "1.0.0";
     }
 
     @Override
-    public String onRequest(OfflinePlayer player, String identifier) {
+    public String onRequest(OfflinePlayer player, @Nonnull String identifier) {
         if (player == null) return "";
 
         if (identifier.equals("current") || identifier.equals("left")) {
@@ -63,12 +66,12 @@ public class PlaceholderHook extends PlaceholderExpansion {
             if (identifier.equals("current")) {
                 return "" + current;
             } else {
-                return "" + (HeadService.getChargedHeadLocations().size() - current);
+                //return "" + (HeadService.getChargedHeadLocations().size() - current);
             }
         }
 
         if (identifier.equals("max")) {
-            return "" +  HeadService.getChargedHeadLocations().size();
+            //return "" +  HeadService.getChargedHeadLocations().size();
         }
 
         // %headblocks_hasHead_uuid%
