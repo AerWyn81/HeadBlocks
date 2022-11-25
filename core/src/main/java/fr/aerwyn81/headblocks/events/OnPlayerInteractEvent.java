@@ -21,6 +21,7 @@ import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class OnPlayerInteractEvent implements Listener {
 
@@ -200,8 +201,16 @@ public class OnPlayerInteractEvent implements Listener {
                 // Commands list if not empty
                 if (ConfigService.getHeadClickCommands().size() != 0) {
                     var plugin = HeadBlocks.getInstance();
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
-                            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(player.getName(), player.getUniqueId(), reward))), 1L);
+                    var isRandomCommand = ConfigService.isHeadClickCommandsRandomized();
+
+                    if (isRandomCommand) {
+                        String randomCommand = ConfigService.getHeadClickCommands().get(new Random().nextInt(ConfigService.getHeadClickCommands().size()));
+                        Bukkit.getScheduler().runTaskLater(plugin, () ->
+                                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(player.getName(), player.getUniqueId(), randomCommand)), 1L);
+                    } else {
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
+                                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(player.getName(), player.getUniqueId(), reward))), 1L);
+                    }
                 }
             }
         }

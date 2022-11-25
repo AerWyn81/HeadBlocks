@@ -91,6 +91,7 @@ headClick:
   # Keep [] for no command
   commands:
     - "give %player% diamond"
+  randomizeCommands: false
 
 # Holograms displayed above heads
 # Placeholders are not supported

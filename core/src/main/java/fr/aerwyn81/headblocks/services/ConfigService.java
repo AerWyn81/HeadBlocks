@@ -341,4 +341,8 @@ public class ConfigService {
     public static ItemBuilder getGuiCloseIcon() {
         return new ItemBuilder(Material.valueOf(config.getString("gui.closeIcon.type", Material.BARRIER.name())));
     }
+
+    public static boolean isHeadClickCommandsRandomized() {
+        return config.getBoolean("headClick.randomizeCommands", false);
+    }
 }
