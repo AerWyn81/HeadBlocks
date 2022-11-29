@@ -149,13 +149,8 @@ public class HeadLocation {
         section.set("locations." + hUUID + ".location.z", location.getBlockZ());
         section.set("locations." + hUUID + ".location.world", location.getWorld().getName());
 
-        if (hitCount != -1) {
-            section.set("locations." + hUUID + ".hitCount", hitCount);
-        }
-
-        if (orderIndex != -1) {
-            section.set("locations." + hUUID + ".orderIndex", orderIndex);
-        }
+        section.set("locations." + hUUID + ".hitCount", hitCount == -1 ? null : hitCount);
+        section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
 
         if (rewards.size() != 0) {
             section.createSection("locations." + hUUID + ".rewards");
