@@ -6,7 +6,6 @@ import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.ArrayList;
@@ -141,25 +140,20 @@ public class HeadLocation {
         return rewards;
     }
 
-    public void saveInConfig(FileConfiguration config) {
+    public void saveInConfig(YamlConfiguration section) {
         var hUUID = headUUID.toString();
 
-        config.set("track.locations." + hUUID + ".name", name);
-        config.set("track.locations." + hUUID + ".location.x", location.getBlockX());
-        config.set("track.locations." + hUUID + ".location.y", location.getBlockY());
-        config.set("track.locations." + hUUID + ".location.z", location.getBlockZ());
-        config.set("track.locations." + hUUID + ".location.world", location.getWorld().getName());
+        section.set("locations." + hUUID + ".name", name);
+        section.set("locations." + hUUID + ".location.x", location.getBlockX());
+        section.set("locations." + hUUID + ".location.y", location.getBlockY());
+        section.set("locations." + hUUID + ".location.z", location.getBlockZ());
+        section.set("locations." + hUUID + ".location.world", location.getWorld().getName());
 
-        if (hitCount != -1) {
-            config.set("track.locations." + hUUID + ".hitCount", hitCount);
-        }
-
-        if (orderIndex != -1) {
-            config.set("track.locations." + hUUID + ".orderIndex", orderIndex);
-        }
+        section.set("locations." + hUUID + ".hitCount", hitCount == -1 ? null : hitCount);
+        section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
 
         if (rewards.size() != 0) {
-            config.createSection("track.locations." + hUUID + ".rewards");
+            section.createSection("locations." + hUUID + ".rewards");
 
             for (Reward reward : rewards) {
                 //todo
