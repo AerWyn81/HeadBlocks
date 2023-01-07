@@ -54,10 +54,10 @@ public final class HeadBlocks extends JavaPlugin {
         }
         reloadConfig();
 
-        if (VersionUtils.getCurrent().isOlderOrSameThan(VersionUtils.v1_16)) {
+        if (VersionUtils.getCurrent().isOlderThan(VersionUtils.v1_16)) {
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
             log.sendMessage(MessageUtils.colorize("&cHeadBlocks version 2 does not support your Minecraft Server version: " + VersionUtils.getCurrentFormatted()));
-            log.sendMessage(MessageUtils.colorize("&cIf you are using a version below Minecraft 1.17, use the version 1.6 of the plugin"));
+            log.sendMessage(MessageUtils.colorize("&cIf you are using a version below Minecraft 1.16.5, use the version 1.6 of the plugin"));
             log.sendMessage(MessageUtils.colorize("&cVersion 1.6 will not receive any new features but may receive corrective updates."));
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
             this.setEnabled(false);
