@@ -11,6 +11,7 @@ import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
+import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -112,10 +113,7 @@ public class HeadService {
     }
 
     public static UUID saveHeadLocation(Location location, String texture) throws InternalException {
-        UUID uniqueUuid = UUID.randomUUID();
-        while (getHeadByUUID(uniqueUuid) != null) {
-            uniqueUuid = UUID.randomUUID();
-        }
+        UUID uniqueUuid = InternalUtils.generateNewUUID(headLocations.stream().map(HeadLocation::getUuid).collect(Collectors.toList()));
 
         StorageService.createNewHead(uniqueUuid, texture);
 

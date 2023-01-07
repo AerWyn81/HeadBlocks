@@ -26,6 +26,9 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isPlaceholderApiActive;
     public static boolean isReloadInProgress;
     public static boolean isProtocolLibActive;
+    public static boolean isDecentHologramsActive;
+    public static boolean isHolographicDisplaysActive;
+    public static boolean isCMIActive;
 
     private GlobalTask globalTask;
     private HeadDatabaseHook headDatabaseHook;
@@ -70,6 +73,9 @@ public final class HeadBlocks extends JavaPlugin {
         }
 
         isProtocolLibActive = Bukkit.getPluginManager().isPluginEnabled("ProtocolLib");
+        isDecentHologramsActive = Bukkit.getPluginManager().isPluginEnabled("DecentHolograms");
+        isHolographicDisplaysActive = Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays");
+        isCMIActive = Bukkit.getPluginManager().isPluginEnabled("CMI");
 
         ConfigService.initialize(configFile);
 
@@ -81,8 +87,8 @@ public final class HeadBlocks extends JavaPlugin {
         LanguageService.pushMessages();
 
         StorageService.initialize();
-        HologramService.initialize();
         HeadService.initialize(locationFile);
+        HologramService.load();
         GuiService.initialize();
 
         this.globalTask = new GlobalTask();
