@@ -43,8 +43,7 @@ public class HologramService {
         if (!enable ||
                 (enumTypeHologram == EnumTypeHologram.DECENT && !HeadBlocks.isDecentHologramsActive) ||
                 (enumTypeHologram == EnumTypeHologram.HD && !HeadBlocks.isHolographicDisplaysActive) ||
-                (enumTypeHologram == EnumTypeHologram.DEFAULT && !HeadBlocks.isProtocolLibActive)
-                /*(enumTypeHologram == EnumTypeHologram.CMI && !HeadBlocks.isCMIActive)*/) {
+                (enumTypeHologram == EnumTypeHologram.DEFAULT && !HeadBlocks.isProtocolLibActive)) {
             return;
         }
 

@@ -20,8 +20,6 @@ dependencies {
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
     compileOnly("com.github.decentsoftware-eu:decentholograms:2.7.9")
     compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.0")
-    compileOnly(files("../libs/CMI9.0.0.0API.jar"))
-    compileOnly(files("../libs/CMILib1.2.4.1.jar"))
     implementation(files("../libs/hologram-lib-1.4.0-BETA.jar"))
     implementation("redis.clients:jedis:4.2.3")
     implementation("de.tr7zw:item-nbt-api:2.11.1")
@@ -59,7 +57,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib", "DecentHolograms", "HolographicDisplays", "CMI")
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib", "DecentHolograms", "HolographicDisplays")
     version = rootProject.version.toString()
     website = "https://just2craft.fr"
 

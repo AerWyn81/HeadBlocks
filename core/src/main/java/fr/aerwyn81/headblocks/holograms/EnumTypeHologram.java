@@ -3,8 +3,7 @@ package fr.aerwyn81.headblocks.holograms;
 public enum EnumTypeHologram {
     DEFAULT("DEFAULT"),
     DECENT("DECENT"),
-    HD("HD")
-    /*CMI("CMI")*/;
+    HD("HD");
 
     private final String value;
 

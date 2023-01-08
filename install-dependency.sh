@@ -13,5 +13,3 @@ download() {
 }
 
 download "$1" "hologram-lib-1.4.0-BETA.jar"
-download "$2" "CMI9.0.0.0API.jar"
-download "$3" "CMILib1.2.4.1.jar"
