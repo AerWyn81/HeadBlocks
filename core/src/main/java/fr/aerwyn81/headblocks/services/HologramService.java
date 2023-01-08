@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.holograms.InternalHologram;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -47,13 +46,14 @@ public class HologramService {
             return;
         }
 
-        for (HeadLocation loc : HeadService.getHeadLocations()) {
-            if (loc == null) {
-                continue;
-            }
 
-            createHolograms(loc.getLocation());
-        }
+        //for (HeadLocation loc : ) {
+        //    if (loc == null) {
+        //        continue;
+        //    }
+//
+        //    createHolograms(loc.getLocation());
+        //}
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eHolograms loaded!"));
     }

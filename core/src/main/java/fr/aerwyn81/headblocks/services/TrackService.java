@@ -189,6 +189,11 @@ public class TrackService {
         defaultTrack.getHeadManager().loadHeadLocations(config);
         defaultTrack.saveTrack();
 
+        var file = new File(HeadBlocks.getInstance().getDataFolder(), "locations.yml.backup");
+        if (file.exists()) {
+            file.delete();
+        }
+
         locationsFile.renameTo(new File(HeadBlocks.getInstance().getDataFolder(), "locations.yml.backup"));
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eMigration successfully completed of " +

@@ -84,7 +84,7 @@ public class HeadManager {
 
     public void saveHeadLocations(FileConfiguration config) {
         for (HeadLocation headLocation : headLocations) {
-            headLocation.saveInConfig(config);
+            headLocation.saveInConfig((YamlConfiguration) config);
         }
     }
 
