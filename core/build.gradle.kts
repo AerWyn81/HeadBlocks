@@ -11,14 +11,18 @@ version = rootProject.version
 repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://jitpack.io")
+    maven("https://repo.codemc.io/repository/maven-public/")
 }
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.1")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
+    compileOnly("com.github.decentsoftware-eu:decentholograms:2.7.9")
+    compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.0")
+    implementation(files("../libs/hologram-lib-1.4.0-BETA.jar"))
     implementation("redis.clients:jedis:4.2.3")
-    implementation("de.tr7zw:item-nbt-api:2.10.0")
+    implementation("de.tr7zw:item-nbt-api:2.11.1")
     implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("com.github.unldenis:Hologram-Lib:1.4.0")
     implementation("com.google.code.findbugs:jsr305:3.0.2")

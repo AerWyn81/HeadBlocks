@@ -27,6 +27,8 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isPlaceholderApiActive;
     public static boolean isReloadInProgress;
     public static boolean isProtocolLibActive;
+    public static boolean isDecentHologramsActive;
+    public static boolean isHolographicDisplaysActive;
 
     private GlobalTask globalTask;
     private HeadDatabaseHook headDatabaseHook;
@@ -44,6 +46,8 @@ public final class HeadBlocks extends JavaPlugin {
             Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
         } catch (Exception ignored) { }
 
+        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
+
         File configFile = new File(getDataFolder(), "config.yml");
 
         saveDefaultConfig();
@@ -56,10 +60,10 @@ public final class HeadBlocks extends JavaPlugin {
         }
         reloadConfig();
 
-        if (VersionUtils.getCurrent().isOlderOrSameThan(VersionUtils.v1_16)) {
+        if (VersionUtils.getCurrent().isOlderThan(VersionUtils.v1_16)) {
             log.sendMessage(MessageUtils.colorize("[HeadBlocks] &c***** --------------------------------------- *****"));
             log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cHeadBlocks version 2 does not support your Minecraft Server version: " + VersionUtils.getCurrentFormatted()));
-            log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cIf you are using a version below Minecraft 1.17, use the version 1.6 of the plugin"));
+            log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cIf you are using a version below Minecraft 1.16.5, use the version 1.6 of the plugin"));
             log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cVersion 1.6 will not receive any new features but may receive corrective updates."));
             log.sendMessage(MessageUtils.colorize("[HeadBlocks] &c***** --------------------------------------- *****"));
             this.setEnabled(false);
@@ -72,6 +76,8 @@ public final class HeadBlocks extends JavaPlugin {
         }
 
         isProtocolLibActive = Bukkit.getPluginManager().isPluginEnabled("ProtocolLib");
+        isDecentHologramsActive = Bukkit.getPluginManager().isPluginEnabled("DecentHolograms");
+        isHolographicDisplaysActive = Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays");
 
         ConfigService.initialize(configFile);
 
@@ -83,8 +89,8 @@ public final class HeadBlocks extends JavaPlugin {
         LanguageService.pushMessages();
 
         StorageService.initialize();
-        HologramService.initialize();
         HeadService.initialize();
+        HologramService.load();
         TrackService.initialize();
         GuiService.initialize();
 

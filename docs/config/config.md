@@ -327,7 +327,8 @@ It is possible to execute a command list when a player clicks on the head.
 
 ```
 holograms:
-  heightAboveHead: 0
+  plugin: DEFAULT (or DECENT for DecentHolograms or HD for HolographicDisplays)
+  heightAboveHead: 0.4
   found:
     enabled: true
     lines:
@@ -339,6 +340,7 @@ holograms:
 ```
 
 It is possible to add holograms over the head and show it if the player has found the head or not. Can be configurable by:
+- plugin: you can specify some other plugin to handle holograms like DecentHolograms or HolographicDisplay
 - heightAboveHead: height from the top of head and bottom of the last line of the hologram (support decimals)
 - enabled: set enabled or disabled found or noFound hologram
 - lines: lines displayed in the hologram

@@ -45,16 +45,12 @@ public class OthersEvent implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         StorageService.loadPlayer(e.getPlayer());
-
-        HologramService.addExcludedPlayer(e.getPlayer());
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         StorageService.unloadPlayer(e.getPlayer());
         HeadService.getHeadMoves().remove(e.getPlayer().getUniqueId());
-
-        HologramService.removeExcludedPlayer(e.getPlayer());
     }
 
     @EventHandler

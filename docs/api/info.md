@@ -50,8 +50,8 @@ public final class MyPlugin extends JavaPlugin {
 
 #### And use:
 
-Events  | Explanations
-------------- | -------------
-HeadClickEvent | _Event triggered when a head is clicked (contains success or not)_
-HeadCreatedEvent | _Event called when a head is created (contains the location)_
-HeadDeletedEvent | _Event to trigger when a head is deleted_
+| Events           | Explanations                                                       |
+|------------------|--------------------------------------------------------------------|
+| HeadClickEvent   | _Event triggered when a head is clicked (contains success or not)_ |
+| HeadCreatedEvent | _Event called when a head is created (contains the location)_      |
+| HeadDeletedEvent | _Event to trigger when a head is deleted_                          |

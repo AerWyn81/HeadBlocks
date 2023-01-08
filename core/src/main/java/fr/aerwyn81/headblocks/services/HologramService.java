@@ -1,170 +1,164 @@
 package fr.aerwyn81.headblocks.services;
 
-import com.github.unldenis.hologram.Hologram;
-import com.github.unldenis.hologram.HologramPool;
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
+import fr.aerwyn81.headblocks.holograms.InternalHologram;
+import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
+import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class HologramService {
-    private static HologramPool hologramPool;
+    private static HashMap<UUID, InternalHologram> foundHolograms;
+    private static HashMap<UUID, InternalHologram> notFoundHolograms;
+    private static boolean enable;
+    private static EnumTypeHologram enumTypeHologram;
 
-    private static HashMap<Location, Hologram> foundHolograms;
-    private static HashMap<Location, Hologram> notFoundHolograms;
-
-    private static boolean isEnabled() {
-        return HeadBlocks.isProtocolLibActive && ConfigService.isHologramsEnabled();
-    }
-
-    public static void initialize() {
-        foundHolograms = new HashMap<>();
-        notFoundHolograms = new HashMap<>();
-
-        load();
+    static {
+        enable = true;
     }
 
     public static void load() {
-        if (!isEnabled()) {
+        foundHolograms = new HashMap<>();
+        notFoundHolograms = new HashMap<>();
+
+        enable = ConfigService.isHologramsEnabled();
+
+        var holoPlugin = ConfigService.getHologramPlugin();
+        enumTypeHologram = EnumTypeHologram.fromString(holoPlugin);
+        if (enumTypeHologram == null) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cPlugin &e" + holoPlugin + " &cnot yet supported for holograms!"));
+            enable = false;
             return;
         }
 
-        unload();
-        hologramPool = new HologramPool(HeadBlocks.getInstance(), 16, 0, 0);
+        if (!enable ||
+                (enumTypeHologram == EnumTypeHologram.DECENT && !HeadBlocks.isDecentHologramsActive) ||
+                (enumTypeHologram == EnumTypeHologram.HD && !HeadBlocks.isHolographicDisplaysActive) ||
+                (enumTypeHologram == EnumTypeHologram.DEFAULT && !HeadBlocks.isProtocolLibActive)) {
+            return;
+        }
+
+        for (HeadLocation loc : HeadService.getHeadLocations()) {
+            if (loc == null) {
+                continue;
+            }
+
+            createHolograms(loc.getLocation());
+        }
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eHolograms loaded!"));
     }
 
-    public static void unload() {
-        if (!isEnabled()) {
-            return;
-        }
-
-        foundHolograms.values().forEach(h -> hologramPool.remove(h));
-        notFoundHolograms.values().forEach(h -> hologramPool.remove(h));
-    }
-
     public static void createHolograms(Location location) {
-        if (location == null || !isEnabled()) {
+        if (!enable) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cCannot create a hologram. Are the necessary plugin installed?"));
             return;
         }
 
-        Hologram hologramFound = null;
         if (ConfigService.isHologramsFoundEnabled()) {
-            hologramFound = internalCreateHologram(location, ConfigService.getHologramsFoundLines());
-            foundHolograms.put(location, hologramFound);
+            var holoFound = internalCreateHologram(location, ConfigService.getHologramsFoundLines().stream().map(MessageUtils::colorize).collect(Collectors.toList()));
+            foundHolograms.put(holoFound.getUuid(), holoFound);
         }
 
-        Hologram hologramNotFound = null;
         if (ConfigService.isHologramsNotFoundEnabled()) {
-            hologramNotFound = internalCreateHologram(location, ConfigService.getHologramsNotFoundLines());
-            notFoundHolograms.put(location, hologramNotFound);
-        }
-
-        for (Player player : Collections.unmodifiableCollection(Bukkit.getOnlinePlayers())) {
-            if (hologramFound != null) {
-                hologramFound.addExcludedPlayer(player);
-            }
-
-            if (hologramNotFound != null) {
-                hologramNotFound.addExcludedPlayer(player);
-            }
+            var holoNotFound = internalCreateHologram(location, ConfigService.getHologramsNotFoundLines().stream().map(MessageUtils::colorize).collect(Collectors.toList()));
+            notFoundHolograms.put(holoNotFound.getUuid(), holoNotFound);
         }
     }
 
-    private static Hologram internalCreateHologram(Location location, ArrayList<String> lines) {
-        location = location.clone();
-        location.add(0.5, -0.9 + ConfigService.getHologramsHeightAboveHead(), 0.5);
+    private static InternalHologram internalCreateHologram(Location location, List<String> lines) {
+        var allUUIDs = new ArrayList<>(foundHolograms.keySet());
+        allUUIDs.addAll(notFoundHolograms.keySet());
 
-        Hologram.Builder holoBuilder = Hologram.builder()
-                .location(location);
+        var uuid = InternalUtils.generateNewUUID(allUUIDs);
+        var internalHologram = new InternalHologram(enumTypeHologram);
+        internalHologram.createHologram(uuid, location, lines, ConfigService.getHologramsHeightAboveHead(), ConfigService.getHologramParticlePlayerViewDistance());
 
-        for (String line : lines) {
-            holoBuilder.addLine(MessageUtils.colorize(line), false);
-        }
-
-        return holoBuilder.build(hologramPool);
-    }
-
-    public static void removeHolograms(Location location) {
-        if (location == null || !isEnabled()) {
-            return;
-        }
-
-        Hologram foundHolo = foundHolograms.get(location);
-        Hologram notFoundHolo = notFoundHolograms.get(location);
-
-        if (foundHolo != null) {
-            hologramPool.remove(foundHolo);
-            foundHolograms.remove(location);
-        }
-
-        if (notFoundHolo != null) {
-            hologramPool.remove(notFoundHolo);
-            notFoundHolograms.remove(location);
-        }
-    }
-
-    public static Hologram getHoloFound(Location loc) {
-        return foundHolograms.get(loc);
-    }
-
-    public static Hologram getHoloNotFound(Location loc) {
-        return notFoundHolograms.get(loc);
+        return internalHologram;
     }
 
     public static void showFoundTo(Player player, Location location) {
-        Hologram holo = getHoloFound(location);
-        if (holo != null) {
-            holo.removeExcludedPlayer(player);
+        if (!enable) {
+            return;
         }
 
-        holo = getHoloNotFound(location);
-        if (holo != null) {
-            holo.addExcludedPlayer(player);
+        var holoFound = getHologramByLocation(foundHolograms, location);
+        if (holoFound != null && !holoFound.isHologramVisible(player)) {
+            holoFound.show(player);
+        }
+
+        var holoNotFound = getHologramByLocation(notFoundHolograms, location);
+        if (holoNotFound != null && holoNotFound.isHologramVisible(player)) {
+            holoNotFound.hide(player);
         }
     }
 
     public static void showNotFoundTo(Player player, Location location) {
-        Hologram holo = getHoloNotFound(location);
-        if (holo != null) {
-            holo.removeExcludedPlayer(player);
-        }
-
-        holo = getHoloFound(location);
-        if (holo != null) {
-            holo.addExcludedPlayer(player);
-        }
-    }
-
-    public static HashMap<Location, Hologram> getFoundHolograms() {
-        return foundHolograms;
-    }
-
-    public static HashMap<Location, Hologram> getNotFoundHolograms() {
-        return notFoundHolograms;
-    }
-
-    public static void addExcludedPlayer(Player player) {
-        if (!isEnabled()) {
+        if (!enable) {
             return;
         }
 
-        getFoundHolograms().values().forEach(h -> h.addExcludedPlayer(player));
-        getNotFoundHolograms().values().forEach(h -> h.addExcludedPlayer(player));
+        var holoFound = getHologramByLocation(foundHolograms, location);
+        if (holoFound != null && holoFound.isHologramVisible(player)) {
+            holoFound.hide(player);
+        }
+
+        var holoNotFound = getHologramByLocation(notFoundHolograms, location);
+        if (holoNotFound != null && !holoNotFound.isHologramVisible(player)) {
+            holoNotFound.show(player);
+        }
     }
 
-    public static void removeExcludedPlayer(Player player) {
-        if (!isEnabled()) {
+    public static void removeHolograms(Location location) {
+        if (location == null) {
             return;
         }
 
-        getFoundHolograms().values().forEach(h -> h.removeExcludedPlayer(player));
-        getNotFoundHolograms().values().forEach(h -> h.removeExcludedPlayer(player));
+        var foundHolo = getHologramByLocation(foundHolograms, location);
+        var notFoundHolo = getHologramByLocation(notFoundHolograms, location);
+
+        if (foundHolo != null) {
+            foundHolograms.remove(foundHolo.getUuid());
+            foundHolo.deleteHologram();
+        }
+
+        if (notFoundHolo != null) {
+            notFoundHolograms.remove(notFoundHolo.getUuid());
+            notFoundHolo.deleteHologram();
+        }
+    }
+
+    private static InternalHologram getHologramByLocation(HashMap<UUID, InternalHologram> list, Location location) {
+        var holo = list.entrySet().stream()
+                .filter(entry -> LocationUtils.areEquals(entry.getValue().getLocation(), location))
+                .findFirst()
+                .orElse(null);
+
+        if (holo != null) {
+            return holo.getValue();
+        }
+
+        return null;
+    }
+
+    public static void unload() {
+        if (!enable) {
+            return;
+        }
+
+        foundHolograms.forEach((uuid, hologram) -> hologram.deleteHologram());
+        notFoundHolograms.forEach((uuid, hologram) -> hologram.deleteHologram());
+
+        foundHolograms.clear();
+        notFoundHolograms.clear();
     }
 }

@@ -2,16 +2,16 @@
 
 When HeadBlocks is loaded, you will find the following files inside the **HeadBlocks** folder :
 
-* [config.yml](config.md)
-* [messages/](translations.md)
+* [config.yml](./config.md)
+* [messages/](./translations.md)
 * locations.yml
 * headblocks.db
 
-## [config.yml](config.md)
+## [config.yml](./config.md)
 
 This file contains all the additional configurations to adapt the plugin to your needs
 
-## [Translations](translations.md)
+## [Translations](./translations.md)
 
 This folder contains all plugin messages. You can modify these files to match your designated region and language.
 

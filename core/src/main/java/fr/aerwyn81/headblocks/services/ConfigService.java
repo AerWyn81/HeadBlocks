@@ -300,6 +300,8 @@ public class ConfigService {
         return config.getInt("internalTask.delay", 20);
     }
 
+    public static String getHologramPlugin() { return config.getString("holograms.plugin"); }
+
     public static double getHologramsHeightAboveHead() {
         return config.getDouble("holograms.heightAboveHead", 0.5);
     }
