@@ -98,16 +98,16 @@ headClick:
 # Plugins supported :
 # DECENT : DecentHolograms
 # HD : HolographicDisplaysHologram
-# DEFAULT : Internal need ProtocolLib (warn: unstable in pre 1.18 & 1.19.3 depending on ProtocolLib)
+# DEFAULT : Internal need ProtocolLib (warn: unstable since 1.19 depending on ProtocolLib)
 holograms:
   plugin: DEFAULT
   heightAboveHead: 0.4
   found:
-    enabled: true
+    enabled: false
     lines:
       - "&a&lFound"
   notFound:
-    enabled: true
+    enabled: false
     lines:
       - "&c&lNot found"
 
