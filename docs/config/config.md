@@ -199,10 +199,15 @@ tieredRewards:
       - ''
     commands:
       - 'give %player% diamond 100'
+    broadcast:
+      - ''
+      - '%prefix% &6%player% &afound &6100 heads&a!!!'
+      - ''
+    slotsRequired: 2
 ```
 
 It is possible to set up reward levels. When the player reaches the level, that will send a message containing several
-lines and execute a list of commands.
+lines and execute a list of commands. You can also define a number of slots required to receive the reward with `slotsRequired` per level.
 
 ?> Hex colors, placeholders and centering (use: {center}) are supported
 
@@ -317,13 +322,19 @@ already has the head or not. Leave empty for no sound.
 headClick:
   commands:
     - "give %player% diamond"
+  randomizeCommands: false
+  slotsRequired: -1
 ```
 
-It is possible to execute a command list when a player clicks on the head.
+It is possible to execute a command list when a player clicks on the head. 
+You can also define a number of slots required to execute the command with `slotsRequired`,
+and you can randomize the commands executed.
 
 ?> Hex colors (format: {#ffffff}), placeholders and centering (use: {center}) are supported
 
 #### Holograms
+
+!> **For versions above 1.19+, the DEFAULT type is not supported because it causes players to crash.**
 
 ```
 holograms:

@@ -92,6 +92,8 @@ headClick:
   commands:
     - "give %player% diamond"
   randomizeCommands: false
+  # Run the command only if the player has enough space in inventory
+  slotsRequired: -1
 
 # Holograms displayed above heads
 # Placeholders are not supported
@@ -149,6 +151,7 @@ preventCommandsOnTieredRewardsLevel: false
 
 # Tiered rewards : provide a head count to trigger a reward command list
 # Add the tier, then messages, commands or broadcast message which will be executed
+# You can add "slotsRequired" to give the reward only if the player has enough space in inventory
 tieredRewards:
   1:
     messages:
@@ -168,6 +171,7 @@ tieredRewards:
       - ''
       - '%prefix% &6%player% &afound &6100 heads&a!!!'
       - ''
+    slotsRequired: 2
 
 gui:
   borderIcon:

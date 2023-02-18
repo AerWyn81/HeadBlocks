@@ -21,7 +21,6 @@ import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class OnPlayerInteractEvent implements Listener {
 
@@ -79,7 +78,9 @@ public class OnPlayerInteractEvent implements Listener {
 
         try {
             // Check if the player has already clicked on the head
-            if (StorageService.hasHead(player.getUniqueId(), headLocation.getUuid())) {
+            var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
+
+            if (playerHeads.contains(headLocation.getUuid())) {
                 String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), LanguageService.getMessage("Messages.AlreadyClaimHead"));
 
                 if (!message.trim().isEmpty()) {
@@ -117,8 +118,6 @@ public class OnPlayerInteractEvent implements Listener {
 
             // Check head order
             if (headLocation.getOrderIndex() != -1) {
-                var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
-
                 if (HeadService.getChargedHeadLocations().stream()
                         .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
                         .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
@@ -137,6 +136,11 @@ public class OnPlayerInteractEvent implements Listener {
                     return;
                 }
             }
+
+            // Check and give reward if triggerRewards is used
+            var isRewardGiven = RewardService.giveReward(player, playerHeads);
+            if (!isRewardGiven)
+                return;
 
             // Save player click in storage
             StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
@@ -186,40 +190,8 @@ public class OnPlayerInteractEvent implements Listener {
                     colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
         }
 
-        // Prevent trigger commands rewards if current is contained in tieredRewards and enabled in config
-        if (!ConfigService.isPreventCommandsOnTieredRewardsLevel()) {
-            int playerHeads;
-            try {
-                playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).size();
-            } catch (InternalException ex) {
-                player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));
-                return;
-            }
-
-            if (!RewardService.currentIsContainedInTiered(playerHeads)) {
-                // Commands list if not empty
-                if (ConfigService.getHeadClickCommands().size() != 0) {
-                    var plugin = HeadBlocks.getInstance();
-                    var isRandomCommand = ConfigService.isHeadClickCommandsRandomized();
-
-                    if (isRandomCommand) {
-                        String randomCommand = ConfigService.getHeadClickCommands().get(new Random().nextInt(ConfigService.getHeadClickCommands().size()));
-                        Bukkit.getScheduler().runTaskLater(plugin, () ->
-                                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(player.getName(), player.getUniqueId(), randomCommand)), 1L);
-                    } else {
-                        Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
-                                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(player.getName(), player.getUniqueId(), reward))), 1L);
-                    }
-                }
-            }
-        }
-
         // Show hologram
         HologramService.showFoundTo(player, clickedLocation);
-
-        // Check and reward if triggerRewards is used
-        RewardService.giveReward(player);
 
         // Trigger the event HeadClick with success
         Bukkit.getPluginManager().callEvent(new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true));

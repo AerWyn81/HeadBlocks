@@ -7,12 +7,14 @@ public class TieredReward {
     private final List<String> messages;
     private final List<String> commands;
     private final List<String> broadcastMessages;
+    private final int slotsRequired;
 
-    public TieredReward(int level, List<String> messages, List<String> commands, List<String> broadcastMessages) {
+    public TieredReward(int level, List<String> messages, List<String> commands, List<String> broadcastMessages, int slotsRequired) {
         this.level = level;
         this.messages = messages;
         this.commands = commands;
         this.broadcastMessages = broadcastMessages;
+        this.slotsRequired = slotsRequired;
     }
 
     public int getLevel() {
@@ -29,5 +31,9 @@ public class TieredReward {
 
     public List<String> getBroadcastMessages() {
         return broadcastMessages;
+    }
+
+    public int getSlotsRequired() {
+        return slotsRequired;
     }
 }

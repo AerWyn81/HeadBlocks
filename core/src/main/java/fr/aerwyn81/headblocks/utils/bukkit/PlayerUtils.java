@@ -2,8 +2,10 @@ package fr.aerwyn81.headblocks.utils.bukkit;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,5 +33,18 @@ public class PlayerUtils {
         } catch (Exception ex) {
             return "";
         }
+    }
+
+    public static int getEmptySlots(Player player) {
+        int i = 0;
+
+        ItemStack[] items = player.getInventory().getStorageContents();
+
+        for (ItemStack is : items) {
+            if (is != null && is.getType() != Material.AIR)
+                continue;
+            i++;
+        }
+        return i;
     }
 }

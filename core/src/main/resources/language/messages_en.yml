@@ -56,6 +56,7 @@ Messages:
   TargetBlockNotHead: "%prefix% &cTargeted block is not a HeadBlock"
   OrderClickError: "%prefix% &cAnother HeadBlock need to be found before this one &7(%name%&7)"
   HitClickMax: "%prefix% &cThis HeadBlock has reached its click limit &7(%count%)"
+  InventoryFullReward: "%prefix% &cYou do not have the available space in your inventory to receive the reward"
   MeCommand:
     - ""
     - "&aNumber of heads collected: &e%current%&7/&e%max%"
