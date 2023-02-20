@@ -28,7 +28,11 @@ public class RewardService {
                 }
 
                 if (tieredReward.getSlotsRequired() != -1 && PlayerUtils.getEmptySlots(p) < tieredReward.getSlotsRequired()) {
-                    p.sendMessage(LanguageService.getMessage("Messages.InventoryFullReward"));
+                    var message = LanguageService.getMessage("Messages.InventoryFullReward");
+                    if (message.trim().length() > 0) {
+                        p.sendMessage(message);
+                    }
+
                     return false;
                 }
 
@@ -58,7 +62,11 @@ public class RewardService {
         var slotsRequired = ConfigService.getHeadClickCommandsSlotsRequired();
 
         if (slotsRequired != -1 && PlayerUtils.getEmptySlots(p) < slotsRequired) {
-            p.sendMessage(LanguageService.getMessage("Messages.InventoryFullReward"));
+            var message = LanguageService.getMessage("Messages.InventoryFullReward");
+            if (message.trim().length() > 0) {
+                p.sendMessage(message);
+            }
+
             return false;
         }
 
