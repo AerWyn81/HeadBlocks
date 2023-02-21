@@ -22,11 +22,6 @@ public class RewardService {
                     .orElse(null);
 
             if (tieredReward != null) {
-                List<String> messages = tieredReward.getMessages();
-                if (messages.size() != 0) {
-                    p.sendMessage(PlaceholdersService.parse(p, messages));
-                }
-
                 if (tieredReward.getSlotsRequired() != -1 && PlayerUtils.getEmptySlots(p) < tieredReward.getSlotsRequired()) {
                     var message = LanguageService.getMessage("Messages.InventoryFullReward");
                     if (message.trim().length() > 0) {
@@ -34,6 +29,11 @@ public class RewardService {
                     }
 
                     return false;
+                }
+
+                List<String> messages = tieredReward.getMessages();
+                if (messages.size() != 0) {
+                    p.sendMessage(PlaceholdersService.parse(p, messages));
                 }
 
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
