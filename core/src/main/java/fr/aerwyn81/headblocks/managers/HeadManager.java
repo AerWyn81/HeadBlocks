@@ -15,7 +15,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Skull;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.ArrayList;
@@ -24,16 +23,18 @@ import java.util.stream.Collectors;
 
 public class HeadManager {
     private final ArrayList<HeadLocation> headLocations;
+    private final YamlConfiguration config;
 
-    public HeadManager() {
+    public HeadManager(YamlConfiguration config) {
         this.headLocations = new ArrayList<>();
+        this.config = config;
     }
 
     public ArrayList<HeadLocation> getHeadLocations() {
         return headLocations;
     }
 
-    public void loadHeadLocations(YamlConfiguration config) {
+    public void loadHeadLocations() {
         var section = "track.locations";
         ConfigurationSection locations = config.getConfigurationSection(section);
 
@@ -69,11 +70,7 @@ public class HeadManager {
                 }
 
                 try {
-                    //Todo retirer le double appel et insert into uniquement s'il n'existe pas déjà
-                    boolean isExist = StorageService.isHeadExist(headUuid);
-                    if (!isExist) {
-                        StorageService.createNewHead(headUuid, "");
-                    }
+                    StorageService.createNewHead(headUuid, "");
                 } catch (Exception ex) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
                     headLocation.setCharged(false);
@@ -82,9 +79,9 @@ public class HeadManager {
         }
     }
 
-    public void saveHeadLocations(FileConfiguration config) {
+    public void saveHeadLocations() {
         for (HeadLocation headLocation : headLocations) {
-            headLocation.saveInConfig((YamlConfiguration) config);
+            headLocation.saveInConfig(config);
         }
     }
 
@@ -107,19 +104,17 @@ public class HeadManager {
     }
 
     public void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
-        if (headLocation != null) {
-            StorageService.removeHead(headLocation.getUuid(), withDelete);
+        StorageService.removeHead(headLocation.getUuid(), withDelete);
 
-            headLocation.getLocation().getBlock().setType(Material.AIR);
+        headLocation.getLocation().getBlock().setType(Material.AIR);
 
-            if (ConfigService.isHologramsEnabled()) {
-                HologramService.removeHolograms(headLocation.getLocation());
-            }
-
-            headLocations.remove(headLocation);
-
-            //headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
+        if (ConfigService.isHologramsEnabled()) {
+            HologramService.removeHolograms(headLocation.getLocation());
         }
+
+        headLocations.remove(headLocation);
+
+        //headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
     }
 
     public void changeHeadLocation(UUID hUuid, Block oldBlock, Block newBlock) {
@@ -143,7 +138,7 @@ public class HeadManager {
         var indexOfOld = headLocations.indexOf(headLocation);
 
         headLocation.setLocation(newBlock.getLocation());
-        //headLocation.saveInConfig(config);
+        headLocation.saveInConfig(config);
 
         headLocations.set(indexOfOld, headLocation);
 
@@ -159,7 +154,10 @@ public class HeadManager {
         return headLocations.stream().filter(h -> LocationUtils.areEquals(h.getLocation(), location)).findFirst().orElse(null);
     }
 
-    public ArrayList<HeadLocation> getChargedHeadLocations() {
-        return headLocations.stream().filter(HeadLocation::isCharged).collect(Collectors.toCollection(ArrayList::new));
+    public ArrayList<HeadLocation> getChargedHeadLocations(boolean onlyCharged) {
+        if (onlyCharged)
+            return headLocations.stream().filter(HeadLocation::isCharged).collect(Collectors.toCollection(ArrayList::new));
+
+        return headLocations;
     }
 }

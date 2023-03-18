@@ -140,7 +140,16 @@ public class SQLite implements Database {
      */
     @Override
     public void createNewHead(UUID hUUID, String texture) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.CREATE_HEAD)) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.HEAD_EXIST);
+            ps.setString(1, hUUID.toString());
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return;
+            }
+
+            ps = connection.prepareStatement(Requests.CREATE_HEAD);
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
 

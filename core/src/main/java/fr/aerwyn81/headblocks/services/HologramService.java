@@ -46,15 +46,6 @@ public class HologramService {
             return;
         }
 
-
-        //for (HeadLocation loc : ) {
-        //    if (loc == null) {
-        //        continue;
-        //    }
-//
-        //    createHolograms(loc.getLocation());
-        //}
-
         HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eHolograms loaded!"));
     }
 

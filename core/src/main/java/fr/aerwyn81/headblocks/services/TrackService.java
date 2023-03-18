@@ -1,28 +1,23 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.head.HBTrack;
 import fr.aerwyn81.headblocks.managers.HeadManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.UUID;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class TrackService {
     private static HashMap<String, HBTrack> tracks;
@@ -42,6 +37,43 @@ public class TrackService {
         migrateOldLocations();
         loadTracks();
     }
+
+    //region Config
+
+    public static FileConfiguration getConfig(String id) {
+        return trackConfigs.get(id);
+    }
+
+    public static void saveConfig(String id) {
+        try {
+            File file = trackFiles.get(id);
+            if (file.exists()) {
+                trackConfigs.get(id).save(file);
+            }
+        } catch (IOException ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while saving track in config: " + ex.getMessage()));
+        }
+    }
+
+    //endregion
+
+    //region Getters
+
+    public static Optional<HBTrack> getTrackById(String trackId) {
+        return Optional.ofNullable(tracks.get(trackId));
+    }
+
+    public static HashMap<String, HBTrack> getTracks() {
+        return tracks;
+    }
+
+    public static boolean isTrackExists(String trackId) {
+        return tracks.containsKey(trackId);
+    }
+
+    //endregion
+
+    //region Methods
 
     public static boolean createTrack(String id) {
         File file = new File(HeadBlocks.getInstance().getDataFolder(), "tracks/" + id + ".yml");
@@ -90,17 +122,6 @@ public class TrackService {
         return false;
     }
 
-    public static void saveConfig(String id) {
-        try {
-            File file = trackFiles.get(id);
-            if (file.exists()) {
-                trackConfigs.get(id).save(file);
-            }
-        } catch (IOException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while saving track in config: " + ex.getMessage()));
-        }
-    }
-
     private static void loadTracks() {
         tracks.clear();
         trackFiles.clear();
@@ -133,8 +154,9 @@ public class TrackService {
                 iconItem = new ItemStack(Material.PAPER);
             }
 
-            var track = new HBTrack(id, name, description, iconItem);
-            track.getHeadManager().loadHeadLocations(config);
+            var manager = new HeadManager(config);
+            var track = new HBTrack(id, name, description, iconItem, manager);
+            track.getHeadManager().loadHeadLocations();
 
             tracks.put(id, track);
             trackFiles.put(id, file);
@@ -185,8 +207,9 @@ public class TrackService {
 
         var config = YamlConfiguration.loadConfiguration(locationsFile);
 
-        var defaultTrack = new HBTrack(id, "Default", "", new ItemStack(Material.PAPER));
-        defaultTrack.getHeadManager().loadHeadLocations(config);
+        var manager = new HeadManager(config);
+        var defaultTrack = new HBTrack(id, "Default", "", new ItemStack(Material.PAPER), manager);
+        defaultTrack.getHeadManager().loadHeadLocations();
         defaultTrack.saveTrack();
 
         var file = new File(HeadBlocks.getInstance().getDataFolder(), "locations.yml.backup");
@@ -200,62 +223,5 @@ public class TrackService {
                 defaultTrack.getHeadManager().getHeadLocations().size() + " locations in a default track."));
     }
 
-    private static UUID addHead(String trackId, Location location, String texture) throws InternalException {
-        var headManager = getHeadManager(trackId);
-
-        if (headManager == null) {
-            throw new RuntimeException("Head cannot be add No track with id: " + trackId);
-        }
-
-        return headManager.addHeadLocation(location, texture);
-    }
-
-    private static void removeHead(String trackId, HeadLocation headLocation, boolean withDelete) throws InternalException {
-        var headManager = getHeadManager(trackId);
-
-        if (headManager == null) {
-            throw new RuntimeException("No track with id: " + trackId);
-        }
-
-        headManager.removeHeadLocation(headLocation, withDelete);
-    }
-
-    public static HashMap<String, HBTrack> getTracks() {
-        return tracks;
-    }
-
-    public static boolean isTrackExists(String trackId) {
-        return tracks.containsKey(trackId);
-    }
-
-    public static FileConfiguration getConfig(String id) {
-        return trackConfigs.get(id);
-    }
-
-    public static HBTrack getTrackById(String trackId) {
-        return tracks.get(trackId);
-    }
-
-    public static ArrayList<HeadLocation> getHeads(String trackId, boolean onlyCharged) {
-        var headManager = getHeadManager(trackId);
-
-        if (headManager == null) {
-            return new ArrayList<>();
-        }
-
-        var headLocations = headManager.getHeadLocations();
-        if (!onlyCharged) {
-            return headLocations;
-        }
-
-        return headLocations.stream().filter(HeadLocation::isCharged).collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    @Nullable
-    public static HeadManager getHeadManager(String trackId) {
-        if (!isTrackExists(trackId))
-            return null;
-
-        return getTrackById(trackId).getHeadManager();
-    }
+    //endregion
 }

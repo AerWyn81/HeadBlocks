@@ -12,12 +12,12 @@ public class HBTrack {
     private final ItemStack icon;
     private final HeadManager headManager;
 
-    public HBTrack(String id, String name, String description, ItemStack icon) {
+    public HBTrack(String id, String name, String description, ItemStack icon, HeadManager headManager) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.icon = icon;
-        this.headManager = new HeadManager();
+        this.headManager = headManager;
     }
 
     public String getId() {
@@ -50,7 +50,7 @@ public class HBTrack {
         config.set("track.description", description);
         config.set("track.icon", icon.getType().name());
 
-        headManager.saveHeadLocations(config);
+        headManager.saveHeadLocations();
 
         TrackService.saveConfig(id);
     }

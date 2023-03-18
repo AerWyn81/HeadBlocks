@@ -161,7 +161,16 @@ public final class MySQL implements Database {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.CREATE_HEAD)) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.HEAD_EXIST);
+            ps.setString(1, hUUID.toString());
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return;
+            }
+
+            ps = connection.prepareStatement(Requests.CREATE_HEAD);
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
             ps.executeUpdate();

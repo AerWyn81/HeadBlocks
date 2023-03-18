@@ -11,6 +11,7 @@ import java.util.Random;
 import java.util.UUID;
 
 public class RewardService {
+
     public static boolean giveReward(Player p, List<UUID> playerHeads) {
         var plugin = HeadBlocks.getInstance();
 

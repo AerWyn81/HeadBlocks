@@ -10,7 +10,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 
 public class ExportSQLHelper {
 
@@ -34,12 +33,7 @@ public class ExportSQLHelper {
         ps.println("-- ");
         ps.println();
 
-        ArrayList<String> instructions = StorageService.getInstructionsExport(enumTypeDatabase);
-
-        for (String ins : instructions) {
-            ps.println(ins);
-        }
-
+        ps.println(StorageService.getInstructionsExport(enumTypeDatabase));
         ps.close();
     }
 }
