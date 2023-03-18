@@ -54,7 +54,8 @@ Messages:
   TargetBlockMoved: "%prefix% &aLe HeadBlock a correctement été déplacé aux coordonnées &e%world%&a, &e%x%&a, &e%y%&a, &e%z%"
   PluginReloading: "%prefix% &cVeuillez patienter, le plugin se recharge..."
   TargetBlockNotHead: "%prefix% &cLa HeadBlock ciblée n'est pas un HeadBlock"
-  OrderClickError: "%prefix% Une autre HeadBlock est à trouver avant celle là (%name%&7)"
+  OrderClickError: "%prefix% &cUne autre HeadBlock est à trouver avant celle là (%name%&7)"
+  InventoryFullReward: "%prefix% &cVous n'avez pas l'espace disponible dans votre inventaire pour recevoir la récompense"
   MeCommand:
     - ""
     - "&aNombre de têtes récupérées : &e%current%&7/&e%max%"

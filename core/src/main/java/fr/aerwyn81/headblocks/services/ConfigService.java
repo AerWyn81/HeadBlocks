@@ -280,8 +280,13 @@ public class ConfigService {
                     broadcastMessages = config.getStringList("tieredRewards." + level + ".broadcast");
                 }
 
-                if (messages.size() != 0 || commands.size() != 0 || broadcastMessages.size() != 0) {
-                    tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages));
+                int slotsRequired = -1;
+                if (config.contains("tieredRewards." + level + ".slotsRequired")) {
+                    slotsRequired = config.getInt("tieredRewards." + level + ".slotsRequired", -1);
+                }
+
+                if (messages.size() != 0 || commands.size() != 0 || broadcastMessages.size() != 0 || slotsRequired != -1) {
+                    tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages, slotsRequired));
                 }
             } catch (Exception ex) {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize(
@@ -348,5 +353,9 @@ public class ConfigService {
 
     public static boolean isHeadClickCommandsRandomized() {
         return config.getBoolean("headClick.randomizeCommands", false);
+    }
+
+    public static int getHeadClickCommandsSlotsRequired() {
+        return config.getInt("headClick.slotsRequired", -1);
     }
 }

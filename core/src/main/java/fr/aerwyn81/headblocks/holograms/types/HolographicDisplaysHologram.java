@@ -32,10 +32,12 @@ public class HolographicDisplaysHologram implements IHologram {
     @Override
     public IHologram create(String name, Location location, List<String> lines, int displayRange) {
         HolographicDisplaysAPI api = HolographicDisplaysAPI.get(HeadBlocks.getInstance());
+
+        hologram = api.createHologram(location);
         for (String line : lines) {
             hologram.getLines().appendText(line);
         }
-        hologram = api.createHologram(location);
+
         hologram.getVisibilitySettings().setGlobalVisibility(VisibilitySettings.Visibility.HIDDEN);
         return this;
     }

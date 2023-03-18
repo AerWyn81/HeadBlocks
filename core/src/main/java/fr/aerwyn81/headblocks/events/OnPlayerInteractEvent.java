@@ -79,7 +79,9 @@ public class OnPlayerInteractEvent implements Listener {
 
         try {
             // Check if the player has already clicked on the head
-            if (StorageService.hasHead(player.getUniqueId(), headLocation.getUuid())) {
+            var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
+
+            if (playerHeads.contains(headLocation.getUuid())) {
                 String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), LanguageService.getMessage("Messages.AlreadyClaimHead"));
 
                 if (!message.trim().isEmpty()) {
@@ -117,8 +119,6 @@ public class OnPlayerInteractEvent implements Listener {
 
             // Check head order
             //if (headLocation.getOrderIndex() != -1) {
-            //    var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
-//
             //    if (HeadService.getChargedHeadLocations().stream()
             //            .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
             //            .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {

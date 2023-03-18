@@ -2,56 +2,83 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 public class RewardService {
-
-    public static void giveReward(Player p) {
-        if (ConfigService.getTieredRewards().size() == 0) {
-            return;
-        }
-
+    public static boolean giveReward(Player p, List<UUID> playerHeads) {
         var plugin = HeadBlocks.getInstance();
 
-        TieredReward tieredReward = ConfigService.getTieredRewards().stream().filter(t -> {
-            try {
-                return t.getLevel() == StorageService.getHeadsPlayer(p.getUniqueId(), p.getName()).size();
-            } catch (InternalException ex) {
-                p.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + p.getName() + ": " + ex.getMessage()));
-                return false;
-            }
-        }).findFirst().orElse(null);
+        TieredReward tieredReward;
+        if (ConfigService.getTieredRewards().size() != 0) {
+            tieredReward = ConfigService.getTieredRewards().stream()
+                    .filter(t -> t.getLevel() == playerHeads.size() + 1)
+                    .findFirst()
+                    .orElse(null);
 
-        if (tieredReward == null) {
-            return;
-        }
+            if (tieredReward != null) {
+                if (tieredReward.getSlotsRequired() != -1 && PlayerUtils.getEmptySlots(p) < tieredReward.getSlotsRequired()) {
+                    var message = LanguageService.getMessage("Messages.InventoryFullReward");
+                    if (message.trim().length() > 0) {
+                        p.sendMessage(message);
+                    }
 
-        List<String> messages = tieredReward.getMessages();
-        if (messages.size() != 0) {
-            p.sendMessage(PlaceholdersService.parse(p, messages));
-        }
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            List<String> commands = tieredReward.getCommands();
-            commands.forEach(command ->
-                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), command)));
-
-            List<String> broadcastMessages = tieredReward.getBroadcastMessages();
-            if (broadcastMessages.size() != 0) {
-                for (String message : broadcastMessages) {
-                    plugin.getServer().broadcastMessage(PlaceholdersService.parse(p.getName(), p.getUniqueId(), message));
+                    return false;
                 }
-            }
-        }, 1L);
-    }
 
-    public static boolean currentIsContainedInTiered(int playerHeads) {
-        return ConfigService.getTieredRewards().stream().anyMatch(t -> t.getLevel() == playerHeads);
+                List<String> messages = tieredReward.getMessages();
+                if (messages.size() != 0) {
+                    p.sendMessage(PlaceholdersService.parse(p, messages));
+                }
+
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    List<String> commands = tieredReward.getCommands();
+                    commands.forEach(command ->
+                            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), command)));
+
+                    List<String> broadcastMessages = tieredReward.getBroadcastMessages();
+                    if (broadcastMessages.size() != 0) {
+                        for (String message : broadcastMessages) {
+                            plugin.getServer().broadcastMessage(PlaceholdersService.parse(p.getName(), p.getUniqueId(), message));
+                        }
+                    }
+                }, 1L);
+            }
+        } else {
+            tieredReward = null;
+        }
+
+        // Only the tieredReward was given
+        if (ConfigService.isPreventCommandsOnTieredRewardsLevel() && tieredReward != null) {
+            return true;
+        }
+
+        var isRandomCommand = ConfigService.isHeadClickCommandsRandomized();
+        var slotsRequired = ConfigService.getHeadClickCommandsSlotsRequired();
+
+        if (slotsRequired != -1 && PlayerUtils.getEmptySlots(p) < slotsRequired) {
+            var message = LanguageService.getMessage("Messages.InventoryFullReward");
+            if (message.trim().length() > 0) {
+                p.sendMessage(message);
+            }
+
+            return false;
+        }
+
+        if (isRandomCommand) {
+            String randomCommand = ConfigService.getHeadClickCommands().get(new Random().nextInt(ConfigService.getHeadClickCommands().size()));
+            Bukkit.getScheduler().runTaskLater(plugin, () ->
+                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), randomCommand)), 1L);
+        } else {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
+                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), reward))), 1L);
+        }
+
+        return true;
     }
 }
