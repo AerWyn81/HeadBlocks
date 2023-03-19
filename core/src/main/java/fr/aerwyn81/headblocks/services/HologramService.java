@@ -34,7 +34,6 @@ public class HologramService {
         var holoPlugin = ConfigService.getHologramPlugin();
         enumTypeHologram = EnumTypeHologram.fromString(holoPlugin);
         if (enumTypeHologram == null) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cPlugin &e" + holoPlugin + " &cnot yet supported for holograms!"));
             enable = false;
             return;
         }

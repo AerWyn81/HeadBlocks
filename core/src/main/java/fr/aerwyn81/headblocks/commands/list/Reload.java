@@ -42,6 +42,11 @@ public class Reload implements Cmd {
         HeadService.load();
         GuiService.clearCache();
 
+        ConversationService.clearConversations();
+        GuiService.closeAllInventories();
+
+        TrackService.load();
+
         if (plugin.isHeadDatabaseActive()) {
             if (plugin.getHeadDatabaseHook() == null) {
                 plugin.setHeadDatabaseHook(new HeadDatabaseHook());

@@ -3,7 +3,9 @@ package fr.aerwyn81.headblocks.managers;
 import de.tr7zw.changeme.nbtapi.NBTTileEntity;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.head.HBTrack;
 import fr.aerwyn81.headblocks.services.ConfigService;
+import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.HologramService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -18,12 +20,15 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class HeadManager {
     private final ArrayList<HeadLocation> headLocations;
     private final YamlConfiguration config;
+
+    private HBTrack track;
 
     public HeadManager(YamlConfiguration config) {
         this.headLocations = new ArrayList<>();
@@ -32,6 +37,14 @@ public class HeadManager {
 
     public ArrayList<HeadLocation> getHeadLocations() {
         return headLocations;
+    }
+
+    public HBTrack getTrack() {
+        return track;
+    }
+
+    public void setTrack(HBTrack track) {
+        this.track = track;
     }
 
     public void loadHeadLocations() {
@@ -87,7 +100,7 @@ public class HeadManager {
 
     public UUID addHeadLocation(Location location, String texture) throws InternalException {
         UUID uniqueUuid = UUID.randomUUID();
-        while (getHeadByUUID(uniqueUuid) != null) {
+        while (getHeadByUUID(uniqueUuid).isPresent()) {
             uniqueUuid = UUID.randomUUID();
         }
 
@@ -97,7 +110,7 @@ public class HeadManager {
             HologramService.createHolograms(location);
         }
 
-        var headLocation = new HeadLocation("", uniqueUuid, location);
+        var headLocation = new HeadLocation("", uniqueUuid, location, this);
         headLocations.add(headLocation);
 
         return uniqueUuid;
@@ -108,13 +121,15 @@ public class HeadManager {
 
         headLocation.getLocation().getBlock().setType(Material.AIR);
 
+        headLocation.removeFromConfig(config);
+
         if (ConfigService.isHologramsEnabled()) {
             HologramService.removeHolograms(headLocation.getLocation());
         }
 
         headLocations.remove(headLocation);
 
-        //headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
+        HeadService.getHeadMoves().entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
     }
 
     public void changeHeadLocation(UUID hUuid, Block oldBlock, Block newBlock) {
@@ -134,7 +149,13 @@ public class HeadManager {
 
         oldBlock.setType(Material.AIR);
 
-        var headLocation = getHeadByUUID(hUuid);
+        var optHeadLocation = getHeadByUUID(hUuid);
+        if (optHeadLocation.isEmpty()) {
+            return;
+        }
+
+        var headLocation = optHeadLocation.get();
+
         var indexOfOld = headLocations.indexOf(headLocation);
 
         headLocation.setLocation(newBlock.getLocation());
@@ -146,12 +167,12 @@ public class HeadManager {
         HologramService.createHolograms(newBlock.getLocation());
     }
 
-    public HeadLocation getHeadByUUID(UUID headUuid) {
-        return headLocations.stream().filter(h -> h.getUuid().equals(headUuid)).findFirst().orElse(null);
+    public Optional<HeadLocation> getHeadByUUID(UUID headUuid) {
+        return headLocations.stream().filter(h -> h.getUuid().equals(headUuid)).findFirst();
     }
 
-    public HeadLocation getHeadAt(Location location) {
-        return headLocations.stream().filter(h -> LocationUtils.areEquals(h.getLocation(), location)).findFirst().orElse(null);
+    public Optional<HeadLocation> getHeadAt(Location location) {
+        return headLocations.stream().filter(h -> LocationUtils.areEquals(h.getLocation(), location)).findFirst();
     }
 
     public ArrayList<HeadLocation> getChargedHeadLocations(boolean onlyCharged) {

@@ -26,8 +26,8 @@ Messages:
   InventoryFull: "%prefix% &cThere is not enough space in the player's inventory to give a HeadBlock"
   TopEmpty: "%prefix% &cPlayer top is empty"
   CreativeSneakRemoveHead: "%prefix% &cYou must be in creative and crouching to destroy a HeadBlock"
-  CreativeSneakAddHead: "%prefix% &cYou must be in creative and crouching to place a HeadBlock"
-  HeadPlaced: "%prefix% &2&l+ &aHeadBlock placed &7(%world%, %x%, %y%, %z%)"
+  CreativeAddHead: "%prefix% &cYou must be in creative to place a HeadBlock"
+  HeadPlaced: "%prefix% &2&l+ &aHeadBlock placed for track %track% &7(%world%, %x%, %y%, %z%)"
   HeadRemoved: "%prefix% &2&c- &eHeadBlock removed &7(%world%, %x%, %y%, %z%)"
   RemoveAllConfirm: "%prefix% &cWarning, this command will remove &7%headCount% &chead(s). Add &7--confirm &cin the command to confirm"
   RemoveAllSuccess: "%prefix% &e%headCount% &ahead(s) successfully removed"
@@ -57,6 +57,8 @@ Messages:
   OrderClickError: "%prefix% &cAnother HeadBlock need to be found before this one &7(%name%&7)"
   HitClickMax: "%prefix% &cThis HeadBlock has reached its click limit &7(%count%)"
   InventoryFullReward: "%prefix% &cYou do not have the available space in your inventory to receive the reward"
+  CanceledTrackChoice: "%prefix% &cCanceled HeadBlock placement"
+  GuiClosePlayerOnReload: "%prefix% &cGUI has been closed because the plugin has been reloaded"
   MeCommand:
     - ""
     - "&aNumber of heads collected: &e%current%&7/&e%max%"
@@ -86,6 +88,14 @@ Chat:
   PreviousPage: "&7--------[&8<<<&7]-------"
   NextPage: "&7-------[&8>>>&7]--------"
   PageFooter: " &8[ &e%pageNumber%&7/&e%totalPage% &8] "
+  Conversation:
+    TrackNamePromptIncorrectEmpty: "%prefix% &cThe track name cannot be empty"
+    TrackNamePromptIncorrectAlreadyExist: "%prefix% &cA track with the same name already exist"
+    TrackNamePromptIncorrectNotEnoughChar: "%prefix% &cPlease provide a track name longer than 3 characters"
+    TrackNamePromptIncorrectOnlyNumber: "%prefix% &cThe track name cannot contains only numbers"
+    ConversationClosePlayerOnReload: "%prefix% &cThe creation of the track has been cancelled because the plugin has been reloaded"
+    AskUserTrackName: "%prefix% &aPlease enter the track name you want or &ecancel &ato cancel"
+    TrackNamePromptSuccess: "%prefix% &7&oShift-click to place other HeadBlocks in the same track without showing the track menu selection."
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &c&lOptions"
@@ -94,6 +104,7 @@ Gui:
   PreviousPage: "&cPrevious page"
   NextPage: "&aNext page"
   Close: "&cClose"
+  Cancel: "&cCancel"
   Unnamed: "&cUnnamed"
   Infinite: "&7Infinite"
   CloseLore:
@@ -140,6 +151,18 @@ Gui:
     - "&a&lRIGHT CLICK&8: &7Increase count"
     - ""
     - "&7Count: &e%count%"
+  TracksTitle: "&8HeadBlocks &7- &b&lTracks selection"
+  TrackItemHeadCount: "&7&oContains %headCount% heads"
+  CreateNewTrackName: "&2+ &aCreate new track"
+  CreateNewTrackLore:
+    - ""
+    - "&e&lINFO:"
+    - "&7 Create a new track that"
+    - "&7 will contains your HeadBlocks"
+    - ""
+    - "&8&lTIPS:"
+    - "&7&o Shift-click when placing new"
+    - "&7&o HeadBlocks will remember this new track"
 
 Help:
   LineTop: "&7--------------------[ &e&lHelp &7]--------------------"

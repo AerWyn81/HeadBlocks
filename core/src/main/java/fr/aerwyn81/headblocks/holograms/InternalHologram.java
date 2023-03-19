@@ -26,7 +26,7 @@ public class InternalHologram {
                 hologram = new DefaultHologram();
                 break;
             default:
-                hologram = null; //todo
+                hologram = null;
                 break;
         }
     }

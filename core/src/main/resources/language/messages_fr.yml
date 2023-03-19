@@ -26,8 +26,8 @@ Messages:
   InventoryFull: "%prefix% &cIl n'y a pas assez de place dans l'inventaire du joueur pour donner un HeadBlock"
   TopEmpty: "%prefix% &cLe classement des joueurs est vide"
   CreativeSneakRemoveHead: "%prefix% &cVous devez être en créatif et accroupi pour détruire un HeadBlock"
-  CreativeSneakAddHead: "%prefix% &cVous devez être en créatif et accroupi pour poser un HeadBlock"
-  HeadPlaced: "%prefix% &2&l+ &aHeadBlock placé &7(%world%, %x%, %y%, %z%)"
+  CreativeAddHead: "%prefix% &cVous devez être en créatif pour poser un HeadBlock"
+  HeadPlaced: "%prefix% &2&l+ &aHeadBlock placé pour la piste %track% &7(%world%, %x%, %y%, %z%)"
   HeadRemoved: "%prefix% &2&c- &eHeadBlock supprimé &7(%world%, %x%, %y%, %z%)"
   RemoveAllConfirm: "%prefix% &cAttention, cette commande va supprimer &7%headCount% &ctête(s). Ajoutez &7--confirm &cà la commande pour confirmer"
   RemoveAllSuccess: "%prefix% &e%headCount% &atête(s) ont correctement été supprimé"
@@ -56,6 +56,9 @@ Messages:
   TargetBlockNotHead: "%prefix% &cLa HeadBlock ciblée n'est pas un HeadBlock"
   OrderClickError: "%prefix% &cUne autre HeadBlock est à trouver avant celle là (%name%&7)"
   InventoryFullReward: "%prefix% &cVous n'avez pas l'espace disponible dans votre inventaire pour recevoir la récompense"
+  CanceledTrackChoice: "%prefix% &cAnnulation du placement du HeadBlock"
+  GuiClosePlayerOnReload: "%prefix% &cLe menu a été fermé car le plugin a été rechargé"
+  TrackNamePromptSuccess: "%prefix% &7&oShift-clic pour placer d'autres HeadBlocks dans la même piste sans afficher le menu de choix de piste."
   MeCommand:
     - ""
     - "&aNombre de têtes récupérées : &e%current%&7/&e%max%"
@@ -85,6 +88,13 @@ Chat:
   PreviousPage: "&7--------[&8<<<&7]-------"
   NextPage: "&7-------[&8>>>&7]--------"
   PageFooter: " &8[ &e%pageNumber%&7/&e%totalPage% &8] "
+  Conversation:
+    TrackNamePromptIncorrectEmpty: "%prefix% &cLe nom de la piste ne peut pas être vide"
+    TrackNamePromptIncorrectAlreadyExist: "%prefix% &cUne piste portant le même nom existe déjà"
+    TrackNamePromptIncorrectNotEnoughChar: "%prefix% &cVeuillez fournir un nom de piste de plus de 3 caractères"
+    TrackNamePromptIncorrectOnlyNumber: "%prefix% &cLe nom de la piste ne peut pas contenir uniquement des numéros"
+    ConversationClosePlayerOnReload: "%prefix% &cLa création de la track a été annulé car le plugin a été rechargé"
+    TrackAskUserTrackName: "%prefix% &aVeuillez saisir le nom de la piste que vous souhaitez ou &ecancel &apour annuler"
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &cOptions"
@@ -93,6 +103,7 @@ Gui:
   PreviousPage: "&cPage précédente"
   NextPage: "&aPage suivante"
   Close: "&cFermer"
+  Cancel: "&cAnnuler"
   Unnamed: "&cSans nom"
   Infinite: "&7Infini"
   CloseLore:
@@ -138,6 +149,16 @@ Gui:
     - "&a&lCLIC DROIT&8: &7Augmente la position"
     - ""
     - "&7Compteur: &e%count%"
+  TracksTitle: "&8HeadBlocks &7- &b&lSélection piste"
+  CreateNewTrackName: "&2+ &aCréer une nouvelle piste"
+  CreateNewTrackLore:
+    - ""
+    - "&e&lINFO:"
+    - "&7 Créez une nouvelle piste"
+    - "&7 qui contiendra vos HeadBlocks"
+    - ""
+    - "&7TIPS : &7&Shift-clic lorsque vous poserez de nouveaux"
+    - "&7&o   HeadBlocks utilisera cette nouvelle piste"
 
 Help:
   LineTop: "&7--------------------[ &e&lAide &7]--------------------"

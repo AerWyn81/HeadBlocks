@@ -103,11 +103,12 @@ headClick:
 # Holograms displayed above heads
 # Placeholders are not supported
 # Plugins supported :
+# NONE : Disabled
 # DECENT : DecentHolograms
 # HD : HolographicDisplaysHologram
 # DEFAULT : Internal need ProtocolLib (warn: unstable since 1.19 depending on ProtocolLib)
 holograms:
-  plugin: DEFAULT
+  plugin: NONE
   heightAboveHead: 0.4
   found:
     enabled: false

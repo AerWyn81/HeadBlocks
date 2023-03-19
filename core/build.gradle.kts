@@ -26,6 +26,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("com.github.unldenis:Hologram-Lib:1.4.0")
     implementation("com.google.code.findbugs:jsr305:3.0.2")
+    implementation("com.github.stefvanschie.inventoryframework:IF:0.10.8")
 }
 
 tasks {
@@ -41,6 +42,7 @@ tasks {
 
     shadowJar {
         relocate("de.tr7zw.changeme.nbtapi", "fr.aerwyn81.headblocks.bukkit.shaded.nbtapi")
+        relocate("com.github.stefvanschie.inventoryframework", "fr.aerwyn81.headblocks.bukkit.shaded.inventoryframework")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")

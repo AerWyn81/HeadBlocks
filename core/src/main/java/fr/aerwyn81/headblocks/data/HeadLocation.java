@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.data;
 
 import fr.aerwyn81.headblocks.data.reward.Reward;
+import fr.aerwyn81.headblocks.managers.HeadManager;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
@@ -27,11 +28,14 @@ public class HeadLocation {
 
     private final ArrayList<Reward> rewards;
 
-    public HeadLocation(String name, UUID headUUID, Location location) {
+    private HeadManager headManager;
+
+    public HeadLocation(String name, UUID headUUID, Location location, HeadManager headManager) {
         this(name, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, new ArrayList<>());
 
         this.location = location;
         this.isCharged = true;
+        this.headManager = headManager;
     }
 
     public HeadLocation(String name, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, ArrayList<Reward> rewards) {
@@ -138,6 +142,10 @@ public class HeadLocation {
 
     public ArrayList<Reward> getRewards() {
         return rewards;
+    }
+
+    public HeadManager getHeadManager() {
+        return headManager;
     }
 
     public void saveInConfig(YamlConfiguration section) {

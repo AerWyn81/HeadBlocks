@@ -93,6 +93,7 @@ public final class HeadBlocks extends JavaPlugin {
         HologramService.load();
         TrackService.initialize();
         GuiService.initialize();
+        ConversationService.initialize();
 
         this.globalTask = new GlobalTask();
         globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());

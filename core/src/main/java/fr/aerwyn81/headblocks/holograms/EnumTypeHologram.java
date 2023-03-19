@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.holograms;
 
 public enum EnumTypeHologram {
+    NONE("NONE"),
     DEFAULT("DEFAULT"),
     DECENT("DECENT"),
     HD("HD");

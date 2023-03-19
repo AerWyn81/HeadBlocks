@@ -93,6 +93,9 @@ public class ItemBuilder implements Cloneable {
         if (im == null)
             return this;
 
+        if (lore.length == 0 || Arrays.stream(lore).allMatch(String::isBlank))
+            return this;
+
         im.setLore(Arrays.asList(lore));
         is.setItemMeta(im);
         return this;

@@ -1,17 +1,13 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.HologramService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -41,7 +37,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        if (!player.isSneaking() || player.getGameMode() != GameMode.CREATIVE) {
+        if (player.getGameMode() != GameMode.CREATIVE) {
             e.setCancelled(true);
             player.sendMessage(LanguageService.getMessage("Messages.CreativeSneakAddHead"));
             return;
@@ -49,11 +45,11 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         Location headLocation = headBlock.getLocation();
 
-        //if (HeadService.getHeadAt(headLocation) != null) {
-        //    e.setCancelled(true);
-        //    player.sendMessage(LanguageService.getMessage("Messages.HeadAlreadyExistHere"));
-        //    return;
-        //}
+        if (TrackService.getHeadAt(headLocation).isPresent()) {
+            e.setCancelled(true);
+            player.sendMessage(LanguageService.getMessage("Messages.HeadAlreadyExistHere"));
+            return;
+        }
 
         // Check if there is a storage issue
         if (StorageService.hasStorageError()) {
@@ -64,22 +60,18 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         var headTexture = HeadUtils.getHeadTexture(e.getItemInHand());
 
-        //UUID headUuid;
-        //try {
-        //    headUuid = HeadService.saveHeadLocation(headLocation, headTexture);
-        //} catch (InternalException ex) {
-        //    player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-        //    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
-        //    return;
-        //}
+        var trackPlayerChoose = TrackService.getPlayersTrackChoice().get(player.getUniqueId());
 
-        HologramService.showNotFoundTo(player, headLocation);
-
-        ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
-
-        player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
-
-        //Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
+        if (player.isSneaking() && trackPlayerChoose != null) {
+            try {
+                TrackService.addHead(player, trackPlayerChoose, headLocation, headTexture);
+            } catch (InternalException ex) {
+                player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while adding new head from the storage: " + ex.getMessage()));
+            }
+        } else {
+            GuiService.openChooseTrack(player, headLocation, headTexture);
+        }
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {
