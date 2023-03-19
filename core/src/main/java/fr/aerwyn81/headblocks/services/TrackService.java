@@ -274,8 +274,12 @@ public class TrackService {
                 trackCreated.getHeadManager().getHeadLocations().size() + " locations in a default track."));
     }
 
-    public static Optional<HeadManager> getHeadAt(Location location) {
-        return getTracks().values().stream().map(HBTrack::getHeadManager).filter(headManager -> headManager.getHeadAt(location).isPresent()).findFirst();
+    public static Optional<HeadLocation> getHeadAt(Location location) {
+        return getTracks().values().stream()
+                .map(HBTrack::getHeadManager)
+                .map(headManager -> headManager.getHeadAt(location))
+                .flatMap(Optional::stream)
+                .findFirst();
     }
 
     public static void removeHead(Player player, HBTrack track, HeadManager headManager, HeadLocation headLocation) throws InternalException {

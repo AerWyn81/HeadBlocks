@@ -54,10 +54,12 @@ public class OnPlayerInteractEvent implements Listener {
         Location clickedLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = null; /*HeadService.getHeadAt(clickedLocation);*/
-        if (headLocation == null) {
+        var optHeadLocation = TrackService.getHeadAt(clickedLocation);
+        if (optHeadLocation.isEmpty()) {
             return;
         }
+
+        HeadLocation headLocation = optHeadLocation.get();
 
         // Check if there is a storage issue
         if (StorageService.hasStorageError()) {
@@ -188,18 +190,6 @@ public class OnPlayerInteractEvent implements Listener {
 
             FireworkUtils.launchFirework(loc, isFlickering,
                     colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
-        }
-
-        // Prevent trigger commands rewards if current is contained in tieredRewards and enabled in config
-        if (!ConfigService.isPreventCommandsOnTieredRewardsLevel()) {
-            int playerHeads;
-            try {
-                playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).size();
-            } catch (InternalException ex) {
-                player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving heads of " + player.getName() + " from the storage: " + ex.getMessage()));
-                return;
-            }
         }
 
         // Show hologram

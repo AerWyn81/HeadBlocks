@@ -29,8 +29,8 @@ public class OnPlayerBreakBlockEvent implements Listener {
         Location blockLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
-        var optHeadManager = TrackService.getHeadAt(blockLocation);
-        if (optHeadManager.isEmpty()) {
+        var optHeadLocation = TrackService.getHeadAt(blockLocation);
+        if (optHeadLocation.isEmpty()) {
             return;
         }
 
@@ -60,16 +60,15 @@ public class OnPlayerBreakBlockEvent implements Listener {
             return;
         }
 
-        var headManager = optHeadManager.get();
+        var headLocation = optHeadLocation.get();
+        var headManager = headLocation.getHeadManager();
         var track = headManager.getTrack();
 
-        headManager.getHeadAt(blockLocation).ifPresent(headLocation -> {
-            try {
-                TrackService.removeHead(player, track, headManager, headLocation);
-            } catch (InternalException ex) {
-                player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));
-            }
-        });
+        try {
+            TrackService.removeHead(player, track, headManager, headLocation);
+        } catch (InternalException ex) {
+            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));
+        }
     }
 }
