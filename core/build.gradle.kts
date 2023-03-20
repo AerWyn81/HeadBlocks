@@ -1,5 +1,3 @@
-import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
-
 plugins {
     id("java")
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -22,11 +20,20 @@ dependencies {
     compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.0")
     implementation(files("../libs/hologram-lib-1.4.0-BETA.jar"))
     implementation("redis.clients:jedis:4.2.3")
-    implementation("de.tr7zw:item-nbt-api:2.11.1")
+    implementation("de.tr7zw:item-nbt-api:2.11.2")
     implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("com.github.unldenis:Hologram-Lib:1.4.0")
     implementation("com.google.code.findbugs:jsr305:3.0.2")
     implementation("com.github.stefvanschie.inventoryframework:IF:0.10.8")
+
+    // Lamp
+    implementation("com.github.Revxrsal.Lamp:common:3.1.5")
+    implementation("com.github.Revxrsal.Lamp:bukkit:3.1.5")
+
+    // Adventure
+    implementation("net.kyori:adventure-api:4.11.0")
+    implementation("net.kyori:adventure-platform-bukkit:4.1.2")
+    implementation("net.kyori:adventure-text-minimessage:4.11.0")
 }
 
 tasks {
@@ -64,22 +71,4 @@ bukkit {
     softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib")
     version = rootProject.version.toString()
     website = "https://just2craft.fr"
-
-    commands {
-        register("headblocks") {
-            description = "Plugin command"
-            aliases = listOf("hb")
-        }
-    }
-
-    permissions {
-        register("headblocks.use") {
-            description = "Allows players to interact with heads and see their progress"
-            default = BukkitPluginDescription.Permission.Default.NOT_OP
-        }
-        register("headblocks.admin") {
-            description = "Allows access to /headblocks admin commands"
-            default = BukkitPluginDescription.Permission.Default.OP
-        }
-    }
 }

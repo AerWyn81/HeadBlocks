@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.services;
 
+import eu.decentsoftware.holograms.api.utils.objects.Pair;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -46,6 +47,12 @@ public class LanguageService {
 		return MessageUtils.colorize(messages.get(message).toString()
 				.replaceAll("%prefix%", getPrefix()));
 	}
+
+	public static String getMessage(String message, Pair<String, String>... test) {
+		return MessageUtils.colorize(messages.get(message).toString()
+				.replaceAll("%prefix%", getPrefix()));
+	}
+
 
 	public static String getMessage(String message, String playerName) {
 		return getMessage(message)

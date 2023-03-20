@@ -1,7 +1,8 @@
 package fr.aerwyn81.headblocks;
 
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
-import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
+import fr.aerwyn81.headblocks.commands.newCommands.AdminCommands;
+import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
@@ -14,10 +15,15 @@ import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
+import revxrsal.commands.autocomplete.SuggestionProvider;
+import revxrsal.commands.bukkit.BukkitCommandHandler;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
@@ -102,7 +108,27 @@ public final class HeadBlocks extends JavaPlugin {
             this.headDatabaseHook = new HeadDatabaseHook();
         }
 
-        getCommand("headblocks").setExecutor(new HBCommandExecutor());
+        //getCommand("headblocks").setExecutor(new HBCommandExecutor());
+        BukkitCommandHandler commandHandler = BukkitCommandHandler.create(this);
+        commandHandler.getAutoCompleter().registerParameterSuggestions(EnumTypeDatabase.class, (args, sender, command) -> EnumTypeDatabase.toStringList());
+        commandHandler.getAutoCompleter().registerSuggestion("giveCommand", (args, sender, command) -> {
+            var headCount = HeadService.getHeads().size();
+
+            if (headCount > 1) {
+                List<String> c = IntStream.range(1, headCount + 1).boxed()
+                        .map(Object::toString)
+                        .collect(Collectors.toList());
+                c.add(0, "*");
+
+                return SuggestionProvider.of(c).getSuggestions(args, sender, command);
+            }
+
+            return SuggestionProvider.EMPTY.getSuggestions(args, sender, command);
+        });
+        commandHandler.setHelpWriter((command, actor) ->
+                String.format(" &8• &e/%s %s &7- &f%s", command.getPath().toRealString(), command.getUsage(), command.getDescription()));
+        commandHandler.register(new AdminCommands());
+        commandHandler.registerBrigadier();
 
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(), this);

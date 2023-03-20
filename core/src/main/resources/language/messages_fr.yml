@@ -18,7 +18,7 @@ Messages:
   PlayerNotFound: "%prefix% &cLe joueur n'est pas connecté"
   HeadNotYetLoaded: "%prefix% &cLa tête id %id% ne peut pas vous être donnée tant que HeadDatabase n'est pas complètement chargé"
   StorageError: "%prefix% &cUne erreur est survenue avec le système de stockage. Vérifiez les logs console"
-  ExportSuccess: "%prefix% &aLe fichier SQL d'export de la base de données &7(%fileName%) &a été généré avec succès dans le dossier du plugin"
+  ExportSuccess: "%prefix% &aLe script SQL a été généré avec succès dans le dossier du plugin &7(%fileName%)"
   ExportError: "%prefix% &cUne erreur s'est produite lors de la création du fichier sql : "
   ExportInProgress: "%prefix% &aGénération de l'export du script SQL en cours..."
   ReloadComplete: "%prefix% &aLa configuration a été rechargée avec succès"
