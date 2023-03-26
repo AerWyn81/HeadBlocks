@@ -18,15 +18,9 @@ import java.util.stream.Collectors;
 public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     private final HashMap<String, HBCommand> registeredCommands;
 
-    private final Help helpCommand;
-
     public HBCommandExecutor() {
         this.registeredCommands = new HashMap<>();
 
-        this.helpCommand = new Help();
-
-        this.register(helpCommand);
-        this.register(new Give());
         this.register(new Reload());
         this.register(new List());
         this.register(new Me());
@@ -46,10 +40,6 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         HBCommand command = new HBCommand(c);
 
         registeredCommands.put(command.getCommand(), command);
-
-        if (command.isVisible()) {
-            helpCommand.addCommand(command);
-        }
     }
 
     @Override

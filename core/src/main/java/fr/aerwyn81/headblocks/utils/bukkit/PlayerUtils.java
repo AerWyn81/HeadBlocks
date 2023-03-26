@@ -35,16 +35,16 @@ public class PlayerUtils {
         }
     }
 
-    public static int getEmptySlots(Player player) {
-        int i = 0;
-
+    public static boolean hasEnoughInventorySpace(Player player, int spaceNeeded) {
         ItemStack[] items = player.getInventory().getStorageContents();
 
+        int i = 0;
         for (ItemStack is : items) {
             if (is != null && is.getType() != Material.AIR)
                 continue;
             i++;
         }
-        return i;
+
+        return i < spaceNeeded;
     }
 }

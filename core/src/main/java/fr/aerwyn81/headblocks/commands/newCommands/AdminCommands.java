@@ -1,18 +1,24 @@
 package fr.aerwyn81.headblocks.commands.newCommands;
 
+import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
+import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.ExportSQLHelper;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.entity.Player;
 import revxrsal.commands.annotation.*;
 import revxrsal.commands.bukkit.BukkitCommandActor;
-import revxrsal.commands.bukkit.EntitySelector;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 import revxrsal.commands.help.CommandHelp;
 
-@Command({"hb"})
+import java.util.ArrayList;
+
+@Command({"hb", "headblock", "heablocks"})
 @CommandPermission("headblocks.admin")
+@Usage("/headblocks <give|list|remove|reset|stats|top|...> <args...>")
 public class AdminCommands {
 
     @Subcommand({"help"})
@@ -41,9 +47,34 @@ public class AdminCommands {
     @Subcommand("give")
     @CommandPermission("headblocks.admin.give")
     @Description("Give command")
-    @Usage("<player> <*|n>")
-    @AutoComplete("@giveCommand *")
-    public void give(BukkitCommandActor actor, @Default("self") EntitySelector<Player> players, String t) {
+    @Usage("(player)")
+    public void give(BukkitCommandActor actor, @Default("me") Player player) {
+        ArrayList<HBHead> hbHeads = HeadService.getHeads();
 
+        if (!PlayerUtils.hasEnoughInventorySpace(player, hbHeads.size())) {
+            actor.reply(LanguageService.getMessage("Messages.NotEnoughInventorySpace"));
+            return;
+        }
+
+        int headGiven = 0;
+        for (HBHead head : hbHeads) {
+            if (head instanceof HBHeadHDB) {
+                HBHeadHDB headHDB = (HBHeadHDB) head;
+
+                if (!headHDB.isLoaded()) {
+                    actor.reply(LanguageService.getMessage("Messages.HeadNotYetLoaded")
+                            .replaceAll("%id%", String.valueOf(headHDB.getId())));
+                    continue;
+                }
+            }
+
+            player.getInventory().addItem(head.getItemStack());
+            headGiven++;
+        }
+
+        if (headGiven != 0) {
+            actor.reply(LanguageService.getMessage("Messages.HeadGiven")
+                    .replaceAll("%headNumber%", String.valueOf(headGiven)));
+        }
     }
 }

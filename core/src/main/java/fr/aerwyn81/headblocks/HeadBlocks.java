@@ -21,9 +21,6 @@ import revxrsal.commands.bukkit.BukkitCommandHandler;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
@@ -110,21 +107,10 @@ public final class HeadBlocks extends JavaPlugin {
 
         //getCommand("headblocks").setExecutor(new HBCommandExecutor());
         BukkitCommandHandler commandHandler = BukkitCommandHandler.create(this);
-        commandHandler.getAutoCompleter().registerParameterSuggestions(EnumTypeDatabase.class, (args, sender, command) -> EnumTypeDatabase.toStringList());
-        commandHandler.getAutoCompleter().registerSuggestion("giveCommand", (args, sender, command) -> {
-            var headCount = HeadService.getHeads().size();
+        commandHandler.getAutoCompleter()
+                .registerParameterSuggestions(EnumTypeDatabase.class, (args, sender, command) -> EnumTypeDatabase.toStringList())
+                .registerParameterSuggestions(boolean.class, SuggestionProvider.of("true", "false"));
 
-            if (headCount > 1) {
-                List<String> c = IntStream.range(1, headCount + 1).boxed()
-                        .map(Object::toString)
-                        .collect(Collectors.toList());
-                c.add(0, "*");
-
-                return SuggestionProvider.of(c).getSuggestions(args, sender, command);
-            }
-
-            return SuggestionProvider.EMPTY.getSuggestions(args, sender, command);
-        });
         commandHandler.setHelpWriter((command, actor) ->
                 String.format(" &8• &e/%s %s &7- &f%s", command.getPath().toRealString(), command.getUsage(), command.getDescription()));
         commandHandler.register(new AdminCommands());
