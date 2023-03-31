@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.holograms.InternalHologram;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -30,27 +31,39 @@ public class HologramService {
         notFoundHolograms = new HashMap<>();
 
         enable = ConfigService.isHologramsEnabled();
+        if (!enable) {
+            return;
+        }
 
         var holoPlugin = ConfigService.getHologramPlugin();
         enumTypeHologram = EnumTypeHologram.fromString(holoPlugin);
         if (enumTypeHologram == null) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cPlugin &e" + holoPlugin + " &cnot yet supported for holograms!"));
             enable = false;
             return;
         }
 
-        if (!enable ||
-                (enumTypeHologram == EnumTypeHologram.DECENT && !HeadBlocks.isDecentHologramsActive) ||
+        if ((enumTypeHologram == EnumTypeHologram.DECENT && !HeadBlocks.isDecentHologramsActive) ||
                 (enumTypeHologram == EnumTypeHologram.HD && !HeadBlocks.isHolographicDisplaysActive) ||
                 (enumTypeHologram == EnumTypeHologram.DEFAULT && !HeadBlocks.isProtocolLibActive)) {
+            enable = false;
             return;
         }
+
+        //for (HeadLocation loc : HeadService.getHeadLocations()) {
+        //    if (loc == null) {
+        //        continue;
+        //    }
+
+        //    createHolograms(loc.getLocation());
+        //}
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eHolograms loaded!"));
     }
 
     public static void createHolograms(Location location) {
         if (!enable) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cCannot create a hologram. Are the necessary plugin installed?"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &cCannot create a hologram. Is " + ConfigService.getHologramPlugin() + " plugin installed?"));
             return;
         }
 
