@@ -23,7 +23,7 @@ public class RewardService {
                     .orElse(null);
 
             if (tieredReward != null) {
-                if (tieredReward.getSlotsRequired() != -1 && PlayerUtils.getEmptySlots(p) < tieredReward.getSlotsRequired()) {
+                if (tieredReward.getSlotsRequired() != -1 && PlayerUtils.getFreeSlots(p) < tieredReward.getSlotsRequired()) {
                     var message = LanguageService.getMessage("Messages.InventoryFullReward");
                     if (message.trim().length() > 0) {
                         p.sendMessage(message);
@@ -62,7 +62,7 @@ public class RewardService {
         var isRandomCommand = ConfigService.isHeadClickCommandsRandomized();
         var slotsRequired = ConfigService.getHeadClickCommandsSlotsRequired();
 
-        if (slotsRequired != -1 && PlayerUtils.getEmptySlots(p) < slotsRequired) {
+        if (slotsRequired != -1 && PlayerUtils.getFreeSlots(p) < slotsRequired) {
             var message = LanguageService.getMessage("Messages.InventoryFullReward");
             if (message.trim().length() > 0) {
                 p.sendMessage(message);

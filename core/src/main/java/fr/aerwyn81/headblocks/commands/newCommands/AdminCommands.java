@@ -9,12 +9,14 @@ import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.ExportSQLHelper;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import revxrsal.commands.annotation.*;
 import revxrsal.commands.bukkit.BukkitCommandActor;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 import revxrsal.commands.help.CommandHelp;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Command({"hb", "headblock", "heablocks"})
 @CommandPermission("headblocks.admin")
@@ -47,34 +49,55 @@ public class AdminCommands {
     @Subcommand("give")
     @CommandPermission("headblocks.admin.give")
     @Description("Give command")
-    @Usage("(player)")
-    public void give(BukkitCommandActor actor, @Default("me") Player player) {
-        ArrayList<HBHead> hbHeads = HeadService.getHeads();
+    @Usage("(player) <number>")
+    public void give(BukkitCommandActor actor, @Default("me") Player player, @Named("number") @Optional Integer part) {
+        var hbHeads = new ArrayList<>(HeadService.getHeads());
 
-        if (!PlayerUtils.hasEnoughInventorySpace(player, hbHeads.size())) {
-            actor.reply(LanguageService.getMessage("Messages.NotEnoughInventorySpace"));
+        var headNotLoaded = hbHeads.stream()
+                .filter(HBHeadHDB.class::isInstance)
+                .map(h -> (HBHeadHDB) h)
+                .filter(HBHeadHDB::isLoaded)
+                .collect(Collectors.toList());
+
+        if (headNotLoaded.size() > 0) {
+            actor.reply(LanguageService.getMessage("Messages.HeadNotYetLoaded")
+                    .replaceAll("%ids%", headNotLoaded.stream().map(HBHeadHDB::getId).collect(Collectors.joining(", "))));
+
+            // At least one HeadDatabase head not loaded, removing all others to give
+            hbHeads.removeIf(hbHead -> hbHead instanceof HBHeadHDB);
+        }
+
+        var headsToItemstack = hbHeads.stream().map(HBHead::getItemStack).toArray(ItemStack[]::new);
+
+        var freeSlots = PlayerUtils.getFreeSlots(player, headsToItemstack);
+        if (freeSlots == 0) {
+            actor.reply(LanguageService.getMessage("Messages.InventoryFull"));
             return;
         }
 
-        int headGiven = 0;
-        for (HBHead head : hbHeads) {
-            if (head instanceof HBHeadHDB) {
-                HBHeadHDB headHDB = (HBHeadHDB) head;
+        if (freeSlots >= hbHeads.size()) {
+            player.getInventory().addItem(headsToItemstack);
+            actor.reply(LanguageService.getMessage("Messages.HeadGiven")
+                    .replaceAll("%headNumber%", String.valueOf(hbHeads.size())));
 
-                if (!headHDB.isLoaded()) {
-                    actor.reply(LanguageService.getMessage("Messages.HeadNotYetLoaded")
-                            .replaceAll("%id%", String.valueOf(headHDB.getId())));
-                    continue;
-                }
-            }
-
-            player.getInventory().addItem(head.getItemStack());
-            headGiven++;
+            return;
         }
 
-        if (headGiven != 0) {
+        if (part == -1) {
+            actor.reply(LanguageService.getMessage("Messages.GiveTooManyHeadInventory"));
+            return;
+        }
+
+        if (part <= 0)
+            part = 1;
+        else if (part > hbHeads.size())
+            part = hbHeads.size() - 1;
+
+        var headSelected  = hbHeads.get(part);
+        if (headSelected != null) {
+            player.getInventory().addItem(headSelected.getItemStack());
             actor.reply(LanguageService.getMessage("Messages.HeadGiven")
-                    .replaceAll("%headNumber%", String.valueOf(headGiven)));
+                    .replaceAll("%headNumber%", "1"));
         }
     }
 }
