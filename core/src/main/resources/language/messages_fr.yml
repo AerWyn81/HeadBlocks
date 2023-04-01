@@ -60,6 +60,7 @@ Messages:
   GuiClosePlayerOnReload: "%prefix% &cLe menu a été fermé car le plugin a été rechargé"
   TrackNamePromptSuccess: "%prefix% &7&oShift-clic pour placer d'autres HeadBlocks dans la même piste sans afficher le menu de choix de piste."
   GiveTooManyHeadInventory: "%prefix% &cTrop de HeadBlocks définis par rapport à la taille de votre inventaire, ajoutez un nombre dans la commande pour obtenir les têtes spécifiques"
+  TrackNotExist: "%prefix% &cLa piste &e%track% &cn'existe pas"
   MeCommand:
     - ""
     - "&aNombre de têtes récupérées : &e%current%&7/&e%max%"

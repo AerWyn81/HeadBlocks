@@ -22,6 +22,8 @@ public class MessageUtils {
 		return IridiumColorAPI.process(message);
 	}
 
+	public static String uncolorize(String message) { return IridiumColorAPI.stripColorFormatting(message); }
+
 	/**
 	 * Replace placeholders x y z world by location in string
 	 * @param message string

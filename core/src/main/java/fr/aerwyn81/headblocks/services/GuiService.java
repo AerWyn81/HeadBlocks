@@ -32,8 +32,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class GuiService {
 
@@ -91,10 +91,10 @@ public class GuiService {
         //        .toItemStack(), true)
         //        .addOnClickEvent(event -> {}));
 
-        int[] borders = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 9,  10, 11, 14, 15, 16, 17 };
-        IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
-                index -> optionsMenu.setItem(0, borders[index], new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack()))
-        );
+        //int[] borders = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 9,  10, 11, 14, 15, 16, 17 };
+        //IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
+        //        index -> optionsMenu.setItem(0, borders[index], new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack()))
+        //);
 
         p.openInventory(optionsMenu.getInventory());
     }
@@ -191,6 +191,7 @@ public class GuiService {
                                      Consumer<InventoryCloseEvent> eventOnClose,
                                      BiConsumer<InventoryClickEvent, HBTrack> eventOnClick,
                                      Consumer<InventoryClickEvent> eventOnPaginationBack,
+                                     Function<HBTrack, ArrayList<String>> lore,
                                      boolean withCreateTrack,
                                      Location headLocation,
                                      String headTexture) {
@@ -201,30 +202,11 @@ public class GuiService {
 
         var pages = new PaginatedPane(0, 0, 9, 5);
         pages.populateWithGuiItems(TrackService.getTracks().values().stream()
-                .map(track -> {
-                    ArrayList<String> lore = new ArrayList<>();
-
-                    var message = LanguageService.getMessage("Gui.TrackItemHeadCount")
-                            .replaceAll("%headCount%", String.valueOf(track.getHeadManager().getHeadLocations().size()));
-                    if (message.trim().length() > 0) {
-                        lore.add(message);
-                    }
-
-                    lore.add("");
-                    if (withCreateTrack) {
-                        lore.add(LanguageService.getMessage("Gui.ClickSelectTrack"));
-                    } else {
-                        lore.add(LanguageService.getMessage("Gui.ClickShowContent"));
-                    }
-
-                    lore.addAll(track.getColorizedDescription());
-
-                    return new GuiItem(new ItemBuilder(track.getIcon())
-                            .setName(MessageUtils.colorize("&e" + track.getId()) + ". " + track.getColorizedName())
-                            .setLore(lore)
-                            .toItemStack(),
-                            click -> eventOnClick.accept(click, track));
-                })
+                .map(track -> new GuiItem(new ItemBuilder(track.getIcon())
+                        .setName(MessageUtils.colorize("&e" + track.getId()) + ". " + track.getDisplayName())
+                        .setLore(lore.apply(track))
+                        .toItemStack(),
+                        click -> eventOnClick.accept(click, track)))
                 .collect(Collectors.toList()));
 
         gui.addPane(pages);

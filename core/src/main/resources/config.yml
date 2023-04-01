@@ -185,15 +185,3 @@ tieredRewards:
       - '%prefix% &6%player% &afound &6100 heads&a!!!'
       - ''
     slotsRequired: 2
-
-gui:
-  borderIcon:
-    type: GRAY_STAINED_GLASS_PANE
-  previousIcon:
-    type: ARROW
-  nextIcon:
-    type: ARROW
-  backIcon:
-    type: SPRUCE_DOOR
-  closeIcon:
-    type: BARRIER

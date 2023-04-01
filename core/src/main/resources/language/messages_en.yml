@@ -60,6 +60,7 @@ Messages:
   CanceledTrackChoice: "%prefix% &cCanceled HeadBlock placement"
   GuiClosePlayerOnReload: "%prefix% &cGUI has been closed because the plugin has been reloaded"
   GiveTooManyHeadInventory: "%prefix% &cToo many HeadBlocks defined for the size of your inventory, add a number in the order to get the specific heads"
+  TrackNotExist: "%prefix% &cTrack &e%track% &cdoes not exist"
   MeCommand:
     - ""
     - "&aNumber of heads collected: &e%current%&7/&e%max%"

@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.newCommands.AdminCommands;
 import fr.aerwyn81.headblocks.commands.newCommands.PlayerCommands;
+import fr.aerwyn81.headblocks.data.head.HBTrack;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
@@ -18,6 +19,7 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import revxrsal.commands.autocomplete.SuggestionProvider;
 import revxrsal.commands.bukkit.BukkitCommandHandler;
+import revxrsal.commands.exception.CommandErrorException;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,7 +111,19 @@ public final class HeadBlocks extends JavaPlugin {
         BukkitCommandHandler commandHandler = BukkitCommandHandler.create(this);
         commandHandler.getAutoCompleter()
                 .registerParameterSuggestions(EnumTypeDatabase.class, (args, sender, command) -> EnumTypeDatabase.toStringList())
-                .registerParameterSuggestions(boolean.class, SuggestionProvider.of("true", "false"));
+                .registerParameterSuggestions(boolean.class, SuggestionProvider.of("true", "false"))
+                .registerParameterSuggestions(HBTrack.class, SuggestionProvider.map(() -> TrackService.getTracks().values(), HBTrack::getName));
+
+        commandHandler.registerValueResolver(HBTrack.class, ctx -> {
+            var reqTrack = ctx.popForParameter();
+            var hbTrack = TrackService.getTrackByName(reqTrack);
+            if (hbTrack.isEmpty()) {
+                throw new CommandErrorException(LanguageService.getMessage("Messages.TrackNotExist")
+                        .replaceAll("%track%", reqTrack));
+            }
+
+            return hbTrack.get();
+        });
 
         commandHandler.setHelpWriter((command, actor) ->
                 String.format(" &8• &e/%s %s &7- &f%s", command.getPath().toRealString(), command.getUsage(), command.getDescription()));

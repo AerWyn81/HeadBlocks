@@ -82,6 +82,10 @@ public class TrackService {
         return tracks.containsKey(trackId);
     }
 
+    public static Optional<HBTrack> getTrackByName(String track) {
+        return tracks.values().stream().filter(t -> t.getName().equals(track)).findFirst();
+    }
+
     //endregion
 
     //region Methods
@@ -129,7 +133,7 @@ public class TrackService {
         var manager = new HeadManager(config);
 
         HBTrack track;
-        track = new HBTrack(id, name, new ArrayList<>(), new ItemStack(Material.PAPER), manager);
+        track = new HBTrack(id, MessageUtils.uncolorize(name), name, new ArrayList<>(), new ItemStack(Material.PAPER), manager);
 
         manager.setTrack(track);
 
@@ -181,29 +185,13 @@ public class TrackService {
             String id = file.getName().toLowerCase().replace(".yml", "");
 
             YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-            String name = config.getString("track.name");
 
             if (!Character.isDigit(id.charAt(0))) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cCannot load track " + name + " because filename must be a number."));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cCannot load track " + id + " because filename must be a number."));
                 continue;
             }
 
-            ArrayList<String> description = new ArrayList<>(config.getStringList("track.description"));
-
-            ItemStack iconItem;
-            try {
-                iconItem = new ItemStack(Material.valueOf(config.getString("track.icon", "PAPER")));
-            } catch (Exception ex) {
-                iconItem = new ItemStack(Material.PAPER);
-            }
-
-            var manager = new HeadManager(config);
-
-            HBTrack track;
-            track = new HBTrack(id, name, description, iconItem, manager);
-
-            manager.setTrack(track);
-
+            HBTrack track = HBTrack.fromConfig(config, id);
             track.getHeadManager().loadHeadLocations();
 
             tracks.put(id, track);
@@ -252,7 +240,7 @@ public class TrackService {
             var manager = new HeadManager(trackConfigs.get("1"));
             manager.getHeadLocations().addAll(oldManager.getHeadLocations());
 
-            trackCreated = new HBTrack("1", "&7Default", new ArrayList<>(), new ItemStack(Material.PAPER), manager);
+            trackCreated = new HBTrack("1", "Default", "&7Default", new ArrayList<>(), new ItemStack(Material.PAPER), manager);
 
             manager.setTrack(trackCreated);
 
@@ -271,7 +259,7 @@ public class TrackService {
         oldLocationsFile.renameTo(new File(HeadBlocks.getInstance().getDataFolder(), "locations.yml.backup"));
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eMigration successfully completed of " +
-                trackCreated.getHeadManager().getHeadLocations().size() + " locations in a default track."));
+                trackCreated.getHeadCount() + " locations in a default track."));
     }
 
     public static Optional<HeadLocation> getHeadAt(Location location) {

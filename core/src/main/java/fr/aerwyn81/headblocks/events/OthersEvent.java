@@ -1,12 +1,8 @@
 package fr.aerwyn81.headblocks.events;
 
-import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.HologramService;
 import fr.aerwyn81.headblocks.services.StorageService;
-import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
@@ -17,8 +13,6 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
-
-import java.util.stream.Collectors;
 
 public class OthersEvent implements Listener {
 

@@ -16,6 +16,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class OnPlayerPlaceBlockEvent implements Listener {
 
     @EventHandler
@@ -68,7 +71,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             try {
                 TrackService.addHead(player, trackPlayerChoose, headLocation, headTexture);
                 player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced")
-                        .replaceAll("%track%", trackPlayerChoose.getColorizedName()), headLocation));
+                        .replaceAll("%track%", trackPlayerChoose.getDisplayName()), headLocation));
             } catch (InternalException ex) {
                 player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while adding new head from the storage: " + ex.getMessage()));
@@ -90,14 +93,35 @@ public class OnPlayerPlaceBlockEvent implements Listener {
                             TrackService.getPlayersTrackChoice().put(player.getUniqueId(), track);
 
                             player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced")
-                                    .replaceAll("%track%", track.getColorizedName()), headLocation));
+                                    .replaceAll("%track%", track.getDisplayName()), headLocation));
                         } catch (InternalException ex) {
                             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while adding new head from the storage: " + ex.getMessage()));
                         }
                     },
                     inventoryClickEvent -> GuiService.closeInventory(inventoryClickEvent.getWhoClicked()),
-                    true, headLocation, headTexture);
+                    track -> {
+                        StringBuilder lore = new StringBuilder();
+
+                        var message = LanguageService.getMessage("Gui.TrackItemHeadCount")
+                                .replaceAll("%headCount%", String.valueOf(track.getHeadCount()));
+                        if (message.trim().length() > 0) {
+                            lore.append(message).append("\n");
+                        }
+
+                        lore.append("\n");
+
+                        if (track.getDescription().size() > 0) {
+                            for (var line : track.getColorizedDescription()) {
+                                lore.append(line).append("\n");
+                            }
+
+                            lore.append("\n");
+                        }
+
+                        lore.append(LanguageService.getMessage("Gui.ClickSelectTrack"));
+                        return new ArrayList<>(List.of(lore.toString().split("\n")));
+                    }, true, headLocation, headTexture);
         }
     }
 

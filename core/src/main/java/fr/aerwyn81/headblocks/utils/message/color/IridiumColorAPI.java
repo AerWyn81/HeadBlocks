@@ -149,7 +149,7 @@ public class IridiumColorAPI {
      * @since 1.0.5
      */
     public static String stripColorFormatting(String string) {
-        return string.replaceAll("<#[0-9A-F]{6}>|[&§][a-f0-9lnokm]|</?[A-Z]{5,8}(:[0-9A-F]{6})?[0-9]*>", "");
+        return string.replaceAll("<#[0-9A-F]{6}>|[&§][a-f0-9lnokm]|</?[A-Z]{5,8}(:[0-9A-F]{6})?[0-9]*>|\\{#[0-9a-fA-F]{6}}", "");
     }
 
     private static String apply(String source, ChatColor[] colors) {
