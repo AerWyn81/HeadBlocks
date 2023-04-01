@@ -155,6 +155,13 @@ shouldResetPlayerData: true
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
 preventCommandsOnTieredRewardsLevel: false
 
+# Disable these options can significantly increase performance
+#  -> piston will prevent any piston extension interaction (extension destroying head)
+#  -> water will prevent any liquid flow interaction (water destroying head)
+externalInteractions:
+  piston: true
+  water: true
+
 # Tiered rewards : provide a head count to trigger a reward command list
 # Add the tier, then messages, commands or broadcast message which will be executed
 # You can add "slotsRequired" to give the reward only if the player has enough space in inventory
