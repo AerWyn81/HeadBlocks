@@ -356,4 +356,8 @@ public class ConfigService {
     public static int getHeadClickCommandsSlotsRequired() {
         return config.getInt("headClick.slotsRequired", -1);
     }
+
+    public static boolean isPreventPistonExtension() { return config.getBoolean("externalInteractions.piston", true); }
+
+    public static boolean isPreventLiquidFlow() { return config.getBoolean("externalInteractions.water", true); }
 }

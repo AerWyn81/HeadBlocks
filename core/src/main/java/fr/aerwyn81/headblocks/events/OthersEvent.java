@@ -42,6 +42,9 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent e) {
+        if (!ConfigService.isPreventPistonExtension())
+            return;
+
         if (e.getBlocks().stream().anyMatch(b -> HeadService.getChargedHeadLocations().stream()
                 .anyMatch(p -> LocationUtils.areEquals(p.getLocation(), b.getLocation())))) {
             e.setCancelled(true);
@@ -78,6 +81,9 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onBlockChange(BlockFromToEvent e) {
+        if (!ConfigService.isPreventLiquidFlow())
+            return;
+
         if (e.getBlock().isLiquid() && HeadService.getHeadAt(e.getToBlock().getLocation()) != null) {
             e.setCancelled(true);
         }
