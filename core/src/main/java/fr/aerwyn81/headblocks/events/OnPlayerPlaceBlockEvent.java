@@ -6,8 +6,10 @@ import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -65,16 +67,48 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         if (player.isSneaking() && trackPlayerChoose != null) {
             try {
                 TrackService.addHead(player, trackPlayerChoose, headLocation, headTexture);
+                player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced")
+                        .replaceAll("%track%", trackPlayerChoose.getColorizedName()), headLocation));
             } catch (InternalException ex) {
                 player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while adding new head from the storage: " + ex.getMessage()));
             }
         } else {
-            GuiService.openChooseTrack(player, headLocation, headTexture);
+            GuiService.showTracksGui(player,
+                    closeEvent -> cancelChoice(player, headLocation),
+                    (invClickEvent, track) -> {
+                        var optGui = GuiService.getOpenedInventory(player);
+                        if (optGui.isEmpty())
+                            return;
+
+                        var gui = optGui.get();
+                        gui.setOnClose(null);
+                        GuiService.closeInventory(player);
+
+                        try {
+                            TrackService.addHead(player, track, headLocation, headTexture);
+                            TrackService.getPlayersTrackChoice().put(player.getUniqueId(), track);
+
+                            player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced")
+                                    .replaceAll("%track%", track.getColorizedName()), headLocation));
+                        } catch (InternalException ex) {
+                            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+                            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while adding new head from the storage: " + ex.getMessage()));
+                        }
+                    },
+                    inventoryClickEvent -> GuiService.closeInventory(inventoryClickEvent.getWhoClicked()),
+                    true, headLocation, headTexture);
         }
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {
         return HeadService.getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
+    }
+
+    public static void cancelChoice(Player p, Location headLocation) {
+        Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+            headLocation.getBlock().setType(Material.AIR);
+            p.sendMessage(LanguageService.getMessage("Messages.CanceledTrackChoice"));
+        }, 1L);
     }
 }

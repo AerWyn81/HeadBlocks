@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.utils.message;
 
 import com.google.common.base.Strings;
+import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.color.IridiumColorAPI;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -35,8 +36,8 @@ public class MessageUtils {
 				.replaceAll("%worldName%", parseWorld(location));
 	}
 
-	private static String parseWorld(Location location) {
-		return location.getWorld() != null ? location.getWorld().getName() : colorize("&cUnknownWorld");
+	public static String parseWorld(Location location) {
+		return location.getWorld() != null ? location.getWorld().getName() : LanguageService.getMessage("Gui.UnknownWorld");
 	}
 
 	/**

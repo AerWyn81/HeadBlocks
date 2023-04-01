@@ -3,8 +3,8 @@ Prefix: '&6&lH&e&lead&6&lB&e&llocks &7»&r'
 Head:
   Name: "&6&lH&e&lead&6&lB&e&llocks"
   Lore:
-    - ""
-    - "&7&oAllows you to create a HeadBlock at the chosen location"
+    - "&8&oAllows you to create a HeadBlock"
+    - "&8&oat the chosen location"
     - ""
     - "&2✔ &8- &7Right click + sneak to create"
     - "&c✘ &8- &7Left click + sneak to delete"
@@ -96,7 +96,7 @@ Chat:
     TrackNamePromptIncorrectOnlyNumber: "%prefix% &cThe track name cannot contains only numbers"
     ConversationClosePlayerOnReload: "%prefix% &cThe creation of the track has been cancelled because the plugin has been reloaded"
     AskUserTrackName: "%prefix% &aPlease enter the track name you want or &ecancel &ato cancel"
-    TrackNamePromptSuccess: "%prefix% &7&oShift-click to place other HeadBlocks in the same track without showing the track menu selection."
+    TrackNamePromptSuccess: "%prefix% &7&oShift-click to place other HeadBlock in the same track without showing the track menu selection."
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &c&lOptions"
@@ -152,7 +152,7 @@ Gui:
     - "&a&lRIGHT CLICK&8: &7Increase count"
     - ""
     - "&7Count: &e%count%"
-  TracksTitle: "&8HeadBlocks &7- &b&lTracks selection"
+  TracksTitle: "&8HeadBlocks &7- &b&lTrack list"
   TrackItemHeadCount: "&7&oContains %headCount% heads"
   CreateNewTrackName: "&2+ &aCreate new track"
   CreateNewTrackLore:
@@ -164,6 +164,16 @@ Gui:
     - "&8&lTIPS:"
     - "&7&o Shift-click when placing new"
     - "&7&o HeadBlocks will remember this new track"
+  ClickSelectTrack: "&7&oClick to select track"
+  ClickShowContent: "&7&oClick to show content"
+  TrackContentTitle: "&8HeadBlocks &7- &e&lContent &7(%headCount%)"
+  Coordinates: "&e&lCoordinates:"
+  World: "World:"
+  UnknownWorld: "&cUnknownWorld"
+  ErrorLoadingLocation: "&c&oError loading location..."
+  HeadLoaded: "&2✔ &aHeadBlock loaded"
+  HeadNotLoaded: "&4✘ &cHeadBlock not loaded"
+  ClickTeleport: "&8✈ &7&oClick to teleport"
 
 Help:
   LineTop: "&7--------------------[ &e&lHelp &7]--------------------"

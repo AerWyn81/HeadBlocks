@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks;
 
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.newCommands.AdminCommands;
+import fr.aerwyn81.headblocks.commands.newCommands.PlayerCommands;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
@@ -105,7 +106,6 @@ public final class HeadBlocks extends JavaPlugin {
             this.headDatabaseHook = new HeadDatabaseHook();
         }
 
-        //getCommand("headblocks").setExecutor(new HBCommandExecutor());
         BukkitCommandHandler commandHandler = BukkitCommandHandler.create(this);
         commandHandler.getAutoCompleter()
                 .registerParameterSuggestions(EnumTypeDatabase.class, (args, sender, command) -> EnumTypeDatabase.toStringList())
@@ -114,6 +114,7 @@ public final class HeadBlocks extends JavaPlugin {
         commandHandler.setHelpWriter((command, actor) ->
                 String.format(" &8• &e/%s %s &7- &f%s", command.getPath().toRealString(), command.getUsage(), command.getDescription()));
         commandHandler.register(new AdminCommands());
+        commandHandler.register(new PlayerCommands());
         commandHandler.registerBrigadier();
 
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(), this);

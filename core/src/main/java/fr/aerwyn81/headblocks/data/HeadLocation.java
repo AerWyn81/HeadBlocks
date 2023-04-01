@@ -11,10 +11,12 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class HeadLocation {
     private final String name;
     private final UUID headUUID;
+    private final ArrayList<String> description;
 
     private String configWorldName;
     private int x;
@@ -30,16 +32,17 @@ public class HeadLocation {
 
     private HeadManager headManager;
 
-    public HeadLocation(String name, UUID headUUID, Location location, HeadManager headManager) {
-        this(name, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, new ArrayList<>());
+    public HeadLocation(String name, ArrayList<String> description, UUID headUUID, Location location, HeadManager headManager) {
+        this(name, description, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, new ArrayList<>());
 
         this.location = location;
         this.isCharged = true;
         this.headManager = headManager;
     }
 
-    public HeadLocation(String name, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, ArrayList<Reward> rewards) {
+    public HeadLocation(String name, ArrayList<String> description, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, ArrayList<Reward> rewards) {
         this.name = name;
+        this.description = description;
         this.headUUID = headUUID;
         this.hitCount = hitCount;
         this.orderIndex = orderIndex;
@@ -61,6 +64,10 @@ public class HeadLocation {
             return LanguageService.getMessage("Gui.Unnamed");
 
         return MessageUtils.colorize(name);
+    }
+
+    public ArrayList<String> getDisplayedDescription() {
+        return description.stream().map(MessageUtils::colorize).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public UUID getUuid() {
@@ -85,6 +92,10 @@ public class HeadLocation {
 
     public int getOrderIndex() {
         return orderIndex;
+    }
+
+    public ArrayList<String> getDescription() {
+        return description;
     }
 
     public String getDisplayedOrderIndex() {
@@ -152,6 +163,7 @@ public class HeadLocation {
         var hUUID = headUUID.toString();
 
         section.set("locations." + hUUID + ".name", name);
+        section.set("locations." + hUUID + ".description", description);
         section.set("locations." + hUUID + ".location.x", location.getBlockX());
         section.set("locations." + hUUID + ".location.y", location.getBlockY());
         section.set("locations." + hUUID + ".location.z", location.getBlockZ());
@@ -176,7 +188,8 @@ public class HeadLocation {
     public static HeadLocation fromConfig(YamlConfiguration section, UUID headUUID) {
         var hUUID = headUUID.toString();
 
-        String name = section.getString("locations." + hUUID + ".name");
+        var name = section.getString("locations." + hUUID + ".name");
+        var description = new ArrayList<>(section.getStringList("locations." + hUUID + ".description"));
 
         int x, y, z;
         String worldName;
@@ -208,7 +221,7 @@ public class HeadLocation {
             //todo
         }
 
-        var headLocation = new HeadLocation(name, headUUID, worldName, x, y, z, hitCount, orderIndex, rewards);
+        var headLocation = new HeadLocation(name, description, headUUID, worldName, x, y, z, hitCount, orderIndex, rewards);
 
         World world = Bukkit.getWorld(worldName);
         if (world != null) {

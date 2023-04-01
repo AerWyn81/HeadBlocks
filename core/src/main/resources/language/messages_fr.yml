@@ -3,8 +3,8 @@ Prefix: '&6&lH&e&lead&6&lB&e&llocks &7»&r'
 Head:
   Name: "&6&lH&e&lead&6&lB&e&llocks"
   Lore:
-    - ""
-    - "&7&oPermet de créer un HeadBlock à l'emplacement choisi"
+    - "&8&oPermet de créer un Heablocks"
+    - "&8&oà l'emplacement choisi"
     - ""
     - "&2✔ &8- &7Clic droit + accroupi pour créer un Headblock"
     - "&c✘ &8- &7Clic gauche + accroupi pour supprimer un Headblock"
@@ -150,7 +150,7 @@ Gui:
     - "&a&lCLIC DROIT&8: &7Augmente la position"
     - ""
     - "&7Compteur: &e%count%"
-  TracksTitle: "&8HeadBlocks &7- &b&lSélection piste"
+  TracksTitle: "&8HeadBlocks &7- &b&lListe pistes"
   CreateNewTrackName: "&2+ &aCréer une nouvelle piste"
   CreateNewTrackLore:
     - ""
@@ -160,6 +160,16 @@ Gui:
     - ""
     - "&7TIPS : &7&Shift-clic lorsque vous poserez de nouveaux"
     - "&7&o   HeadBlocks utilisera cette nouvelle piste"
+  ClickSelectTrack: "&7&oCliquez pour sélectionner cette piste"
+  ClickShowContent: "&7&oCliquez pour afficher le contenu"
+  TrackContentTitle: "&8HeadBlocks &7- &e&lContenu &7(%headCount%)"
+  Coordinates: "&e&lCoordonnées :"
+  World: "Monde :"
+  UnknownWorld: "&cMonde inconnu"
+  ErrorLoadingLocation: "&c&oErreur chargement emplacement..."
+  HeadLoaded: "&2✔ &aHeadBlock chargé"
+  HeadNotLoaded: "&4✘ &cHeadBlock non chargé"
+  ClickTeleport: "&8✈ &7&oCliquer pour se téléporter"
 
 Help:
   LineTop: "&7--------------------[ &e&lAide &7]--------------------"

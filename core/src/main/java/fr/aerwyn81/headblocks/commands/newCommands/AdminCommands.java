@@ -13,7 +13,6 @@ import org.bukkit.inventory.ItemStack;
 import revxrsal.commands.annotation.*;
 import revxrsal.commands.bukkit.BukkitCommandActor;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
-import revxrsal.commands.help.CommandHelp;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -23,18 +22,11 @@ import java.util.stream.Collectors;
 @Usage("/headblocks <give|list|remove|reset|stats|top|...> <args...>")
 public class AdminCommands {
 
-    @Subcommand({"help"})
-    @Description("HeadBlocks admin commands list")
-    public void help(BukkitCommandActor actor, CommandHelp<String> helpEntries, @Default("1") int page) {
-        for (String entry : helpEntries.paginate(page, 7))
-            actor.reply(entry);
-    }
-
     @Subcommand({"exportDatabase"})
     @CommandPermission("headblocks.admin.exportDatabase")
     @Description("Export command")
     @Usage("<SQLite|MySQL>")
-    public void export(BukkitCommandActor actor, EnumTypeDatabase typeDatabase) {
+    public void export(BukkitCommandActor actor, @Named("database_type") EnumTypeDatabase typeDatabase) {
         actor.reply(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportInProgress")));
 
         ExportSQLHelper.generateFile(typeDatabase)

@@ -78,7 +78,7 @@ public class HeadManager {
 
                 headLocations.add(headLocation);
 
-                if (ConfigService.isHologramsEnabled()) {
+                if (ConfigService.isHologramsEnabled() && headLocation.getLocation() != null) {
                     HologramService.createHolograms(headLocation.getLocation());
                 }
 
@@ -110,7 +110,7 @@ public class HeadManager {
             HologramService.createHolograms(location);
         }
 
-        var headLocation = new HeadLocation("", uniqueUuid, location, this);
+        var headLocation = new HeadLocation("", new ArrayList<>(), uniqueUuid, location, this);
         headLocations.add(headLocation);
 
         return uniqueUuid;

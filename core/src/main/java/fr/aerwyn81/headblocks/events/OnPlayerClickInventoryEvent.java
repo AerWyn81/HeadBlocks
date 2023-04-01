@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.services.GuiService;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
@@ -30,11 +29,11 @@ public class OnPlayerClickInventoryEvent implements Listener {
             int offset = event.getRawSlot() - clickedGui.getPageSize();
             HBPaginationButtonType buttonType = HBPaginationButtonType.forSlot(offset);
 
-            ItemGUI paginationButton = GuiService.getDefaultPaginationButtonBuilder(buttonType, clickedGui);
+            //ItemGUI paginationButton = GuiService.getDefaultPaginationButtonBuilder(buttonType, clickedGui);
 
-            if (paginationButton != null && paginationButton.getOnClickEvent() != null) {
-                paginationButton.getOnClickEvent().accept(event);
-            }
+            //if (paginationButton != null && paginationButton.getOnClickEvent() != null) {
+            //    paginationButton.getOnClickEvent().accept(event);
+            //}
 
             return;
         }

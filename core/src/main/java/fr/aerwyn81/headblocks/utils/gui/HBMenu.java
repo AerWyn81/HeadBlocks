@@ -1,8 +1,6 @@
 package fr.aerwyn81.headblocks.utils.gui;
 
-import fr.aerwyn81.headblocks.services.GuiService;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonBuilder;
-import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
@@ -204,8 +202,8 @@ public class HBMenu implements InventoryHolder {
             for (int i = pageSize; i < pageSize + 9; i++) {
                 int offset = i - pageSize;
 
-                ItemGUI paginationButton = GuiService.getDefaultPaginationButtonBuilder(HBPaginationButtonType.forSlot(offset), this);
-                inventory.setItem(i, paginationButton != null ? paginationButton.getIcon() : null);
+                //ItemGUI paginationButton = GuiService.getDefaultPaginationButtonBuilder(HBPaginationButtonType.forSlot(offset), this);
+                //inventory.setItem(i, paginationButton != null ? paginationButton.getIcon() : null);
             }
         }
 

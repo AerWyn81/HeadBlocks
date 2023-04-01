@@ -8,11 +8,13 @@ import com.github.stefvanschie.inventoryframework.pane.Pane;
 import com.github.stefvanschie.inventoryframework.pane.StaticPane;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.head.HBTrack;
+import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
-import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
@@ -20,11 +22,16 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -180,55 +187,15 @@ public class GuiService {
 //        p.openInventory(clickCounterMenu.getInventory());
     }
 
-    public static ItemGUI getDefaultPaginationButtonBuilder(HBPaginationButtonType type, HBMenu inventory) {
-        //switch (type) {
-        //    case BACK_BUTTON:
-        //        if (inventory.isNestedMenu()) {
-        //            return new ItemGUI(ConfigService.getGuiBackIcon()
-        //                    .setName(LanguageService.getMessage("Gui.Back"))
-        //                    .setLore(LanguageService.getMessages("Gui.BackLore"))
-        //                    .toItemStack()
-        //            ).addOnClickEvent(e -> openOptionsGui((Player) e.getWhoClicked()));
-        //        } else {
-        //            return new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack());
-        //        }
-        //    case PREV_BUTTON:
-        //        if (inventory.getCurrentPage() > 0) {
-        //            return new ItemGUI(ConfigService.getGuiPreviousIcon()
-        //                    .setName(LanguageService.getMessage("Gui.Previous"))
-        //                    .setLore(LanguageService.getMessages("Gui.PreviousLore")
-        //                            .stream().map(s -> s.replaceAll("%page%", String.valueOf(inventory.getCurrentPage()))).collect(Collectors.toList()))
-        //                    .toItemStack()
-        //            ).addOnClickEvent(event -> inventory.previousPage(event.getWhoClicked()));
-        //        } else {
-        //            return new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack());
-        //        }
-        //    case NEXT_BUTTON:
-        //        if (inventory.getCurrentPage() < inventory.getMaxPage() - 1) {
-        //            return new ItemGUI(ConfigService.getGuiNextIcon()
-        //                    .setName(LanguageService.getMessage("Gui.Next"))
-        //                    .setLore(LanguageService.getMessages("Gui.NextLore")
-        //                            .stream().map(s -> s.replaceAll("%page%", String.valueOf((inventory.getCurrentPage() + 2)))).collect(Collectors.toList()))
-        //                    .toItemStack()
-        //            ).addOnClickEvent(event -> inventory.nextPage(event.getWhoClicked()));
-        //        } else {
-        //            return new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack());
-        //        }
-        //    case CLOSE_BUTTON:
-        //        return new ItemGUI(ConfigService.getGuiCloseIcon()
-        //                .setName(LanguageService.getMessage("Gui.Close"))
-        //                .setLore(LanguageService.getMessages("Gui.CloseLore"))
-        //                .toItemStack()
-        //        ).addOnClickEvent(event -> event.getWhoClicked().closeInventory());
-        //    default:
-        //        return new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack());
-        //}
-        return null;
-    }
-
-    public static void openChooseTrack(Player player, Location headLocation, String headTexture) {
+    public static void showTracksGui(Player player,
+                                     Consumer<InventoryCloseEvent> eventOnClose,
+                                     BiConsumer<InventoryClickEvent, HBTrack> eventOnClick,
+                                     Consumer<InventoryClickEvent> eventOnPaginationBack,
+                                     boolean withCreateTrack,
+                                     Location headLocation,
+                                     String headTexture) {
         var gui = new ChestGui(6, LanguageService.getMessage("Gui.TracksTitle"));
-        gui.setOnClose(e -> cancelChoice(player, headLocation));
+        gui.setOnClose(eventOnClose);
 
         gui.setOnGlobalClick(event -> event.setCancelled(true));
 
@@ -243,48 +210,43 @@ public class GuiService {
                         lore.add(message);
                     }
 
+                    lore.add("");
+                    if (withCreateTrack) {
+                        lore.add(LanguageService.getMessage("Gui.ClickSelectTrack"));
+                    } else {
+                        lore.add(LanguageService.getMessage("Gui.ClickShowContent"));
+                    }
+
                     lore.addAll(track.getColorizedDescription());
 
                     return new GuiItem(new ItemBuilder(track.getIcon())
                             .setName(MessageUtils.colorize("&e" + track.getId()) + ". " + track.getColorizedName())
                             .setLore(lore)
                             .toItemStack(),
-                            click -> {
-                                gui.setOnClose(null);
-                                closeInventory(player);
-
-                                try {
-                                    TrackService.addHead(player, track, headLocation, headTexture);
-                                    TrackService.getPlayersTrackChoice().put(player.getUniqueId(), track);
-
-                                    player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced")
-                                            .replaceAll("%track%", track.getColorizedName()), headLocation));
-                                } catch (InternalException ex) {
-                                    player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while adding new head from the storage: " + ex.getMessage()));
-                                }
-                            });
+                            click -> eventOnClick.accept(click, track));
                 })
                 .collect(Collectors.toList()));
 
         gui.addPane(pages);
 
-        var navigation = setPaginationLayout(gui, pages, true);
+        var navigation = setPaginationLayout(gui, pages, false, eventOnPaginationBack);
 
-        navigation.addItem(new GuiItem(new ItemBuilder(Material.NETHER_STAR)
-                .setName(LanguageService.getMessage("Gui.CreateNewTrackName"))
-                .setLore(LanguageService.getMessages("Gui.CreateNewTrackLore"))
-                .toItemStack(), event -> {
-            gui.setOnClose(null);
-            closeInventory(player);
+        if (withCreateTrack) {
+            navigation.addItem(new GuiItem(new ItemBuilder(Material.NETHER_STAR)
+                    .setName(LanguageService.getMessage("Gui.CreateNewTrackName"))
+                    .setLore(LanguageService.getMessages("Gui.CreateNewTrackLore"))
+                    .toItemStack(), event -> {
+                gui.setOnClose(null);
+                closeInventory(player);
 
-            var conversation = ConversationService.askForTrackName(player, headLocation, headTexture);
-            conversation.addConversationAbandonedListener(e -> {
-                if (!e.gracefulExit()) {
-                    cancelChoice(player, headLocation);
-                }
-            });
-        }), 4, 0);
+                var conversation = ConversationService.askForTrackName(player, headLocation, headTexture);
+                conversation.addConversationAbandonedListener(e -> {
+                    if (!e.gracefulExit()) {
+                        OnPlayerPlaceBlockEvent.cancelChoice(player, headLocation);
+                    }
+                });
+            }), 4, 0);
+        }
 
         gui.addPane(navigation);
         gui.show(player);
@@ -292,7 +254,79 @@ public class GuiService {
         openInventories.put(player.getUniqueId(), gui);
     }
 
-    private static StaticPane setPaginationLayout(ChestGui gui, PaginatedPane pages, boolean isButtonBackCancel) {
+    public static void showContentTracksGui(Player player, HBTrack track, Consumer<InventoryClickEvent> eventOnPaginationBack) {
+        var heads = new ArrayList<>(track.getHeadManager().getHeadLocations());
+
+        if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
+            heads.removeIf(h -> !h.isCharged());
+        }
+
+        var gui = new ChestGui(6, LanguageService.getMessage("Gui.TrackContentTitle")
+                .replaceAll("%headCount%", String.valueOf(heads.size())));
+
+        gui.setOnGlobalClick(event -> event.setCancelled(true));
+
+        var pages = new PaginatedPane(0, 0, 9, 5);
+
+        pages.populateWithGuiItems(heads.stream()
+                .map(head -> {
+                    StringBuilder lore = new StringBuilder();
+
+                    if (head.getDescription().size() > 0) {
+                        lore.append(String.join("\n", head.getDisplayedDescription())).append("\n");
+                    }
+
+                    if (PlayerUtils.hasPermission(player, "headblocks.admin")) {
+                        lore.append("\n");
+                        lore.append(LanguageService.getMessage("Gui.Coordinates")).append("\n");
+                        if (head.getLocation() != null) {
+                            lore.append(MessageUtils.colorize("&7 X: &a" + head.getLocation().getBlockX())).append("\n");
+                            lore.append(MessageUtils.colorize("&7 Z: &a" + head.getLocation().getBlockZ())).append("\n");
+                            lore.append(MessageUtils.colorize("&7 Y: &a" + head.getLocation().getBlockY())).append("\n");
+                            lore.append(MessageUtils.colorize("&7 " + LanguageService.getMessage("Gui.World") + " &a" + MessageUtils.parseWorld(head.getLocation()))).append("\n");
+                        } else {
+                            lore.append(LanguageService.getMessage("Gui.ErrorLoadingLocation")).append("\n");
+                        }
+
+                        lore.append("\n");
+
+                        if (head.isCharged()) {
+                            lore.append(LanguageService.getMessage("Gui.HeadLoaded")).append("\n");
+                        } else {
+                            lore.append(LanguageService.getMessage("Gui.HeadNotLoaded")).append("\n");
+                        }
+
+                        lore.append("\n");
+                        lore.append(LanguageService.getMessage("Gui.ClickTeleport"));
+                    }
+
+                    return new GuiItem(new ItemBuilder(head.isCharged() ? getHeadItemStackFromCache(head) : new ItemStack(Material.RED_STAINED_GLASS_PANE))
+                            .setName(head.getDisplayedName())
+                            .setLore(lore.toString().split("\n"))
+                            .toItemStack(),
+                            click -> {
+                                if (head.getLocation() == null) {
+                                    return;
+                                }
+
+                                var teleportLocation = head.getLocation().clone();
+                                teleportLocation.add(0.5D, 0.5D, 0.5D);
+                                teleportLocation.setYaw(0F);
+                                teleportLocation.setPitch(90F);
+                                player.teleport(teleportLocation);
+                            });
+                })
+                .collect(Collectors.toList()));
+
+        gui.addPane(pages);
+
+        var navigation = setPaginationLayout(gui, pages, true, eventOnPaginationBack);
+
+        gui.addPane(navigation);
+        gui.show(player);
+    }
+
+    private static StaticPane setPaginationLayout(ChestGui gui, PaginatedPane pages, boolean isButtonBackCancel, Consumer<InventoryClickEvent> eventOnPaginationBack) {
         var background = new OutlinePane(0, 5, 9, 1);
         background.addItem(new GuiItem(new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE).setName("").toItemStack()));
         background.setRepeat(true);
@@ -320,8 +354,7 @@ public class GuiService {
         }), 5, 0);
 
         navigation.addItem(new GuiItem(new ItemBuilder(Material.SPRUCE_DOOR)
-                .setName(isButtonBackCancel ? LanguageService.getMessage("Gui.Cancel") : LanguageService.getMessage("Gui.Close")).toItemStack(), event ->
-                closeInventory(event.getWhoClicked())
+                .setName(isButtonBackCancel ? LanguageService.getMessage("Gui.Cancel") : LanguageService.getMessage("Gui.Close")).toItemStack(), eventOnPaginationBack
         ), 8, 0);
 
         return navigation;
@@ -344,10 +377,7 @@ public class GuiService {
         openInventories.clear();
     }
 
-    private static void cancelChoice(Player p, Location headLocation) {
-        Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-            headLocation.getBlock().setType(Material.AIR);
-            p.sendMessage(LanguageService.getMessage("Messages.CanceledTrackChoice"));
-        }, 1L);
+    public static Optional<ChestGui> getOpenedInventory(Player player) {
+        return Optional.ofNullable(openInventories.get(player.getUniqueId()));
     }
 }

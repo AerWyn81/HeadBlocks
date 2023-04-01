@@ -64,14 +64,14 @@ public class LanguageService {
 	}
 
 	public static String checkLanguage(String lang) {
-		File f = new File("plugins/HeadBlocks/language/messages_" + lang + ".yml");
+		File f = new File(HeadBlocks.getInstance().getDataFolder() + "/language/messages_" + lang + ".yml");
 		if (f.exists())
 			return lang;
 		return "en";
 	}
 
 	public static void pushMessages() {
-		File f = new File("plugins/HeadBlocks/language/messages_" + language + ".yml");
+		File f = new File(HeadBlocks.getInstance().getDataFolder() + "/language/messages_" + language + ".yml");
 		YamlConfiguration c = YamlConfiguration.loadConfiguration(f);
 
 		c.getKeys(true).stream().filter(key -> !(c.get(key) instanceof MemorySection)).forEach(key -> {
@@ -94,7 +94,13 @@ public class LanguageService {
 		}
 		YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
 
-		cfg.options().header("\nThis is the messsages file.\nYou can change any messages that are in this file\n\nIf you want to reset a message back to the default,\ndelete the entire line the message is on and restart the server.\n\t");
+		cfg.options().header("\n" +
+				"This is the message file.\n" +
+				"You can change any messages that are in this file\n" +
+				"\n" +
+				"If you want to reset a message back to the default,\n" +
+				"delete the entire line the message is on and restart the server.\n" +
+				"\t");
 
 		Map<String, Object> msgDefaults = new LinkedHashMap<>();
 
