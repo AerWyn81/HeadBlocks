@@ -188,13 +188,13 @@ public class GuiService {
     }
 
     public static void showTracksGui(Player player,
-                                     Consumer<InventoryCloseEvent> eventOnClose,
-                                     BiConsumer<InventoryClickEvent, HBTrack> eventOnClick,
-                                     Consumer<InventoryClickEvent> eventOnPaginationBack,
-                                     Function<HBTrack, ArrayList<String>> lore,
-                                     boolean withCreateTrack,
-                                     Location headLocation,
-                                     String headTexture) {
+                           Consumer<InventoryCloseEvent> eventOnClose,
+                           BiConsumer<InventoryClickEvent, HBTrack> eventOnClick,
+                           Consumer<InventoryClickEvent> eventOnPaginationBack,
+                           Function<HBTrack, ArrayList<String>> lore,
+                           boolean withCreateTrack,
+                           Location headLocation,
+                           String headTexture) {
         var gui = new ChestGui(6, LanguageService.getMessage("Gui.TracksTitle"));
         gui.setOnClose(eventOnClose);
 
@@ -236,6 +236,20 @@ public class GuiService {
         openInventories.put(player.getUniqueId(), gui);
     }
 
+    public static void showTracksGuiWithBack(Player player, HBTrack chosenTrack, Function<HBTrack, ArrayList<String>> lore) {
+        if (chosenTrack == null) {
+            GuiService.showTracksGui(player,
+                    inventoryCloseEvent -> { },
+                    (inventoryClickEvent, hbTrack) -> GuiService.showContentTracksGui(player, hbTrack, e -> showTracksGuiWithBack(player, null, lore)),
+                    inventoryClickEvent -> GuiService.closeInventory(inventoryClickEvent.getWhoClicked()),
+                    lore, false,null, null);
+
+            return;
+        }
+
+        GuiService.showContentTracksGui(player, chosenTrack, e -> showTracksGuiWithBack(player, null, lore));
+    }
+
     public static void showContentTracksGui(Player player, HBTrack track, Consumer<InventoryClickEvent> eventOnPaginationBack) {
         var heads = new ArrayList<>(track.getHeadManager().getHeadLocations());
 
@@ -262,10 +276,10 @@ public class GuiService {
                         lore.append("\n");
                         lore.append(LanguageService.getMessage("Gui.Coordinates")).append("\n");
                         if (head.getLocation() != null) {
-                            lore.append(MessageUtils.colorize("&7 X: &a" + head.getLocation().getBlockX())).append("\n");
-                            lore.append(MessageUtils.colorize("&7 Z: &a" + head.getLocation().getBlockZ())).append("\n");
-                            lore.append(MessageUtils.colorize("&7 Y: &a" + head.getLocation().getBlockY())).append("\n");
-                            lore.append(MessageUtils.colorize("&7 " + LanguageService.getMessage("Gui.World") + " &a" + MessageUtils.parseWorld(head.getLocation()))).append("\n");
+                            lore.append(MessageUtils.colorize("&7 X: &a" + head.getLocation().getBlockX())).append("\n")
+                                    .append(MessageUtils.colorize("&7 Z: &a" + head.getLocation().getBlockZ())).append("\n")
+                                    .append(MessageUtils.colorize("&7 Y: &a" + head.getLocation().getBlockY())).append("\n")
+                                    .append(MessageUtils.colorize("&7 " + LanguageService.getMessage("Gui.World") + " &a" + MessageUtils.parseWorld(head.getLocation()))).append("\n");
                         } else {
                             lore.append(LanguageService.getMessage("Gui.ErrorLoadingLocation")).append("\n");
                         }
@@ -278,8 +292,8 @@ public class GuiService {
                             lore.append(LanguageService.getMessage("Gui.HeadNotLoaded")).append("\n");
                         }
 
-                        lore.append("\n");
-                        lore.append(LanguageService.getMessage("Gui.ClickTeleport"));
+                        lore.append("\n")
+                            .append(LanguageService.getMessage("Gui.ClickTeleport"));
                     }
 
                     return new GuiItem(new ItemBuilder(head.isCharged() ? getHeadItemStackFromCache(head) : new ItemStack(Material.RED_STAINED_GLASS_PANE))

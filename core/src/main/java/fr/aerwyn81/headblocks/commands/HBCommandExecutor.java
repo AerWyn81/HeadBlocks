@@ -22,7 +22,6 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         this.registeredCommands = new HashMap<>();
 
         this.register(new Reload());
-        this.register(new Me());
         this.register(new Remove());
         this.register(new RemoveAll());
         this.register(new Reset());

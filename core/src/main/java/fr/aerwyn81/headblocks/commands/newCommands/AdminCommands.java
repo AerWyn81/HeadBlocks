@@ -1,8 +1,10 @@
 package fr.aerwyn81.headblocks.commands.newCommands;
 
 import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.data.head.HBTrack;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
+import fr.aerwyn81.headblocks.services.GuiService;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -15,6 +17,7 @@ import revxrsal.commands.bukkit.BukkitCommandActor;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Command({"hb", "headblock", "heablocks"})
@@ -91,5 +94,37 @@ public class AdminCommands {
             actor.reply(LanguageService.getMessage("Messages.HeadGiven")
                     .replaceAll("%headNumber%", "1"));
         }
+    }
+
+
+    @Subcommand({"tracks"})
+    @CommandPermission("headblocks.admin.list")
+    @Description("Track list command")
+    @Usage("(track_name)")
+    public void list(BukkitCommandActor actor, @Optional HBTrack track) {
+        var player = actor.requirePlayer();
+
+        GuiService.showTracksGuiWithBack(player, track, t -> {
+            StringBuilder lore = new StringBuilder();
+
+            var message = LanguageService.getMessage("Gui.TrackItemHeadCount")
+                    .replaceAll("%headCount%", String.valueOf(t.getHeadCount()));
+            if (message.trim().length() > 0) {
+                lore.append(message).append("\n");
+            }
+
+            lore.append("\n");
+
+            if (t.getDescription().size() > 0) {
+                for (var line : t.getColorizedDescription()) {
+                    lore.append(line).append("\n");
+                }
+
+                lore.append("\n");
+            }
+
+            lore.append(LanguageService.getMessage("Gui.ClickShowContent"));
+            return new ArrayList<>(List.of(lore.toString().split("\n")));
+        });
     }
 }
