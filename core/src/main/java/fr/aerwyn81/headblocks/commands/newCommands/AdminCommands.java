@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Command({"hb", "headblock", "heablocks"})
 @CommandPermission("headblocks.admin")
-@Usage("/headblocks <give|list|remove|reset|stats|top|...> <args...>")
+@Usage("/headblocks <give|remove|reset|stats|top|...> <args...>")
 public class AdminCommands {
 
     @Subcommand({"exportDatabase"})

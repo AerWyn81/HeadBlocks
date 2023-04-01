@@ -29,6 +29,7 @@ dependencies {
     // Lamp
     implementation("com.github.Revxrsal.Lamp:common:3.1.5")
     implementation("com.github.Revxrsal.Lamp:bukkit:3.1.5")
+    implementation("com.github.Revxrsal.Lamp:brigadier:3.1.5")
 
     // Adventure
     implementation("net.kyori:adventure-api:4.11.0")
