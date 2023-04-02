@@ -17,6 +17,7 @@ public class HeadLocation {
     private final String name;
     private final UUID headUUID;
     private final ArrayList<String> description;
+    private final String texture;
 
     private String configWorldName;
     private int x;
@@ -32,18 +33,20 @@ public class HeadLocation {
 
     private HeadManager headManager;
 
-    public HeadLocation(String name, ArrayList<String> description, UUID headUUID, Location location, HeadManager headManager) {
-        this(name, description, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, new ArrayList<>());
+    public HeadLocation(String name, ArrayList<String> description, UUID headUUID, String texture, Location location, HeadManager headManager) {
+        this(name, description, headUUID, texture, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, new ArrayList<>());
 
         this.location = location;
         this.isCharged = true;
         this.headManager = headManager;
     }
 
-    public HeadLocation(String name, ArrayList<String> description, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, ArrayList<Reward> rewards) {
+    public HeadLocation(String name, ArrayList<String> description, UUID headUUID, String texture, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, ArrayList<Reward> rewards) {
         this.name = name;
         this.description = description;
         this.headUUID = headUUID;
+        this.texture = texture;
+
         this.hitCount = hitCount;
         this.orderIndex = orderIndex;
 
@@ -68,6 +71,10 @@ public class HeadLocation {
 
     public ArrayList<String> getDisplayedDescription() {
         return description.stream().map(MessageUtils::colorize).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public String getTexture() {
+        return texture;
     }
 
     public UUID getUuid() {
@@ -164,6 +171,7 @@ public class HeadLocation {
 
         section.set("locations." + hUUID + ".name", name);
         section.set("locations." + hUUID + ".description", description);
+        section.set("locations." + hUUID + ".texture", texture);
         section.set("locations." + hUUID + ".location.x", location.getBlockX());
         section.set("locations." + hUUID + ".location.y", location.getBlockY());
         section.set("locations." + hUUID + ".location.z", location.getBlockZ());
@@ -190,6 +198,7 @@ public class HeadLocation {
 
         var name = section.getString("locations." + hUUID + ".name");
         var description = new ArrayList<>(section.getStringList("locations." + hUUID + ".description"));
+        var texture = section.getString("locations." + hUUID + ".texture", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzQ4NDNlYTVmZTA5MzMxNWQ4YjNmNDAxNWIyYTZjMmNjMjNhZTUyZThhYWIxNDczYmJmMmY2MjM1NDJmNTI1YiJ9fX0=");
 
         int x, y, z;
         String worldName;
@@ -221,7 +230,7 @@ public class HeadLocation {
             //todo
         }
 
-        var headLocation = new HeadLocation(name, description, headUUID, worldName, x, y, z, hitCount, orderIndex, rewards);
+        var headLocation = new HeadLocation(name, description, headUUID, texture, worldName, x, y, z, hitCount, orderIndex, rewards);
 
         World world = Bukkit.getWorld(worldName);
         if (world != null) {

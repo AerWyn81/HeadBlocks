@@ -27,7 +27,7 @@ public class Requests {
     public static final String UPDATE_PLAYER = "INSERT OR REPLACE INTO hb_players (pUUID, pName) VALUES (?, ?)";
     public static final String UPDATE_PLAYER_MYSQL = "REPLACE INTO hb_players (pUUID, pName) VALUES (?, ?)";
 
-    public static final String CREATE_HEAD = "INSERT INTO hb_heads (hUUID, hExist, hTexture) VALUES (?, true, ?)";
+    public static final String CREATE_HEAD = "INSERT INTO hb_heads (hUUID, hExist) VALUES (?, true)";
 
     public static final String SAVE_PLAYERHEAD = "INSERT INTO hb_playerHeads (pUUID, hUUID) VALUES (?, ?)";
 
@@ -67,9 +67,10 @@ public class Requests {
     public static final String MIG_DEL_ARCHIVE = "DROP TABLE hb_players_old";
 
     public static final String ADD_COLUMN_HEAD_TEXTURE_MYSQL = "ALTER TABLE hb_heads ADD COLUMN IF NOT EXISTS hTexture VARCHAR(255) DEFAULT ''";
+
     public static final String ADD_COLUMN_HEAD_TEXTURE_SQLITE = "ALTER TABLE hb_heads ADD COLUMN hTexture VARCHAR(255) DEFAULT ''";
 
-    public static final String GET_HEAD_TEXTURE = "SELECT hTexture FROM hb_heads WHERE hUUID = (?)";
+    public static final String REMOVE_COLUMN_HEAD_TEXTURE = "ALTER TABLE hb_heads DROP COLUMN hTexture";
 
     public static final String GET_PLAYERS_BY_HEAD = "SELECT pUUID FROM hb_playerHeads WHERE hUUID = (?)";
 

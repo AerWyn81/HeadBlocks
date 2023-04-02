@@ -10,6 +10,7 @@ import fr.aerwyn81.headblocks.services.HologramService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
+import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -83,7 +84,7 @@ public class HeadManager {
                 }
 
                 try {
-                    StorageService.createNewHead(headUuid, "");
+                    StorageService.createNewHead(headUuid);
                 } catch (Exception ex) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
                     headLocation.setCharged(false);
@@ -99,18 +100,15 @@ public class HeadManager {
     }
 
     public UUID addHeadLocation(Location location, String texture) throws InternalException {
-        UUID uniqueUuid = UUID.randomUUID();
-        while (getHeadByUUID(uniqueUuid).isPresent()) {
-            uniqueUuid = UUID.randomUUID();
-        }
+        UUID uniqueUuid = InternalUtils.generateNewUUID(headLocations.stream().map(HeadLocation::getUuid).collect(Collectors.toList()));
 
-        StorageService.createNewHead(uniqueUuid, texture);
+        StorageService.createNewHead(uniqueUuid);
 
         if (ConfigService.isHologramsEnabled()) {
             HologramService.createHolograms(location);
         }
 
-        var headLocation = new HeadLocation("", new ArrayList<>(), uniqueUuid, location, this);
+        var headLocation = new HeadLocation("", new ArrayList<>(), uniqueUuid, texture, location, this);
         headLocations.add(headLocation);
 
         return uniqueUuid;

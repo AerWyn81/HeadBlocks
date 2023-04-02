@@ -152,11 +152,10 @@ public final class MySQL implements Database {
      * Create a head
      *
      * @param hUUID head UUID
-     * @param texture head texture
      * @throws InternalException SQL Exception
      */
     @Override
-    public void createNewHead(UUID hUUID, String texture) throws InternalException {
+    public void createNewHead(UUID hUUID) throws InternalException {
         if (!checkAlive()) {
             open();
         }
@@ -172,7 +171,6 @@ public final class MySQL implements Database {
 
             ps = connection.prepareStatement(Requests.CREATE_HEAD);
             ps.setString(1, hUUID.toString());
-            ps.setString(2, texture);
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -580,21 +578,14 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public String getHeadTexture(UUID headUuid) throws InternalException {
+    public void removeColumnHeadTexture() throws InternalException {
         if (!checkAlive()) {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_HEAD_TEXTURE)) {
-            ps.setString(1, headUuid.toString());
-
-            ResultSet rs  = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getString("hTexture");
-            }
-
-            return "";
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.REMOVE_COLUMN_HEAD_TEXTURE);
+            ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
         }

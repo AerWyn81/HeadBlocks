@@ -135,11 +135,10 @@ public class SQLite implements Database {
      * Create a head
      *
      * @param hUUID head UUID
-     * @param texture head texture
      * @throws InternalException SQL Exception
      */
     @Override
-    public void createNewHead(UUID hUUID, String texture) throws InternalException {
+    public void createNewHead(UUID hUUID) throws InternalException {
         try {
             PreparedStatement ps = connection.prepareStatement(Requests.HEAD_EXIST);
             ps.setString(1, hUUID.toString());
@@ -151,7 +150,6 @@ public class SQLite implements Database {
 
             ps = connection.prepareStatement(Requests.CREATE_HEAD);
             ps.setString(1, hUUID.toString());
-            ps.setString(2, texture);
 
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -500,17 +498,10 @@ public class SQLite implements Database {
     }
 
     @Override
-    public String getHeadTexture(UUID headUuid) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_HEAD_TEXTURE)) {
-            ps.setString(1, headUuid.toString());
-
-            ResultSet rs  = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getString("hTexture");
-            }
-
-            return "";
+    public void removeColumnHeadTexture() throws InternalException {
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.REMOVE_COLUMN_HEAD_TEXTURE);
+            ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
         }

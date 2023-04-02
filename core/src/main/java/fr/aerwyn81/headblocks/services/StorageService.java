@@ -113,6 +113,10 @@ public class StorageService {
             database.addColumnHeadTexture();
         }
 
+        if (dbVersion == 2) {
+            database.removeColumnHeadTexture();
+        }
+
         if (dbVersion != database.version) {
             database.upsertTableVersion(dbVersion);
         }
@@ -223,8 +227,8 @@ public class StorageService {
         return database.hasPlayerRenamed(playerUuid, playerName);
     }
 
-    public static void createNewHead(UUID headUuid, String texture) throws InternalException {
-        database.createNewHead(headUuid, texture);
+    public static void createNewHead(UUID headUuid) throws InternalException {
+        database.createNewHead(headUuid);
     }
 
     public static boolean isHeadExist(UUID headUuid) throws InternalException {
@@ -318,10 +322,6 @@ public class StorageService {
                 .append(";");
 
         return instructions;
-    }
-
-    public static String getHeadTexture(UUID headUuid) throws InternalException {
-        return database.getHeadTexture(headUuid);
     }
 
     public static ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {

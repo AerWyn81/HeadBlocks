@@ -7,7 +7,6 @@ import com.github.stefvanschie.inventoryframework.pane.PaginatedPane;
 import com.github.stefvanschie.inventoryframework.pane.Pane;
 import com.github.stefvanschie.inventoryframework.pane.StaticPane;
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.head.HBTrack;
 import fr.aerwyn81.headblocks.events.OnPlayerPlaceBlockEvent;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
@@ -15,7 +14,6 @@ import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -49,23 +47,6 @@ public class GuiService {
         if (headItemCache != null) {
             headItemCache.clear();
         }
-    }
-
-    private static ItemStack getHeadItemStackFromCache(HeadLocation headLocation) {
-        var headUuid = headLocation.getUuid();
-
-        if (!headItemCache.containsKey(headUuid)) {
-            String texture;
-            try {
-                texture = StorageService.getHeadTexture(headUuid);
-            } catch (InternalException e) {
-                texture = "";
-            }
-
-            headItemCache.put(headUuid, HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), texture));
-        }
-
-        return headItemCache.get(headLocation.getUuid());
     }
 
     public static void openOptionsGui(Player p) {
@@ -296,7 +277,12 @@ public class GuiService {
                             .append(LanguageService.getMessage("Gui.ClickTeleport"));
                     }
 
-                    return new GuiItem(new ItemBuilder(head.isCharged() ? getHeadItemStackFromCache(head) : new ItemStack(Material.RED_STAINED_GLASS_PANE))
+                    var itemStackGui = new ItemStack(Material.RED_STAINED_GLASS_PANE);
+                    if (head.isCharged()) {
+                        itemStackGui = HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), head.getTexture());
+                    }
+
+                    return new GuiItem(new ItemBuilder(itemStackGui)
                             .setName(head.getDisplayedName())
                             .setLore(lore.toString().split("\n"))
                             .toItemStack(),
