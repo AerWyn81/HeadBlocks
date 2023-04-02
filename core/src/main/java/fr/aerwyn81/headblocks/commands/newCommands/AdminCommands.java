@@ -1,5 +1,7 @@
 package fr.aerwyn81.headblocks.commands.newCommands;
 
+import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.HBTrack;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
@@ -7,9 +9,14 @@ import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.services.GuiService;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.services.TrackService;
+import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.ExportSQLHelper;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import revxrsal.commands.annotation.*;
@@ -22,7 +29,6 @@ import java.util.stream.Collectors;
 
 @Command({"hb", "headblock", "heablocks"})
 @CommandPermission("headblocks.admin")
-@Usage("/headblocks <give|remove|reset|stats|top|...> <args...>")
 public class AdminCommands {
 
     @Subcommand({"exportDatabase"})
@@ -45,7 +51,7 @@ public class AdminCommands {
     @CommandPermission("headblocks.admin.give")
     @Description("Give command")
     @Usage("(player) <number>")
-    public void give(BukkitCommandActor actor, @Default("me") Player player, @Named("number") @Optional Integer part) {
+    public void give(BukkitCommandActor actor, @Default Player player, @Named("number") @Optional Integer part) {
         var hbHeads = new ArrayList<>(HeadService.getHeads());
 
         var headNotLoaded = hbHeads.stream()
@@ -96,12 +102,11 @@ public class AdminCommands {
         }
     }
 
-
     @Subcommand({"tracks"})
     @CommandPermission("headblocks.admin.list")
     @Description("Track list command")
     @Usage("(track_name)")
-    public void list(BukkitCommandActor actor, @Optional HBTrack track) {
+    public void tracks(BukkitCommandActor actor, @Optional HBTrack track) {
         var player = actor.requirePlayer();
 
         GuiService.showTracksGuiWithBack(player, track, t -> {
@@ -126,5 +131,87 @@ public class AdminCommands {
             lore.append(LanguageService.getMessage("Gui.ClickShowContent"));
             return new ArrayList<>(List.of(lore.toString().split("\n")));
         });
+    }
+
+    @DefaultFor("hb move")
+    @CommandPermission("headblocks.admin.move")
+    @Description("Move command")
+    @Usage("(--cancel|--confirm)")
+    public void move(BukkitCommandActor actor) {
+        var player = actor.requirePlayer();
+
+        if (HeadService.getHeadMoves().containsKey(player.getUniqueId())) {
+            actor.reply(LanguageService.getMessage("Messages.HeadMoveAlready"));
+            return;
+        }
+
+        Location targetLoc = player.getTargetBlock(null, 30).getLocation();
+
+        java.util.Optional<HeadLocation> optHeadLocation = TrackService.getHeadAt(targetLoc);
+        if (optHeadLocation.isEmpty()) {
+            actor.reply(LanguageService.getMessage("Messages.NoTargetHeadBlock"));
+            return;
+        }
+
+        var headLocation = optHeadLocation.get();
+
+        String message = LanguageService.getMessage("Messages.TargetBlockInfo")
+                .replaceAll("%uuid%", headLocation.getUuid().toString());
+
+        HeadService.getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), headLocation.getLocation()));
+
+        actor.reply(MessageUtils.parseLocationPlaceholders(message, headLocation.getLocation()));
+    }
+
+    @Subcommand({"move --cancel"})
+    @CommandPermission("headblocks.admin.move")
+    public void moveCancel(BukkitCommandActor actor) {
+        var player = actor.requirePlayer();
+
+        if (HeadService.getHeadMoves().remove(player.getUniqueId()) != null) {
+            actor.reply(LanguageService.getMessage("Messages.HeadMoveCancel"));
+        }
+    }
+
+    @Subcommand({"move --confirm"})
+    @CommandPermission("headblocks.admin.move")
+    public void moveConfirm(BukkitCommandActor actor) {
+        var player = actor.requirePlayer();
+
+        var optHeadMove = HeadService.getHeadMoves().entrySet().stream()
+                .filter(uuidHeadMoveEntry -> player.getUniqueId() == uuidHeadMoveEntry.getKey()).findFirst();
+        if (optHeadMove.isEmpty()) {
+            actor.reply(LanguageService.getMessage("Messages.HeadMoveNoPlayer"));
+            return;
+        }
+
+        var headOldLoc = optHeadMove.get().getValue();
+
+        var targetLoc = player.getTargetBlock(null, 30).getLocation();
+
+        var newHeadBlockLoc = targetLoc.clone().add(0, 1, 0);
+        if (LocationUtils.areEquals(newHeadBlockLoc, headOldLoc.getOldLoc())) {
+            actor.reply(LanguageService.getMessage("Messages.HeadMoveOtherLoc"));
+            return;
+        }
+        if (isTargetBlockInvalid(targetLoc.getBlock()) || !newHeadBlockLoc.getBlock().isEmpty()) {
+            actor.reply(LanguageService.getMessage("Messages.TargetBlockInvalid"));
+        }
+
+        java.util.Optional<HeadLocation> optHeadLocation = TrackService.getHeadAt(headOldLoc.getOldLoc());
+        if (optHeadLocation.isEmpty()) {
+            actor.reply(LanguageService.getMessage("Messages.NoTargetHeadBlock"));
+            return;
+        }
+
+        var headLocation = optHeadLocation.get();
+
+        TrackService.changeHeadLocation(headLocation, headOldLoc.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
+        HeadService.getHeadMoves().remove(player.getUniqueId());
+        actor.reply(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));
+    }
+
+    private boolean isTargetBlockInvalid(Block block) {
+        return block.isEmpty() || block.getType() == Material.PLAYER_HEAD || block.getType() == Material.PLAYER_WALL_HEAD;
     }
 }

@@ -30,7 +30,6 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         this.register(new Stats());
         this.register(new Top());
         this.register(new Tp());
-        this.register(new Move());
         this.register(new Options());
     }
 

@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.services;
 
+import de.tr7zw.changeme.nbtapi.NBTTileEntity;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
@@ -13,6 +14,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.block.Block;
+import org.bukkit.block.Skull;
+import org.bukkit.block.data.Rotatable;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -289,6 +293,30 @@ public class TrackService {
         HologramService.showNotFoundTo(player, location);
 
         return headUuid;
+    }
+
+    public static void changeHeadLocation(HeadLocation headLocation, Block oldBlock, Block newBlock) {
+        Skull oldSkull = (Skull) oldBlock.getState();
+        Rotatable skullRotation = (Rotatable) oldSkull.getBlockData();
+
+        newBlock.setType(Material.PLAYER_HEAD);
+
+        Skull newSkull = (Skull) newBlock.getState();
+
+        Rotatable rotatable = (Rotatable) newSkull.getBlockData();
+        rotatable.setRotation(skullRotation.getRotation());
+        newSkull.setBlockData(rotatable);
+        newSkull.update(true);
+
+        new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
+
+        oldBlock.setType(Material.AIR);
+
+        headLocation.setLocation(newBlock.getLocation());
+        headLocation.getHeadManager().getTrack().saveTrack();
+
+        HologramService.removeHolograms(oldBlock.getLocation());
+        HologramService.createHolograms(newBlock.getLocation());
     }
 
     //endregion

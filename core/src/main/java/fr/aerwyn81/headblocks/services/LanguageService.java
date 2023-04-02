@@ -20,6 +20,8 @@ public class LanguageService {
 	private static String language;
 	private static HashMap<String, Object> messages;
 
+	private static Locale locale;
+
 	public static void initialize(String lang) {
 		new File(HeadBlocks.getInstance().getDataFolder() + "/language").mkdirs();
 
@@ -28,15 +30,22 @@ public class LanguageService {
 		language = checkLanguage(lang);
 		messages = new HashMap<>();
 
+		locale = new Locale(lang);
+
 		HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks] &eLanguages loaded!"));
 	}
 
 	public static void setLanguage(String lang) {
 		language = lang;
+		HeadBlocks.getCommandHandler().setLocale(new Locale(lang));
 	}
 
 	public static String getPrefix() {
 		return MessageUtils.colorize(messages.get("Prefix").toString());
+	}
+
+	public static Locale getLocale() {
+		return locale;
 	}
 
 	public static boolean hasMessage(String message) {

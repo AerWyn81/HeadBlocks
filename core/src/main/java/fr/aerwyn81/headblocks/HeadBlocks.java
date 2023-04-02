@@ -39,6 +39,8 @@ public final class HeadBlocks extends JavaPlugin {
     private GlobalTask globalTask;
     private HeadDatabaseHook headDatabaseHook;
 
+    private static BukkitCommandHandler commandHandler;
+
     @Override
     public void onEnable() {
         instance = this;
@@ -108,7 +110,9 @@ public final class HeadBlocks extends JavaPlugin {
             this.headDatabaseHook = new HeadDatabaseHook();
         }
 
-        BukkitCommandHandler commandHandler = BukkitCommandHandler.create(this);
+        commandHandler = BukkitCommandHandler.create(this);
+        commandHandler.setLocale(LanguageService.getLocale());
+        commandHandler.setSwitchPrefix("--");
         commandHandler.getAutoCompleter()
                 .registerParameterSuggestions(EnumTypeDatabase.class, (args, sender, command) -> EnumTypeDatabase.toStringList())
                 .registerParameterSuggestions(boolean.class, SuggestionProvider.of("true", "false"))
@@ -173,5 +177,9 @@ public final class HeadBlocks extends JavaPlugin {
 
     public boolean isHeadDatabaseActive() {
         return Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
+    }
+
+    public static BukkitCommandHandler getCommandHandler() {
+        return commandHandler;
     }
 }

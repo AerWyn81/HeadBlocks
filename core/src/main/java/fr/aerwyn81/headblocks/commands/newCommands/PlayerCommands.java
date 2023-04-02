@@ -5,7 +5,10 @@ import fr.aerwyn81.headblocks.services.GuiService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.permissions.PermissionDefault;
-import revxrsal.commands.annotation.*;
+import revxrsal.commands.annotation.Command;
+import revxrsal.commands.annotation.Default;
+import revxrsal.commands.annotation.Description;
+import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.BukkitCommandActor;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 import revxrsal.commands.help.CommandHelp;
@@ -15,7 +18,6 @@ import java.util.List;
 
 @Command({"hb", "headblock", "heablocks"})
 @CommandPermission(value = "headblocks.use", defaultAccess = PermissionDefault.TRUE)
-@Usage("/headblocks <help|me|stats|top|...> <args...>")
 public class PlayerCommands {
 
     @Subcommand({"help"})

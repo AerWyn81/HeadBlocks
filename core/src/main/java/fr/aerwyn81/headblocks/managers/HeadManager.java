@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks.managers;
 
-import de.tr7zw.changeme.nbtapi.NBTTileEntity;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.head.HBTrack;
@@ -14,9 +13,6 @@ import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.Skull;
-import org.bukkit.block.data.Rotatable;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -128,41 +124,6 @@ public class HeadManager {
         headLocations.remove(headLocation);
 
         HeadService.getHeadMoves().entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-    }
-
-    public void changeHeadLocation(UUID hUuid, Block oldBlock, Block newBlock) {
-        Skull oldSkull = (Skull) oldBlock.getState();
-        Rotatable skullRotation = (Rotatable) oldSkull.getBlockData();
-
-        newBlock.setType(Material.PLAYER_HEAD);
-
-        Skull newSkull = (Skull) newBlock.getState();
-
-        Rotatable rotatable = (Rotatable) newSkull.getBlockData();
-        rotatable.setRotation(skullRotation.getRotation());
-        newSkull.setBlockData(rotatable);
-        newSkull.update(true);
-
-        new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
-
-        oldBlock.setType(Material.AIR);
-
-        var optHeadLocation = getHeadByUUID(hUuid);
-        if (optHeadLocation.isEmpty()) {
-            return;
-        }
-
-        var headLocation = optHeadLocation.get();
-
-        var indexOfOld = headLocations.indexOf(headLocation);
-
-        headLocation.setLocation(newBlock.getLocation());
-        headLocation.saveInConfig(config);
-
-        headLocations.set(indexOfOld, headLocation);
-
-        HologramService.removeHolograms(oldBlock.getLocation());
-        HologramService.createHolograms(newBlock.getLocation());
     }
 
     public Optional<HeadLocation> getHeadByUUID(UUID headUuid) {
