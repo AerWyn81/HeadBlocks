@@ -143,10 +143,6 @@ public class ConfigService {
         return config.getStringList("headClick.commands");
     }
 
-    public static boolean shouldResetPlayerData() {
-        return config.getBoolean("shouldResetPlayerData", true);
-    }
-
     public static int getProgressBarBars() {
         return config.getInt("progressBar.totalBars", 100);
     }

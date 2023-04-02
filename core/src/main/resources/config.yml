@@ -148,10 +148,6 @@ floatingParticles:
       - 0,255,50
     amount: 3
 
-# If true, when a Headblocks is destroyed, it will delete all player data related to it
-# If false, Headblocks destroyed will remain in database. There's no purge command atm
-shouldResetPlayerData: true
-
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
 preventCommandsOnTieredRewardsLevel: false
 

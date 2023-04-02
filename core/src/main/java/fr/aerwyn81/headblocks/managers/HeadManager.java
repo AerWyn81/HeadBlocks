@@ -114,8 +114,8 @@ public class HeadManager {
         return uniqueUuid;
     }
 
-    public void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
-        StorageService.removeHead(headLocation.getUuid(), withDelete);
+    public void removeHeadLocation(HeadLocation headLocation) throws InternalException {
+        StorageService.removeHead(headLocation.getUuid());
 
         headLocation.getLocation().getBlock().setType(Material.AIR);
 

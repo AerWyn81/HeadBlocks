@@ -30,7 +30,7 @@ public interface Database {
 
     void resetPlayer(UUID pUUID) throws InternalException;
 
-    void removeHead(UUID hUUID, boolean withDelete) throws InternalException;
+    void removeHead(UUID hUUID) throws InternalException;
 
     ArrayList<UUID> getAllPlayers() throws InternalException;
 
@@ -61,4 +61,6 @@ public interface Database {
     boolean isDefaultTablesExist();
 
     void insertVersion() throws InternalException;
+
+    void removeColumnHeadExist() throws InternalException;
 }

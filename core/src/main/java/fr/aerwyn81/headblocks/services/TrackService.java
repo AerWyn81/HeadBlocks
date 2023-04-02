@@ -271,7 +271,7 @@ public class TrackService {
     }
 
     public static void removeHead(Player player, HBTrack track, HeadManager headManager, HeadLocation headLocation) throws InternalException {
-        headManager.removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
+        headManager.removeHeadLocation(headLocation);
         track.saveTrack();
 
         Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), headLocation.getLocation()));

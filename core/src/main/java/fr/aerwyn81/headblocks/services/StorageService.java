@@ -115,6 +115,7 @@ public class StorageService {
 
         if (dbVersion == 2) {
             database.removeColumnHeadTexture();
+            database.removeColumnHeadExist();
         }
 
         if (dbVersion != database.version) {
@@ -206,9 +207,9 @@ public class StorageService {
         database.resetPlayer(playerUuid);
     }
 
-    public static void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
+    public static void removeHead(UUID headUuid) throws InternalException {
         storage.removeHead(headUuid);
-        database.removeHead(headUuid, withDelete);
+        database.removeHead(headUuid);
     }
 
     public static List<UUID> getAllPlayers() throws InternalException {

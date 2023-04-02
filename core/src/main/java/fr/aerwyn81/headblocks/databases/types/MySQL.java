@@ -277,16 +277,15 @@ public final class MySQL implements Database {
      * Remove a head
      *
      * @param hUUID head UUID
-     * @param withDelete should delete the head from the database
      * @throws InternalException SQL Exception
      */
     @Override
-    public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
+    public void removeHead(UUID hUUID) throws InternalException {
         if (!checkAlive()) {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.DELETE_HEAD : Requests.REMOVE_HEAD)) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.DELETE_HEAD)) {
             ps.setString(1, hUUID.toString());
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -461,6 +460,20 @@ public final class MySQL implements Database {
 
             ps = connection.prepareStatement(Requests.INSERT_VERSION);
             ps.setInt(1, version);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void removeColumnHeadExist() throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.REMOVE_COLUMN_HEAD_EXIST);
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
