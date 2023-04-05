@@ -29,12 +29,11 @@ public class TrackNameSetPrompt extends MessagePrompt {
         try {
             TrackService.addHead(player, track, headLocation, headTexture);
             TrackService.getPlayersTrackChoice().put(player.getUniqueId(), track);
-            return "";
         } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while adding new head from the storage: " + ex.getMessage()));
-
             TrackService.removeTrack(trackName);
+
+            return LanguageService.getMessage("Messages.StorageError");
         }
 
         return MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced")

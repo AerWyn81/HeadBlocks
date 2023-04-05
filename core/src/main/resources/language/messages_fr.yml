@@ -49,7 +49,7 @@ Messages:
   TargetBlockInvalid: "%prefix% &cLe bloc ou le bloc au dessus du bloc ciblé est invalide"
   HeadMoveNoPlayer: "%prefix% &cAucun HeadBlock à déplacer n'a été trouvé"
   HeadMoveOtherLoc: "%prefix% &cVous ne pouvez pas déplacer le HeadBlock au même endroit qu'auparavant"
-  HeadMoveAlready: "%prefix% &cVous avez déjà un déplacement de HeadBlock en cours, utilisez la commande &e/hb move --cancel &cd'abord pour annuler"
+  HeadMoveAlready: "%prefix% &cVous avez déjà un déplacement de HeadBlock en cours, utilisez la commande &e/hb move --confirm &cpour confirmer le nouvel emplacement de la cible ou &e/hb move --cancel &cpour l'annuler"
   HeadMoveCancel: "%prefix% &cVous avez annulé le déplacement du HeadBlock"
   TargetBlockMoved: "%prefix% &aLe HeadBlock a correctement été déplacé aux coordonnées &e%world%&a, &e%x%&a, &e%y%&a, &e%z%"
   PluginReloading: "%prefix% &cVeuillez patienter, le plugin se recharge..."
@@ -61,6 +61,7 @@ Messages:
   TrackNamePromptSuccess: "%prefix% &7&oShift-clic pour placer d'autres HeadBlocks dans la même piste sans afficher le menu de choix de piste."
   GiveTooManyHeadInventory: "%prefix% &cTrop de HeadBlocks définis par rapport à la taille de votre inventaire, ajoutez un nombre dans la commande pour obtenir les têtes spécifiques"
   TrackNotExist: "%prefix% &cLa piste &e%track% &cn'existe pas"
+  HeadMoveSameTrack: "%prefix% &cLe HeadBlock ne peut pas être déplacé car il se trouve déjà dans la piste %track%"
 
 Chat:
   Hover:

@@ -49,7 +49,7 @@ Messages:
   TargetBlockInvalid: "%prefix% &cThe block or the block above the targeted block is invalid"
   HeadMoveNoPlayer: "%prefix% &cNo HeadBlock to move was found"
   HeadMoveOtherLoc: "%prefix% &cYou cannot move the HeadBlock to the same place as before"
-  HeadMoveAlready: "%prefix% &cYou already have a HeadBlock move in progress, use the command &e/hb move --cancel &cfirst to cancel"
+  HeadMoveAlready: "%prefix% &cYou already have a HeadBlock move in progress, use the command &e/hb move --confirm &cto confirm the target new location or &e/hb move --cancel &cto cancel"
   HeadMoveCancel: "%prefix% &cYou have cancelled the move of the HeadBlock"
   TargetBlockMoved: "%prefix% &aThe HeadBlock has been correctly moved at &e%world%&a, &e%x%&a, &e%y%&a, &e%z%"
   PluginReloading: "%prefix% &cPlease wait, the plugin is reloading..."
@@ -61,6 +61,7 @@ Messages:
   GuiClosePlayerOnReload: "%prefix% &cGUI has been closed because the plugin has been reloaded"
   GiveTooManyHeadInventory: "%prefix% &cToo many HeadBlocks defined for the size of your inventory, add a number in the order to get the specific heads"
   TrackNotExist: "%prefix% &cTrack &e%track% &cdoes not exist"
+  HeadMoveSameTrack: "%prefix% &cHeadBlock cannot be moved because it is already in the track %track%"
 
 Chat:
   Hover:

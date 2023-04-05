@@ -295,7 +295,7 @@ public class TrackService {
         return headUuid;
     }
 
-    public static void changeHeadLocation(HeadLocation headLocation, Block oldBlock, Block newBlock) {
+    public static void changeHeadLocation(HeadLocation headLocation, Block oldBlock, Block newBlock, String trackId) {
         Skull oldSkull = (Skull) oldBlock.getState();
         Rotatable skullRotation = (Rotatable) oldSkull.getBlockData();
 
@@ -312,8 +312,22 @@ public class TrackService {
 
         oldBlock.setType(Material.AIR);
 
-        headLocation.setLocation(newBlock.getLocation());
-        headLocation.getHeadManager().getTrack().saveTrack();
+        if (trackId == null) {
+            headLocation.setLocation(newBlock.getLocation());
+            headLocation.getHeadManager().getTrack().saveTrack();
+        } else {
+            var optTrack = TrackService.getTrackById(trackId);
+
+            if (optTrack.isPresent()) {
+                var track = optTrack.get();
+
+                headLocation.getHeadManager().getHeadLocations().remove(headLocation);
+                headLocation.getHeadManager().getTrack().saveTrack();
+
+                track.getHeadManager().getHeadLocations().add(headLocation);
+                track.getHeadManager().saveHeadLocations();
+            }
+        }
 
         HologramService.removeHolograms(oldBlock.getLocation());
         HologramService.createHolograms(newBlock.getLocation());

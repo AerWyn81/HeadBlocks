@@ -116,7 +116,14 @@ public final class HeadBlocks extends JavaPlugin {
         commandHandler.getAutoCompleter()
                 .registerParameterSuggestions(EnumTypeDatabase.class, (args, sender, command) -> EnumTypeDatabase.toStringList())
                 .registerParameterSuggestions(boolean.class, SuggestionProvider.of("true", "false"))
-                .registerParameterSuggestions(HBTrack.class, SuggestionProvider.map(() -> TrackService.getTracks().values(), HBTrack::getName));
+                .registerParameterSuggestions(HBTrack.class, SuggestionProvider.map(() -> TrackService.getTracks().values(), HBTrack::getName))
+                .registerSuggestion("internal", (args, sender, command) -> {
+                    if (args.size() == 3) {
+
+                    }
+
+                    return null;
+                });
 
         commandHandler.registerValueResolver(HBTrack.class, ctx -> {
             var reqTrack = ctx.popForParameter();

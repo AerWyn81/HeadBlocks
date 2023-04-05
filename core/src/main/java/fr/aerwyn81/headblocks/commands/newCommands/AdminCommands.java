@@ -1,19 +1,20 @@
 package fr.aerwyn81.headblocks.commands.newCommands;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.HBTrack;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
-import fr.aerwyn81.headblocks.services.GuiService;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.TrackService;
+import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
+import fr.aerwyn81.headblocks.runnables.GlobalTask;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.ExportSQLHelper;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -24,6 +25,7 @@ import revxrsal.commands.bukkit.BukkitCommandActor;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -136,8 +138,9 @@ public class AdminCommands {
     @DefaultFor("hb move")
     @CommandPermission("headblocks.admin.move")
     @Description("Move command")
-    @Usage("(--cancel|--confirm)")
-    public void move(BukkitCommandActor actor) {
+    @Usage("(track) (--cancel|--confirm)")
+    @AutoComplete("@internal *")
+    public void move(BukkitCommandActor actor, @Optional HBTrack track) {
         var player = actor.requirePlayer();
 
         if (HeadService.getHeadMoves().containsKey(player.getUniqueId())) {
@@ -155,10 +158,16 @@ public class AdminCommands {
 
         var headLocation = optHeadLocation.get();
 
+        if (headLocation.getHeadManager().getTrack() == track) {
+            actor.reply(LanguageService.getMessage("Messages.HeadMoveSameTrack")
+                    .replaceAll("%track%", track.getDisplayName()));
+            return;
+        }
+
         String message = LanguageService.getMessage("Messages.TargetBlockInfo")
                 .replaceAll("%uuid%", headLocation.getUuid().toString());
 
-        HeadService.getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), headLocation.getLocation()));
+        HeadService.getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), headLocation.getLocation(), track == null ? null : track.getId()));
 
         actor.reply(MessageUtils.parseLocationPlaceholders(message, headLocation.getLocation()));
     }
@@ -206,12 +215,68 @@ public class AdminCommands {
 
         var headLocation = optHeadLocation.get();
 
-        TrackService.changeHeadLocation(headLocation, headOldLoc.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
+        TrackService.changeHeadLocation(headLocation, headOldLoc.getOldLoc().getBlock(), newHeadBlockLoc.getBlock(), headOldLoc.getTrackId());
         HeadService.getHeadMoves().remove(player.getUniqueId());
+
         actor.reply(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));
     }
 
     private boolean isTargetBlockInvalid(Block block) {
         return block.isEmpty() || block.getType() == Material.PLAYER_HEAD || block.getType() == Material.PLAYER_WALL_HEAD;
     }
+
+    @Subcommand("reload")
+    @CommandPermission("headblocks.admin.reload")
+    @Description("Reload command")
+    public void reload(BukkitCommandActor actor) {
+        var plugin = HeadBlocks.getInstance();
+        HeadBlocks.isReloadInProgress = true;
+
+        plugin.reloadConfig();
+        ConfigService.load();
+
+        LanguageService.setLanguage(ConfigService.getLanguage());
+        LanguageService.pushMessages();
+
+        HologramService.unload();
+        StorageService.close();
+
+        StorageService.initialize();
+        for (Player player : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
+            StorageService.unloadPlayer(player);
+            StorageService.loadPlayer(player);
+        }
+
+        plugin.getParticlesTask().cancel();
+
+        HologramService.load();
+        HeadService.load();
+        GuiService.clearCache();
+
+        ConversationService.clearConversations();
+        GuiService.closeAllInventories();
+
+        TrackService.load();
+
+        if (plugin.isHeadDatabaseActive()) {
+            if (plugin.getHeadDatabaseHook() == null) {
+                plugin.setHeadDatabaseHook(new HeadDatabaseHook());
+            }
+
+            plugin.getHeadDatabaseHook().loadHeadsHDB();
+        }
+
+        plugin.setParticlesTask(new GlobalTask());
+        plugin.getParticlesTask().runTaskTimer(plugin, 0, ConfigService.getDelayGlobalTask());
+
+        HeadBlocks.isReloadInProgress = false;
+
+        if (StorageService.hasStorageError()) {
+            actor.reply(LanguageService.getMessage("Messages.ReloadWithErrors"));
+        }
+
+        actor.reply(LanguageService.getMessage("Messages.ReloadComplete"));
+    }
+
+
 }
