@@ -13,6 +13,7 @@ import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.ExportSQLHelper;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -27,14 +28,15 @@ import revxrsal.commands.bukkit.annotation.CommandPermission;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Command({"hb", "headblock", "heablocks"})
-@CommandPermission("headblocks.admin")
+@CommandPermission("headblocks.commands.admin")
 public class AdminCommands {
 
-    @Subcommand({"exportDatabase"})
-    @CommandPermission("headblocks.admin.exportDatabase")
+    @Subcommand("exportDatabase")
+    @CommandPermission("headblocks.commands.admin.exportdatabase")
     @Description("Export command")
     @Usage("<SQLite|MySQL>")
     public void export(BukkitCommandActor actor, @Named("database_type") EnumTypeDatabase typeDatabase) {
@@ -50,10 +52,10 @@ public class AdminCommands {
     }
 
     @Subcommand("give")
-    @CommandPermission("headblocks.admin.give")
+    @CommandPermission("headblocks.commands.admin.give")
     @Description("Give command")
-    @Usage("(player) <number>")
-    public void give(BukkitCommandActor actor, @Default Player player, @Named("number") @Optional Integer part) {
+    @Usage("(player) (number)")
+    public void give(BukkitCommandActor actor, @Default("me") @Named("player") Player player, @Named("number") @Optional Integer part) {
         var hbHeads = new ArrayList<>(HeadService.getHeads());
 
         var headNotLoaded = hbHeads.stream()
@@ -104,11 +106,11 @@ public class AdminCommands {
         }
     }
 
-    @Subcommand({"tracks"})
-    @CommandPermission("headblocks.admin.list")
+    @Subcommand("tracks")
+    @CommandPermission("headblocks.commands.admin.tracks")
     @Description("Track list command")
     @Usage("(track_name)")
-    public void tracks(BukkitCommandActor actor, @Optional HBTrack track) {
+    public void tracks(BukkitCommandActor actor, @Optional @Named("track") HBTrack track) {
         var player = actor.requirePlayer();
 
         GuiService.showTracksGuiWithBack(player, track, t -> {
@@ -136,11 +138,10 @@ public class AdminCommands {
     }
 
     @DefaultFor("hb move")
-    @CommandPermission("headblocks.admin.move")
+    @CommandPermission("headblocks.commands.admin.move")
     @Description("Move command")
     @Usage("(track) (--cancel|--confirm)")
-    @AutoComplete("@internal *")
-    public void move(BukkitCommandActor actor, @Optional HBTrack track) {
+    public void move(BukkitCommandActor actor, @Optional @Named("track") HBTrack track) {
         var player = actor.requirePlayer();
 
         if (HeadService.getHeadMoves().containsKey(player.getUniqueId())) {
@@ -172,8 +173,8 @@ public class AdminCommands {
         actor.reply(MessageUtils.parseLocationPlaceholders(message, headLocation.getLocation()));
     }
 
-    @Subcommand({"move --cancel"})
-    @CommandPermission("headblocks.admin.move")
+    @Subcommand("move --cancel")
+    @CommandPermission("headblocks.commands.admin.move")
     public void moveCancel(BukkitCommandActor actor) {
         var player = actor.requirePlayer();
 
@@ -182,8 +183,8 @@ public class AdminCommands {
         }
     }
 
-    @Subcommand({"move --confirm"})
-    @CommandPermission("headblocks.admin.move")
+    @Subcommand("move --confirm")
+    @CommandPermission("headblocks.commands.admin.move")
     public void moveConfirm(BukkitCommandActor actor) {
         var player = actor.requirePlayer();
 
@@ -226,7 +227,7 @@ public class AdminCommands {
     }
 
     @Subcommand("reload")
-    @CommandPermission("headblocks.admin.reload")
+    @CommandPermission("headblocks.commands.admin.reload")
     @Description("Reload command")
     public void reload(BukkitCommandActor actor) {
         var plugin = HeadBlocks.getInstance();
@@ -278,5 +279,66 @@ public class AdminCommands {
         actor.reply(LanguageService.getMessage("Messages.ReloadComplete"));
     }
 
+    @Subcommand("reset")
+    @CommandPermission("headblocks.commands.admin.reset")
+    @Description("Reset command")
+    @Usage("(player)")
+    public void reset(BukkitCommandActor actor, @Default("me") @Named("player") Player player) {
+        try {
+            StorageService.resetPlayer(player.getUniqueId());
+            actor.reply(LanguageService.getMessage("Messages.PlayerReset", player.getName()));
+        } catch (InternalException ex) {
+            actor.reply(LanguageService.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player " + player.getName() + " from the storage: " + ex.getMessage()));
+        }
+    }
 
+    @DefaultFor("hb resetall")
+    @CommandPermission("headblocks.commands.admin.resetall")
+    @Description("Reset all command")
+    public void resetAll(BukkitCommandActor actor) {
+        var allPlayers = InternalGetAllPlayers(actor);
+        if (allPlayers.size() == 0) {
+            actor.reply(LanguageService.getMessage("Messages.ResetAllNoData"));
+            return;
+        }
+
+        actor.reply(LanguageService.getMessage("Messages.ResetAllConfirm")
+                .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
+    }
+
+    @Subcommand("resetall --confirm")
+    @CommandPermission("headblocks.commands.admin.resetall")
+    public void resetAllConfirm(BukkitCommandActor actor) {
+        var allPlayers = InternalGetAllPlayers(actor);
+        if (allPlayers.size() == 0) {
+            actor.reply(LanguageService.getMessage("Messages.ResetAllNoData"));
+            return;
+        }
+
+        for (UUID uuid : allPlayers) {
+            try {
+                StorageService.resetPlayer(uuid);
+            } catch (InternalException ex) {
+                actor.reply(LanguageService.getMessage("Messages.StorageError"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + uuid.toString() + " from the storage: " + ex.getMessage()));
+            }
+        }
+
+        actor.reply(LanguageService.getMessage("Messages.ResetAllSuccess")
+                .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
+    }
+
+    private List<UUID> InternalGetAllPlayers(BukkitCommandActor actor) {
+        List<UUID> allPlayers = new ArrayList<>();
+
+        try {
+            allPlayers = StorageService.getAllPlayers();
+        } catch (InternalException ex) {
+            actor.reply(LanguageService.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving all players from the storage: " + ex.getMessage()));
+        }
+
+        return allPlayers;
+    }
 }

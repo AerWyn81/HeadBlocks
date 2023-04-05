@@ -7,7 +7,6 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -59,21 +58,8 @@ public class ChatPageUtils  {
         return this;
     }
 
-    public ChatPageUtils currentPage(String[] args) {
-        if (args.length == 1) {
-            pageNumber = 1;
-        } else if (NumberUtils.isDigits(args[args.length - 1])) {
-            try {
-                pageNumber = NumberUtils.createInteger(args[args.length - 1]);
-            } catch (NumberFormatException exception) {
-                pageNumber = 1;
-            }
-            if (pageNumber <= 0) {
-                pageNumber = 1;
-            }
-        } else {
-            pageNumber = 1;
-        }
+    public ChatPageUtils currentPage(int page) {
+        pageNumber = page;
 
         if (totalPage != 0) {
             pageNumber = Math.min(totalPage, pageNumber);

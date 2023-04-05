@@ -16,8 +16,10 @@ import fr.aerwyn81.headblocks.utils.internal.Metrics;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import revxrsal.commands.autocomplete.SuggestionProvider;
+import revxrsal.commands.bukkit.BukkitCommandActor;
 import revxrsal.commands.bukkit.BukkitCommandHandler;
 import revxrsal.commands.exception.CommandErrorException;
 
@@ -116,14 +118,7 @@ public final class HeadBlocks extends JavaPlugin {
         commandHandler.getAutoCompleter()
                 .registerParameterSuggestions(EnumTypeDatabase.class, (args, sender, command) -> EnumTypeDatabase.toStringList())
                 .registerParameterSuggestions(boolean.class, SuggestionProvider.of("true", "false"))
-                .registerParameterSuggestions(HBTrack.class, SuggestionProvider.map(() -> TrackService.getTracks().values(), HBTrack::getName))
-                .registerSuggestion("internal", (args, sender, command) -> {
-                    if (args.size() == 3) {
-
-                    }
-
-                    return null;
-                });
+                .registerParameterSuggestions(HBTrack.class, SuggestionProvider.map(() -> TrackService.getTracks().values(), HBTrack::getName));
 
         commandHandler.registerValueResolver(HBTrack.class, ctx -> {
             var reqTrack = ctx.popForParameter();
@@ -134,6 +129,19 @@ public final class HeadBlocks extends JavaPlugin {
             }
 
             return hbTrack.get();
+        }).registerValueResolver(Player.class, ctx -> {
+            String player = ctx.popForParameter();
+            if (player.equalsIgnoreCase("me")) {
+                return ((BukkitCommandActor) ctx.actor()).requirePlayer();
+            }
+
+            Player p = Bukkit.getPlayer(player);
+            if (p == null) {
+                throw new CommandErrorException(LanguageService.getMessage("Messages.PlayerNotFound")
+                        .replaceAll("%player%", player));
+            }
+
+            return p;
         });
 
         commandHandler.setHelpWriter((command, actor) ->
