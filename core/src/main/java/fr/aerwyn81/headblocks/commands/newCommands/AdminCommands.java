@@ -341,4 +341,41 @@ public class AdminCommands {
 
         return allPlayers;
     }
+
+    @Subcommand("remove")
+    @CommandPermission("headblocks.commands.admin.remove")
+    @Description("Remove command")
+    public void remove(BukkitCommandActor actor, @Optional @Named("head_UUID") UUID headUUID) {
+        var player = actor.requirePlayer();
+
+        HeadLocation headLocation;
+        if (headUUID == null) {
+            var targetHead = TrackService.getHeadAt(player.getTargetBlock(null, 25).getLocation());
+
+            if (targetHead.isEmpty()) {
+                actor.reply(LanguageService.getMessage("Messages.TargetBlockNotHead"));
+                return;
+            }
+
+            headLocation = targetHead.get();
+        } else {
+            var optHeadLocation = TrackService.getHeadByUUID(headUUID);
+            if (optHeadLocation.isEmpty()) {
+                actor.reply(LanguageService.getMessage("Messages.RemoveLocationError"));
+                return;
+            }
+
+            headLocation = optHeadLocation.get();
+        }
+
+        try {
+            TrackService.removeHead(headLocation);
+        } catch (InternalException ex) {
+            actor.reply(LanguageService.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + headLocation.getUuid().toString() + " at " + headLocation.getLocation().toString() + ") from the storage: " + ex.getMessage()));
+            return;
+        }
+
+        actor.reply(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadRemoved"), headLocation.getLocation()));
+    }
 }

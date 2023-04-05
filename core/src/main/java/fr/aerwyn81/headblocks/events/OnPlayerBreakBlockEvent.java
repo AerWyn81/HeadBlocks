@@ -61,11 +61,10 @@ public class OnPlayerBreakBlockEvent implements Listener {
         }
 
         var headLocation = optHeadLocation.get();
-        var headManager = headLocation.getHeadManager();
-        var track = headManager.getTrack();
 
         try {
-            TrackService.removeHead(player, track, headManager, headLocation);
+            TrackService.removeHead(headLocation);
+            player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadRemoved"), headLocation.getLocation()));
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));

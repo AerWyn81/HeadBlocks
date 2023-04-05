@@ -274,13 +274,20 @@ public class TrackService {
                 .findFirst();
     }
 
-    public static void removeHead(Player player, HBTrack track, HeadManager headManager, HeadLocation headLocation) throws InternalException {
+    public static Optional<HeadLocation> getHeadByUUID(UUID uuid) {
+        return getTracks().values().stream()
+                .map(HBTrack::getHeadManager)
+                .map(headManager -> headManager.getHeadByUUID(uuid))
+                .flatMap(Optional::stream)
+                .findFirst();
+    }
+
+    public static void removeHead(HeadLocation headLocation) throws InternalException {
+        var headManager = headLocation.getHeadManager();
         headManager.removeHeadLocation(headLocation);
-        track.saveTrack();
+        headManager.getTrack().saveTrack();
 
         Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), headLocation.getLocation()));
-
-        player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadRemoved"), headLocation.getLocation()));
     }
 
     public static UUID addHead(Player player, HBTrack track, Location location, String texture) throws InternalException {
