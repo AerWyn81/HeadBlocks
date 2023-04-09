@@ -76,6 +76,14 @@ public class SQLite implements Database {
             statement = connection.prepareStatement(Requests.CREATE_TABLE_PLAYERHEADS);
             statement.execute();
 
+            // Version
+            statement = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
+            statement.execute();
+
+            // Tracks
+            statement = connection.prepareStatement(Requests.CREATE_TABLE_TRACKS);
+            statement.execute();
+
             if (checkVersion() == 0) {
                 insertVersion();
             }
@@ -414,6 +422,33 @@ public class SQLite implements Database {
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
+    }
+
+
+    @Override
+    public void removeTrack(String id) throws InternalException {
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.REMOVE_TRACK);
+            ps.setString(1, id);
+
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public boolean createTrack(String id, String name) throws InternalException {
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.CREATE_TRACK);
+            ps.setString(1, name);
+
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return true;
     }
 
     /**

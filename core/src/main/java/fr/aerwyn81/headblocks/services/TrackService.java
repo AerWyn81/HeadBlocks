@@ -118,20 +118,19 @@ public class TrackService {
 
         File file = new File(HeadBlocks.getInstance().getDataFolder(), "tracks/" + id + ".yml");
 
-        if (!file.exists()) {
-            try {
+        try {
+            if (!file.exists()) {
                 file.createNewFile();
-            } catch (IOException ignored) { }
-
-            trackFiles.put(id, file);
-            trackConfigs.put(id, YamlConfiguration.loadConfiguration(file));
-
-            try {
-                StorageService.createTrack(id);
-            } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create track " + id + " from the storage: " + ex.getMessage()));
             }
+
+            StorageService.createTrack(id, name);
+        } catch (Exception ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create track " + id + " from the storage: " + ex.getMessage()));
+            return null;
         }
+
+        trackFiles.put(id, file);
+        trackConfigs.put(id, YamlConfiguration.loadConfiguration(file));
 
         var config = trackConfigs.get(id);
         var manager = new HeadManager(config);
@@ -148,7 +147,9 @@ public class TrackService {
         return track;
     }
 
-    public static boolean removeTrack(String id) {
+    public static boolean removeTrack(HBTrack track) {
+        var id = track.getId();
+
         if (trackFiles.containsKey(id) && trackConfigs.containsKey(id)) {
             File file = trackFiles.get(id);
 
@@ -160,12 +161,21 @@ public class TrackService {
                 return false;
             }
 
+            for (HeadLocation headLocation : new ArrayList<>(track.getHeadManager().getHeadLocations())) {
+                try {
+                    track.getHeadManager().removeHeadLocation(headLocation);
+                } catch (Exception ex) {
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove head " + headLocation.getUuid() + ": " + ex.getMessage()));
+                    return false;
+                }
+            }
+
             trackFiles.remove(id);
             trackConfigs.remove(id);
             tracks.remove(id);
         }
 
-        return false;
+        return true;
     }
 
     public static void load() {
@@ -191,11 +201,16 @@ public class TrackService {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
             if (!Character.isDigit(id.charAt(0))) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cCannot load track " + id + " because filename must be a number."));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cCannot load track " + id + " because filename must be a number"));
                 continue;
             }
 
             HBTrack track = HBTrack.fromConfig(config, id);
+            if (track.getName() == null) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("[HeadBlocks]   &cCannot load track " + id + " because name is null"));
+                continue;
+            }
+
             track.getHeadManager().loadHeadLocations();
 
             tracks.put(id, track);
@@ -231,7 +246,7 @@ public class TrackService {
                 trackConfigs.put("1", YamlConfiguration.loadConfiguration(file));
 
                 try {
-                    StorageService.createTrack("1");
+                    StorageService.createTrack("1", "Default");
                 } catch (Exception ex) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create track 1 from the storage: " + ex.getMessage()));
                 }

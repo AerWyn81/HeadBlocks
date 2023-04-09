@@ -86,6 +86,9 @@ public final class MySQL implements Database {
             statement = connection.prepareStatement(Requests.CREATE_TABLE_VERSION);
             statement.execute();
 
+            statement = connection.prepareStatement(Requests.CREATE_TABLE_TRACKS);
+            statement.execute();
+
             if (checkVersion() == 0) {
                 insertVersion();
             }
@@ -478,6 +481,36 @@ public final class MySQL implements Database {
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
+    }
+
+    @Override
+    public void removeTrack(String id) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.REMOVE_TRACK);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public boolean createTrack(String id, String name) throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.CREATE_TRACK);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return true;
     }
 
     /**

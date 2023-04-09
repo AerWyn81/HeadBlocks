@@ -62,6 +62,9 @@ Messages:
   GiveTooManyHeadInventory: "%prefix% &cTrop de HeadBlocks définis par rapport à la taille de votre inventaire, ajoutez un nombre dans la commande pour obtenir les têtes spécifiques"
   TrackNotExist: "%prefix% &cLa piste &e%track% &cn'existe pas"
   HeadMoveSameTrack: "%prefix% &cLe HeadBlock ne peut pas être déplacé car il se trouve déjà dans la piste %track%"
+  TrackDeleteRequest: "%prefix% &cAttention, cette commande va supprimer la piste &e%track% &cet &7%headCount% &ctête(s) dedans. Ajoutez &7--confirm &cà la commande pour confirmer"
+  TrackCreated: "%prefix% &2&l+ &aCréation d'une nouvelle piste &e%track% &aréussie"
+  ErrorCreatingTrack: "%prefix% &cErreur lors de la création de la piste, vérifiez les logs console"
 
 Chat:
   Hover:

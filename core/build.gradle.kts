@@ -69,7 +69,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib")
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib", "DecentHolograms", "HolographicDisplays")
     version = rootProject.version.toString()
     website = "https://just2craft.fr"
 }

@@ -63,4 +63,8 @@ public interface Database {
     void insertVersion() throws InternalException;
 
     void removeColumnHeadExist() throws InternalException;
+
+    void removeTrack(String id) throws InternalException;
+
+    boolean createTrack(String id, String name) throws InternalException;
 }

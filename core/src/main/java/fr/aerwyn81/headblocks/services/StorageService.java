@@ -333,11 +333,11 @@ public class StorageService {
         return database.getPlayer(pName);
     }
 
-    public static void removeTrack(String id) {
-        //return database.removeTrack(id);
+    public static void removeTrack(String id) throws InternalException {
+        database.removeTrack(id);
     }
 
-    public static void createTrack(String id) {
-        //return database.createTrack(id);
+    public static boolean createTrack(String id, String name) throws InternalException {
+        return database.createTrack(id, name);
     }
 }

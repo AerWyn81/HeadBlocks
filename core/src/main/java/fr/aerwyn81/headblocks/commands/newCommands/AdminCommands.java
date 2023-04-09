@@ -106,7 +106,7 @@ public class AdminCommands {
         }
     }
 
-    @Subcommand("tracks")
+    @Subcommand("tracks list")
     @CommandPermission("headblocks.commands.admin.tracks")
     @Description("Track list command")
     @Usage("(track_name)")
@@ -293,26 +293,28 @@ public class AdminCommands {
         }
     }
 
-    @DefaultFor("hb resetall")
+    @Subcommand("resetall")
     @CommandPermission("headblocks.commands.admin.resetall")
     @Description("Reset all command")
-    public void resetAll(BukkitCommandActor actor) {
-        var allPlayers = InternalGetAllPlayers(actor);
+    @Usage("--confirm")
+    public void resetAll(BukkitCommandActor actor, @Switch("confirm") boolean confirm) {
+        List<UUID> allPlayers = new ArrayList<>();
+
+        try {
+            allPlayers = StorageService.getAllPlayers();
+        } catch (InternalException ex) {
+            actor.reply(LanguageService.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving all players from the storage: " + ex.getMessage()));
+        }
+
         if (allPlayers.size() == 0) {
             actor.reply(LanguageService.getMessage("Messages.ResetAllNoData"));
             return;
         }
 
-        actor.reply(LanguageService.getMessage("Messages.ResetAllConfirm")
-                .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
-    }
-
-    @Subcommand("resetall --confirm")
-    @CommandPermission("headblocks.commands.admin.resetall")
-    public void resetAllConfirm(BukkitCommandActor actor) {
-        var allPlayers = InternalGetAllPlayers(actor);
-        if (allPlayers.size() == 0) {
-            actor.reply(LanguageService.getMessage("Messages.ResetAllNoData"));
+        if (!confirm) {
+            actor.reply(LanguageService.getMessage("Messages.ResetAllConfirm")
+                    .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
             return;
         }
 
@@ -327,19 +329,6 @@ public class AdminCommands {
 
         actor.reply(LanguageService.getMessage("Messages.ResetAllSuccess")
                 .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
-    }
-
-    private List<UUID> InternalGetAllPlayers(BukkitCommandActor actor) {
-        List<UUID> allPlayers = new ArrayList<>();
-
-        try {
-            allPlayers = StorageService.getAllPlayers();
-        } catch (InternalException ex) {
-            actor.reply(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving all players from the storage: " + ex.getMessage()));
-        }
-
-        return allPlayers;
     }
 
     @Subcommand("remove")
@@ -377,5 +366,53 @@ public class AdminCommands {
         }
 
         actor.reply(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadRemoved"), headLocation.getLocation()));
+    }
+
+    @Subcommand("tracks add")
+    @CommandPermission("headblocks.commands.admin.tracks.add")
+    @Description("Tracks add command")
+    public void tracksAdd(BukkitCommandActor actor, @Named("name") String name) {
+        if (TrackService.getTrackByName(name).isPresent()) {
+            actor.reply(LanguageService.getMessage("Chat.Conversation.TrackNamePromptIncorrectAlreadyExist"));
+            return;
+        }
+
+        var trackCreated = TrackService.createTrack(name);
+        if (trackCreated == null) {
+            actor.reply(LanguageService.getMessage("Messages.ErrorCreatingTrack"));
+            return;
+        }
+
+        actor.reply(LanguageService.getMessage("Messages.TrackCreated")
+                .replaceAll("%track%", MessageUtils.colorize(trackCreated.getDisplayName())));
+    }
+
+    @Subcommand("tracks remove")
+    @CommandPermission("headblocks.commands.admin.tracks.remove")
+    @Description("Tracks remove command")
+    @Usage("<track> true")
+    public void tracksRemove(BukkitCommandActor actor, @Named("track") HBTrack track, @Named("confirm") @Optional boolean confirm) {
+        if (!confirm) {
+            actor.reply(LanguageService.getMessage("Messages.TrackDeleteRequest")
+                    .replaceAll("%track%", MessageUtils.colorize(track.getDisplayName()))
+                    .replaceAll("%headCount%", String.valueOf(track.getHeadCount())));
+            return;
+        }
+
+        var trackDeleted = TrackService.removeTrack(track);
+        if (!trackDeleted) {
+            actor.reply(LanguageService.getMessage("Messages.ErrorDeletingTrack"));
+            return;
+        }
+
+        actor.reply(LanguageService.getMessage("Messages.TrackDeleted")
+                .replaceAll("%track%", MessageUtils.colorize(track.getDisplayName())));
+    }
+
+    @Subcommand("tracks edit")
+    @CommandPermission("headblocks.commands.admin.tracks.edit")
+    @Description("Tracks edit command")
+    public void tracksEdit(BukkitCommandActor actor, @Named("track") HBTrack track) {
+        actor.reply("Not yet implemented!");
     }
 }

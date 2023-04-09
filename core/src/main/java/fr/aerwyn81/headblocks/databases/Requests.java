@@ -75,4 +75,10 @@ public class Requests {
     public static final String GET_PLAYER = "SELECT pUUID FROM hb_players WHERE pName = (?)";
 
     public static final String REMOVE_COLUMN_HEAD_EXIST = "ALTER TABLE hb_heads DROP COLUMN hExist";
+
+    public static final String CREATE_TABLE_TRACKS = "CREATE TABLE IF NOT EXISTS hb_tracks (`tId` INTEGER PRIMARY KEY AUTOINCREMENT, `name` VARCHAR(255) UNIQUE NOT NULL)";
+
+    public static final String REMOVE_TRACK = "DELETE FROM hb_tracks WHERE tId = ?";
+
+    public static final String CREATE_TRACK = "INSERT INTO hb_tracks (name) VALUES (?)";
 }

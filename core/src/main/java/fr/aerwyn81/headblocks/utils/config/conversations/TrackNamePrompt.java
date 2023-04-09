@@ -24,7 +24,7 @@ public class TrackNamePrompt extends ValidatingPrompt {
             return false;
         }
 
-        if (TrackService.getTracks().containsKey(input)) {
+        if (TrackService.getTrackByName(input).isPresent()) {
             context.setSessionData("error", "1");
             return false;
         }

@@ -3,7 +3,6 @@ package fr.aerwyn81.headblocks.utils.config.conversations;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.TrackService;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.conversations.ConversationContext;
@@ -23,16 +22,20 @@ public class TrackNameSetPrompt extends MessagePrompt {
         var headLocation = (Location) context.getSessionData("headLocation");
         var headTexture = (String) context.getSessionData("headTexture");
 
-        var track = TrackService.createTrack(trackName);
-
         var player = (Player)context.getForWhom();
+
+        var track = TrackService.createTrack(trackName);
+        if (track == null) {
+            return LanguageService.getMessage("Messages.ErrorCreatingTrack");
+        }
+
         try {
             TrackService.addHead(player, track, headLocation, headTexture);
             TrackService.getPlayersTrackChoice().put(player.getUniqueId(), track);
-        } catch (InternalException ex) {
+            player.sendMessage(LanguageService.getMessage("Messages.TrackCreated")
+                    .replaceAll("%track%", trackName));
+        } catch (Exception ex) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while adding new head from the storage: " + ex.getMessage()));
-            TrackService.removeTrack(trackName);
-
             return LanguageService.getMessage("Messages.StorageError");
         }
 

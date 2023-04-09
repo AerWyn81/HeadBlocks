@@ -28,7 +28,7 @@ Messages:
   CreativeSneakRemoveHead: "%prefix% &cYou must be in creative and crouching to destroy a HeadBlock"
   CreativeAddHead: "%prefix% &cYou must be in creative to place a HeadBlock"
   HeadPlaced: "%prefix% &2&l+ &aHeadBlock placed for track %track% &7(%world%, %x%, %y%, %z%)"
-  HeadRemoved: "%prefix% &2&c- &eHeadBlock removed &7(%world%, %x%, %y%, %z%)"
+  HeadRemoved: "%prefix% &c&l- &eHeadBlock removed &7(%world%, %x%, %y%, %z%)"
   RemoveAllConfirm: "%prefix% &cWarning, this command will remove &7%headCount% &chead(s). Add &7--confirm &cin the command to confirm"
   RemoveAllSuccess: "%prefix% &e%headCount% &ahead(s) successfully removed"
   RemoveAllError: "%prefix% &cNo heads have been removed"
@@ -62,6 +62,11 @@ Messages:
   GiveTooManyHeadInventory: "%prefix% &cToo many HeadBlocks defined for the size of your inventory, add a number in the order to get the specific heads"
   TrackNotExist: "%prefix% &cTrack &e%track% &cdoes not exist"
   HeadMoveSameTrack: "%prefix% &cHeadBlock cannot be moved because it is already in the track %track%"
+  TrackCreated: "%prefix% &2&l+ &aSuccessfully created new track &e%track%"
+  ErrorCreatingTrack: "%prefix% &cError creating track, check console logs"
+  TrackDeleteRequest: "%prefix% &cWarning, this command will remove track &e%track% &cand remove &7%headCount% &chead(s) in. Add &7true &cin the command to confirm"
+  TrackDeleted: "%prefix% &c&l- &aSuccessfully deleted track &e%track%"
+  ErrorDeletingTrack: "%prefix% &cError deleting track, check console logs"
 
 Chat:
   Hover:
