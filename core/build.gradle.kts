@@ -15,14 +15,14 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
-    compileOnly("me.clip:placeholderapi:2.11.1")
+    compileOnly("org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT")
+    compileOnly("me.clip:placeholderapi:2.11.3")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
-    compileOnly("com.github.decentsoftware-eu:decentholograms:2.7.9")
-    compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.0")
+    compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.1")
+    compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.3")
     implementation(files("../libs/hologram-lib-1.4.0-BETA.jar"))
     implementation("redis.clients:jedis:4.2.3")
-    implementation("de.tr7zw:item-nbt-api:2.11.2")
+    implementation("de.tr7zw:item-nbt-api:2.11.3")
     implementation("com.zaxxer:HikariCP:5.0.1")
 }
 
