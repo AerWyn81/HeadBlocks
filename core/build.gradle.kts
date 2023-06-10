@@ -19,7 +19,7 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.3")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
     compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.1")
-    compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.3")
+    compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.0")
     implementation(files("../libs/hologram-lib-1.4.0-BETA.jar"))
     implementation("redis.clients:jedis:4.2.3")
     implementation("de.tr7zw:item-nbt-api:2.11.3")
