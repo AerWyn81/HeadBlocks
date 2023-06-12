@@ -14,7 +14,10 @@ jobs:
         with:
           java-version: 11
       - name: Install dependencies
-        run: bash ./install-dependency.sh ${{ secrets.FILE_ID_CMI, secrets.FILE_ID_CMI_LIB, secrets.FILE_ID_HOLOGRAM_LIB }}
+        run: |
+          bash ./install-dependency.sh ${{ secrets.FILE_ID_CMI }} "CMI-9.6.0.2.jar"
+          bash ./install-dependency.sh ${{ secrets.FILE_ID_CMI_LIB }} "CMILib1.3.0.0.jar"
+          bash ./install-dependency.sh ${{ secrets.FILE_ID_HOLOGRAM_LIB }} "hologram-lib-2.1.1-SNAPSHOT.jar"
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
