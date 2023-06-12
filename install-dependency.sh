@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if [[ -d ./libs ]]; then
-  echo "remove existing libs directory"
-  rm -r ./libs
-fi
-
 mkdir ./libs && cd ./libs || exit
 
 download() {
