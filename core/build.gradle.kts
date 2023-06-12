@@ -16,13 +16,15 @@ repositories {
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
-    compileOnly("me.clip:placeholderapi:2.11.1")
+    compileOnly("me.clip:placeholderapi:2.11.3")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
-    compileOnly("com.github.decentsoftware-eu:decentholograms:2.7.9")
+    compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.2")
     compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.0")
-    implementation(files("../libs/hologram-lib-1.4.0-BETA.jar"))
+    compileOnly(files("../libs/CMILib1.3.0.0.jar"))
+    compileOnly(files("../libs/CMI-9.6.0.2.jar"))
+    implementation(files("../libs/hologram-lib-2.1.1-SNAPSHOT.jar"))
     implementation("redis.clients:jedis:4.2.3")
-    implementation("de.tr7zw:item-nbt-api:2.11.2")
+    implementation("de.tr7zw:item-nbt-api:2.11.3")
     implementation("com.zaxxer:HikariCP:5.0.1")
 }
 
@@ -57,7 +59,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib", "DecentHolograms", "HolographicDisplays")
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib", "DecentHolograms", "CMI")
     version = rootProject.version.toString()
     website = "https://just2craft.fr"
 

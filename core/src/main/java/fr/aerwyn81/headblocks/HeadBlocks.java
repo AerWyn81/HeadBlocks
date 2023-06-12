@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks;
 
+import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
@@ -28,6 +29,7 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isProtocolLibActive;
     public static boolean isDecentHologramsActive;
     public static boolean isHolographicDisplaysActive;
+    public static boolean isCMIActive;
 
     private GlobalTask globalTask;
     private HeadDatabaseHook headDatabaseHook;
@@ -36,6 +38,8 @@ public final class HeadBlocks extends JavaPlugin {
     public void onEnable() {
         instance = this;
         log = Bukkit.getConsoleSender();
+
+        MinecraftVersion.disableBStats();
 
         try {
             Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
@@ -74,6 +78,7 @@ public final class HeadBlocks extends JavaPlugin {
         isProtocolLibActive = Bukkit.getPluginManager().isPluginEnabled("ProtocolLib");
         isDecentHologramsActive = Bukkit.getPluginManager().isPluginEnabled("DecentHolograms");
         isHolographicDisplaysActive = Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays");
+        isCMIActive = Bukkit.getPluginManager().isPluginEnabled("CMI");
 
         ConfigService.initialize(configFile);
 

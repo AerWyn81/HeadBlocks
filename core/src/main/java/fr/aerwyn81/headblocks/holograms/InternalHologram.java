@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.holograms;
 
+import fr.aerwyn81.headblocks.holograms.types.CMIHologram;
 import fr.aerwyn81.headblocks.holograms.types.DecentHologram;
 import fr.aerwyn81.headblocks.holograms.types.DefaultHologram;
 import fr.aerwyn81.headblocks.holograms.types.HolographicDisplaysHologram;
@@ -21,6 +22,9 @@ public class InternalHologram {
                 break;
             case HD:
                 hologram = new HolographicDisplaysHologram();
+                break;
+            case CMI:
+                hologram = new CMIHologram();
                 break;
             case DEFAULT:
                 hologram = new DefaultHologram();
@@ -71,5 +75,9 @@ public class InternalHologram {
 
     public boolean isHologramVisible(Player player) {
         return hologram.isVisible(player);
+    }
+
+    public boolean isSupportedPerPlayerView() {
+        return hologram.getTypeHologram() != EnumTypeHologram.CMI;
     }
 }

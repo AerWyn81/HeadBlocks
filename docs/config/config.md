@@ -334,11 +334,9 @@ and you can randomize the commands executed.
 
 #### Holograms
 
-!> **For versions above 1.19+, the DEFAULT type is not supported because it causes players to crash.**
-
 ```
 holograms:
-  plugin: DEFAULT (or DECENT for DecentHolograms or HD for HolographicDisplays)
+  plugin: DEFAULT (or DECENT for DecentHolograms or HD for HolographicDisplays or CMI for CMI)
   heightAboveHead: 0.4
   found:
     enabled: true
@@ -351,7 +349,7 @@ holograms:
 ```
 
 It is possible to add holograms over the head and show it if the player has found the head or not. Can be configurable by:
-- plugin: you can specify some other plugin to handle holograms like DecentHolograms or HolographicDisplay
+- plugin: you can specify some other plugin to handle holograms like DecentHolograms or CMI
 - heightAboveHead: height from the top of head and bottom of the last line of the hologram (support decimals)
 - enabled: set enabled or disabled found or noFound hologram
 - lines: lines displayed in the hologram

@@ -36,7 +36,8 @@ public class HologramService {
         }
 
         var holoPlugin = ConfigService.getHologramPlugin();
-        enumTypeHologram = EnumTypeHologram.fromString(holoPlugin);
+
+        enumTypeHologram = EnumTypeHologram.getEnumFromText(holoPlugin);
         if (enumTypeHologram == null) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cPlugin &e" + holoPlugin + " &cnot yet supported for holograms!"));
             enable = false;
@@ -44,8 +45,9 @@ public class HologramService {
         }
 
         if ((enumTypeHologram == EnumTypeHologram.DECENT && !HeadBlocks.isDecentHologramsActive) ||
+                (enumTypeHologram == EnumTypeHologram.DEFAULT && !HeadBlocks.isProtocolLibActive) ||
                 (enumTypeHologram == EnumTypeHologram.HD && !HeadBlocks.isHolographicDisplaysActive) ||
-                (enumTypeHologram == EnumTypeHologram.DEFAULT && !HeadBlocks.isProtocolLibActive)) {
+                (enumTypeHologram == EnumTypeHologram.CMI && !HeadBlocks.isCMIActive)) {
             enable = false;
             return;
         }
@@ -61,7 +63,12 @@ public class HologramService {
 
     public static void createHolograms(Location location) {
         if (!enable) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create a hologram. Is " + ConfigService.getHologramPlugin() + " plugin installed?"));
+            if (enumTypeHologram == EnumTypeHologram.DEFAULT) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create an hologram above the head. Is ProtocolLib plugin enabled?"));
+            } else {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create an hologram above the head. Is " + EnumTypeHologram.getPluginName(enumTypeHologram) + " plugin enabled?"));
+            }
+
             return;
         }
 
@@ -93,13 +100,17 @@ public class HologramService {
         }
 
         var holoFound = getHologramByLocation(foundHolograms, location);
-        if (holoFound != null && !holoFound.isHologramVisible(player)) {
-            holoFound.show(player);
+        if (holoFound != null) {
+            if (!holoFound.isSupportedPerPlayerView() || !holoFound.isHologramVisible(player)) {
+                holoFound.show(player);
+            }
         }
 
         var holoNotFound = getHologramByLocation(notFoundHolograms, location);
-        if (holoNotFound != null && holoNotFound.isHologramVisible(player)) {
-            holoNotFound.hide(player);
+        if (holoNotFound != null) {
+            if (!holoNotFound.isSupportedPerPlayerView() || holoNotFound.isHologramVisible(player)) {
+                holoNotFound.hide(player);
+            }
         }
     }
 
@@ -109,13 +120,17 @@ public class HologramService {
         }
 
         var holoFound = getHologramByLocation(foundHolograms, location);
-        if (holoFound != null && holoFound.isHologramVisible(player)) {
-            holoFound.hide(player);
+        if (holoFound != null) {
+            if (!holoFound.isSupportedPerPlayerView() || holoFound.isHologramVisible(player)) {
+                holoFound.hide(player);
+            }
         }
 
         var holoNotFound = getHologramByLocation(notFoundHolograms, location);
-        if (holoNotFound != null && !holoNotFound.isHologramVisible(player)) {
-            holoNotFound.show(player);
+        if (holoNotFound != null) {
+            if (!holoNotFound.isSupportedPerPlayerView() || !holoNotFound.isHologramVisible(player)) {
+                holoNotFound.show(player);
+            }
         }
     }
 

@@ -9,7 +9,7 @@ public class HoloLibSingleton {
 
     public static HologramPool getHologramPool() {
         if (hologramPool == null) {
-            hologramPool = new HologramPool(HeadBlocks.getInstance(), ConfigService.getHologramParticlePlayerViewDistance(), 0f, 0f);
+            hologramPool = new HologramPool(HeadBlocks.getInstance(), ConfigService.getHologramParticlePlayerViewDistance());
         }
 
         return hologramPool;

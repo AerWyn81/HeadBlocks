@@ -1,9 +1,12 @@
 package fr.aerwyn81.headblocks.holograms;
 
+import java.util.Arrays;
+
 public enum EnumTypeHologram {
     DEFAULT("DEFAULT"),
-    DECENT("DECENT"),
-    HD("HD");
+    DECENT("DecentHolograms"),
+    HD("HD"),
+    CMI("CMI");
 
     private final String value;
 
@@ -15,12 +18,15 @@ public enum EnumTypeHologram {
         return this.value;
     }
 
-    public static EnumTypeHologram fromString(String text) {
-        for (EnumTypeHologram b : EnumTypeHologram.values()) {
-            if (b.value.equalsIgnoreCase(text)) {
-                return b;
-            }
+    public static EnumTypeHologram getEnumFromText(String text) {
+        try {
+            return EnumTypeHologram.valueOf(text);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-        return null;
+    }
+
+    public static EnumTypeHologram getPluginName(EnumTypeHologram e) {
+        return Arrays.stream(EnumTypeHologram.values()).filter(enumTypeHologram -> enumTypeHologram == e).findFirst().orElse(null);
     }
 }
