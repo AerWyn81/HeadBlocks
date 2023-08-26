@@ -35,7 +35,7 @@ public class Top implements Cmd {
             return true;
         }
 
-        if (top.size() == 0) {
+        if (top.isEmpty()) {
             sender.sendMessage(LanguageService.getMessage("Messages.TopEmpty"));
             return true;
         }

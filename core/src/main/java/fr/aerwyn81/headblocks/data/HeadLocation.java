@@ -152,7 +152,7 @@ public class HeadLocation {
         section.set("locations." + hUUID + ".hitCount", hitCount == -1 ? null : hitCount);
         section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
 
-        if (rewards.size() != 0) {
+        if (!rewards.isEmpty()) {
             section.createSection("locations." + hUUID + ".rewards");
 
             for (Reward reward : rewards) {

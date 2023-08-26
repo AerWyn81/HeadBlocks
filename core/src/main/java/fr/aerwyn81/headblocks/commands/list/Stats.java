@@ -62,7 +62,7 @@ public class Stats implements Cmd {
         }
 
         ArrayList<HeadLocation> headsSpawned = new ArrayList<>(HeadService.getChargedHeadLocations());
-        if (headsSpawned.size() == 0) {
+        if (headsSpawned.isEmpty()) {
             sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }

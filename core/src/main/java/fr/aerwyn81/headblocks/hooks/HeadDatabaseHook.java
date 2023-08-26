@@ -26,7 +26,7 @@ public class HeadDatabaseHook {
         try {
             // If the list is not empty, then the database is already loaded
             List<Head> heads = headDatabaseAPI.getHeads(CategoryEnum.ALPHABET);
-            if (heads != null && heads.size() > 0) {
+            if (heads != null && !heads.isEmpty()) {
                 this.loadHeadsHDB();
             }
         } catch (Exception ignored) { }

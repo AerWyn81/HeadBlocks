@@ -136,7 +136,7 @@ public class GuiService {
                 .sorted(((o1, o2) -> o2.getOrderIndex() - o1.getOrderIndex()))
                 .collect(Collectors.toList());
 
-        if (headLocations.size() == 0) {
+        if (headLocations.isEmpty()) {
             clickCounterMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
                     .setName(LanguageService.getMessage("Gui.NoHeads"))
                     .toItemStack(), true));

@@ -107,6 +107,7 @@ public class HeadService {
                     }
                 } catch (Exception e) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head " + uuid));
+                    HeadBlocks.log.sendMessage(e.getMessage());
                 }
             }
         });
@@ -176,7 +177,7 @@ public class HeadService {
                 continue;
             }
 
-            if (parts[1].trim().equals("")) {
+            if (parts[1].trim().isEmpty()) {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&cValue cannot be empty for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
                 continue;
             }

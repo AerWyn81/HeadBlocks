@@ -283,7 +283,7 @@ public class ConfigService {
                     slotsRequired = config.getInt("tieredRewards." + level + ".slotsRequired", -1);
                 }
 
-                if (messages.size() != 0 || commands.size() != 0 || broadcastMessages.size() != 0 || slotsRequired != -1) {
+                if (!messages.isEmpty() || !commands.isEmpty() || !broadcastMessages.isEmpty() || slotsRequired != -1) {
                     tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages, slotsRequired));
                 }
             } catch (Exception ex) {

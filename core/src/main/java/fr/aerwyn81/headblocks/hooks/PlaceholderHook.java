@@ -8,6 +8,7 @@ import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -33,22 +34,22 @@ public class PlaceholderHook extends PlaceholderExpansion {
     }
 
     @Override
-    public String getIdentifier() {
+    public @NotNull String getIdentifier() {
         return "headblocks";
     }
 
     @Override
-    public String getAuthor() {
+    public @NotNull String getAuthor() {
         return "AerWyn81";
     }
 
     @Override
-    public String getVersion() {
+    public @NotNull String getVersion() {
         return "1.0.0";
     }
 
     @Override
-    public String onRequest(OfflinePlayer player, String identifier) {
+    public String onRequest(OfflinePlayer player, @NotNull String identifier) {
         if (player == null) return "";
 
         if (identifier.equals("current") || identifier.equals("left")) {

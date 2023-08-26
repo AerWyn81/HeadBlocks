@@ -152,7 +152,7 @@ public class OnPlayerInteractEvent implements Listener {
 
         // Success messages if not empty
         List<String> messages = ConfigService.getHeadClickMessages();
-        if (messages.size() != 0) {
+        if (!messages.isEmpty()) {
             player.sendMessage(PlaceholdersService.parse(player, messages));
         }
 
@@ -187,7 +187,7 @@ public class OnPlayerInteractEvent implements Listener {
             Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
 
             FireworkUtils.launchFirework(loc, isFlickering,
-                    colors.size() == 0, colors, fadeColors.size() == 0, fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
+                    colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
         }
 
         // Show hologram

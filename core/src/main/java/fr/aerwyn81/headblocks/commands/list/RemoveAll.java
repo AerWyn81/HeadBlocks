@@ -22,7 +22,7 @@ public class RemoveAll implements Cmd {
         ArrayList<HeadLocation> headLocations = new ArrayList<>(HeadService.getChargedHeadLocations());
         int headCount = headLocations.size();
 
-        if (headLocations.size() == 0) {
+        if (headLocations.isEmpty()) {
             sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }

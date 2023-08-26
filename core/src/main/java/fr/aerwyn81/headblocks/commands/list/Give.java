@@ -34,7 +34,7 @@ public class Give implements Cmd {
         }
 
         ArrayList<HBHead> hbHeads = HeadService.getHeads();
-        if (hbHeads.size() == 0) {
+        if (hbHeads.isEmpty()) {
             player.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }

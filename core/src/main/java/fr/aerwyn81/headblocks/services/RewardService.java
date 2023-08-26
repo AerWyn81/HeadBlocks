@@ -15,7 +15,7 @@ public class RewardService {
         var plugin = HeadBlocks.getInstance();
 
         TieredReward tieredReward;
-        if (ConfigService.getTieredRewards().size() != 0) {
+        if (!ConfigService.getTieredRewards().isEmpty()) {
             tieredReward = ConfigService.getTieredRewards().stream()
                     .filter(t -> t.getLevel() == playerHeads.size() + 1)
                     .findFirst()
@@ -24,7 +24,7 @@ public class RewardService {
             if (tieredReward != null) {
                 if (tieredReward.getSlotsRequired() != -1 && PlayerUtils.getEmptySlots(p) < tieredReward.getSlotsRequired()) {
                     var message = LanguageService.getMessage("Messages.InventoryFullReward");
-                    if (message.trim().length() > 0) {
+                    if (!message.trim().isEmpty()) {
                         p.sendMessage(message);
                     }
 
@@ -32,7 +32,7 @@ public class RewardService {
                 }
 
                 List<String> messages = tieredReward.getMessages();
-                if (messages.size() != 0) {
+                if (!messages.isEmpty()) {
                     p.sendMessage(PlaceholdersService.parse(p, messages));
                 }
 
@@ -42,7 +42,7 @@ public class RewardService {
                             plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), command)));
 
                     List<String> broadcastMessages = tieredReward.getBroadcastMessages();
-                    if (broadcastMessages.size() != 0) {
+                    if (!broadcastMessages.isEmpty()) {
                         for (String message : broadcastMessages) {
                             plugin.getServer().broadcastMessage(PlaceholdersService.parse(p.getName(), p.getUniqueId(), message));
                         }
@@ -63,7 +63,7 @@ public class RewardService {
 
         if (slotsRequired != -1 && PlayerUtils.getEmptySlots(p) < slotsRequired) {
             var message = LanguageService.getMessage("Messages.InventoryFullReward");
-            if (message.trim().length() > 0) {
+            if (!message.trim().isEmpty()) {
                 p.sendMessage(message);
             }
 

@@ -23,7 +23,7 @@ public class List implements Cmd {
     public boolean perform(CommandSender sender, String[] args) {
         ArrayList<HeadLocation> headLocations = new ArrayList<>(HeadService.getHeadLocations());
 
-        if (headLocations.size() == 0) {
+        if (headLocations.isEmpty()) {
             sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }

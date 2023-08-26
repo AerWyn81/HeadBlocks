@@ -80,7 +80,7 @@ public class LanguageService {
 			try {
 				file.createNewFile();
 			} catch (IOException e) {
-				e.printStackTrace();
+				HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading translation file: " + e.getMessage()));
 			}
 		}
 		YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
@@ -119,13 +119,13 @@ public class LanguageService {
 		try {
 			cfg.save(file);
 		} catch (IOException e) {
-			e.printStackTrace();
+			HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading translation file: " + e.getMessage()));
 		}
 
 		try {
 			ConfigUpdater.update(HeadBlocks.getInstance(), "language/messages_" + lang + ".yml", new File(HeadBlocks.getInstance().getDataFolder() + "/language/messages_" + lang + ".yml"), Collections.emptyList());
 		} catch (IOException e) {
-			e.printStackTrace();
+			HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading translation file: " + e.getMessage()));
 		}
 	}
 }

@@ -29,7 +29,7 @@ public class ResetAll implements Cmd {
             return true;
         }
 
-        if (allPlayers.size() == 0) {
+        if (allPlayers.isEmpty()) {
             sender.sendMessage(LanguageService.getMessage("Messages.ResetAllNoData"));
             return true;
         }
