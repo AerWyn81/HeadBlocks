@@ -53,20 +53,18 @@ public class HologramService {
         }
 
         for (HeadLocation loc : HeadService.getHeadLocations()) {
-            if (loc == null) {
-                continue;
+            if (loc.isCharged()) {
+                createHolograms(loc.getLocation());
             }
-
-            createHolograms(loc.getLocation());
         }
     }
 
     public static void createHolograms(Location location) {
         if (!enable) {
             if (enumTypeHologram == EnumTypeHologram.DEFAULT) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create an hologram above the head. Is ProtocolLib plugin enabled?"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create an hologram above the head at " + location.toString() + ". Is ProtocolLib plugin enabled?"));
             } else {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create an hologram above the head. Is " + EnumTypeHologram.getPluginName(enumTypeHologram) + " plugin enabled?"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create an hologram above the head at " + location.toString() + ". Is " + EnumTypeHologram.getPluginName(enumTypeHologram) + " plugin enabled?"));
             }
 
             return;

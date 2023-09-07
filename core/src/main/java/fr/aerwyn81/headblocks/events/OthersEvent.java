@@ -70,12 +70,10 @@ public class OthersEvent implements Listener {
                 .collect(Collectors.toList());
 
         for (HeadLocation head : headsInWorld) {
-            if (ConfigService.isHologramsEnabled()) {
-                HologramService.createHolograms(head.getLocation());
-            }
-
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));
             head.setCharged(true);
+
+            HologramService.createHolograms(head.getLocation());
         }
     }
 
