@@ -38,8 +38,8 @@ public class Reload implements Cmd {
 
         plugin.getParticlesTask().cancel();
 
-        HologramService.load();
         HeadService.load();
+        HologramService.load();
         GuiService.clearCache();
 
         if (plugin.isHeadDatabaseActive()) {

@@ -99,15 +99,9 @@ public class HeadService {
                 }
 
                 try {
-                    var headLocation = HeadLocation.fromConfig(config, headUuid);
-                    headLocations.add(headLocation);
-
-                    if (ConfigService.isHologramsEnabled()) {
-                        HologramService.createHolograms(headLocation.getLocation());
-                    }
+                    headLocations.add(HeadLocation.fromConfig(config, headUuid));
                 } catch (Exception e) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head " + uuid));
-                    HeadBlocks.log.sendMessage(e.getMessage());
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head &e" + uuid + "&c. Cause: &e" + e.getMessage()));
                 }
             }
         });
