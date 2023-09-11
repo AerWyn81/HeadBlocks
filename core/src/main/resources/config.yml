@@ -150,6 +150,8 @@ shouldResetPlayerData: true
 
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
 preventCommandsOnTieredRewardsLevel: false
+# Used to cancel messages executed after player earn the reward (headclick commands or tieredRewards)
+disableHeadMessagesAfterRewarding: false
 
 # Disable these options can significantly increase performance
 #  -> piston will prevent any piston extension interaction (extension destroying head)
