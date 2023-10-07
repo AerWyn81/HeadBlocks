@@ -137,23 +137,20 @@ public class OnPlayerInteractEvent implements Listener {
                 }
             }
 
+            playerHeads.add(headLocation.getUuid());
+
+            // Save player click in storage
+            StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
+
             // Check and give reward if triggerRewards is used
             var isRewardGiven = RewardService.giveReward(player, playerHeads);
             if (!isRewardGiven)
                 return;
 
-            // Save player click in storage
-            StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to save a head found by " + player.getName() + " from the storage: " + ex.getMessage()));
             return;
-        }
-
-        // Success messages if not empty
-        List<String> messages = ConfigService.getHeadClickMessages();
-        if (!messages.isEmpty()) {
-            player.sendMessage(PlaceholdersService.parse(player, messages));
         }
 
         // Success song if not empty

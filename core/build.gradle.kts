@@ -24,7 +24,7 @@ dependencies {
     compileOnly(files("../libs/CMI-9.6.0.2.jar"))
     implementation(files("../libs/hologram-lib-2.1.1-SNAPSHOT.jar"))
     implementation("redis.clients:jedis:4.4.3")
-    implementation("de.tr7zw:item-nbt-api:2.11.3")
+    implementation("de.tr7zw:item-nbt-api:2.12.0")
     implementation("com.zaxxer:HikariCP:5.0.1")
 }
 

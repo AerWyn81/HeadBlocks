@@ -161,6 +161,17 @@ shouldResetPlayerData: true
 By disabling this configuration, when a head is deleted (from the command or sneak), players' data will not be deleted.
 It is not recommended deactivating it because the data will never be deleted (not used atm).
 
+#### Prevent messages if tieredRewards contains the current number
+
+```
+preventMessagesOnTieredRewardsLevel: false
+```
+
+By activating this configuration, messages on `headClick` configuration section will not be sent to the player if the number of heads the player has is part of a tieredRewards.
+Example:
+> I want it to show the normal "You found a head" messages for rewards 1-14.  
+And then for reward 15 only show the "Congrats you found 15 heads!" which is what is configured with TieredRewards
+
 #### Prevent commands if tieredRewards contains the current number
 
 ```

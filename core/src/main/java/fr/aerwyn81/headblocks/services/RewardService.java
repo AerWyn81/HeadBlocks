@@ -17,7 +17,7 @@ public class RewardService {
         TieredReward tieredReward;
         if (!ConfigService.getTieredRewards().isEmpty()) {
             tieredReward = ConfigService.getTieredRewards().stream()
-                    .filter(t -> t.getLevel() == playerHeads.size() + 1)
+                    .filter(t -> t.getLevel() == playerHeads.size())
                     .findFirst()
                     .orElse(null);
 
@@ -51,6 +51,14 @@ public class RewardService {
             }
         } else {
             tieredReward = null;
+        }
+
+        if (!ConfigService.isPreventHeadClickMessageOnTieredRewardsLevel() || tieredReward == null) {
+            // Success messages if not empty
+            List<String> messages = ConfigService.getHeadClickMessages();
+            if (!messages.isEmpty()) {
+                p.sendMessage(PlaceholdersService.parse(p, messages));
+            }
         }
 
         // Only the tieredReward was given

@@ -151,6 +151,9 @@ shouldResetPlayerData: true
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
 preventCommandsOnTieredRewardsLevel: false
 
+# Used to cancel messages executed when clicking on the head if current headClicked is in levels of tieredRewards
+preventMessagesOnTieredRewardsLevel: false
+
 # Disable these options can significantly increase performance
 #  -> piston will prevent any piston extension interaction (extension destroying head)
 #  -> water will prevent any liquid flow interaction (water destroying head)
