@@ -174,14 +174,6 @@ Example:
 At tiered rewards I have (at 10 heads): "eco give %player% 2000"  
 Instead of giving both, that will just give 2000 and not the 500 + 2000
 
-#### Prevent head click messages when any reward is given
-
-```
-disableHeadMessagesAfterRewarding: false
-```
-
-Used to prevent any headclick.messages when any reward is given to the player (concerns: headclick.commands, rewards and tieredRewards) 
-
 #### TieredRewards
 
 ```
