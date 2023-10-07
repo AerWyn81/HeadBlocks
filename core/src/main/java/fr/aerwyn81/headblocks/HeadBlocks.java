@@ -30,6 +30,7 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isDecentHologramsActive;
     public static boolean isHolographicDisplaysActive;
     public static boolean isCMIActive;
+    public static boolean isHeadDatabaseActive;
 
     private GlobalTask globalTask;
     private HeadDatabaseHook headDatabaseHook;
@@ -70,6 +71,8 @@ public final class HeadBlocks extends JavaPlugin {
             return;
         }
 
+        isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
+
         isPlaceholderApiActive = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
         if (isPlaceholderApiActive) {
             new PlaceholderHook().register();
@@ -97,8 +100,11 @@ public final class HeadBlocks extends JavaPlugin {
         this.globalTask = new GlobalTask();
         globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
 
-        if (isHeadDatabaseActive()) {
+        if (isHeadDatabaseActive) {
             this.headDatabaseHook = new HeadDatabaseHook();
+            if (!this.headDatabaseHook.init()) {
+                isHeadDatabaseActive = false;
+            }
         }
 
         getCommand("headblocks").setExecutor(new HBCommandExecutor());
@@ -141,9 +147,5 @@ public final class HeadBlocks extends JavaPlugin {
 
     public void setHeadDatabaseHook(HeadDatabaseHook headDatabaseHook) {
         this.headDatabaseHook = headDatabaseHook;
-    }
-
-    public boolean isHeadDatabaseActive() {
-        return Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
     }
 }

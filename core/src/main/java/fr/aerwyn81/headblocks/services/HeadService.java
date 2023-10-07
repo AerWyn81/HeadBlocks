@@ -210,7 +210,7 @@ public class HeadService {
                     heads.add(HeadUtils.createHead(new HBHeadDefault(head), parts[1]));
                     break;
                 case "hdb":
-                    if (!HeadBlocks.getInstance().isHeadDatabaseActive()) {
+                    if (!HeadBlocks.isHeadDatabaseActive) {
                         HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot load hdb head " + configHead + " without HeadDatabase installed"));
                         continue;
                     }

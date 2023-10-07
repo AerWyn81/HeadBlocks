@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.arcaniax.hdb.enums.CategoryEnum;
 import me.arcaniax.hdb.object.head.Head;
@@ -13,12 +14,18 @@ import org.bukkit.Bukkit;
 import java.util.List;
 
 public class HeadDatabaseHook {
-    private final HeadDatabaseAPI headDatabaseAPI;
+    private HeadDatabaseAPI headDatabaseAPI;
 
-    public HeadDatabaseHook() {
+    public boolean init() {
         var plugin = HeadBlocks.getInstance();
 
-        headDatabaseAPI = new HeadDatabaseAPI();
+        try {
+            headDatabaseAPI = new HeadDatabaseAPI();
+        } catch (NoClassDefFoundError ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading HeadDatabaseAPI support:" + ex.getMessage() + ". Please try to update HeadDatabase plugin or report the error on HeadBlocks discord."));
+            return false;
+        }
+
         Bukkit.getPluginManager().registerEvents(new OnHeadDatabaseLoaded(plugin), plugin);
 
         // Plugman/HeadDatabase issue
@@ -30,6 +37,8 @@ public class HeadDatabaseHook {
                 this.loadHeadsHDB();
             }
         } catch (Exception ignored) { }
+
+        return true;
     }
 
     public void loadHeadsHDB() {

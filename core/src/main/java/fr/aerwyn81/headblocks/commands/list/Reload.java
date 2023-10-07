@@ -42,9 +42,12 @@ public class Reload implements Cmd {
         HologramService.load();
         GuiService.clearCache();
 
-        if (plugin.isHeadDatabaseActive()) {
+        if (HeadBlocks.isHeadDatabaseActive) {
             if (plugin.getHeadDatabaseHook() == null) {
-                plugin.setHeadDatabaseHook(new HeadDatabaseHook());
+                var headDatabaseApi = new HeadDatabaseHook();
+                if (headDatabaseApi.init()) {
+                    plugin.setHeadDatabaseHook(headDatabaseApi);
+                }
             }
 
             plugin.getHeadDatabaseHook().loadHeadsHDB();
