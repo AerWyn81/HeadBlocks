@@ -53,7 +53,7 @@ public class RewardService {
             tieredReward = null;
         }
 
-        if (!ConfigService.isPreventHeadClickMessageOnTieredRewardsLevel() || tieredReward == null) {
+        if (!ConfigService.isPreventMessagesOnTieredRewardsLevel() || tieredReward == null) {
             // Success messages if not empty
             List<String> messages = ConfigService.getHeadClickMessages();
             if (!messages.isEmpty()) {

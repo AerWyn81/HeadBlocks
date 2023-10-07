@@ -213,8 +213,8 @@ public class ConfigService {
         return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
     }
 
-    public static boolean isPreventHeadClickMessageOnTieredRewardsLevel() {
-        return config.getBoolean("preventHeadClickMessageOnTieredRewardsLevel", false);
+    public static boolean isPreventMessagesOnTieredRewardsLevel() {
+        return config.getBoolean("preventMessagesOnTieredRewardsLevel", false);
     }
 
     public static boolean isParticlesEnabled() {
