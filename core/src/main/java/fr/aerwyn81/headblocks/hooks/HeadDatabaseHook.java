@@ -26,6 +26,16 @@ public class HeadDatabaseHook {
             return false;
         }
 
+        try {
+            var fields = headDatabaseAPI.getClass().getDeclaredFields();
+            if (fields.length == 0) {
+                throw new RuntimeException("Too old version, API not compatible.");
+            }
+        } catch (Exception ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading HeadDatabaseAPI support:" + ex.getMessage() + ". Please try to update HeadDatabase plugin or report the error on HeadBlocks discord."));
+            return false;
+        }
+
         Bukkit.getPluginManager().registerEvents(new OnHeadDatabaseLoaded(plugin), plugin);
 
         // Plugman/HeadDatabase issue
