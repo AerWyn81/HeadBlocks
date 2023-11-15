@@ -58,7 +58,10 @@ public class StorageService {
 
         try {
             storage.init();
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&aRedis cache properly connected!"));
+
+            if (ConfigService.isRedisEnabled()) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&aRedis cache properly connected!"));
+            }
         } catch (InternalException ex) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to initialize the storage: " + ex.getMessage()));
             storageError = true;

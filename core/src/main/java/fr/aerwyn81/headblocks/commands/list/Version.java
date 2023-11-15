@@ -8,7 +8,7 @@ import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
 
-@HBAnnotations(command = "version", permission = "headblocks.use")
+@HBAnnotations(command = "version", permission = "headblocks.commands.version")
 public class Version implements Cmd {
 
     @Override

@@ -19,7 +19,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Map;
 
-@HBAnnotations(command = "top", permission = "headblocks.use")
+@HBAnnotations(command = "top", permission = "headblocks.commands.top")
 public class Top implements Cmd {
 
     @Override

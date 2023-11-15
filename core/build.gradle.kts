@@ -73,7 +73,19 @@ bukkit {
     permissions {
         register("headblocks.use") {
             description = "Allows players to interact with heads and see their progress"
-            default = BukkitPluginDescription.Permission.Default.NOT_OP
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.commands.top") {
+            description = "Allows players to see leaderboard"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.commands.me") {
+            description = "Allows players to see his score"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.commands.version") {
+            description = "Allows players to see the plugin version"
+            default = BukkitPluginDescription.Permission.Default.FALSE
         }
         register("headblocks.admin") {
             description = "Allows access to /headblocks admin commands"

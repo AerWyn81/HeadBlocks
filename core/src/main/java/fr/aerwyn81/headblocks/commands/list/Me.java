@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 
-@HBAnnotations(command = "me", permission = "headblocks.use", isPlayerCommand = true)
+@HBAnnotations(command = "me", permission = "headblocks.commands.me", isPlayerCommand = true)
 public class Me implements Cmd {
 
     @Override
