@@ -42,7 +42,6 @@ Messages:
   PlayerReset: "%prefix% &aLes données de %player% ont été réinitialisé"
   RemoveLocationError: "%prefix% &cErreur aucun HeadBlock correspondant n'a été trouvé"
   HeadAlreadyExistHere: "%prefix% &cUn HeadBlock existe déjà à cet emplacement"
-  Version: "%prefix% &aVersion du plugin : &e%version%"
   ErrorCannotPlaySound: "%prefix% &cErreur lors de la lecture du son"
   NoTargetHeadBlock: "%prefix% &cAucun HeadBlock n'a été trouvé à l'emplacement ciblé"
   TargetBlockInfo: "%prefix% &aVous avez sélectionné un HeadBlock &7(uuid: %uuid% - %x% %y% %z% - %world%)&a. Ciblez le bloc sur lequel vous voulez déplacer le HeadBlock et ré-exécutez la commande &e/hb move --confirm &apour confirmer. Utilisez &e/hb move --cancel &apour annuler"

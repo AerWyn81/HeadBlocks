@@ -42,7 +42,6 @@ Messages:
   PlayerReset: "%prefix% &aThe %player% data has been reset"
   RemoveLocationError: "%prefix% &cError no matching HeadBlock was found"
   HeadAlreadyExistHere: "%prefix% &cA HeadBlock already exists at this location"
-  Version: "%prefix% &aPlugin version: &e%version%"
   ErrorCannotPlaySound: "%prefix% &cSong on head click cannot be played"
   NoTargetHeadBlock: "%prefix% &cNo HeadBlock were found at the targeted location"
   TargetBlockInfo: "%prefix% &aYou have selected a HeadBlock &7(uuid: %uuid% - %world%, %x%, %y%, %z%)&a. Target the block on which you want to move the HeadBlock and use the command &e/hb move --confirm &ato confirm. Use &e/hb move --cancel &ato cancel"
