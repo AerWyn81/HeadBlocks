@@ -59,6 +59,7 @@ public class HeadDatabaseHook {
                 .forEach(h -> {
                     HeadUtils.createHead(h, headDatabaseAPI.getBase64(h.getId()));
                     h.setLoaded(true);
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded HeadDatabase head id &e" + h.getId() + "."));
                 });
     }
 }

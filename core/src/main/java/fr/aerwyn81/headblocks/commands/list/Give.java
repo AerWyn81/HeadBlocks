@@ -26,7 +26,7 @@ public class Give implements Cmd {
             Player pTemp = Bukkit.getPlayer(args[1]);
 
             if (pTemp == null) {
-                player.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound", args[1]));
+                player.sendMessage(LanguageService.getMessage("Messages.PlayerNotConnected", args[1]));
                 return true;
             }
 
@@ -42,9 +42,9 @@ public class Give implements Cmd {
         ArrayList<HBHead> headsToGive = new ArrayList<>();
         if (args.length > 2 && args[2].equals("*")) {
             headsToGive = hbHeads;
-        } else if (args.length >= 1 && hbHeads.size() == 1) {
-            headsToGive.add(hbHeads.get(0));
-        } else if (args.length > 2) {
+        } else if (args.length < 3) {
+            headsToGive.addAll(hbHeads);
+        } else {
             int id;
 
             try {
@@ -64,9 +64,6 @@ public class Give implements Cmd {
             }
 
             headsToGive.add(hbHeads.get(finalId));
-        } else {
-            player.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
-            return true;
         }
 
         if (PlayerUtils.getEmptySlots(player) < headsToGive.size()) {

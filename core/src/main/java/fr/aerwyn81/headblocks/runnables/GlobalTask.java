@@ -84,6 +84,9 @@ public class GlobalTask extends BukkitRunnable {
             return new ArrayList<>();
         }
 
-        return loc.getWorld().getNearbyEntities(loc, range, range, range).stream().filter(Player.class::isInstance).map(e -> (Player) e).collect(Collectors.toList());
+        return loc.getWorld().getNearbyEntities(loc, range, range, range).stream()
+                .filter(Player.class::isInstance)
+                .map(e -> (Player) e)
+                .collect(Collectors.toList());
     }
 }

@@ -105,6 +105,8 @@ public class HeadService {
                 }
             }
         });
+
+        HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded &e" + headLocations.size() + " locations!"));
     }
 
     public static UUID saveHeadLocation(Location location, String texture) throws InternalException {
@@ -160,7 +162,21 @@ public class HeadService {
     }
 
     private static void loadHeads() {
-        List<String> headsConfig = ConfigService.getHeads();
+        List<String> headsConfig;
+
+        if (ConfigService.isHeadsThemeEnabled()) {
+            var selectedTheme = ConfigService.getHeadsThemeSelected().trim();
+            var themeHeads = ConfigService.getHeadsTheme().get(selectedTheme);
+
+            if (selectedTheme.isEmpty() || themeHeads == null) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError when trying to use heads theme, selected theme is empty or don't match any theme."));
+                return;
+            }
+
+            headsConfig = themeHeads;
+        } else {
+            headsConfig = ConfigService.getHeads();
+        }
 
         for (int i = 0; i < headsConfig.size(); i++) {
             String configHead = headsConfig.get(i);
@@ -222,6 +238,12 @@ public class HeadService {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cThe " + parts[0] + " type is not yet supported!"));
             }
         }
+
+        var headsHdb = heads.stream()
+                .filter(HBHeadHDB.class::isInstance)
+                .map(HBHeadHDB.class::cast).count();
+
+        HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded &e" + (Math.abs(heads.size() - headsHdb)) + " &8&o(+" + headsHdb + " HeadDatabase heads) &aconfiguration heads!"));
     }
 
     public static ArrayList<HBHead> getHeads() {

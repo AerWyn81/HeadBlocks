@@ -12,6 +12,7 @@ import redis.clients.jedis.Protocol;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ConfigService {
@@ -35,6 +36,25 @@ public class ConfigService {
 
     public static List<String> getHeads() {
         return config.getStringList("heads");
+    }
+
+    public static boolean isHeadsThemeEnabled() { return config.getBoolean("headsTheme.enabled", false); }
+
+    public static String getHeadsThemeSelected() { return config.getString("headsTheme.selected", ""); }
+
+    public static HashMap<String, List<String>> getHeadsTheme() {
+        var headsTheme = new HashMap<String, List<String>>();
+
+        var headsThemeSection = config.getConfigurationSection("headsTheme.theme");
+        if (headsThemeSection == null) {
+            return new HashMap<>();
+        }
+
+        for (String theme : headsThemeSection.getKeys(false)) {
+            headsTheme.put(theme, new ArrayList<>(config.getStringList("headsTheme.theme." + theme)));
+        }
+
+        return headsTheme;
     }
 
     public static String getHeadClickAlreadyOwnSound() {

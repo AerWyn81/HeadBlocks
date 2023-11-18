@@ -49,6 +49,55 @@ When using the command `/hb give <playerName>`, you can specify what HeadBlock y
 
 !> Note: If you have only one head configured, just use the simple command /hb give
 
+#### Heads theme
+```
+# When enabling this, that will override above heads configuration
+# If you want some idea for default heads textures or customize yours, you can define that below
+# This configuration will not be updated on change, so if you want to add some another themes, simply follow the correct indentation and add your
+# Same configurations than above head textures
+# /!\ Will not update heads already placed /!\
+headsTheme:
+  enabled: false
+  selected: "Christmas"
+  theme:
+    Easter:
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNWIzZTAzNjM5OTIyYTUxZjI2OGU4NTZmYmIwZGQ0YzE5ZDIwNjg3OGIxY2U2YjVhZGRjNmI5ZjhmNDJmYWRjZCJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTRkYWU1MDc2NTcyZmMzMWNmYzdmY2RhMGZkNWI3ZWJmNGFlMWQ1NmE5YjYyNWJkNTU2ZGYxZjA5NWU5YTc3ZiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDdmODUxOWNjNWE2MjQzZDg1ODk0OWE2YzU3MzlkY2U4NWE3NjE5YWQwZTcxYzUzNzAxYzgwZDQ3NjA0NmEwMCJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjc5ODNmYjQ5NWQzODJmOWQ4NzgyNjBkZTk5ZTRlNmNlY2Y2MThiNjdhM2I1YzIwNTFlM2ZhZDJiNjliIn19fQ=='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzA0OTY2MmEzMzY1MzNlZDY0YTExODI2NjVmZTZiMWU2YjUwYWM2ZGI3ZTk2YWE2NmY4NDcxNjhmYjkzNzI0OCJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZWViMzM1MTgyZGI1ZjNiZTgwZmNjZjZlYWJlNTk5ZjQxMDdkNGZmMGU5ZjQ0ZjM0MTc0Y2VmYTZlMmI1NzY4In19fQ=='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTYyODUzMWViNWYwNTY5ZWRhZTE2YzhhNDNlYjIyZWVjZjdjMTUyMzViODM1YWUxNDE0YzI2OWNhZDEyY2E3In19fQ=='
+    Halloween:
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDhhMzhiZjkyZDA0OGEzNzNjMGM3Y2Q5YjgzYTQ4YTdmOTgwZWU2NTU1ZTg1NDg3N2IzMmZlZjI2YTE5MzEzNiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjYyZWE5N2NlN2FhNzlkNGY5YzI3ODA1N2FmYTFhMWRlZTIzNjlhNDBhZjFlYTBjNTU5Zjk2OTNiNWZiZWJjYiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzFlMDlmNWZjZmU0MDNlYjVkZTllMThiNWMyODQzN2JlMDllOWJkY2ZiMzRhYzRiZmM3NWU4ODFhZDlhMGRkNiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvY2Y4NGJkYjRiNmFmZDg0ZmZkNmNmNDExYzgzNGQ4NDU4YzdlNTEzMTYwZDc5MjM4OThkNDljNmFmNzJmMjJjMSJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDBlMThiZTI3OWMxNzM2ODQwZmIxOTFmNTY0YzVhZDkzYzQxYTUwN2YyYzJkNzQwYjM0ZmVlMjEyZWVmMDQxNCJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjQyNDYwNjI4ODcyNzYzN2RjMTFmOTA4NTMyZWZlMGE0ZTI5ODBmZmM1NmNlMThjNmE1ZTljYjlkYWZlMGE0MiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjNjNDJiN2EyZjU5ZDA3NWQyZmY1NTE2NGVmZWE2N2JhMzM3NjViZGNmMzNjYWZmNWFlODI5MGU0NzYwYmRlMyJ9fX0='
+    Christmas:
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMWUzYWQwMzllOTAzZTMwZjkwZGFhNjhjZWJmYzVjZWU3MmI1ZWQ4NGQ2MDQ0MzgyNDA5YzY3ZjM3NGQxNzMyYiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZTA0MGIwMzg3NjU4MDM1MGRiZjgxMzMzYWVhNjk2YTZkMmYzZjdkNTE1NmZiMGNlMjU3NzEyODNkZjYwOWE5ZiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjRiNzhjYjhmODMyMmU3NDM0MjQyNjlhODZlZDc0MzcyY2JjMjUyYzYzMzNhYmI5NWY2ODQ5NjQzNWFhMWU2OSJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTFmYTQ3YTc2OGI3OWU2MWQ1ZjQzZWE4N2I0Y2U4ZGNlYTFjNDM5ZmU3Njg3MWFlOTk4MTMwMDMwNzRlYzNmYiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTQwZGE5OWVhNDcxODkwN2YxNzE5MGViMTUzNTJjMGRhMGRlMGNlZTE4NmQ0ZmFiZjYxNThmODE5MjZhNTA0ZiJ9fX0='
+      - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmRiMjRkYzI2MjYzMTY2M2JhMWUzZTMzOTg2NDUwMTNkYzVjZDIzMzFlYzliOWYzZWIyNjg1NWEwYjEwNGJhYSJ9fX0='
+    Custom:
+      - ''
+```
+
+If you wish to have a predefined list or create your own, you can define heads by theme by activating this configuration.  
+Each theme can handle a list of textures, like `heads` configuration:
+- **default**: To get the Base64String, I advise you to
+  visit [Minecraft-Heads](https://minecraft-heads.com/) to get this information. Find the head you want to use and in the
+  same page, at the bottom, in **Other** section, copy the **Value** and paste it in place of `base64String`.
+- **hdb**: Plugin [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/) is needed. Now, you can
+  retrieve the ID of the head with the plugin and use it in place of `Id`.
+- **player**: Retrieve the player name and the head will have the texture of the player head.
+
+Be careful, if you activate this configuration, it will overload the previous "heads" configuration.
+
 #### Multi-server
 
 ```
