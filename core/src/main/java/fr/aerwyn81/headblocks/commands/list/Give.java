@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@HBAnnotations(command = "give", permission = "headblocks.admin", isPlayerCommand = true)
+@HBAnnotations(command = "give", permission = "headblocks.admin", isPlayerCommand = true, alias = "g")
 public class Give implements Cmd {
 
     @Override

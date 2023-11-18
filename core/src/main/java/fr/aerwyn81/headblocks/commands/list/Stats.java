@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@HBAnnotations(command = "stats", permission = "headblocks.admin")
+@HBAnnotations(command = "stats", permission = "headblocks.admin", alias = "s")
 public class Stats implements Cmd {
 
     @Override

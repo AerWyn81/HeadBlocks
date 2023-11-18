@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.commands;
 
 import fr.aerwyn81.headblocks.commands.list.*;
+import fr.aerwyn81.headblocks.commands.list.List;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.command.Command;
@@ -8,10 +9,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class HBCommandExecutor implements CommandExecutor, TabCompleter {
@@ -53,17 +53,23 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command c, String s, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command c, @NotNull String s, String[] args) {
         if (args.length == 0) {
             sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
             return false;
         }
 
-        HBCommand command = registeredCommands.get(args[0].toLowerCase());
+        var input = args[0].toLowerCase();
+        HBCommand command = registeredCommands.get(input);
 
         if (command == null) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
-            return false;
+            var aliasCmd = registeredCommands.entrySet().stream().filter(cEntry -> Objects.equals(cEntry.getValue().getAlias(), input)).findAny();
+            if (aliasCmd.isPresent()) {
+                command = aliasCmd.get().getValue();
+            } else {
+                sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
+                return false;
+            }
         }
 
         if (!PlayerUtils.hasPermission(sender, command.getPermission())) {
@@ -83,27 +89,32 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
             return false;
         }
 
-        return registeredCommands.get(args[0].toLowerCase()).getCmdClass().perform(sender, args);
+        return command.getCmdClass().perform(sender, args);
     }
 
     @Override
     public ArrayList<String> onTabComplete(CommandSender sender, Command c, String s, String[] args) {
-        if(args.length == 1) {
-            return registeredCommands.keySet().stream()
-                    .filter(arg -> arg.startsWith(args[0].toLowerCase()))
-                    .filter(arg -> registeredCommands.get(arg).isVisible())
-                    .filter(arg -> PlayerUtils.hasPermission(sender, registeredCommands.get(arg).getPermission())).distinct()
+        var input = args[0].toLowerCase();
+
+        if (args.length == 1) {
+            return registeredCommands.entrySet().stream()
+                    .filter(cEntry -> cEntry.getKey().startsWith(input))
+                    .filter(cEntry -> cEntry.getValue().isVisible())
+                    .filter(cEntry -> PlayerUtils.hasPermission(sender, cEntry.getValue().getPermission()))
+                    .map(Map.Entry::getKey)
+                    .distinct()
                     .collect(Collectors.toCollection(ArrayList::new));
         }
 
-        if (!registeredCommands.containsKey(args[0].toLowerCase())) {
-            return new ArrayList<>();
-        }
-
         HBCommand command = registeredCommands.get(args[0].toLowerCase());
-
-        if (!PlayerUtils.hasPermission(sender, command.getPermission())) {
-            return new ArrayList<>();
+        if (command == null)
+        {
+            var optCmd = registeredCommands.values().stream().filter(cmd -> !Objects.equals(cmd.getAlias(), input)).findAny();
+            if (optCmd.isEmpty()) {
+                return new ArrayList<>();
+            } else {
+                command = optCmd.get();
+            }
         }
 
         return command.getCmdClass().tabComplete(sender, args);

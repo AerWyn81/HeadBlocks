@@ -16,7 +16,7 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 
-@HBAnnotations(command = "list", permission = "headblocks.admin")
+@HBAnnotations(command = "list", permission = "headblocks.admin", alias = "l")
 public class List implements Cmd {
 
     @Override

@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@HBAnnotations(command = "export", permission = "headblocks.admin", args = { "database" })
+@HBAnnotations(command = "export", permission = "headblocks.admin", args = { "database" }, alias = "e")
 public class Export implements Cmd {
 
     @Override

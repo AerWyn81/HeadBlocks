@@ -7,6 +7,7 @@ public class HBCommand {
     private final boolean isPlayerCommand;
     private final String[] args;
     private final boolean visible;
+    private final String alias;
 
     public HBCommand(Cmd command) {
         this.cmdClass = command;
@@ -15,6 +16,7 @@ public class HBCommand {
         this.isPlayerCommand = cmdClass.getClass().getAnnotation(HBAnnotations.class).isPlayerCommand();
         this.args = cmdClass.getClass().getAnnotation(HBAnnotations.class).args();
         this.visible = cmdClass.getClass().getAnnotation(HBAnnotations.class).isVisible();
+        this.alias = cmdClass.getClass().getAnnotation(HBAnnotations.class).alias();
     }
 
     public Cmd getCmdClass() {
@@ -34,4 +36,8 @@ public class HBCommand {
     public String[] getArgs() { return args; }
 
     public boolean isVisible() { return visible; }
+
+    public String getAlias() {
+        return alias;
+    }
 }

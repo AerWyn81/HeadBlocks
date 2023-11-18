@@ -12,17 +12,20 @@ import java.util.ArrayList;
 
 import static org.bukkit.Bukkit.getServer;
 
-@HBAnnotations(command = "version", permission = "headblocks.admin")
+@HBAnnotations(command = "version", permission = "headblocks.admin", alias = "v")
 public class Version implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        var versionBuilder = "\n" +
-                "&7Plugin version: &e" +
-                HeadBlocks.getInstance().getDescription().getVersion() +
+        var versionBuilder =
                 "\n" +
-                "&7Server version: &e" +
-                Bukkit.getBukkitVersion() + " &8&o(" + getServer().getVersion() + ")" +
+                "&7----------------------------------------------------" +
+                "\n" +
+                "&6&lH&e&lead&6&lB&e&llocks &7version: &e" + HeadBlocks.getInstance().getDescription().getVersion() +
+                "\n" +
+                "&7Running on: &e" + Bukkit.getBukkitVersion() + " &8&o(" + getServer().getVersion() + ")" +
+                "\n" +
+                "&7----------------------------------------------------" +
                 "\n&7";
 
         sender.sendMessage(MessageUtils.colorize(versionBuilder));

@@ -17,7 +17,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-@HBAnnotations(command = "move", permission = "headblocks.admin", isPlayerCommand = true)
+@HBAnnotations(command = "move", permission = "headblocks.admin", isPlayerCommand = true, alias = "m")
 public class Move implements Cmd {
 
     @Override

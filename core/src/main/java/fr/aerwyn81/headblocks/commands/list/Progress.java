@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@HBAnnotations(command = "progress", permission = "headblocks.commands.progress")
+@HBAnnotations(command = "progress", permission = "headblocks.commands.progress", alias = "p")
 public class Progress implements Cmd {
 
     @Override

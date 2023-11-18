@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-@HBAnnotations(command = "options", permission = "headblocks.admin", isPlayerCommand = true)
+@HBAnnotations(command = "options", permission = "headblocks.admin", isPlayerCommand = true, alias = "o")
 public class Options implements Cmd {
 
     @Override
