@@ -79,13 +79,9 @@ bukkit {
             description = "Allows players to see leaderboard"
             default = BukkitPluginDescription.Permission.Default.TRUE
         }
-        register("headblocks.commands.me") {
-            description = "Allows players to see his score"
+        register("headblocks.commands.progress") {
+            description = "Allows players to see his or player score"
             default = BukkitPluginDescription.Permission.Default.TRUE
-        }
-        register("headblocks.commands.version") {
-            description = "Allows players to see the plugin version"
-            default = BukkitPluginDescription.Permission.Default.FALSE
         }
         register("headblocks.admin") {
             description = "Allows access to /headblocks admin commands"

@@ -56,8 +56,9 @@ Messages:
   TargetBlockNotHead: "%prefix% &cLa HeadBlock ciblée n'est pas un HeadBlock"
   OrderClickError: "%prefix% &cUne autre HeadBlock est à trouver avant celle là (%name%&7)"
   InventoryFullReward: "%prefix% &cVous n'avez pas l'espace disponible dans votre inventaire pour recevoir la récompense"
-  MeCommand:
+  ProgressCommand:
     - ""
+    - "&aJoueur : &e&l%player%"
     - "&aNombre de têtes récupérées : &e%current%&7/&e%max%"
     - "&aProgression : &7[%progress%&7]"
     - ""

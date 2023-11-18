@@ -4,11 +4,13 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.PlayerUuidName;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
+import fr.aerwyn81.headblocks.utils.internal.CommandsUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -33,31 +35,8 @@ public class Stats implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        String pName;
-
-        if (args.length >= 2 && !NumberUtils.isDigits(args[1])) {
-            pName = args[1];
-        } else {
-            if (sender instanceof ConsoleCommandSender) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cThis command cannot be performed by console without player in argument"));
-                return true;
-            }
-
-            pName = sender.getName();
-        }
-
-        UUID playerUuid;
-
-        try {
-            playerUuid = StorageService.getPlayer(pName);
-        } catch (Exception ex) {
-            sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving player " + pName + " from the storage: " + ex.getMessage()));
-            return true;
-        }
-
-        if (playerUuid == null) {
-            sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound", args[1]));
+        PlayerUuidName playerUuidName = CommandsUtils.extractAndGetPlayerUuidByName(sender, args);
+        if (playerUuidName == null) {
             return true;
         }
 
@@ -69,13 +48,13 @@ public class Stats implements Cmd {
 
         ArrayList<HeadLocation> playerHeads;
         try {
-            playerHeads = StorageService.getHeadsPlayer(playerUuid, pName).stream()
+            playerHeads = StorageService.getHeadsPlayer(playerUuidName.getUuid(), playerUuidName.getName()).stream()
                     .map(HeadService::getHeadByUUID)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving stats of the player " + pName + " from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving stats of the player " + playerUuidName.getName() + " from the storage: " + ex.getMessage()));
             return true;
         }
 
@@ -87,7 +66,7 @@ public class Stats implements Cmd {
 
         String message = LanguageService.getMessage("Chat.LineTitle");
         if (sender instanceof Player) {
-            TextComponent titleComponent = new TextComponent(PlaceholdersService.parse(pName, playerUuid, LanguageService.getMessage("Chat.StatsTitleLine")
+            TextComponent titleComponent = new TextComponent(PlaceholdersService.parse(playerUuidName.getName(), playerUuidName.getUuid(), LanguageService.getMessage("Chat.StatsTitleLine")
                     .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
             cpu.addTitleLine(titleComponent);
         } else {
@@ -129,7 +108,7 @@ public class Stats implements Cmd {
             }
         }
 
-        cpu.addPageLine("stats " + pName);
+        cpu.addPageLine("stats " + playerUuidName.getName());
         cpu.build();
         return true;
     }
