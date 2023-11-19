@@ -22,7 +22,7 @@ dependencies {
     compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.0")
     compileOnly(files("../libs/CMILib1.3.0.0.jar"))
     compileOnly(files("../libs/CMI-9.6.0.2.jar"))
-    implementation(files("../libs/hologram-lib-2.1.1-SNAPSHOT.jar"))
+    implementation("com.github.AerWyn81:Hologram-Lib:2.6.0-fork")
     implementation("redis.clients:jedis:4.4.3")
     implementation("de.tr7zw:item-nbt-api:2.12.0")
     implementation("com.zaxxer:HikariCP:5.0.1")

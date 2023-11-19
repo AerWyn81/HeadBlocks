@@ -14,4 +14,8 @@ public class HoloLibSingleton {
 
         return hologramPool;
     }
+
+    public static void updateViewDistance() {
+        hologramPool.updateSpawnDistance(ConfigService.getHologramParticlePlayerViewDistance());
+    }
 }

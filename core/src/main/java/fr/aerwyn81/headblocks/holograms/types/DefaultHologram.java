@@ -1,9 +1,6 @@
 package fr.aerwyn81.headblocks.holograms.types;
 
 import com.github.unldenis.hologram.Hologram;
-import com.github.unldenis.hologram.line.Line;
-import com.github.unldenis.hologram.line.TextLine;
-import com.github.unldenis.hologram.line.hologram.TextSequentialLoader;
 import com.github.unldenis.hologram.placeholder.Placeholders;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
@@ -18,6 +15,8 @@ import java.util.List;
 
 public class DefaultHologram implements IHologram {
     Hologram hologram;
+
+    private final Placeholders placeholders = new Placeholders(Placeholders.STRING | Placeholders.PAPI);
 
     @Override
     public void show(Player player) {
@@ -36,14 +35,18 @@ public class DefaultHologram implements IHologram {
 
     @Override
     public IHologram create(String name, Location location, List<String> lines, int displayRange) {
-        hologram = new Hologram(HeadBlocks.getInstance(), location.subtract(0, 1.3, 0), new TextSequentialLoader());
-        hologram.load(lines.stream().map(s -> new TextLine(new Line(HeadBlocks.getInstance()), s, new Placeholders(), false)).toArray(TextLine[]::new));
+        var hologramBuilder = Hologram.builder(HeadBlocks.getInstance(), location.subtract(0, 1.3, 0))
+                .name(name)
+                .placeholders(placeholders);
+
+        lines.forEach(hologramBuilder::addLine);
+
+        hologram = hologramBuilder.loadAndBuild(HoloLibSingleton.getHologramPool());
 
         for (Player pl : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
             hide(pl);
         }
 
-        HoloLibSingleton.getHologramPool().takeCareOf(hologram);
         return this;
     }
 
