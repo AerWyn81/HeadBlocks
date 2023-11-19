@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.data.PlayerUuidName;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.CommandsUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -20,7 +21,7 @@ public class Progress implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        PlayerUuidName playerUuidName = CommandsUtils.extractAndGetPlayerUuidByName(sender, args);
+        PlayerUuidName playerUuidName = CommandsUtils.extractAndGetPlayerUuidByName(sender, args, PlayerUtils.hasPermission(sender, "headblocks.commands.progress.other"));
         if (playerUuidName == null) {
             return true;
         }

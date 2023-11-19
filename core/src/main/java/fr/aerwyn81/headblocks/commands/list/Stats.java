@@ -34,7 +34,7 @@ public class Stats implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        PlayerUuidName playerUuidName = CommandsUtils.extractAndGetPlayerUuidByName(sender, args);
+        PlayerUuidName playerUuidName = CommandsUtils.extractAndGetPlayerUuidByName(sender, args, true);
         if (playerUuidName == null) {
             return true;
         }

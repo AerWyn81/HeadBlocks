@@ -13,10 +13,15 @@ import java.util.UUID;
 
 public class CommandsUtils {
 
-    public static PlayerUuidName extractAndGetPlayerUuidByName(CommandSender sender, String[] args) {
+    public static PlayerUuidName extractAndGetPlayerUuidByName(CommandSender sender, String[] args, boolean canSeeOther) {
         var pName = "";
 
         if (args.length >= 2 && !NumberUtils.isDigits(args[1])) {
+            if (!canSeeOther) {
+                sender.sendMessage(LanguageService.getMessage("Messages.NoPermission"));
+                return null;
+            }
+
             pName = args[1];
         } else {
             if (sender instanceof ConsoleCommandSender) {
