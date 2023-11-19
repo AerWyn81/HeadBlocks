@@ -110,7 +110,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         HBCommand command = registeredCommands.get(args[0].toLowerCase());
         if (command == null)
         {
-            var optCmd = registeredCommands.values().stream().filter(cmd -> !Objects.equals(cmd.getAlias(), input)).findAny();
+            var optCmd = registeredCommands.values().stream().filter(cmd -> Objects.equals(cmd.getAlias(), input)).findAny();
             if (optCmd.isEmpty()) {
                 return new ArrayList<>();
             } else {
