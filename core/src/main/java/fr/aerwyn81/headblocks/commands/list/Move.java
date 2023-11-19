@@ -7,7 +7,6 @@ import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -55,7 +54,7 @@ public class Move implements Cmd {
 
             HeadService.getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), targetLoc));
 
-            player.sendMessage(MessageUtils.parseLocationPlaceholders(message, targetLoc));
+            player.sendMessage(LocationUtils.parseLocationPlaceholders(message, targetLoc));
             return true;
         }
 
@@ -81,7 +80,7 @@ public class Move implements Cmd {
         HeadService.changeHeadLocation(headMove.gethUuid(), headMove.getOldLoc().getBlock(), newHeadBlockLoc.getBlock());
         HeadService.getHeadMoves().remove(player.getUniqueId());
 
-        player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));
+        player.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.TargetBlockMoved"), newHeadBlockLoc));
         return true;
     }
 

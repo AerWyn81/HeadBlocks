@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.internal.CommandsUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -17,11 +18,9 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -77,7 +76,7 @@ public class Stats implements Cmd {
             UUID uuid = headsSpawned.get(i).getUuid();
             Location location = headsSpawned.get(i).getLocation();
 
-            String hover = MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), location);
+            String hover = LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), location);
 
             if (sender instanceof Player) {
                 TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + uuid));

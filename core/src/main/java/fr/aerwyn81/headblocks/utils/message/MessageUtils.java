@@ -3,7 +3,6 @@ package fr.aerwyn81.headblocks.utils.message;
 import com.google.common.base.Strings;
 import fr.aerwyn81.headblocks.utils.message.color.IridiumColorAPI;
 import org.bukkit.Color;
-import org.bukkit.Location;
 
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
@@ -19,24 +18,6 @@ public class MessageUtils {
 	 */
 	public static String colorize(String message) {
 		return IridiumColorAPI.process(message);
-	}
-
-	/**
-	 * Replace placeholders x y z world by location in string
-	 * @param message string
-	 * @param location location for replace
-	 * @return parsed string
-	 */
-	public static String parseLocationPlaceholders(String message, Location location) {
-		return message.replaceAll("%x%", String.valueOf(location.getBlockX()))
-				.replaceAll("%y%", String.valueOf(location.getBlockY()))
-				.replaceAll("%z%", String.valueOf(location.getBlockZ()))
-				.replaceAll("%world%", parseWorld(location))
-				.replaceAll("%worldName%", parseWorld(location));
-	}
-
-	private static String parseWorld(Location location) {
-		return location.getWorld() != null ? location.getWorld().getName() : colorize("&cUnknownWorld");
 	}
 
 	/**

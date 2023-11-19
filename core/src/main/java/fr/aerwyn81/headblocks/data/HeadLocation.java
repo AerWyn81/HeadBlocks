@@ -85,7 +85,7 @@ public class HeadLocation {
 
     public String getDisplayedOrderIndex() {
         if (orderIndex == -1) {
-            return MessageUtils.colorize("&7No order");
+            return LanguageService.getMessage("Gui.NoOrder");
         }
 
         return String.valueOf(orderIndex);

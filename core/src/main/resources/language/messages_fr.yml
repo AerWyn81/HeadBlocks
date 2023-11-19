@@ -86,6 +86,16 @@ Chat:
   PreviousPage: "&7--------[&8<<<&7]-------"
   NextPage: "&7-------[&8>>>&7]--------"
   PageFooter: " &8[ &e%pageNumber%&7/&e%totalPage% &8] "
+  Info:
+    Name: "&aNom : &7"
+    HoverCopyName: "&7&oCliquez pour copier le nom"
+    Uuid: "&aUUID : &7"
+    HoverCopyUuid: "&7&oCliquez pour copier l'UUID"
+    Location: "&aEmplacement : &7"
+    HoverLocationTp: "&7&oCliquez pour s'y téléporter"
+    Loaded: "&aChargé : &7"
+    HitCount: "&aNombre maximum de clic : "
+    OrderIndex: "&aPosition : "
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &cOptions"
@@ -94,8 +104,9 @@ Gui:
   PreviousPage: "&cPage précédente"
   NextPage: "&aPage suivante"
   Close: "&cFermer"
-  Unnamed: "&cSans nom"
-  Infinite: "&7Infini"
+  Unnamed: "&7&oSans nom"
+  Infinite: "&7&oInfini"
+  NoOrder: "&7&oPas d'ordre"
   CloseLore:
     - "&7Fermer cette interface"
   Back: "&cRetour"

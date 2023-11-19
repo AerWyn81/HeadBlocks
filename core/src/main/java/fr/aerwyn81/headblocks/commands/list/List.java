@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -48,7 +49,7 @@ public class List implements Cmd {
 
             if (headLocation.isCharged()) {
                 if (sender instanceof Player) {
-                    String hover = MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), headLocation.getLocation());
+                    String hover = LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), headLocation.getLocation());
 
                     msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
 

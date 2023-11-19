@@ -4,11 +4,11 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
+import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -100,7 +100,7 @@ public class GuiService {
                 HeadLocation headLocation = headLocations.get(i);
 
                 var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
-                        .setName(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.OrderItemName")
+                        .setName(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.OrderItemName")
                                         .replaceAll("%headName%", headLocation.getDisplayedName()), headLocation.getLocation()))
                         .setLore(LanguageService.getMessages("Gui.OrderItemLore").stream().map(s ->
                                         s.replaceAll("%position%", headLocation.getDisplayedOrderIndex()))
@@ -145,7 +145,7 @@ public class GuiService {
                 HeadLocation headLocation = headLocations.get(i);
 
                 var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
-                        .setName(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.CounterClickItemName")
+                        .setName(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.CounterClickItemName")
                                 .replaceAll("%headName%", headLocation.getDisplayedName()), headLocation.getLocation()))
                         .setLore(LanguageService.getMessages("Gui.CounterClickItemLore").stream().map(s ->
                                         s.replaceAll("%count%", headLocation.getDisplayedHitCount()))

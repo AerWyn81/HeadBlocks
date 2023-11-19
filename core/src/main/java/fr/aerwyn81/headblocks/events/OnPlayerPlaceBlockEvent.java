@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.services.HologramService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -82,7 +83,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
 
-        player.sendMessage(MessageUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
+        player.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
 
         Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
     }
