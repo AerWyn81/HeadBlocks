@@ -8,12 +8,6 @@ plugins {
 
 version = rootProject.version
 
-repositories {
-    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
-    maven("https://jitpack.io")
-    maven("https://repo.codemc.io/repository/maven-public/")
-}
-
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.3")
