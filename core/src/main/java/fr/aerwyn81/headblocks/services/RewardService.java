@@ -11,7 +11,7 @@ import java.util.Random;
 import java.util.UUID;
 
 public class RewardService {
-    public static boolean giveReward(Player p, List<UUID> playerHeads) {
+    public static boolean giveReward(Player p, List<UUID> playerHeads, UUID hUuid) {
         var plugin = HeadBlocks.getInstance();
 
         TieredReward tieredReward;
@@ -57,7 +57,7 @@ public class RewardService {
             // Success messages if not empty
             List<String> messages = ConfigService.getHeadClickMessages();
             if (!messages.isEmpty()) {
-                p.sendMessage(PlaceholdersService.parse(p, messages));
+                p.sendMessage(PlaceholdersService.parse(p, messages, hUuid));
             }
         }
 

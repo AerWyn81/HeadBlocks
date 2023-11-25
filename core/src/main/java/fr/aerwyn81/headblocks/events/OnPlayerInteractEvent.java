@@ -122,7 +122,7 @@ public class OnPlayerInteractEvent implements Listener {
                         .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
                         .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
                     player.sendMessage(LanguageService.getMessage("Messages.OrderClickError")
-                            .replaceAll("%name%", headLocation.getDisplayedName()));
+                                .replaceAll("%name%", headLocation.getDisplayedName()));
                     return;
                 }
             }
@@ -143,7 +143,7 @@ public class OnPlayerInteractEvent implements Listener {
             StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
 
             // Check and give reward if triggerRewards is used
-            var isRewardGiven = RewardService.giveReward(player, playerHeads);
+            var isRewardGiven = RewardService.giveReward(player, playerHeads, headLocation.getUuid());
             if (!isRewardGiven)
                 return;
 
