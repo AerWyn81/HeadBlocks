@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class HeadLocation {
-    private final String name;
+    private String name;
     private final UUID headUUID;
 
     private String configWorldName;
@@ -50,6 +50,10 @@ public class HeadLocation {
 
     public String getName() {
         return name;
+    }
+    public  void setName(String name)
+    {
+        this.name = name;
     }
 
     public String getDisplayedName() {
@@ -107,7 +111,6 @@ public class HeadLocation {
         this.z = -1;
         this.configWorldName = "";
     }
-
     public boolean isCharged() {
         return isCharged;
     }

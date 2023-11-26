@@ -96,6 +96,7 @@ Chat:
     Loaded: "&aChargé : &7"
     HitCount: "&aNombre maximum de clic : "
     OrderIndex: "&aPosition : "
+  Rename: "&aHead renamed to: &e "
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &cOptions"

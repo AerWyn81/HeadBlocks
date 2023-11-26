@@ -98,6 +98,7 @@ Chat:
     HitCount: "&aHit count: "
     OrderIndex: "&aOrder index: "
 
+
 Gui:
   TitleOptions: "&8HeadBlocks &7- &c&lOptions"
   TitleOrder: "&8HeadBlocks &7- &6&lOrder"
