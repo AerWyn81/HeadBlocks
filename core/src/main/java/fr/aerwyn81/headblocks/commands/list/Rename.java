@@ -37,9 +37,14 @@ public class Rename implements Cmd {
         }
         args[0] = "";
         String name = String.join(" ", args);
+        //if the name starts with a space, it will be removed
+        if(name.startsWith(" ")) {
+            name = name.substring(1);
+        }
         headLocation.setName(name);
         HeadService.saveHeadInConfig(headLocation);
-        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Rename") + MessageUtils.colorize(name)));
+        //could not find out how to send language service message while also sending the name of the head with colours
+        player.sendMessage(MessageUtils.colorize("&cHead renamed to " + name));
         return true;
     }
 
