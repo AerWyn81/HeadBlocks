@@ -16,6 +16,10 @@ public class HoloLibSingleton {
     }
 
     public static void updateViewDistance() {
+        if (hologramPool == null) {
+            return;
+        }
+
         hologramPool.updateSpawnDistance(ConfigService.getHologramParticlePlayerViewDistance());
     }
 }
