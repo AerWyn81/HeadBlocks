@@ -12,5 +12,5 @@ download() {
 	curl -Lb ./cookie "https://drive.google.com/uc?export=download&`echo ${html}|grep -Po '(confirm=[a-zA-Z0-9\-_]+)'`&id=$1" -o $2
 }
 
-download "$1" "CMI-9.6.0.2.jar"
-download "$2" "CMILib1.3.0.0.jar"
+download "$1" "CMI-9.6.8.5.jar"
+download "$2" "CMILib1.4.3.4.jar"
