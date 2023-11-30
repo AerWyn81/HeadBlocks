@@ -80,7 +80,7 @@ progressBar:
 # Interactions on head click
 headClick:
   # A multiline message send to the player
-  # Support placeholders (%player%, %prefix%, %current%, %max%, %progress%) & PlaceholderAPI
+  # Support placeholders (%player%, %prefix%, %current%, %max%, %progress%, %head-name%) & PlaceholderAPI
   # Keep [] for no message
   messages:
     - ''
