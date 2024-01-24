@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.databases.Requests;
+import fr.aerwyn81.headblocks.databases.types.MariaDB;
 import fr.aerwyn81.headblocks.databases.types.MySQL;
 import fr.aerwyn81.headblocks.databases.types.SQLite;
 import fr.aerwyn81.headblocks.storages.Storage;
@@ -45,13 +46,23 @@ public class StorageService {
         var isFileExist = new File(pathToDatabase).exists();
 
         if (ConfigService.isDatabaseEnabled()) {
-            database = new MySQL(
-                    ConfigService.getDatabaseUsername(),
-                    ConfigService.getDatabasePassword(),
-                    ConfigService.getDatabaseHostname(),
-                    ConfigService.getDatabasePort(),
-                    ConfigService.getDatabaseName(),
-                    ConfigService.getDatabaseSsl());
+            if (ConfigService.getDatabaseType() == EnumTypeDatabase.MariaDB) {
+                database = new MariaDB(
+                        ConfigService.getDatabaseUsername(),
+                        ConfigService.getDatabasePassword(),
+                        ConfigService.getDatabaseHostname(),
+                        ConfigService.getDatabasePort(),
+                        ConfigService.getDatabaseName(),
+                        ConfigService.getDatabaseSsl());
+            } else {
+                database = new MySQL(
+                        ConfigService.getDatabaseUsername(),
+                        ConfigService.getDatabasePassword(),
+                        ConfigService.getDatabaseHostname(),
+                        ConfigService.getDatabasePort(),
+                        ConfigService.getDatabaseName(),
+                        ConfigService.getDatabaseSsl());
+            }
         } else {
             database = new SQLite(pathToDatabase);
         }
@@ -77,13 +88,13 @@ public class StorageService {
 
             database.load();
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to connect to the SQL database: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to connect to the " + ConfigService.getDatabaseType() + " database: " + ex.getMessage()));
             storageError = true;
         }
 
         if (!storageError) {
             if (ConfigService.isDatabaseEnabled()) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&aMySQL storage properly connected!"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&a" + ConfigService.getDatabaseType() + " storage properly connected!"));
             } else {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&aSQLite storage properly connected!"));
             }

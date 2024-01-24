@@ -27,7 +27,7 @@ public class Export implements Cmd {
             return true;
         }
 
-        EnumTypeDatabase typeDatabase = EnumTypeDatabase.Of(args[2]);
+        EnumTypeDatabase typeDatabase = EnumTypeDatabase.of(args[2]);
 
         if (typeDatabase == null) {
             sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cThe SQL type &e" + args[2] + " &cis not supported!"));

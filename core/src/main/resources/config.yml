@@ -50,9 +50,11 @@ headsTheme:
     Custom:
       - ''
 
-# Database configuration (MySQL)
+# Database configuration
+# Support MySQL, MariaDB
 database:
   enable: false
+  type: MySQL
   settings:
     hostname: localhost
     database: ''

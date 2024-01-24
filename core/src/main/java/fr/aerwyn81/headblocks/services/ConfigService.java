@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Color;
@@ -205,6 +206,14 @@ public class ConfigService {
 
     public static boolean isDatabaseEnabled() {
         return config.getBoolean("database.enable", false);
+    }
+
+    public static EnumTypeDatabase getDatabaseType() {
+        var type = EnumTypeDatabase.of(config.getString("database.type", "MySQL"));
+        if (type == null)
+            type = EnumTypeDatabase.MySQL;
+
+        return type;
     }
 
     public static String getDatabaseHostname() {
