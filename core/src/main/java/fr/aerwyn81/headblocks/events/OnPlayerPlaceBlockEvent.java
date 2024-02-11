@@ -43,7 +43,12 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.NoPermissionBlock"));
+
+            var message = LanguageService.getMessage("Messages.NoPermissionBlock");
+            if (!message.trim().isEmpty()) {
+                player.sendMessage(message);
+            }
+
             return;
         }
 
