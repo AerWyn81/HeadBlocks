@@ -121,8 +121,9 @@ public class OnPlayerInteractEvent implements Listener {
                 if (HeadService.getChargedHeadLocations().stream()
                         .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
                         .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
-                    player.sendMessage(LanguageService.getMessage("Messages.OrderClickError")
-                            .replaceAll("%name%", headLocation.getDisplayedName()));
+                    player.sendMessage(PlaceholdersService.parse(player.getName(), player.getUniqueId(),
+                            LanguageService.getMessage("Messages.OrderClickError")
+                                    .replaceAll("%name%", headLocation.getDisplayedName())));
                     return;
                 }
             }
