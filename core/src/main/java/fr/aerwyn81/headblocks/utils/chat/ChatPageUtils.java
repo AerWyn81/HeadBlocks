@@ -106,11 +106,11 @@ public class ChatPageUtils  {
 
             if (!isConsoleSender && command != null && size > pageHeight) {
                 TextComponent c1 = new TextComponent(MessageUtils.colorize(LanguageService.getMessage("Chat.PreviousPage")));
-                c1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb " + command + " " + (pageNumber - 1)));
+                c1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks " + command + " " + (pageNumber - 1)));
                 c1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.PreviousPage"))));
 
                 TextComponent c2 = new TextComponent(MessageUtils.colorize(LanguageService.getMessage("Chat.NextPage")));
-                c2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb " + command + " " + (pageNumber + 1)));
+                c2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks " + command + " " + (pageNumber + 1)));
                 c2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.NextPage"))));
 
                 player.spigot().sendMessage(c1, new TextComponent(LanguageService.getMessage("Chat.PageFooter").replaceAll("%pageNumber%", String.valueOf(pageNumber)).replaceAll("%totalPage%", String.valueOf(totalPage))), c2);

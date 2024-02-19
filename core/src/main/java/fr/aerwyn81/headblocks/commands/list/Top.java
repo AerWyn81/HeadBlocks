@@ -62,7 +62,7 @@ public class Top implements Cmd {
                 TextComponent msg = new TextComponent(message);
 
                 if (PlayerUtils.hasPermission(sender, "headblocks.admin")) {
-                    msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + currentScore.getKey()));
+                    msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks stats " + currentScore.getKey()));
                     msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.LineTop"))));
                 }
 
