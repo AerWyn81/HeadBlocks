@@ -49,7 +49,7 @@ public class GuiService {
             headItemCache.put(headUuid, HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), texture));
         }
 
-        return headItemCache.get(headLocation.getUuid());
+        return headItemCache.get(headLocation.getUuid()).clone();
     }
 
     public static void openOptionsGui(Player p) {
@@ -89,9 +89,9 @@ public class GuiService {
         List<HeadLocation> headLocations = HeadService.getHeadLocations()
                 .stream()
                 .sorted((Comparator.comparingInt(HeadLocation::getOrderIndex)))
-                .collect(Collectors.toList());
+                .toList();
 
-        if (headLocations.size() == 0) {
+        if (headLocations.isEmpty()) {
             orderMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
                     .setName(LanguageService.getMessage("Gui.NoHeads"))
                     .toItemStack(), true));
@@ -134,7 +134,7 @@ public class GuiService {
         List<HeadLocation> headLocations = HeadService.getHeadLocations()
                 .stream()
                 .sorted(((o1, o2) -> o2.getOrderIndex() - o1.getOrderIndex()))
-                .collect(Collectors.toList());
+                .toList();
 
         if (headLocations.isEmpty()) {
             clickCounterMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)

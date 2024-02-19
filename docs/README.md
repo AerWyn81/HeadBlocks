@@ -23,7 +23,7 @@ ___
 - Storage of player data in SQLite or MySQL
 - Everything is almost translatable
 - API for developers
-- Contains several placeholders (see below)
+- Contains several placeholders
 - Automatic configuration updates
 - Supports Minecraft 1.16+ colors
 - Show holograms on heads
