@@ -655,7 +655,7 @@ public final class MySQL implements Database {
         }
 
         try {
-            return connection.isValid(0);
+            return connection.isValid(1);
         } catch (SQLException e) {
             return false;
         }

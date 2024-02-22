@@ -16,6 +16,7 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class StorageService {
     private static Storage storage;
@@ -23,7 +24,11 @@ public class StorageService {
 
     private static boolean storageError;
 
+    private static ConcurrentHashMap<UUID, List<UUID>> _cacheHeads;
+
     public static void initialize() {
+        _cacheHeads = new ConcurrentHashMap<>();
+
         storageError = false;
 
         if (ConfigService.isRedisEnabled() && !ConfigService.isDatabaseEnabled()) {
@@ -149,6 +154,8 @@ public class StorageService {
                 for (UUID hUuid : database.getHeadsPlayer(pUuid, playerName)) {
                     storage.addHead(pUuid, hUuid);
                 }
+
+                _cacheHeads.put(pUuid, new ArrayList<>());
             } else {
                 updatePlayerName(pUuid, playerName);
             }
@@ -168,6 +175,8 @@ public class StorageService {
             if (isExist) {
                 storage.resetPlayer(uuid);
             }
+
+            _cacheHeads.remove(uuid);
         } catch (InternalException ex) {
             storageError = true;
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to unload player " + playerName + " from SQL database: " + ex.getMessage()));
@@ -195,10 +204,15 @@ public class StorageService {
     }
 
     public static boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
+            return _cacheHeads.get(playerUuid).contains(headUuid);
+
         return storage.hasHead(playerUuid, headUuid);
     }
 
     public static void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        invalidateCachePlayer(playerUuid);
+
         storage.addHead(playerUuid, headUuid);
         database.addHead(playerUuid, headUuid);
     }
@@ -208,15 +222,27 @@ public class StorageService {
     }
 
     public static List<UUID> getHeadsPlayer(UUID playerUuid, String pName) throws InternalException {
-        return database.getHeadsPlayer(playerUuid, pName);
+        if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
+            return _cacheHeads.get(playerUuid);
+
+        var headsUuid = database.getHeadsPlayer(playerUuid, pName);
+        _cacheHeads.get(playerUuid).addAll(headsUuid);
+
+        return headsUuid;
     }
 
     public static void resetPlayer(UUID playerUuid) throws InternalException {
+        invalidateCachePlayer(playerUuid);
+
         storage.resetPlayer(playerUuid);
         database.resetPlayer(playerUuid);
     }
 
     public static void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
+        for (var head : _cacheHeads.entrySet()) {
+            head.getValue().remove(headUuid);
+        }
+
         storage.removeHead(headUuid);
         database.removeHead(headUuid, withDelete);
     }
@@ -316,5 +342,12 @@ public class StorageService {
 
     public static UUID getPlayer(String pName) throws InternalException {
         return database.getPlayer(pName);
+    }
+
+    private static void invalidateCachePlayer(UUID playerUuid) {
+        if (!_cacheHeads.containsKey(playerUuid))
+            return;
+
+        _cacheHeads.get(playerUuid).clear();
     }
 }

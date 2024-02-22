@@ -42,8 +42,9 @@ public final class MariaDB implements Database {
         }
 
         try {
+            Class.forName("org.mariadb.jdbc.Driver");
             connection = DriverManager.getConnection("jdbc:mariadb://" + hostname + ":" + port + "/" + databaseName, properties);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             throw new InternalException(ex);
         }
     }
@@ -655,8 +656,8 @@ public final class MariaDB implements Database {
         }
 
         try {
-            return connection.isValid(0);
-        } catch (SQLException e) {
+            return connection.isValid(1);
+        } catch (Exception e) {
             return false;
         }
     }
