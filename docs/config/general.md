@@ -35,4 +35,4 @@ See the list below:
 - `%headblocks_order_previous%`: if order is specified, display the previous named head found (_raw integer or "-" if not calculable_)
 - `%headblocks_order_current%`: if order is specified, display the current named head found (_raw integer or "-" if not calculable_)
 - `%headblocks_order_next%`: if order is specified, display the next named head to found (_raw integer or "-" if not calculable_)
-
+- `%headblocks_leaderboard_<position>_<name|value>%`: used to get a leaderboard

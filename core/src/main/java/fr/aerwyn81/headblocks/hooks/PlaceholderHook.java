@@ -72,6 +72,36 @@ public class PlaceholderHook extends PlaceholderExpansion {
             }
         }
 
+        // %headblocks_leaderboard_<position>_<name|value>%
+        if (identifier.contains("leaderboard")) {
+            var str = identifier.split("_");
+            try {
+                var position = Integer.parseInt(str[str.length - (str.length == 2 ? 1 : 2)]);
+                if (position < 1) {
+                    position = 1;
+                }
+
+                var top = new ArrayList<>(StorageService.getTopPlayers().entrySet());
+
+                if (position > top.size()) {
+                    return "No player found at position: " + position;
+                }
+
+                var p = top.get(position - 1);
+
+                var elt = str[str.length - 1];
+                if (elt.equals("name")) {
+                    return p.getKey();
+                } else if (elt.equals("value")) {
+                    return String.valueOf(p.getValue());
+                } else {
+                    return p.getKey() + ": " + p.getValue();
+                }
+            } catch (Exception ex) {
+                return "Cannot parse the leaderboard placeholder. Use %headblocks_leaderboard_<position>_<name|value>%.";
+            }
+        }
+
         // %headblocks_max%
         if (identifier.equals("max")) {
             return "" +  HeadService.getChargedHeadLocations().size();

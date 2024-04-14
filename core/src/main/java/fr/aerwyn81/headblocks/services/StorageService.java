@@ -25,9 +25,11 @@ public class StorageService {
     private static boolean storageError;
 
     private static ConcurrentHashMap<UUID, List<UUID>> _cacheHeads;
+    private static ConcurrentHashMap<String, Integer> _cacheTop;
 
     public static void initialize() {
         _cacheHeads = new ConcurrentHashMap<>();
+        _cacheTop = new ConcurrentHashMap<>();
 
         storageError = false;
 
@@ -252,7 +254,12 @@ public class StorageService {
     }
 
     public static Map<String, Integer> getTopPlayers() throws InternalException {
-        return database.getTopPlayers();
+        if (!_cacheTop.isEmpty())
+            return _cacheTop;
+
+        _cacheTop.putAll(database.getTopPlayers());
+
+        return _cacheTop;
     }
 
     public static void updatePlayerName(UUID playerUuid, String playerName) throws InternalException {
@@ -345,6 +352,8 @@ public class StorageService {
     }
 
     private static void invalidateCachePlayer(UUID playerUuid) {
+        _cacheTop.clear();
+
         if (!_cacheHeads.containsKey(playerUuid))
             return;
 
