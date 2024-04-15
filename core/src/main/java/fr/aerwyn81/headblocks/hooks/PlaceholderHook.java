@@ -84,7 +84,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 var top = new ArrayList<>(StorageService.getTopPlayers().entrySet());
 
                 if (position > top.size()) {
-                    return "No player found at position: " + position;
+                    return "-";
                 }
 
                 var p = top.get(position - 1);

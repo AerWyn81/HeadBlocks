@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 public interface Database {
@@ -34,7 +34,7 @@ public interface Database {
 
     ArrayList<UUID> getAllPlayers() throws InternalException;
 
-    Map<String, Integer> getTopPlayers() throws InternalException;
+    LinkedHashMap<String, Integer> getTopPlayers() throws InternalException;
 
     boolean hasPlayerRenamed(UUID pUUID, String playerName) throws InternalException;
 

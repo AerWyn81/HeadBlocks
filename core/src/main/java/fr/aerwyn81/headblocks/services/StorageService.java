@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class StorageService {
     private static Storage storage;
@@ -25,11 +26,11 @@ public class StorageService {
     private static boolean storageError;
 
     private static ConcurrentHashMap<UUID, List<UUID>> _cacheHeads;
-    private static ConcurrentHashMap<String, Integer> _cacheTop;
+    private static LinkedHashMap<String, Integer> _cacheTop;
 
     public static void initialize() {
         _cacheHeads = new ConcurrentHashMap<>();
-        _cacheTop = new ConcurrentHashMap<>();
+        _cacheTop = new LinkedHashMap<>();
 
         storageError = false;
 
@@ -253,9 +254,12 @@ public class StorageService {
         return database.getAllPlayers();
     }
 
-    public static Map<String, Integer> getTopPlayers() throws InternalException {
-        if (!_cacheTop.isEmpty())
-            return _cacheTop;
+    public static LinkedHashMap<String, Integer> getTopPlayers() throws InternalException {
+        var copy = _cacheTop.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+
+        if (!copy.isEmpty())
+            return copy;
 
         _cacheTop.putAll(database.getTopPlayers());
 

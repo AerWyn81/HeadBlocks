@@ -280,8 +280,8 @@ public class SQLite implements Database {
      * @throws InternalException SQL Exception
      */
     @Override
-    public Map<String, Integer> getTopPlayers() throws InternalException {
-        Map<String, Integer> top = new LinkedHashMap<>();
+    public LinkedHashMap<String, Integer> getTopPlayers() throws InternalException {
+        LinkedHashMap<String, Integer> top = new LinkedHashMap<>();
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.TOP_PLAYERS)) {
             ResultSet rs = ps.executeQuery();

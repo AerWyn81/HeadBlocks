@@ -321,8 +321,8 @@ public final class MariaDB implements Database {
      * @throws InternalException SQL Exception
      */
     @Override
-    public Map<String, Integer> getTopPlayers() throws InternalException {
-        Map<String, Integer> top = new LinkedHashMap<>();
+    public LinkedHashMap<String, Integer> getTopPlayers() throws InternalException {
+        LinkedHashMap<String, Integer> top = new LinkedHashMap<>();
 
         if (!checkAlive()) {
             open();
