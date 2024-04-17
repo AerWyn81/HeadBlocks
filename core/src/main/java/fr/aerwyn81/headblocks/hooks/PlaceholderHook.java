@@ -72,7 +72,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
             }
         }
 
-        // %headblocks_leaderboard_<position>_<name|value>%
+        // %headblocks_leaderboard_<position>_<name|displayname|value>%
         if (identifier.contains("leaderboard")) {
             var str = identifier.split("_");
             try {
@@ -90,15 +90,23 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 var p = top.get(position - 1);
 
                 var elt = str[str.length - 1];
-                if (elt.equals("name")) {
-                    return p.getKey();
-                } else if (elt.equals("value")) {
-                    return String.valueOf(p.getValue());
-                } else {
-                    return p.getKey() + ": " + p.getValue();
+                switch (elt) {
+                    case "name" -> {
+                        return p.getKey().name();
+                    }
+                    case "displayname" -> {
+                        var displayName = p.getKey().displayName();
+                        return displayName.isEmpty() ? p.getKey().name() : displayName;
+                    }
+                    case "value" -> {
+                        return String.valueOf(p.getValue());
+                    }
+                    default -> {
+                        return p.getKey().displayName() + " (" + p.getKey().name() + ") " + ": " + p.getValue();
+                    }
                 }
             } catch (Exception ex) {
-                return "Cannot parse the leaderboard placeholder. Use %headblocks_leaderboard_<position>_<name|value>%.";
+                return "Cannot parse the leaderboard placeholder. Use %headblocks_leaderboard_<position>_<name|displayname|value>%.";
             }
         }
 

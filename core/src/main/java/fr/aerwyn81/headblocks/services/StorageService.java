@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.databases.Requests;
@@ -14,7 +15,8 @@ import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.entity.Player;
 
-import java.io.File;
+import java.io.*;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -26,7 +28,7 @@ public class StorageService {
     private static boolean storageError;
 
     private static ConcurrentHashMap<UUID, List<UUID>> _cacheHeads;
-    private static LinkedHashMap<String, Integer> _cacheTop;
+    private static LinkedHashMap<PlayerProfileLight, Integer> _cacheTop;
 
     public static void initialize() {
         _cacheHeads = new ConcurrentHashMap<>();
@@ -120,6 +122,17 @@ public class StorageService {
 
         int dbVersion = database.checkVersion();
 
+        if (dbVersion == database.version) {
+            return;
+        }
+
+        if (database instanceof SQLite) {
+            var backup = backupDatabase();
+            if (!backup) {
+                storageError = true;
+            }
+        }
+
         if (dbVersion == -1) {
             database.migrate();
             dbVersion = database.version;
@@ -128,6 +141,7 @@ public class StorageService {
         if (dbVersion == 0) {
             database.insertVersion();
             database.addColumnHeadTexture();
+            database.addColumnDisplayName();
             dbVersion = database.version;
         }
 
@@ -135,23 +149,56 @@ public class StorageService {
             database.addColumnHeadTexture();
         }
 
+        if (dbVersion == 2) {
+            database.addColumnDisplayName();
+        }
+
         if (dbVersion != database.version) {
             database.upsertTableVersion(dbVersion);
         }
     }
 
+    private static boolean backupDatabase() {
+        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + File.separator + "headblocks.db";
+        var databaseFile = new File(pathToDatabase);
+
+        if (!databaseFile.exists()) {
+            return true;
+        }
+
+        File copied = new File(pathToDatabase + ".save-" + LocalDate.now());
+        try (var in = new BufferedInputStream(new FileInputStream(databaseFile));
+             var out = new BufferedOutputStream(new FileOutputStream(copied))) {
+
+            var buffer = new byte[1024];
+            int lengthRead;
+            while ((lengthRead = in.read(buffer)) > 0) {
+                out.write(buffer, 0, lengthRead);
+                out.flush();
+            }
+        } catch (Exception e) {
+            HeadBlocks.log.sendMessage("&cError backuping database, aborting migration, storage error: " + e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
     public static void loadPlayer(Player player) {
         UUID pUuid = player.getUniqueId();
         String playerName = player.getName();
+        String playerDisplayName = player.getDisplayName();
 
         try {
             boolean isExist = containsPlayer(pUuid);
 
+            var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
+
             if (isExist) {
-                boolean hasRenamed = hasPlayerRenamed(pUuid, playerName);
+                boolean hasRenamed = hasPlayerRenamed(playerProfile);
 
                 if (hasRenamed) {
-                    updatePlayerName(pUuid, playerName);
+                    updatePlayerName(playerProfile);
                 }
 
                 for (UUID hUuid : database.getHeadsPlayer(pUuid, playerName)) {
@@ -160,7 +207,7 @@ public class StorageService {
 
                 _cacheHeads.put(pUuid, new ArrayList<>());
             } else {
-                updatePlayerName(pUuid, playerName);
+                updatePlayerName(playerProfile);
             }
         } catch (InternalException ex) {
             storageError = true;
@@ -254,7 +301,7 @@ public class StorageService {
         return database.getAllPlayers();
     }
 
-    public static LinkedHashMap<String, Integer> getTopPlayers() throws InternalException {
+    public static LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
         var copy = _cacheTop.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
 
@@ -266,12 +313,12 @@ public class StorageService {
         return _cacheTop;
     }
 
-    public static void updatePlayerName(UUID playerUuid, String playerName) throws InternalException {
-        database.updatePlayerInfo(playerUuid, playerName);
+    public static void updatePlayerName(PlayerProfileLight profile) throws InternalException {
+        database.updatePlayerInfo(profile);
     }
 
-    public static boolean hasPlayerRenamed(UUID playerUuid, String playerName) throws InternalException {
-        return database.hasPlayerRenamed(playerUuid, playerName);
+    public static boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException {
+        return database.hasPlayerRenamed(profile);
     }
 
     public static void createNewHead(UUID headUuid, String texture) throws InternalException {
@@ -351,8 +398,8 @@ public class StorageService {
         return database.getPlayers(headUuid);
     }
 
-    public static UUID getPlayer(String pName) throws InternalException {
-        return database.getPlayer(pName);
+    public static PlayerProfileLight getPlayerByName(String pName) throws InternalException {
+        return database.getPlayerByName(pName);
     }
 
     private static void invalidateCachePlayer(UUID playerUuid) {

@@ -20,13 +20,13 @@ public class Reset implements Cmd {
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         try {
-            var playerUUID = StorageService.getPlayer(args[1]);
-            if (playerUUID == null) {
+            var profile = StorageService.getPlayerByName(args[1]);
+            if (profile == null) {
                 sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound", args[1]));
                 return true;
             }
 
-            StorageService.resetPlayer(playerUUID);
+            StorageService.resetPlayer(profile.uuid());
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player " + args[1] + " from the storage: " + ex.getMessage()));

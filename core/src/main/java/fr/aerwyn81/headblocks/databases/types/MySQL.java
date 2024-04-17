@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.databases.types;
 
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.Requests;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -129,19 +130,18 @@ public final class MySQL implements Database {
     /**
      * Create or update a player
      *
-     * @param pUUID player UUID
-     * @param pName player name
-     * @throws InternalException SQL Exception
+     * @param profile@throws InternalException SQL Exception
      */
     @Override
-    public void updatePlayerInfo(UUID pUUID, String pName) throws InternalException {
+    public void updatePlayerInfo(PlayerProfileLight profile) throws InternalException {
         if (!checkAlive()) {
             open();
         }
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.UPDATE_PLAYER_MYSQL)) {
-            ps.setString(1, pUUID.toString());
-            ps.setString(2, pName);
+            ps.setString(1, profile.uuid().toString());
+            ps.setString(2, profile.name());
+            ps.setString(3, profile.displayName());
             ps.executeUpdate();
         } catch (SQLException ex) {
             throw new InternalException(ex);
@@ -320,8 +320,8 @@ public final class MySQL implements Database {
      * @throws InternalException SQL Exception
      */
     @Override
-    public LinkedHashMap<String, Integer> getTopPlayers() throws InternalException {
-        LinkedHashMap<String, Integer> top = new LinkedHashMap<>();
+    public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
+        LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
 
         if (!checkAlive()) {
             open();
@@ -330,7 +330,7 @@ public final class MySQL implements Database {
         try (PreparedStatement ps = connection.prepareStatement(Requests.TOP_PLAYERS)) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                top.put(rs.getString("pName"), rs.getInt("hCount"));
+                top.put(new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), rs.getString("pName"), rs.getString("pDisplayName")), rs.getInt("hCount"));
             }
 
             return top;
@@ -341,23 +341,24 @@ public final class MySQL implements Database {
 
     /**
      * Check player name
-     * @param pUUID player UUID
-     * @param pName player name
+     *
+     * @param profile player profile
      * @return boolean if player has renamed
      * @throws InternalException SQL Exception
      */
     @Override
-    public boolean hasPlayerRenamed(UUID pUUID, String pName) throws InternalException {
+    public boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException {
         if (!checkAlive()) {
             open();
         }
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.CHECK_PLAYER_NAME)) {
-            ps.setString(1, pUUID.toString());
+            ps.setString(1, profile.uuid().toString());
+            ps.setString(2, profile.displayName());
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return !pName.equals(rs.getString("pName"));
+                return !profile.name().equals(rs.getString("pName")) || !profile.displayName().equals(rs.getString("pDisplayName"));
             }
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -454,6 +455,20 @@ public final class MySQL implements Database {
 
             ps = connection.prepareStatement(Requests.INSERT_VERSION);
             ps.setInt(1, version);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void addColumnDisplayName() throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.ADD_COLUMN_PLAYER_DISPLAYNAME_MYSQL);
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -614,7 +629,7 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public UUID getPlayer(String pName) throws InternalException {
+    public PlayerProfileLight getPlayerByName(String pName) throws InternalException {
         if (!checkAlive()) {
             open();
         }
@@ -625,7 +640,7 @@ public final class MySQL implements Database {
             ResultSet rs  = ps.executeQuery();
 
             if (rs.next()) {
-                return UUID.fromString(rs.getString("pUUID"));
+                return new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), pName, rs.getString("pDisplayName"));
             }
 
             return null;

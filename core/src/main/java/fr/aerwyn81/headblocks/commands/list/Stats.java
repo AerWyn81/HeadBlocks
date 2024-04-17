@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.PlayerUuidName;
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
@@ -34,8 +34,8 @@ public class Stats implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        PlayerUuidName playerUuidName = CommandsUtils.extractAndGetPlayerUuidByName(sender, args, true);
-        if (playerUuidName == null) {
+        PlayerProfileLight playerProfileLight = CommandsUtils.extractAndGetPlayerUuidByName(sender, args, true);
+        if (playerProfileLight == null) {
             return true;
         }
 
@@ -47,13 +47,13 @@ public class Stats implements Cmd {
 
         ArrayList<HeadLocation> playerHeads;
         try {
-            playerHeads = StorageService.getHeadsPlayer(playerUuidName.getUuid(), playerUuidName.getName()).stream()
+            playerHeads = StorageService.getHeadsPlayer(playerProfileLight.uuid(), playerProfileLight.name()).stream()
                     .map(HeadService::getHeadByUUID)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving stats of the player " + playerUuidName.getName() + " from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving stats of the player " + playerProfileLight.name() + " from the storage: " + ex.getMessage()));
             return true;
         }
 
@@ -65,7 +65,7 @@ public class Stats implements Cmd {
 
         String message = LanguageService.getMessage("Chat.LineTitle");
         if (sender instanceof Player) {
-            TextComponent titleComponent = new TextComponent(PlaceholdersService.parse(playerUuidName.getName(), playerUuidName.getUuid(), LanguageService.getMessage("Chat.StatsTitleLine")
+            TextComponent titleComponent = new TextComponent(PlaceholdersService.parse(playerProfileLight.name(), playerProfileLight.uuid(), LanguageService.getMessage("Chat.StatsTitleLine")
                     .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
             cpu.addTitleLine(titleComponent);
         } else {
@@ -107,7 +107,7 @@ public class Stats implements Cmd {
             }
         }
 
-        cpu.addPageLine("stats " + playerUuidName.getName());
+        cpu.addPageLine("stats " + playerProfileLight.name());
         cpu.build();
         return true;
     }
