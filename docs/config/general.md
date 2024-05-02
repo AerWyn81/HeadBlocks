@@ -3,6 +3,7 @@
 When HeadBlocks is loaded, you will find the following files inside the **HeadBlocks** folder :
 
 * [config.yml](config/config.md)
+* [locations.yml](config/locations.md)
 * [messages/](config/translations.md)
 * locations.yml
 * headblocks.db
