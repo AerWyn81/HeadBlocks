@@ -5,12 +5,12 @@ import java.util.UUID;
 public final class PlayerProfileLight {
     private final UUID uuid;
     private final String name;
-    private final String displayName;
+    private final String customDisplay;
 
-    public PlayerProfileLight(UUID uuid, String name, String displayName) {
+    public PlayerProfileLight(UUID uuid, String name, String customDisplay) {
         this.uuid = uuid;
         this.name = name;
-        this.displayName = displayName;
+        this.customDisplay = customDisplay;
     }
 
     public UUID uuid() {
@@ -21,7 +21,7 @@ public final class PlayerProfileLight {
         return name;
     }
 
-    public String displayName() {
-        return displayName;
+    public String customDisplay() {
+        return customDisplay;
     }
 }

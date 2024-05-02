@@ -141,7 +141,7 @@ public final class MySQL implements Database {
         try (PreparedStatement ps = connection.prepareStatement(Requests.UPDATE_PLAYER_MYSQL)) {
             ps.setString(1, profile.uuid().toString());
             ps.setString(2, profile.name());
-            ps.setString(3, profile.displayName());
+            ps.setString(3, profile.customDisplay());
             ps.executeUpdate();
         } catch (SQLException ex) {
             throw new InternalException(ex);
@@ -354,11 +354,11 @@ public final class MySQL implements Database {
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.CHECK_PLAYER_NAME)) {
             ps.setString(1, profile.uuid().toString());
-            ps.setString(2, profile.displayName());
+            ps.setString(2, profile.customDisplay());
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return !profile.name().equals(rs.getString("pName")) || !profile.displayName().equals(rs.getString("pDisplayName"));
+                return !profile.name().equals(rs.getString("pName")) || !profile.customDisplay().equals(rs.getString("pDisplayName"));
             }
         } catch (Exception ex) {
             throw new InternalException(ex);

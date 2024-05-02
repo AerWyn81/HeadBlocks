@@ -393,4 +393,16 @@ public class ConfigService {
     public static boolean isPreventPistonExtension() { return config.getBoolean("externalInteractions.piston", true); }
 
     public static boolean isPreventLiquidFlow() { return config.getBoolean("externalInteractions.water", true); }
+
+    public static String getPlaceholdersLeaderboardPrefix() {
+        return config.getString("placeholders.leaderboard.prefix", "");
+    }
+
+    public static String getPlaceholdersLeaderboardSuffix() {
+        return config.getString("placeholders.leaderboard.suffix", "");
+    }
+
+    public static boolean isPlaceholdersLeaderboardUseNickname() {
+        return config.getBoolean("placeholders.leaderboard.nickname", false);
+    }
 }

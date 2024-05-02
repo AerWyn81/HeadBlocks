@@ -3,7 +3,6 @@ package fr.aerwyn81.headblocks.hooks;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -13,7 +12,6 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class PlaceholderHook extends PlaceholderExpansion {
 
@@ -72,7 +70,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
             }
         }
 
-        // %headblocks_leaderboard_<position>_<name|displayname|value>%
+        // %headblocks_leaderboard_<position>_<name|custom|value>%
         if (identifier.contains("leaderboard")) {
             var str = identifier.split("_");
             try {
@@ -94,19 +92,19 @@ public class PlaceholderHook extends PlaceholderExpansion {
                     case "name" -> {
                         return p.getKey().name();
                     }
-                    case "displayname" -> {
-                        var displayName = p.getKey().displayName();
+                    case "custom" -> {
+                        var displayName = p.getKey().customDisplay();
                         return displayName.isEmpty() ? p.getKey().name() : displayName;
                     }
                     case "value" -> {
                         return String.valueOf(p.getValue());
                     }
                     default -> {
-                        return p.getKey().displayName() + " (" + p.getKey().name() + ") " + ": " + p.getValue();
+                        return p.getKey().customDisplay() + " (" + p.getKey().name() + ") " + ": " + p.getValue();
                     }
                 }
             } catch (Exception ex) {
-                return "Cannot parse the leaderboard placeholder. Use %headblocks_leaderboard_<position>_<name|displayname|value>%.";
+                return "Cannot parse the leaderboard placeholder. Use %headblocks_leaderboard_<position>_<name|custom|value>%.";
             }
         }
 

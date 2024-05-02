@@ -13,6 +13,7 @@ import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.entity.Player;
 
 import java.io.*;
@@ -187,10 +188,11 @@ public class StorageService {
     public static void loadPlayer(Player player) {
         UUID pUuid = player.getUniqueId();
         String playerName = player.getName();
-        String playerDisplayName = player.getDisplayName();
 
         try {
             boolean isExist = containsPlayer(pUuid);
+
+            String playerDisplayName = getCustomDisplay(player);
 
             var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
 
@@ -213,6 +215,26 @@ public class StorageService {
             storageError = true;
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to load player " + playerName + " from SQL database: " + ex.getMessage()));
         }
+    }
+
+    private static String getCustomDisplay(Player player) {
+        var customName = player.getName();
+
+        if (ConfigService.isPlaceholdersLeaderboardUseNickname()) {
+            customName = player.getDisplayName();
+        }
+
+        var prefix = ConfigService.getPlaceholdersLeaderboardPrefix();
+        if (!prefix.isEmpty()) {
+            customName = PlaceholderAPI.setPlaceholders(player, prefix) + customName;
+        }
+
+        var suffix = ConfigService.getPlaceholdersLeaderboardSuffix();
+        if (!prefix.isEmpty()) {
+            customName = customName + PlaceholderAPI.setPlaceholders(player, suffix);
+        }
+
+        return customName;
     }
 
     public static void unloadPlayer(Player player) {

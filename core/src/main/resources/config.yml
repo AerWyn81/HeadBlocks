@@ -198,6 +198,15 @@ externalInteractions:
   piston: true
   water: true
 
+# Used to customize the %headblocks_leaderboard_<position>_custom% placeholder
+# Support placeholders (PlaceholderAPI)
+# IMPORTANT: Player had to reconnect or server restart to make the modification effective
+placeholders:
+  leaderboard:
+    prefix: ""
+    suffix: ""
+    nickname: false
+
 # Tiered rewards : provide a head count to trigger a reward command list
 # Add the tier, then messages, commands or broadcast message which will be executed
 # You can add "slotsRequired" to give the reward only if the player has enough space in inventory
