@@ -125,6 +125,7 @@ allows you to configure:
 ```
 database:
   enable: false
+  type: MySQL
   settings:
     hostname: localhost
     database: ''
@@ -134,8 +135,8 @@ database:
     ssl: false
 ```
 
-By default, all data is stored locally in SQLite in the file `plugins/HeadBlocks/headblocks.db`. If **enabled**, it is
-possible to connect a remote database in MySQL:
+By default, all data is stored locally in SQLite in the file `plugins/HeadBlocks/headblocks.db` but you can use a remote database. First enable this configuration and specify a database type, currently supported: `MySQL` or `MariaDB`.
+Now you can configure all the required parameter below to connect.
 
 - hostname: `localhost` or `url` to the remote database
 - database: database name

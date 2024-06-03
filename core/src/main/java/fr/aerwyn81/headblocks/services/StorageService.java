@@ -1,9 +1,11 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.databases.Requests;
+import fr.aerwyn81.headblocks.databases.types.MariaDB;
 import fr.aerwyn81.headblocks.databases.types.MySQL;
 import fr.aerwyn81.headblocks.databases.types.SQLite;
 import fr.aerwyn81.headblocks.storages.Storage;
@@ -11,10 +13,14 @@ import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.entity.Player;
 
-import java.io.File;
+import java.io.*;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class StorageService {
     private static Storage storage;
@@ -22,7 +28,13 @@ public class StorageService {
 
     private static boolean storageError;
 
+    private static ConcurrentHashMap<UUID, List<UUID>> _cacheHeads;
+    private static LinkedHashMap<PlayerProfileLight, Integer> _cacheTop;
+
     public static void initialize() {
+        _cacheHeads = new ConcurrentHashMap<>();
+        _cacheTop = new LinkedHashMap<>();
+
         storageError = false;
 
         if (ConfigService.isRedisEnabled() && !ConfigService.isDatabaseEnabled()) {
@@ -45,13 +57,23 @@ public class StorageService {
         var isFileExist = new File(pathToDatabase).exists();
 
         if (ConfigService.isDatabaseEnabled()) {
-            database = new MySQL(
-                    ConfigService.getDatabaseUsername(),
-                    ConfigService.getDatabasePassword(),
-                    ConfigService.getDatabaseHostname(),
-                    ConfigService.getDatabasePort(),
-                    ConfigService.getDatabaseName(),
-                    ConfigService.getDatabaseSsl());
+            if (ConfigService.getDatabaseType() == EnumTypeDatabase.MariaDB) {
+                database = new MariaDB(
+                        ConfigService.getDatabaseUsername(),
+                        ConfigService.getDatabasePassword(),
+                        ConfigService.getDatabaseHostname(),
+                        ConfigService.getDatabasePort(),
+                        ConfigService.getDatabaseName(),
+                        ConfigService.getDatabaseSsl());
+            } else {
+                database = new MySQL(
+                        ConfigService.getDatabaseUsername(),
+                        ConfigService.getDatabasePassword(),
+                        ConfigService.getDatabaseHostname(),
+                        ConfigService.getDatabasePort(),
+                        ConfigService.getDatabaseName(),
+                        ConfigService.getDatabaseSsl());
+            }
         } else {
             database = new SQLite(pathToDatabase);
         }
@@ -77,13 +99,13 @@ public class StorageService {
 
             database.load();
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to connect to the SQL database: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to connect to the " + ConfigService.getDatabaseType() + " database: " + ex.getMessage()));
             storageError = true;
         }
 
         if (!storageError) {
             if (ConfigService.isDatabaseEnabled()) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&aMySQL storage properly connected!"));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&a" + ConfigService.getDatabaseType() + " storage properly connected!"));
             } else {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&aSQLite storage properly connected!"));
             }
@@ -101,6 +123,17 @@ public class StorageService {
 
         int dbVersion = database.checkVersion();
 
+        if (dbVersion == database.version) {
+            return;
+        }
+
+        if (database instanceof SQLite) {
+            var backup = backupDatabase();
+            if (!backup) {
+                storageError = true;
+            }
+        }
+
         if (dbVersion == -1) {
             database.migrate();
             dbVersion = database.version;
@@ -109,6 +142,7 @@ public class StorageService {
         if (dbVersion == 0) {
             database.insertVersion();
             database.addColumnHeadTexture();
+            database.addColumnDisplayName();
             dbVersion = database.version;
         }
 
@@ -116,9 +150,39 @@ public class StorageService {
             database.addColumnHeadTexture();
         }
 
+        if (dbVersion == 2) {
+            database.addColumnDisplayName();
+        }
+
         if (dbVersion != database.version) {
             database.upsertTableVersion(dbVersion);
         }
+    }
+
+    private static boolean backupDatabase() {
+        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + File.separator + "headblocks.db";
+        var databaseFile = new File(pathToDatabase);
+
+        if (!databaseFile.exists()) {
+            return true;
+        }
+
+        File copied = new File(pathToDatabase + ".save-" + LocalDate.now());
+        try (var in = new BufferedInputStream(new FileInputStream(databaseFile));
+             var out = new BufferedOutputStream(new FileOutputStream(copied))) {
+
+            var buffer = new byte[1024];
+            int lengthRead;
+            while ((lengthRead = in.read(buffer)) > 0) {
+                out.write(buffer, 0, lengthRead);
+                out.flush();
+            }
+        } catch (Exception e) {
+            HeadBlocks.log.sendMessage("&cError backuping database, aborting migration, storage error: " + e.getMessage());
+            return false;
+        }
+
+        return true;
     }
 
     public static void loadPlayer(Player player) {
@@ -128,23 +192,49 @@ public class StorageService {
         try {
             boolean isExist = containsPlayer(pUuid);
 
+            String playerDisplayName = getCustomDisplay(player);
+
+            var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
+
             if (isExist) {
-                boolean hasRenamed = hasPlayerRenamed(pUuid, playerName);
+                boolean hasRenamed = hasPlayerRenamed(playerProfile);
 
                 if (hasRenamed) {
-                    updatePlayerName(pUuid, playerName);
+                    updatePlayerName(playerProfile);
                 }
 
                 for (UUID hUuid : database.getHeadsPlayer(pUuid, playerName)) {
                     storage.addHead(pUuid, hUuid);
                 }
+
+                _cacheHeads.put(pUuid, new ArrayList<>());
             } else {
-                updatePlayerName(pUuid, playerName);
+                updatePlayerName(playerProfile);
             }
         } catch (InternalException ex) {
             storageError = true;
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to load player " + playerName + " from SQL database: " + ex.getMessage()));
         }
+    }
+
+    private static String getCustomDisplay(Player player) {
+        var customName = player.getName();
+
+        if (ConfigService.isPlaceholdersLeaderboardUseNickname()) {
+            customName = player.getDisplayName();
+        }
+
+        var prefix = ConfigService.getPlaceholdersLeaderboardPrefix();
+        if (!prefix.isEmpty()) {
+            customName = PlaceholderAPI.setPlaceholders(player, prefix) + customName;
+        }
+
+        var suffix = ConfigService.getPlaceholdersLeaderboardSuffix();
+        if (!prefix.isEmpty()) {
+            customName = customName + PlaceholderAPI.setPlaceholders(player, suffix);
+        }
+
+        return customName;
     }
 
     public static void unloadPlayer(Player player) {
@@ -157,6 +247,8 @@ public class StorageService {
             if (isExist) {
                 storage.resetPlayer(uuid);
             }
+
+            _cacheHeads.remove(uuid);
         } catch (InternalException ex) {
             storageError = true;
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to unload player " + playerName + " from SQL database: " + ex.getMessage()));
@@ -184,10 +276,15 @@ public class StorageService {
     }
 
     public static boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
+            return _cacheHeads.get(playerUuid).contains(headUuid);
+
         return storage.hasHead(playerUuid, headUuid);
     }
 
     public static void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        invalidateCachePlayer(playerUuid);
+
         storage.addHead(playerUuid, headUuid);
         database.addHead(playerUuid, headUuid);
     }
@@ -197,15 +294,27 @@ public class StorageService {
     }
 
     public static List<UUID> getHeadsPlayer(UUID playerUuid, String pName) throws InternalException {
-        return database.getHeadsPlayer(playerUuid, pName);
+        if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
+            return _cacheHeads.get(playerUuid);
+
+        var headsUuid = database.getHeadsPlayer(playerUuid, pName);
+        _cacheHeads.get(playerUuid).addAll(headsUuid);
+
+        return headsUuid;
     }
 
     public static void resetPlayer(UUID playerUuid) throws InternalException {
+        invalidateCachePlayer(playerUuid);
+
         storage.resetPlayer(playerUuid);
         database.resetPlayer(playerUuid);
     }
 
     public static void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
+        for (var head : _cacheHeads.entrySet()) {
+            head.getValue().remove(headUuid);
+        }
+
         storage.removeHead(headUuid);
         database.removeHead(headUuid, withDelete);
     }
@@ -214,16 +323,24 @@ public class StorageService {
         return database.getAllPlayers();
     }
 
-    public static Map<String, Integer> getTopPlayers() throws InternalException {
-        return database.getTopPlayers();
+    public static LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
+        var copy = _cacheTop.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+
+        if (!copy.isEmpty())
+            return copy;
+
+        _cacheTop.putAll(database.getTopPlayers());
+
+        return _cacheTop;
     }
 
-    public static void updatePlayerName(UUID playerUuid, String playerName) throws InternalException {
-        database.updatePlayerInfo(playerUuid, playerName);
+    public static void updatePlayerName(PlayerProfileLight profile) throws InternalException {
+        database.updatePlayerInfo(profile);
     }
 
-    public static boolean hasPlayerRenamed(UUID playerUuid, String playerName) throws InternalException {
-        return database.hasPlayerRenamed(playerUuid, playerName);
+    public static boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException {
+        return database.hasPlayerRenamed(profile);
     }
 
     public static void createNewHead(UUID headUuid, String texture) throws InternalException {
@@ -303,7 +420,16 @@ public class StorageService {
         return database.getPlayers(headUuid);
     }
 
-    public static UUID getPlayer(String pName) throws InternalException {
-        return database.getPlayer(pName);
+    public static PlayerProfileLight getPlayerByName(String pName) throws InternalException {
+        return database.getPlayerByName(pName);
+    }
+
+    private static void invalidateCachePlayer(UUID playerUuid) {
+        _cacheTop.clear();
+
+        if (!_cacheHeads.containsKey(playerUuid))
+            return;
+
+        _cacheHeads.get(playerUuid).clear();
     }
 }

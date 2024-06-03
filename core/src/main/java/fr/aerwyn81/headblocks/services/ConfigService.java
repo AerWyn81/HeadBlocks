@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Color;
@@ -207,6 +208,14 @@ public class ConfigService {
         return config.getBoolean("database.enable", false);
     }
 
+    public static EnumTypeDatabase getDatabaseType() {
+        var type = EnumTypeDatabase.of(config.getString("database.type", "MySQL"));
+        if (type == null)
+            type = EnumTypeDatabase.MySQL;
+
+        return type;
+    }
+
     public static String getDatabaseHostname() {
         return config.getString("database.settings.hostname", "localhost");
     }
@@ -384,4 +393,16 @@ public class ConfigService {
     public static boolean isPreventPistonExtension() { return config.getBoolean("externalInteractions.piston", true); }
 
     public static boolean isPreventLiquidFlow() { return config.getBoolean("externalInteractions.water", true); }
+
+    public static String getPlaceholdersLeaderboardPrefix() {
+        return config.getString("placeholders.leaderboard.prefix", "");
+    }
+
+    public static String getPlaceholdersLeaderboardSuffix() {
+        return config.getString("placeholders.leaderboard.suffix", "");
+    }
+
+    public static boolean isPlaceholdersLeaderboardUseNickname() {
+        return config.getBoolean("placeholders.leaderboard.nickname", false);
+    }
 }

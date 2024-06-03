@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -26,7 +27,7 @@ public class Top implements Cmd {
     public boolean perform(CommandSender sender, String[] args) {
         ChatPageUtils cpu = new ChatPageUtils(sender).currentPage(args);
 
-        ArrayList<Map.Entry<String, Integer>> top;
+        ArrayList<Map.Entry<PlayerProfileLight, Integer>> top;
         try {
             top = new ArrayList<>(StorageService.getTopPlayers().entrySet());
         } catch (InternalException ex) {
@@ -52,9 +53,9 @@ public class Top implements Cmd {
 
         for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
             int pos = i + 1;
-            Map.Entry<String, Integer> currentScore = top.get(i);
+            Map.Entry<PlayerProfileLight, Integer> currentScore = top.get(i);
 
-            message = LanguageService.getMessage("Chat.LineTop", currentScore.getKey())
+            message = LanguageService.getMessage("Chat.LineTop", currentScore.getKey().name())
                     .replaceAll("%pos%", String.valueOf(pos))
                     .replaceAll("%count%", String.valueOf(currentScore.getValue()));
 
@@ -62,7 +63,7 @@ public class Top implements Cmd {
                 TextComponent msg = new TextComponent(message);
 
                 if (PlayerUtils.hasPermission(sender, "headblocks.admin")) {
-                    msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb stats " + currentScore.getKey()));
+                    msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks stats " + currentScore.getKey()));
                     msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.LineTop"))));
                 }
 

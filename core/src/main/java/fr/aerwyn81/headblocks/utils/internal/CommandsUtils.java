@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.utils.internal;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.data.PlayerUuidName;
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -9,11 +9,9 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 
-import java.util.UUID;
-
 public class CommandsUtils {
 
-    public static PlayerUuidName extractAndGetPlayerUuidByName(CommandSender sender, String[] args, boolean canSeeOther) {
+    public static PlayerProfileLight extractAndGetPlayerUuidByName(CommandSender sender, String[] args, boolean canSeeOther) {
         var pName = "";
 
         if (args.length >= 2 && !NumberUtils.isDigits(args[1])) {
@@ -32,21 +30,21 @@ public class CommandsUtils {
             pName = sender.getName();
         }
 
-        UUID playerUuid;
+        PlayerProfileLight profile;
 
         try {
-            playerUuid = StorageService.getPlayer(pName);
+            profile = StorageService.getPlayerByName(pName);
         } catch (Exception ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving player " + pName + " from the storage: " + ex.getMessage()));
             return null;
         }
 
-        if (playerUuid == null) {
+        if (profile == null) {
             sender.sendMessage(LanguageService.getMessage("Messages.PlayerNotFound", args[1]));
             return null;
         }
 
-        return new PlayerUuidName(playerUuid, pName);
+        return profile;
     }
 }

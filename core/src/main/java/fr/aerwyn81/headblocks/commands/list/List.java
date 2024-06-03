@@ -54,13 +54,13 @@ public class List implements Cmd {
                     msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
 
                     TextComponent del = new TextComponent(LanguageService.getMessage("Chat.Box.Remove"));
-                    del.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb remove " + headLocation.getUuid()));
+                    del.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks remove " + headLocation.getUuid()));
                     del.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Remove"))));
 
                     TextComponent tp = new TextComponent(LanguageService.getMessage("Chat.Box.Teleport"));
 
                     if (headLocation.getLocation().getWorld() != null) {
-                        tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hb tp " + headLocation.getLocation().getWorld().getName() + " " + (headLocation.getLocation().getX() + 0.5) + " " + (headLocation.getLocation().getY() + 1) + " " + (headLocation.getLocation().getZ() + 0.5 + " 0.0 90.0")));
+                        tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + headLocation.getLocation().getWorld().getName() + " " + (headLocation.getLocation().getX() + 0.5) + " " + (headLocation.getLocation().getY() + 1) + " " + (headLocation.getLocation().getZ() + 0.5 + " 0.0 90.0")));
                     }
 
                     tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Teleport"))));

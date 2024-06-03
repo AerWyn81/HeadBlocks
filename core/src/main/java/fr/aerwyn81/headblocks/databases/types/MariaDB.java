@@ -10,7 +10,7 @@ import java.sql.*;
 import java.util.*;
 
 @SuppressWarnings("DuplicatedCode")
-public final class MySQL implements Database {
+public final class MariaDB implements Database {
     private final String user;
     private final String password;
     private final String hostname;
@@ -20,7 +20,7 @@ public final class MySQL implements Database {
 
     private Connection connection;
 
-    public MySQL(String user, String password, String hostname, int port, String databaseName, boolean isSsl) {
+    public MariaDB(String user, String password, String hostname, int port, String databaseName, boolean isSsl) {
         this.user = user;
         this.password = password;
         this.hostname = hostname;
@@ -43,8 +43,9 @@ public final class MySQL implements Database {
         }
 
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://" + hostname + ":" + port + "/" + databaseName, properties);
-        } catch (SQLException ex) {
+            Class.forName("org.mariadb.jdbc.Driver");
+            connection = DriverManager.getConnection("jdbc:mariadb://" + hostname + ":" + port + "/" + databaseName, properties);
+        } catch (Exception ex) {
             throw new InternalException(ex);
         }
     }
@@ -354,7 +355,6 @@ public final class MySQL implements Database {
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.CHECK_PLAYER_NAME)) {
             ps.setString(1, profile.uuid().toString());
-            ps.setString(2, profile.customDisplay());
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
@@ -671,7 +671,7 @@ public final class MySQL implements Database {
 
         try {
             return connection.isValid(1);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             return false;
         }
     }

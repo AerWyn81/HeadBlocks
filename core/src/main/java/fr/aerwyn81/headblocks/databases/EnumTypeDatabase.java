@@ -1,9 +1,9 @@
 package fr.aerwyn81.headblocks.databases;
 
 public enum EnumTypeDatabase {
-    SQLite, MySQL;
+    SQLite, MySQL, MariaDB;
 
-    static public EnumTypeDatabase Of(String t) {
+    static public EnumTypeDatabase of(String t) {
         EnumTypeDatabase[] types = EnumTypeDatabase.values();
         for (EnumTypeDatabase type : types)
             if (type.name().equals(t))

@@ -131,7 +131,7 @@ Gui:
     - "&e&lINFO:"
     - "&7 Cette interface vous permet de configurer"
     - "&7 le compteur de clics sur chaque tête"
-  OrderItemName: "&6%headName% &7(%world%, %y%, %y%, %z%)"
+  OrderItemName: "&6%headName% &7(%world%, %x%, %y%, %z%)"
   OrderItemLore:
     - ""
     - "&e&lINFO:"
@@ -141,7 +141,7 @@ Gui:
     - "&a&lCLIC DROIT&8: &7Augmente la position"
     - ""
     - "&7Position actuelle: &e%position%"
-  CounterClickItemName: "&6%headName% &7(%world%, %y%, %y%, %z%)"
+  CounterClickItemName: "&6%headName% &7(%world%, %x%, %y%, %z%)"
   CounterClickItemLore:
     - ""
     - "&e&lINFO:"

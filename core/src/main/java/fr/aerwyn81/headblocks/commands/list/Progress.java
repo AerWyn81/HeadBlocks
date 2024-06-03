@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.data.PlayerUuidName;
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
@@ -21,8 +21,8 @@ public class Progress implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        PlayerUuidName playerUuidName = CommandsUtils.extractAndGetPlayerUuidByName(sender, args, PlayerUtils.hasPermission(sender, "headblocks.commands.progress.other"));
-        if (playerUuidName == null) {
+        PlayerProfileLight playerProfileLight = CommandsUtils.extractAndGetPlayerUuidByName(sender, args, PlayerUtils.hasPermission(sender, "headblocks.commands.progress.other"));
+        if (playerProfileLight == null) {
             return true;
         }
 
@@ -35,7 +35,7 @@ public class Progress implements Cmd {
         List<String> messages = LanguageService.getMessages("Messages.ProgressCommand");
         if (!messages.isEmpty()) {
             messages.forEach(msg ->
-                    sender.sendMessage(PlaceholdersService.parse(playerUuidName.getName(), playerUuidName.getUuid(), msg)));
+                    sender.sendMessage(PlaceholdersService.parse(playerProfileLight.name(), playerProfileLight.uuid(), msg)));
         }
 
         return true;

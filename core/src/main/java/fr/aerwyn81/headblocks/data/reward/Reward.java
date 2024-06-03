@@ -1,6 +1,13 @@
 package fr.aerwyn81.headblocks.data.reward;
 
-import org.bukkit.configuration.ConfigurationSection;
+import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.services.PlaceholdersService;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class Reward {
     private final RewardType type;
@@ -11,21 +18,62 @@ public class Reward {
         this.value = value;
     }
 
-    public void serialize(ConfigurationSection section) {
-        section.set(type + ".value", value);
+    public RewardType getType() {
+        return type;
     }
 
-    public static Reward deserialize(ConfigurationSection section) {
-        RewardType type;
+    public String getValue() {
+        return value;
+    }
 
+    public HashMap<String, String> serialize() {
+        var map = new HashMap<String, String>();
+        map.put("type", type.name());
+        map.put("value", value);
+
+        return map;
+    }
+
+    public static Reward deserialize(Object object) {
         try {
-            type = RewardType.valueOf(section.getString("type"));
+            var type = RewardType.UNKNOWN;
+            var value = "";
+
+            var map = (LinkedHashMap<?,?>)object;
+            for (var entry : map.entrySet()) {
+                if (entry.getKey().equals("type"))
+                    type = RewardType.valueOf(entry.getValue().toString().toUpperCase());
+
+                if (entry.getKey().equals("value"))
+                    value = entry.getValue().toString();
+            }
+
+            return new Reward(type, value);
         } catch (Exception ex) {
-            type = RewardType.UNKNOWN;
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while deserializing reward: " + ex.getMessage()));
+            return new Reward(RewardType.UNKNOWN, "");
+        }
+    }
+
+    public void execute(Player player) {
+        var plugin = HeadBlocks.getInstance();
+
+        var parsedValue = "";
+        try {
+            parsedValue = PlaceholdersService.parse(player.getName(), player.getUniqueId(), value);
+        } catch (Exception ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError executing head reward (" + value + "): " + ex.getMessage()));
         }
 
-        String value = section.getString("value");
+        if (parsedValue.isEmpty())
+            return;
 
-        return new Reward(type, value);
+        var value = parsedValue;
+        switch (type) {
+            case MESSAGE -> player.sendMessage(parsedValue);
+            case COMMAND -> Bukkit.getScheduler().runTaskLater(plugin, () ->
+                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), value), 1L);
+            case BROADCAST -> plugin.getServer().broadcastMessage(parsedValue);
+        }
     }
 }

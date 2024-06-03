@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.data;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -156,11 +157,12 @@ public class HeadLocation {
         section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
 
         if (!rewards.isEmpty()) {
-            section.createSection("locations." + hUUID + ".rewards");
-
+            var confRewards = new ArrayList<>();
             for (Reward reward : rewards) {
-                //todo
+                confRewards.add(reward.serialize());
             }
+
+            section.set("locations." + hUUID + ".rewards", confRewards);
         }
     }
 
@@ -199,8 +201,20 @@ public class HeadLocation {
         }
 
         var rewards = new ArrayList<Reward>();
-        if (section.contains("locations." + hUUID + "rewards")) {
-            //todo
+        if (section.contains("locations." + hUUID + ".rewards")) {
+            var rewardsSection = section.get("locations." + hUUID + ".rewards");
+            if (!(rewardsSection instanceof ArrayList<?>)) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cMalformed rewards for head: " + headUUID + ". Not a list of TYPE with VALUE."));
+            } else {
+                for (var item : (ArrayList<?>)rewardsSection) {
+                    var reward = Reward.deserialize(item);
+
+                    if (reward.getValue().isEmpty())
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&eIgnored reward for head " + headUUID + " because value is empty."));
+                    else
+                        rewards.add(reward);
+                }
+            }
         }
 
         var headLocation = new HeadLocation(name, headUUID, worldName, x, y, z, hitCount, orderIndex, rewards);

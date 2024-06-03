@@ -1,14 +1,15 @@
 package fr.aerwyn81.headblocks.databases;
 
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 public interface Database {
-    int version = 2;
+    int version = 3;
 
     void close() throws InternalException;
 
@@ -18,7 +19,7 @@ public interface Database {
 
     int checkVersion();
 
-    void updatePlayerInfo(UUID pUUID, String pName) throws InternalException;
+    void updatePlayerInfo(PlayerProfileLight profile) throws InternalException;
 
     void createNewHead(UUID hUUID, String texture) throws InternalException;
 
@@ -34,9 +35,9 @@ public interface Database {
 
     ArrayList<UUID> getAllPlayers() throws InternalException;
 
-    Map<String, Integer> getTopPlayers() throws InternalException;
+    LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException;
 
-    boolean hasPlayerRenamed(UUID pUUID, String playerName) throws InternalException;
+    boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException;
 
     boolean isHeadExist(UUID headUuid) throws InternalException;
 
@@ -56,9 +57,11 @@ public interface Database {
 
     ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException;
 
-    UUID getPlayer(String pName) throws InternalException;
+    PlayerProfileLight getPlayerByName(String pName) throws InternalException;
 
     boolean isDefaultTablesExist();
 
     void insertVersion() throws InternalException;
+
+    void addColumnDisplayName() throws InternalException;
 }

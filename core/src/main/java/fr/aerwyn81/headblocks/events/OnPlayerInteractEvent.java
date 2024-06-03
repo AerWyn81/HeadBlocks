@@ -121,8 +121,10 @@ public class OnPlayerInteractEvent implements Listener {
                 if (HeadService.getChargedHeadLocations().stream()
                         .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
                         .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
-                    player.sendMessage(LanguageService.getMessage("Messages.OrderClickError")
-                                .replaceAll("%name%", headLocation.getDisplayedName()));
+
+                   player.sendMessage(PlaceholdersService.parse(player.getName(), player.getUniqueId(),
+                         LanguageService.getMessage("Messages.OrderClickError")
+                               .replaceAll("%name%", headLocation.getDisplayedName())));
                     return;
                 }
             }
@@ -147,6 +149,10 @@ public class OnPlayerInteractEvent implements Listener {
             if (!isRewardGiven)
                 return;
 
+            // Give special head rewards
+            for (var reward : headLocation.getRewards()) {
+                reward.execute(player);
+            }
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to save a head found by " + player.getName() + " from the storage: " + ex.getMessage()));

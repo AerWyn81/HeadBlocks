@@ -5,6 +5,7 @@
 - **Customization**
     - [Configuration](config/general.md)
         - [config.yml](config/config.md)
+        - [locations.yml](config/locations.md)
     - [Translations](config/translations.md)
 - **Reference**
     - [Particles](reference/particles.md)
