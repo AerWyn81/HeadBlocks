@@ -17,12 +17,12 @@ public class RewardService {
         TieredReward tieredReward;
         if (!ConfigService.getTieredRewards().isEmpty()) {
             tieredReward = ConfigService.getTieredRewards().stream()
-                    .filter(t -> t.getLevel() == playerHeads.size())
+                    .filter(t -> t.level() == playerHeads.size())
                     .findFirst()
                     .orElse(null);
 
             if (tieredReward != null) {
-                if (tieredReward.getSlotsRequired() != -1 && PlayerUtils.getEmptySlots(p) < tieredReward.getSlotsRequired()) {
+                if (tieredReward.slotsRequired() != -1 && PlayerUtils.getEmptySlots(p) < tieredReward.slotsRequired()) {
                     var message = LanguageService.getMessage("Messages.InventoryFullReward");
                     if (!message.trim().isEmpty()) {
                         p.sendMessage(message);
@@ -31,17 +31,17 @@ public class RewardService {
                     return false;
                 }
 
-                List<String> messages = tieredReward.getMessages();
+                List<String> messages = tieredReward.messages();
                 if (!messages.isEmpty()) {
                     p.sendMessage(PlaceholdersService.parse(p, messages));
                 }
 
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    List<String> commands = tieredReward.getCommands();
+                    List<String> commands = tieredReward.commands();
                     commands.forEach(command ->
                             plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), command)));
 
-                    List<String> broadcastMessages = tieredReward.getBroadcastMessages();
+                    List<String> broadcastMessages = tieredReward.broadcastMessages();
                     if (!broadcastMessages.isEmpty()) {
                         for (String message : broadcastMessages) {
                             plugin.getServer().broadcastMessage(PlaceholdersService.parse(p.getName(), p.getUniqueId(), message));

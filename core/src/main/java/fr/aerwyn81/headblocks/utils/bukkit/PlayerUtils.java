@@ -9,6 +9,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -24,7 +25,7 @@ public class PlayerUtils {
 
     public static String getPseudoFromSession(String uuid) {
         try {
-            URL url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid);
+            URL url = URI.create("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid).toURL();
             URLConnection request = url.openConnection();
             request.connect();
 

@@ -17,7 +17,7 @@ public class FireworkUtils {
             return;
         }
 
-        Firework firework = (Firework) loc.getWorld().spawnEntity(loc.add(0.5, isWalled ? 0.5 : 0, 0.5), EntityType.FIREWORK);
+        Firework firework = (Firework) loc.getWorld().spawnEntity(loc.add(0.5, isWalled ? 0.5 : 0, 0.5), EntityType.FIREWORK_ROCKET);
         FireworkMeta fMeta = firework.getFireworkMeta();
 
         FireworkEffect.Builder fBuilder = FireworkEffect.builder()

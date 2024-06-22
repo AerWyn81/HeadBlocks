@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.data.head.HeadType;
 import org.bukkit.inventory.ItemStack;
 
 public class HBHeadHDB extends HBHead {
-    private String id;
+    private final String id;
     private boolean loaded;
 
     public HBHeadHDB(ItemStack head, String hdbId) {
@@ -16,10 +16,6 @@ public class HBHeadHDB extends HBHead {
 
     public String getId() {
         return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public HeadType getType() {

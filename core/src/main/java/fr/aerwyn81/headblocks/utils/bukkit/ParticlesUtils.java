@@ -15,7 +15,7 @@ public class ParticlesUtils {
 
         ArrayList<Particle.DustOptions> dustOptions = new ArrayList<>();
 
-        if (colors != null && particle == Particle.REDSTONE && colors.size() != 0 ) {
+        if (colors != null && particle == Particle.DUST && !colors.isEmpty()) {
             for (String color : colors) {
                 String[] rgb = color.split(",");
                 dustOptions.add(new Particle.DustOptions(Color.fromRGB(Integer.parseInt(rgb[0]),
@@ -24,7 +24,7 @@ public class ParticlesUtils {
         }
 
         for (Player player : players) {
-            if (dustOptions.size() != 0) {
+            if (!dustOptions.isEmpty()) {
                 dustOptions.forEach(dustOpt ->
                         player.spawnParticle(particle, location, amount, size, size, size, dustOpt));
                 continue;

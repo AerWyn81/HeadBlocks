@@ -2,30 +2,31 @@ import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
 
 plugins {
     id("java")
-    id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("net.minecrell.plugin-yml.bukkit") version "0.5.2"
+    id("io.github.goooler.shadow") version "8.1.7"
+    id("net.minecrell.plugin-yml.bukkit") version "0.6.0"
 }
 
 version = rootProject.version
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
-    compileOnly("me.clip:placeholderapi:2.11.3")
-    compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
-    compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.2")
-    compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.0")
-    compileOnly(files("../libs/CMILib1.4.3.4.jar"))
-    compileOnly(files("../libs/CMI-9.6.8.5.jar"))
+    compileOnly("org.spigotmc:spigot-api:1.20.6-R0.1-SNAPSHOT")
+    compileOnly("me.clip:placeholderapi:2.11.6")
+    compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
+    compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.8")
+    compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.4")
+    compileOnly(files("../libs/CMILib1.4.7.16.jar"))
+    compileOnly(files("../libs/CMI-9.7.3.2.jar"))
     implementation("com.github.AerWyn81:Hologram-Lib:2.6.0-fork")
-    implementation("redis.clients:jedis:4.4.3")
-    implementation("de.tr7zw:item-nbt-api:2.12.0")
-    implementation("com.zaxxer:HikariCP:5.0.1")
+    implementation("redis.clients:jedis:5.1.3")
+    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("org.apache.commons:commons-lang3:3.12.0")
+    implementation("de.tr7zw:item-nbt-api:2.13.1")
 }
 
 tasks {
     compileJava {
-        sourceCompatibility = JavaVersion.VERSION_17.toString()
-        targetCompatibility = JavaVersion.VERSION_17.toString()
+        sourceCompatibility = JavaVersion.VERSION_21.toString()
+        targetCompatibility = JavaVersion.VERSION_21.toString()
         options.encoding = "UTF-8"
     }
 

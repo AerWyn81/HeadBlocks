@@ -1,6 +1,8 @@
 package fr.aerwyn81.headblocks.services;
 
+import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.NBTTileEntity;
+import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
@@ -10,6 +12,7 @@ import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -239,9 +242,7 @@ public class HeadService {
             }
         }
 
-        var headsHdb = heads.stream()
-                .filter(HBHeadHDB.class::isInstance)
-                .map(HBHeadHDB.class::cast).count();
+        var headsHdb = heads.stream().filter(HBHeadHDB.class::isInstance).count();
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded &e" + (Math.abs(heads.size() - headsHdb)) + " &8&o(+" + headsHdb + " HeadDatabase heads) &aconfiguration heads!"));
     }
@@ -263,6 +264,10 @@ public class HeadService {
     }
 
     public static void clearHeadMoves() {
+        if (headMoves == null) {
+            return;
+        }
+
         headMoves.clear();
     }
 
@@ -277,9 +282,17 @@ public class HeadService {
         Rotatable rotatable = (Rotatable) newSkull.getBlockData();
         rotatable.setRotation(skullRotation.getRotation());
         newSkull.setBlockData(rotatable);
-        newSkull.update(true);
 
-        new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
+        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R5)) {
+            NBT.modify(newSkull, nbt -> {
+                nbt.mergeCompound(new NBTTileEntity(oldSkull));
+            });
+            newSkull.setOwnerProfile(oldSkull.getOwnerProfile());
+        } else {
+            new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
+        }
+
+        newSkull.update(true);
 
         oldBlock.setType(Material.AIR);
 
