@@ -354,7 +354,7 @@ public final class MySQL implements Database {
 
         try (PreparedStatement ps = connection.prepareStatement(Requests.CHECK_PLAYER_NAME)) {
             ps.setString(1, profile.uuid().toString());
-            ps.setString(2, profile.customDisplay());
+
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
