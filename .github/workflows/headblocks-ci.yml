@@ -2,7 +2,7 @@ name: Headblocks CI
 
 on:
   push:
-    branches: [ master, latest-1.20 ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
           distribution: 'temurin'
           java-version: 21
       - name: Install dependencies
-        run: bash ./install-dependency.sh ${{ secrets.FILE_ID_CMI_OLD }} ${{ secrets.FILE_ID_CMI_LIB_OLD }}
+        run: bash ./install-dependency.sh ${{ secrets.FILE_ID_CMI }} ${{ secrets.FILE_ID_CMI_LIB }}
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
