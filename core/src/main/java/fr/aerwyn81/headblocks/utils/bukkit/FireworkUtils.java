@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
+import org.bukkit.block.data.type.Fire;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -17,7 +18,14 @@ public class FireworkUtils {
             return;
         }
 
-        Firework firework = (Firework) loc.getWorld().spawnEntity(loc.add(0.5, isWalled ? 0.5 : 0, 0.5), EntityType.FIREWORK);
+        EntityType entityType;
+        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
+            entityType = EntityType.FIREWORK_ROCKET;
+        } else {
+            entityType = EntityType.valueOf("FIREWORK");
+        }
+
+        Firework firework = (Firework) loc.getWorld().spawnEntity(loc.add(0.5, isWalled ? 0.5 : 0, 0.5), entityType);
         FireworkMeta fMeta = firework.getFireworkMeta();
 
         FireworkEffect.Builder fBuilder = FireworkEffect.builder()
