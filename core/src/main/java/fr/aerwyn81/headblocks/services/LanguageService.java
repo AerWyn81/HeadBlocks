@@ -85,15 +85,7 @@ public class LanguageService {
 		}
 		YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
 
-		var header = new ArrayList<String>();
-		header.add("====================================================================");
-		header.add(" This is the messsages file.");
-		header.add(" You can change any messages that are in this file.");
-		header.add(" If you want to reset a message back to the default,");
-		header.add(" delete the entire line the message is on and restart the server.");
-		header.add("====================================================================");
-
-		cfg.options().setHeader(header);
+		cfg.options().header("\nThis is the messsages file.\nYou can change any messages that are in this file\n\nIf you want to reset a message back to the default,\ndelete the entire line the message is on and restart the server.\n\t");
 
 		Map<String, Object> msgDefaults = new LinkedHashMap<>();
 

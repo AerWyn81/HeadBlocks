@@ -8,11 +8,12 @@ import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @HBAnnotations(command = "help", permission = "headblocks.use", alias = "h")
 public class Help implements Cmd {
@@ -24,7 +25,7 @@ public class Help implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        var commands = new ArrayList<>(registeredCommands).stream().filter(c -> PlayerUtils.hasPermission(sender, c.getPermission())).toList();
+        var commands = new ArrayList<>(registeredCommands).stream().filter(c -> PlayerUtils.hasPermission(sender, c.getPermission())).collect(Collectors.toList());
 
         ChatPageUtils cpu = new ChatPageUtils(sender)
                 .entriesCount(commands.size())

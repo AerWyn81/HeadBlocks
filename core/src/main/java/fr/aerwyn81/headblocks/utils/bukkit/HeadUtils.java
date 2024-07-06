@@ -1,8 +1,8 @@
 package fr.aerwyn81.headblocks.utils.bukkit;
 
-import de.tr7zw.changeme.nbtapi.NBT;
+import de.tr7zw.changeme.nbtapi.NBTCompound;
 import de.tr7zw.changeme.nbtapi.NBTItem;
-import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
+import de.tr7zw.changeme.nbtapi.NBTListCompound;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.services.HeadService;
@@ -22,42 +22,28 @@ public class HeadUtils {
     }
 
     public static ItemStack applyTextureToItemStack(ItemStack itemStack, String texture) {
-        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4))
-        {
-            NBT.modifyComponents(itemStack, nbt -> {
-                ReadWriteNBT profileCompound = nbt.getOrCreateCompound("minecraft:profile");
-                profileCompound.setUUID("id", UUID.randomUUID());
+        NBTItem nbti = new NBTItem(itemStack);
+        NBTCompound skull = nbti.addCompound("SkullOwner");
+        skull.setString("Name", "HeadBlocks");
 
-                ReadWriteNBT propertiesCompound = profileCompound.getCompoundList("properties").addCompound();
-                propertiesCompound.setString("name", "textures");
-                propertiesCompound.setString("value", texture);
-            });
+        if (VersionUtils.getCurrent().isOlderOrSameThan(VersionUtils.v1_15)) {
+            skull.setString("Id", "f032de26-fde9-469f-a6eb-c453470894a5");
         } else {
-            NBT.modify(itemStack, nbt -> {
-                ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound("SkullOwner");
-
-                skullOwnerCompound.setUUID("Id", UUID.randomUUID());
-
-                skullOwnerCompound.getOrCreateCompound("Properties")
-                        .getCompoundList("textures")
-                        .addCompound()
-                        .setString("Value", texture);
-            });
+            skull.setUUID("Id", UUID.fromString("f032de26-fde9-469f-a6eb-c453470894a5"));
         }
 
-        return itemStack;
+        NBTListCompound textCompound = skull.addCompound("Properties").getCompoundList("textures").addCompound();
+        textCompound.setString("Value", texture);
+
+        return nbti.getItem();
     }
 
     public static String getHeadTexture(ItemStack head) {
-        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
-            return NBT.modifyComponents(head, nbt -> (String) nbt.resolveOrNull("minecraft:profile.properties[0].value", String.class));
-        } else {
-            var nbtItem = new NBTItem(head);
-            try {
-                return nbtItem.getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value");
-            } catch (Exception ex) {
-                return "";
-            }
+        var nbtItem = new NBTItem(head);
+        try {
+            return nbtItem.getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value");
+        } catch (Exception ex) {
+            return "";
         }
     }
 

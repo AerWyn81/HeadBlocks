@@ -14,9 +14,11 @@ public class OnPlayerClickInventoryEvent implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getInventory().getHolder() == null || !(event.getInventory().getHolder() instanceof HBMenu clickedGui)) {
+        if (event.getInventory().getHolder() == null || !(event.getInventory().getHolder() instanceof HBMenu)) {
             return;
         }
+
+        var clickedGui = (HBMenu) event.getInventory().getHolder();
 
         if (!clickedGui.getOwner().equals(HeadBlocks.getInstance())) {
             return;
@@ -45,7 +47,9 @@ public class OnPlayerClickInventoryEvent implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getInventory().getHolder() != null && event.getInventory().getHolder() instanceof HBMenu clickedGui) {
+        if (event.getInventory().getHolder() != null && event.getInventory().getHolder() instanceof HBMenu) {
+            var clickedGui = (HBMenu) event.getInventory().getHolder();
+
             if (!clickedGui.getOwner().equals(HeadBlocks.getInstance())) return;
 
             if (clickedGui.getOnClose() != null)

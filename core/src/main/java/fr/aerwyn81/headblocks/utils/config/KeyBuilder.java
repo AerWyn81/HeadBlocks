@@ -27,13 +27,13 @@ public class KeyBuilder implements Cloneable {
 
         //Checks keyBuilder path against config to see if the path is valid.
         //If the path doesn't exist in the config it keeps removing last key in keyBuilder.
-        while (!builder.isEmpty() && !config.contains(builder.toString() + separator + key)) {
+        while (builder.length() > 0 && !config.contains(builder.toString() + separator + key)) {
             removeLastKey();
         }
 
         //Add the separator if there is already a key inside keyBuilder
         //If currentSplitLine[0] is 'key2' and keyBuilder contains 'key1' the result will be 'key1.' if '.' is the separator
-        if (!builder.isEmpty())
+        if (builder.length() > 0)
             builder.append(separator);
 
         //Appends the current key to keyBuilder
@@ -42,14 +42,14 @@ public class KeyBuilder implements Cloneable {
     }
 
     public String getLastKey() {
-        if (builder.isEmpty())
+        if (builder.length() == 0)
             return "";
 
         return builder.toString().split("[" + separator + "]")[0];
     }
 
     public boolean isEmpty() {
-        return builder.isEmpty();
+        return builder.length() == 0;
     }
 
     //Checks to see if subKey is a sub-key of the key path this instance represents
@@ -88,7 +88,7 @@ public class KeyBuilder implements Cloneable {
 
     //Input: 'key1.key2' Result: 'key1'
     public void removeLastKey() {
-        if (builder.isEmpty())
+        if (builder.length() == 0)
             return;
 
         String keyString = builder.toString();

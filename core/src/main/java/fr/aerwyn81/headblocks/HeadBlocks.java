@@ -61,9 +61,9 @@ public final class HeadBlocks extends JavaPlugin {
         }
         reloadConfig();
 
-        if (!VersionUtils.isAtLeastVersion(VersionUtils.v1_16_R1)) {
+        if (VersionUtils.getCurrent().isOlderThan(VersionUtils.v1_16)) {
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
-            log.sendMessage(MessageUtils.colorize("&cHeadBlocks does not support your Minecraft Server version: " + VersionUtils.getVersion()));
+            log.sendMessage(MessageUtils.colorize("&cHeadBlocks does not support your Minecraft Server version: " + VersionUtils.getCurrentFormatted()));
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
             this.setEnabled(false);
             return;
