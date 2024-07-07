@@ -78,8 +78,14 @@ public class Stats implements Cmd {
 
             String hover = LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), location);
 
+            var headLocation = HeadService.getHeadByUUID(uuid);
+            var headName = headLocation != null ? headLocation.getName() : uuid.toString();
+            if (headName.isEmpty()) {
+                headName = uuid.toString();
+            }
+
             if (sender instanceof Player) {
-                TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + uuid));
+                TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + headName));
                 msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
 
                 TextComponent own;
@@ -103,7 +109,7 @@ public class Stats implements Cmd {
             } else {
                 sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getUuid().equals(uuid)) ?
                                 LanguageService.getMessage("Chat.Box.Own") : LanguageService.getMessage("Chat.Box.NotOwn")) + " " +
-                                MessageUtils.colorize("&6" + uuid));
+                                MessageUtils.colorize("&6" + headName));
             }
         }
 

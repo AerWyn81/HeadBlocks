@@ -57,6 +57,8 @@ Messages:
   OrderClickError: "%prefix% &cAnother HeadBlock need to be found before this one &7(%name%&7)&c."
   HitClickMax: "%prefix% &cThis HeadBlock has reached its click limit &7(%count%)&c."
   InventoryFullReward: "%prefix% &cYou do not have the available space in your inventory to receive the reward."
+  NameCannotBeEmpty: "%prefix% &cHead name cannot be empty."
+  HeadRenamed: "%prefix% &aSuccessfully renamed head to &e%name%&a."
   ProgressCommand:
     - ""
     - "&aPlayer: &e&l%player%"
@@ -97,6 +99,9 @@ Chat:
     Loaded: "&aLoaded: &7"
     HitCount: "&aHit count: "
     OrderIndex: "&aOrder index: "
+
+Other:
+  NameNotSet: "&cName not set"
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &c&lOptions"
@@ -169,3 +174,4 @@ Help:
   Top: "&6/hb top <number>&8: &7&oDisplays the top leaderboard of <number> first players"
   Move: "&6/hb move&8: &7&oMove the HeadBlock to another location"
   Export: "&6/hb export database&8: &7&oExport the database to an SQL file with player data"
+  Rename: "&6/hb rename <name>&8: &7&oRename target head"

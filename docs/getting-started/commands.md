@@ -18,3 +18,4 @@
 | **/hb reload**    |           |    Any     |                                | headblocks.admin                                                      | Reload configuration and language file                                  |
 | **/hb move**      |     m     |   Player   | `--confirm / --cancel`         | headblocks.admin                                                      | Move the HeadBlock targeted to another location                         |
 | **/hb export**    |     e     |    Any     | `<database> <MySQL or SQLite>` | headblocks.admin                                                      | Export the database to an SQL file with player data                     |
+| **/hb rename**    |     r     |   Player   | `(name)`                       | headblocks.admin                                                      | Rename target head                                                      |

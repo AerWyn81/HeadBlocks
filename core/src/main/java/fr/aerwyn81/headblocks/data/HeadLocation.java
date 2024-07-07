@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class HeadLocation {
-    private final String name;
     private final UUID headUUID;
+    private String name;
 
     private String configWorldName;
     private int x;
@@ -47,6 +47,10 @@ public class HeadLocation {
         this.z = z;
 
         this.rewards = rewards;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getName() {

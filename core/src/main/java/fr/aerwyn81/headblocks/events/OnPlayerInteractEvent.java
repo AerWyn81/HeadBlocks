@@ -81,7 +81,7 @@ public class OnPlayerInteractEvent implements Listener {
             var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
 
             if (playerHeads.contains(headLocation.getUuid())) {
-                String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), LanguageService.getMessage("Messages.AlreadyClaimHead"));
+                String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, LanguageService.getMessage("Messages.AlreadyClaimHead"));
 
                 if (!message.trim().isEmpty()) {
                     player.sendMessage(message);
@@ -121,7 +121,7 @@ public class OnPlayerInteractEvent implements Listener {
                 if (HeadService.getChargedHeadLocations().stream()
                         .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
                         .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
-                    player.sendMessage(PlaceholdersService.parse(player.getName(), player.getUniqueId(),
+                    player.sendMessage(PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation,
                             LanguageService.getMessage("Messages.OrderClickError")
                                     .replaceAll("%name%", headLocation.getDisplayedName())));
                     return;
@@ -144,13 +144,13 @@ public class OnPlayerInteractEvent implements Listener {
             StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
 
             // Check and give reward if triggerRewards is used
-            var isRewardGiven = RewardService.giveReward(player, playerHeads);
+            var isRewardGiven = RewardService.giveReward(player, playerHeads, headLocation);
             if (!isRewardGiven)
                 return;
 
             // Give special head rewards
             for (var reward : headLocation.getRewards()) {
-                reward.execute(player);
+                reward.execute(player, headLocation);
             }
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
@@ -170,8 +170,8 @@ public class OnPlayerInteractEvent implements Listener {
 
         // Send title to the player if enabled
         if (ConfigService.isHeadClickTitleEnabled()) {
-            String firstLine = PlaceholdersService.parse(player.getName(), player.getUniqueId(), ConfigService.getHeadClickTitleFirstLine());
-            String subTitle = PlaceholdersService.parse(player.getName(), player.getUniqueId(), ConfigService.getHeadClickTitleSubTitle());
+            String firstLine = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHeadClickTitleFirstLine());
+            String subTitle = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHeadClickTitleSubTitle());
             int fadeIn = ConfigService.getHeadClickTitleFadeIn();
             int stay = ConfigService.getHeadClickTitleStay();
             int fadeOut = ConfigService.getHeadClickTitleFadeOut();

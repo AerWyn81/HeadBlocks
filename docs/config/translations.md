@@ -89,6 +89,8 @@ Messages:
   OrderClickError: "%prefix% &cAnother HeadBlock need to be found before this one &7(%name%&7)&c."
   HitClickMax: "%prefix% &cThis HeadBlock has reached its click limit &7(%count%)&c."
   InventoryFullReward: "%prefix% &cYou do not have the available space in your inventory to receive the reward."
+  NameCannotBeEmpty: "%prefix% &cHead name cannot be empty."
+  HeadRenamed: "%prefix% &aSuccessfully renamed head to &e%name%&a."
   ProgressCommand:
     - ""
     - "&aPlayer: &e&l%player%"
@@ -119,6 +121,19 @@ Chat:
   PreviousPage: "&7--------[&8<<<&7]-------"
   NextPage: "&7-------[&8>>>&7]--------"
   PageFooter: " &8[ &e%pageNumber%&7/&e%totalPage% &8] "
+  Info:
+    Name: "&aName: &7"
+    HoverCopyName: "&7&oClick to copy name"
+    Uuid: "&aUUID: &7"
+    HoverCopyUuid: "&7&oClick to copy UUID"
+    Location: "&aLocation: &7"
+    HoverLocationTp: "&7&oClick to teleport"
+    Loaded: "&aLoaded: &7"
+    HitCount: "&aHit count: "
+    OrderIndex: "&aOrder index: "
+
+Other:
+  NameNotSet: "Name not set"
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &c&lOptions"
@@ -127,8 +142,9 @@ Gui:
   PreviousPage: "&cPrevious page"
   NextPage: "&aNext page"
   Close: "&cClose"
-  Unnamed: "&cUnnamed"
-  Infinite: "&7Infinite"
+  Unnamed: "&7&oUnnamed"
+  Infinite: "&7&oInfinite"
+  NoOrder: "&7&oNo order"
   CloseLore:
     - "&7Close this interface"
   Back: "&cBack"
@@ -153,7 +169,7 @@ Gui:
     - "&e&lINFO:"
     - "&7 This interface allows you to configure"
     - "&7 the click counter on each heads"
-  OrderItemName: "&6%headName% &7(%world%, %y%, %y%, %z%)"
+  OrderItemName: "&6%headName% &7(%world%, %x%, %y%, %z%)"
   OrderItemLore:
     - ""
     - "&e&lINFO:"
@@ -163,7 +179,7 @@ Gui:
     - "&a&lRIGHT CLICK&8: &7Increase order position"
     - ""
     - "&7Current position: &e%position%"
-  CounterClickItemName: "&6%headName% &7(%world%, %y%, %y%, %z%)"
+  CounterClickItemName: "&6%headName% &7(%world%, %x%, %y%, %z%)"
   CounterClickItemLore:
     - ""
     - "&e&lINFO:"
@@ -190,4 +206,5 @@ Help:
   Top: "&6/hb top <number>&8: &7&oDisplays the top leaderboard of <number> first players"
   Move: "&6/hb move&8: &7&oMove the HeadBlock to another location"
   Export: "&6/hb export database&8: &7&oExport the database to an SQL file with player data"
+  Rename: "&6/hb rename <name>&8: &7&oRename target head"
 ```

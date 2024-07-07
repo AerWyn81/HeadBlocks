@@ -56,6 +56,8 @@ Messages:
   TargetBlockNotHead: "%prefix% &cLa HeadBlock ciblée n'est pas un HeadBlock."
   OrderClickError: "%prefix% &cUne autre HeadBlock est à trouver avant celle là (%name%&7)&c."
   InventoryFullReward: "%prefix% &cVous n'avez pas l'espace disponible dans votre inventaire pour recevoir la récompense."
+  NameCannotBeEmpty: "%prefix% &cle nom de la tête ne peut pas être vide."
+  HeadRenamed: "%prefix% &aLa tête a été renommé avec succès en &e%name%&a."
   ProgressCommand:
     - ""
     - "&aJoueur : &e&l%player%"
@@ -96,6 +98,9 @@ Chat:
     Loaded: "&aChargé : &7"
     HitCount: "&aNombre maximum de clic : "
     OrderIndex: "&aPosition : "
+
+Other:
+  NameNotSet: "&cNom non défini"
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &cOptions"
@@ -167,3 +172,4 @@ Help:
   Top: "&6/hb top <nombre> &8: &7&oAffiche le classement des <nombre> premiers joueurs"
   Move: "&6/hb move &8: &7&oDéplace le HeadBlock à une autre position"
   Export: "&6/hb export database &8: &7&oExporte la base de données vers un fichier SQL avec les données des joueurs"
+  Rename: "&6/hb rename <nom>&8: &7&oRenomme la tête ciblée"

@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.data.reward;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
@@ -55,12 +56,12 @@ public class Reward {
         }
     }
 
-    public void execute(Player player) {
+    public void execute(Player player, HeadLocation headLocation) {
         var plugin = HeadBlocks.getInstance();
 
         var parsedValue = "";
         try {
-            parsedValue = PlaceholdersService.parse(player.getName(), player.getUniqueId(), value);
+            parsedValue = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, value);
         } catch (Exception ex) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError executing head reward (" + value + "): " + ex.getMessage()));
         }
