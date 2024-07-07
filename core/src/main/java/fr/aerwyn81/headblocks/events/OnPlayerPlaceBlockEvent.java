@@ -6,10 +6,7 @@ import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.HologramService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
-import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
@@ -86,7 +83,11 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         HologramService.showNotFoundTo(player, headLocation);
 
-        ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
+        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
+            ParticlesUtils.spawn(headLocation, Particle.HAPPY_VILLAGER, 10, null, player);
+        } else {
+            ParticlesUtils.spawn(headLocation, Particle.valueOf("VILLAGER_HAPPY"), 10, null, player);
+        }
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headBlock.getLocation()));
 
