@@ -1,15 +1,16 @@
 package fr.aerwyn81.headblocks.utils.internal;
 
-import com.github.unldenis.hologram.HologramPool;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.services.ConfigService;
+import org.holoeasy.HoloEasy;
+import org.holoeasy.pool.IHologramPool;
 
 public class HoloLibSingleton {
-    private static HologramPool hologramPool;
+    private static IHologramPool hologramPool;
 
-    public static HologramPool getHologramPool() {
+    public static IHologramPool getHologramPool() {
         if (hologramPool == null) {
-            hologramPool = new HologramPool(HeadBlocks.getInstance(), ConfigService.getHologramParticlePlayerViewDistance());
+            hologramPool = HoloEasy.startPool(HeadBlocks.getInstance(), ConfigService.getHologramParticlePlayerViewDistance());
         }
 
         return hologramPool;
@@ -20,6 +21,6 @@ public class HoloLibSingleton {
             return;
         }
 
-        hologramPool.updateSpawnDistance(ConfigService.getHologramParticlePlayerViewDistance());
+        hologramPool = HoloEasy.startPool(HeadBlocks.getInstance(), ConfigService.getHologramParticlePlayerViewDistance());
     }
 }
