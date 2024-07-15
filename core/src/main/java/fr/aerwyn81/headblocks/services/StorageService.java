@@ -298,9 +298,14 @@ public class StorageService {
             return _cacheHeads.get(playerUuid);
 
         var headsUuid = database.getHeadsPlayer(playerUuid, pName);
-        if (!headsUuid.isEmpty())  {
-            _cacheHeads.get(playerUuid).addAll(headsUuid);
-        }
+        _cacheHeads.compute(playerUuid, (key, playerHeads) -> {
+            if (playerHeads == null) {
+                return headsUuid;
+            } else {
+                playerHeads.addAll(headsUuid);
+                return playerHeads;
+            }
+        });
 
         return headsUuid;
     }
