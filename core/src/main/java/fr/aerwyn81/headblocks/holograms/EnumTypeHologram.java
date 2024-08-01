@@ -6,7 +6,8 @@ public enum EnumTypeHologram {
     DEFAULT("DEFAULT"),
     DECENT("DecentHolograms"),
     HD("HD"),
-    CMI("CMI");
+    CMI("CMI"),
+    FH("FancyHolograms");
 
     private final String value;
 

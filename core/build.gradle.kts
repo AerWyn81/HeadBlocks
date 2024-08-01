@@ -16,7 +16,8 @@ dependencies {
     compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.4")
     compileOnly(files("../libs/CMILib1.4.7.16.jar"))
     compileOnly(files("../libs/CMI-9.7.3.2.jar"))
-    implementation(files("../libs/holoeasy-core-3.4.1.jar"))
+    compileOnly("de.oliver:FancyHolograms:2.3.0")
+    implementation(files("../libs/holoeasy-core-3.4.4.jar"))
     //implementation("com.github.unldenis.holoeasy:holoeasy-core:3.4.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.21")
     implementation("redis.clients:jedis:5.1.3")
@@ -56,7 +57,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib", "DecentHolograms", "CMI")
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "ProtocolLib", "DecentHolograms", "CMI", "FancyHolograms")
     version = rootProject.version.toString()
     website = "https://just2craft.fr"
 

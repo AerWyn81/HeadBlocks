@@ -51,4 +51,5 @@ public class HolographicDisplaysHologram implements IHologram {
     public boolean isVisible(Player player) {
         return hologram.getVisibilitySettings().isVisibleTo(player);
     }
+
 }

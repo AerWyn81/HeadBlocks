@@ -34,7 +34,7 @@ public class DefaultHologram implements IHologram {
 
     @Override
     public IHologram create(String name, Location location, List<String> lines, int displayRange) {
-        HoloLibSingleton.getHologramPool().registerHolograms(() -> hologram = hologram(location.subtract(0, 1.3, 0),
+        HoloLibSingleton.getHologramPool().registerHolograms(() -> hologram = hologram(location.subtract(0, 2.3, 0),
                 () -> lines.forEach(HologramBuilder::textline)));
 
         for (Player pl : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
@@ -53,4 +53,5 @@ public class DefaultHologram implements IHologram {
     public boolean isVisible(Player player) {
         return hologram.isShownFor(player);
     }
+
 }

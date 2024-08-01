@@ -51,4 +51,5 @@ public class CMIHologram implements IHologram {
     public boolean isVisible(Player player) {
         return false; // Not used
     }
+
 }

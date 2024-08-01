@@ -7,13 +7,13 @@ import fr.aerwyn81.headblocks.holograms.InternalHologram;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class HologramService {
@@ -22,6 +22,8 @@ public class HologramService {
     private static boolean enable;
     private static EnumTypeHologram enumTypeHologram;
 
+    private static BukkitTask hideHoloTooFarTask;
+
     static {
         enable = true;
     }
@@ -29,6 +31,12 @@ public class HologramService {
     public static void load() {
         foundHolograms = new HashMap<>();
         notFoundHolograms = new HashMap<>();
+
+        if (hideHoloTooFarTask != null) {
+            hideHoloTooFarTask.cancel();
+            Bukkit.getScheduler().cancelTask(hideHoloTooFarTask.getTaskId());
+            hideHoloTooFarTask = null;
+        }
 
         enable = ConfigService.isHologramsEnabled();
         if (!enable) {
@@ -47,9 +55,9 @@ public class HologramService {
         if ((enumTypeHologram == EnumTypeHologram.DECENT && !HeadBlocks.isDecentHologramsActive) ||
                 (enumTypeHologram == EnumTypeHologram.DEFAULT && !HeadBlocks.isProtocolLibActive) ||
                 (enumTypeHologram == EnumTypeHologram.HD && !HeadBlocks.isHolographicDisplaysActive) ||
+                (enumTypeHologram == EnumTypeHologram.FH && !HeadBlocks.isFancyHologramsActive) ||
                 (enumTypeHologram == EnumTypeHologram.CMI && !HeadBlocks.isCMIActive)) {
             enable = false;
-            return;
         }
 
         for (HeadLocation loc : HeadService.getHeadLocations()) {
@@ -57,6 +65,37 @@ public class HologramService {
                 createHolograms(loc.getLocation());
             }
         }
+
+        if (enumTypeHologram == EnumTypeHologram.FH) {
+            hideHoloTooFarTask = startTimerHideHoloTooFar();
+        }
+    }
+
+    private static BukkitTask startTimerHideHoloTooFar() {
+        return Bukkit.getScheduler().runTaskTimerAsynchronously(HeadBlocks.getInstance(), () -> {
+            var players = Collections.synchronizedCollection(Bukkit.getOnlinePlayers());
+
+            foundHolograms.values().forEach(h -> players.stream()
+                    .filter(h::isHologramVisible)
+                    .filter(p -> !isWithinVisibilityDistance(p, h.getLocation()))
+                    .forEach(h::hide));
+
+            notFoundHolograms.values().forEach(h -> players.stream()
+                    .filter(h::isHologramVisible)
+                    .filter(p -> !isWithinVisibilityDistance(p, h.getLocation()))
+                    .forEach(h::hide));
+        }, 0, 20L);
+    }
+
+    public static boolean isWithinVisibilityDistance(Player player, Location holoLoc) {
+        if (!player.getWorld().equals(holoLoc.getWorld())) {
+            return false;
+        }
+
+        int visibilityDistance = ConfigService.getHologramParticlePlayerViewDistance();
+        double distanceSquared = holoLoc.distanceSquared(player.getLocation());
+
+        return distanceSquared <= visibilityDistance * visibilityDistance;
     }
 
     public static void createHolograms(Location location) {

@@ -29,6 +29,7 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isProtocolLibActive;
     public static boolean isDecentHologramsActive;
     public static boolean isHolographicDisplaysActive;
+    public static boolean isFancyHologramsActive;
     public static boolean isCMIActive;
     public static boolean isHeadDatabaseActive;
 
@@ -80,6 +81,7 @@ public final class HeadBlocks extends JavaPlugin {
         isDecentHologramsActive = Bukkit.getPluginManager().isPluginEnabled("DecentHolograms");
         isHolographicDisplaysActive = Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays");
         isCMIActive = Bukkit.getPluginManager().isPluginEnabled("CMI");
+        isFancyHologramsActive = Bukkit.getPluginManager().isPluginEnabled("FancyHolograms");
 
         ConfigService.initialize(configFile);
 

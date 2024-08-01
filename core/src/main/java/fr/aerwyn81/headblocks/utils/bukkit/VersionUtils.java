@@ -4,33 +4,28 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 
+import java.util.Arrays;
+
 public enum VersionUtils {
-    v1_16_R1(1161),
-    v1_16_R2(1162),
-    v1_16_R3(1163),
-    v1_17_R1(1171),
-    v1_18_R1(1181),
-    v1_18_R2(1182),
-    v1_19_R1(1191),
-    v1_19_R2(1192),
-    v1_19_R3(1193),
-    v1_20_R1(1201),
+    v1_20_R1(120, 1201),
     v1_20_R2(1202),
     v1_20_R3(1203),
     v1_20_R4(1204),
     v1_20_R5(1205),
     v1_20_R6(1206),
-    v1_21_R1(1211);
+    v1_21_R1(121, 1211);
 
     private static VersionUtils version;
-    private final int versionId;
+    private final int[] versionId;
 
-    VersionUtils(int id) {
+    private final int currentVersionId;
+    VersionUtils(int... id) {
         this.versionId = id;
+        this.currentVersionId = id[0];
     }
 
     public int getVersionId() {
-        return versionId;
+        return currentVersionId;
     }
 
     public static VersionUtils getVersion() {
@@ -38,7 +33,7 @@ public enum VersionUtils {
             return version;
         }
         try {
-            version = extractFromString(Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3]);
+            version = extractFromString(Bukkit.getBukkitVersion().split("\\.")[3]);
         } catch (Exception e) {
             try {
                 version = extractFromString(Bukkit.getServer().getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
@@ -53,7 +48,7 @@ public enum VersionUtils {
 
     private static VersionUtils extractFromString(String ver) throws IllegalArgumentException {
         for (VersionUtils version : VersionUtils.values())
-            if (ver.equals(String.valueOf(version.versionId)))
+            if (Arrays.stream(version.versionId).anyMatch(v -> ver.equals(String.valueOf(v))))
                 return version;
 
         throw new RuntimeException("Unknown version " + ver + ". Please report to developer. HeadBlocks will use latest.");

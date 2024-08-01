@@ -1,9 +1,6 @@
 package fr.aerwyn81.headblocks.holograms;
 
-import fr.aerwyn81.headblocks.holograms.types.CMIHologram;
-import fr.aerwyn81.headblocks.holograms.types.DecentHologram;
-import fr.aerwyn81.headblocks.holograms.types.DefaultHologram;
-import fr.aerwyn81.headblocks.holograms.types.HolographicDisplaysHologram;
+import fr.aerwyn81.headblocks.holograms.types.*;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -28,6 +25,9 @@ public class InternalHologram {
                 break;
             case DEFAULT:
                 hologram = new DefaultHologram();
+                break;
+            case FH:
+                hologram = new FHHologram();
                 break;
             default:
                 hologram = null; //todo
