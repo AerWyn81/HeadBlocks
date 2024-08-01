@@ -14,4 +14,4 @@ download() {
 
 download "$1" "CMI-9.7.3.2.jar"
 download "$2" "CMILib1.4.7.16.jar"
-download "$3" "holoeasy-core-3.4.1.jar"
+download "$3" "holoeasy-core-3.4.4.jar"
