@@ -7,18 +7,19 @@ import org.bukkit.Bukkit;
 import java.util.Arrays;
 
 public enum VersionUtils {
-    v1_20_R1(120, 1201),
+    v1_20_R1(1201, 120),
     v1_20_R2(1202),
     v1_20_R3(1203),
     v1_20_R4(1204),
     v1_20_R5(1205),
     v1_20_R6(1206),
-    v1_21_R1(121, 1211);
+    v1_21_R1(1211, 121);
 
     private static VersionUtils version;
     private final int[] versionId;
 
     private final int currentVersionId;
+
     VersionUtils(int... id) {
         this.versionId = id;
         this.currentVersionId = id[0];
@@ -32,15 +33,12 @@ public enum VersionUtils {
         if (version != null) {
             return version;
         }
+
         try {
-            version = extractFromString(Bukkit.getBukkitVersion().split("\\.")[3]);
+            version = extractFromString(Bukkit.getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
         } catch (Exception e) {
-            try {
-                version = extractFromString(Bukkit.getServer().getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
-            } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&c" + ex.getMessage()));
-                version = v1_21_R1;
-            }
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError extracting server version" + e.getMessage() + ". Using " + v1_21_R1.name()));
+            version = v1_21_R1;
         }
 
         return version;
