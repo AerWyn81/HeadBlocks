@@ -71,6 +71,11 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         }
 
         var headTexture = HeadUtils.getHeadTexture(e.getItemInHand());
+        if (headTexture == null) {
+            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError, head texture not resolved when trying to save the head for player " + player.getName()));
+            return;
+        }
 
         UUID headUuid;
         try {

@@ -413,4 +413,16 @@ public class ConfigService {
     public static boolean isPlaceholdersLeaderboardUseNickname() {
         return config.getBoolean("placeholders.leaderboard.nickname", false);
     }
+
+    public static boolean isSpinEnabled() {
+        return config.getBoolean("spin.enabled", true);
+    }
+
+    public static int getSpinSpeed() {
+        return config.getInt("spin.speed", 1);
+    }
+
+    public static boolean isSpinLinked() {
+        return config.getBoolean("spin.linked", true);
+    }
 }

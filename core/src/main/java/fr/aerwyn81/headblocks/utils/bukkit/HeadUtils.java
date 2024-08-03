@@ -1,22 +1,50 @@
 package fr.aerwyn81.headblocks.utils.bukkit;
 
+import com.google.gson.JsonParser;
 import de.tr7zw.changeme.nbtapi.NBT;
-import de.tr7zw.changeme.nbtapi.NBTCompound;
 import de.tr7zw.changeme.nbtapi.NBTItem;
-import de.tr7zw.changeme.nbtapi.NBTListCompound;
 import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.services.HeadService;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.Skull;
+import org.bukkit.block.data.Rotatable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.UUID;
+import java.io.StringReader;
+import java.net.URI;
+import java.util.*;
 
 public class HeadUtils {
+
+    public static final HashMap<Integer, BlockFace> skullRotationList;
+
+    static {
+        skullRotationList = new HashMap<>();
+        skullRotationList.put(0, BlockFace.NORTH);
+        skullRotationList.put(1, BlockFace.NORTH_NORTH_EAST);
+        skullRotationList.put(2, BlockFace.NORTH_EAST);
+        skullRotationList.put(3, BlockFace.EAST_NORTH_EAST);
+        skullRotationList.put(4, BlockFace.EAST);
+        skullRotationList.put(5, BlockFace.EAST_SOUTH_EAST);
+        skullRotationList.put(6, BlockFace.SOUTH_EAST);
+        skullRotationList.put(7, BlockFace.SOUTH_SOUTH_EAST);
+        skullRotationList.put(8, BlockFace.SOUTH);
+        skullRotationList.put(9, BlockFace.SOUTH_SOUTH_WEST);
+        skullRotationList.put(10, BlockFace.SOUTH_WEST);
+        skullRotationList.put(11, BlockFace.WEST_SOUTH_WEST);
+        skullRotationList.put(12, BlockFace.WEST);
+        skullRotationList.put(13, BlockFace.WEST_NORTH_WEST);
+        skullRotationList.put(14, BlockFace.NORTH_WEST);
+        skullRotationList.put(15, BlockFace.NORTH_NORTH_WEST);
+    }
 
     public static HBHead createHead(HBHead head, String texture) {
         head.setItemStack(applyTextureToItemStack(head.getItemStack(), texture));
@@ -24,8 +52,7 @@ public class HeadUtils {
     }
 
     public static ItemStack applyTextureToItemStack(ItemStack itemStack, String texture) {
-        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4))
-        {
+        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
             NBT.modifyComponents(itemStack, nbt -> {
                 ReadWriteNBT profileCompound = nbt.getOrCreateCompound("minecraft:profile");
                 profileCompound.setUUID("id", UUID.randomUUID());
@@ -50,6 +77,27 @@ public class HeadUtils {
         });
 
         return itemStack;
+    }
+
+    public static void applyTextureToBlock(Block block, String texture) {
+        var json = JsonParser.parseReader(new StringReader(new String(Base64.getDecoder().decode(texture)))).getAsJsonObject();
+        var skin = json.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
+
+        var profile = Bukkit.createPlayerProfile(UUID.randomUUID());
+
+        try {
+            profile.getTextures().setSkin(new URI(skin).toURL());
+        } catch (Exception e) {
+
+        }
+
+        if (block.getType() != Material.PLAYER_HEAD) {
+            block.setType(Material.PLAYER_HEAD);
+        }
+
+        var skull = (Skull) block.getState();
+        skull.setOwnerProfile(profile);
+        skull.update();
     }
 
     public static String getHeadTexture(ItemStack head) {
@@ -80,5 +128,16 @@ public class HeadUtils {
 
     private static boolean isValidItemStack(ItemStack i) {
         return i != null && i.getType() != Material.AIR;
+    }
+
+    public static void rotateHead(Block block, BlockFace face) {
+        var blockData = block.getBlockData();
+        ((Rotatable) blockData).setRotation(face);
+        block.setBlockData(blockData);
+    }
+
+    public static BlockFace getRotation(Block block) {
+        var blockData = block.getBlockData();
+        return ((Rotatable) blockData).getRotation();
     }
 }

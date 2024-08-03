@@ -36,6 +36,10 @@ public class GlobalTask extends BukkitRunnable {
             if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
                 continue;
 
+            if (ConfigService.isSpinEnabled() && ConfigService.isSpinLinked()) {
+                HeadService.rotateHead(headLocation);
+            }
+
             List<Player> players = playersInRange(location);
 
             players.forEach(p -> {

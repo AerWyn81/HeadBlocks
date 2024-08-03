@@ -187,6 +187,14 @@ floatingParticles:
       - 0,255,50
     amount: 3
 
+# Spin mode, heads will spin forever
+# Set linked to false will not turn heads identically
+# If linked is true, the speed used is configurable above: internalTask.delay
+spin:
+  enabled: false
+  speed: 20
+  linked: true
+
 # If true, when a Headblocks is destroyed, it will delete all player data related to it
 # If false, Headblocks destroyed will remain in database. There's no purge command atm
 shouldResetPlayerData: true

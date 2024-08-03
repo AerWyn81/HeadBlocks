@@ -1,6 +1,6 @@
 # Config.yml
 
-Each configuration is explained in detail below:
+Each configuration is explained in the detail below:
 
 #### Language
 
@@ -435,6 +435,18 @@ It is possible to add holograms over the head and show it if the player has foun
 
 !> Placeholders aren't supported
 
+#### Spin mode
+```
+spin:
+  enabled: false
+  speed: 20
+  linked: true
+````
+By activating spin mode, the heads turn on themselves.  
+If `linked` mode is enabled, heads will rotate identically,
+according to the delay configured in the section below `internalTask.delay`.  
+If `linked` mode is disabled, heads will rotate with a delay (five ticks between) at a configurable speed according to the value defined in `speed`.
+
 #### Internal Task
 
 ```
@@ -443,7 +455,7 @@ internalTask:
   hologramParticlePlayerViewDistance: 16
 ```
 
-This section affects the internal timer of the plugin. You can modify these values to improve the performance but it may affect the plugin's operation.
+This section affects the internal timer of the plugin. You can modify these values to improve the performance, but it may affect the plugin's operation.
 - delay: in ticks when plugin will check for player around a head
 - hologramParticlePlayerViewDistance: view distance for hologram and particles displayed to the player
 
@@ -451,8 +463,11 @@ This section affects the internal timer of the plugin. You can modify these valu
 
 With the `/hb options` command, you can set additional parameters for the heads easily with a GUI. You have two choices:
 - **Order:**  
-  Order allows you to define an order in which the player will have to click on the heads in order to complete the event. In order to have clear instructions for your players, once the order is defined, you have to go in the configuration file `locations.yml` and name the heads. The name will appear in the chat when a player clicks on a head if the order is incorrect. It is also possible to put several heads at the same order level. **The order is defined as follows: the order in the GUI is authoritative, the smaller the value, the higher the priority.**
+  Order allows you to define an order in which the player will have to click on the heads to complete the event. In order to have clear instructions for your players, once the order is defined, you have to go in the configuration file `locations.yml` and name the heads. The name will appear in the chat when a player clicks on a head if the order is incorrect. It is also possible to put several heads at the same order level. **The order is defined as follows: the order in the GUI is authoritative, the smaller the value, the higher the priority.**
 
 
 - **ClickCounter:**  
-  The clickCounter allows to define a maximum number of clicks on the head. It is global. If the number is reached, the head is no longer clickable and the rewards are not distributed. If you increase the number, it will be possible for your players to click on it again.
+  The clickCounter allows defining a maximum number of clicks on the head.
+  It is global.
+  If the number is reached, the head is no longer clickable and the rewards are not distributed.
+  If you increase the number, it will be possible for your players to click on it again.

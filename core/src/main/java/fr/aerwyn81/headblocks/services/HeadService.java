@@ -25,6 +25,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -44,6 +45,8 @@ public class HeadService {
     private static HashMap<UUID, HeadMove> headMoves;
     private static ArrayList<HeadLocation> headLocations;
 
+    private static HashMap<UUID, BukkitTask> tasksHeadSpin;
+
     public static String HB_KEY = "HB_HEAD";
 
     public static void initialize(File file) {
@@ -52,6 +55,7 @@ public class HeadService {
         heads = new ArrayList<>();
         headLocations = new ArrayList<>();
         headMoves = new HashMap<>();
+        tasksHeadSpin = new HashMap<>();
 
         load();
     }
@@ -62,6 +66,7 @@ public class HeadService {
         heads.clear();
         headLocations.clear();
         headMoves.clear();
+        tasksHeadSpin.values().forEach(BukkitTask::cancel);
 
         loadHeads();
         loadLocations();
@@ -85,7 +90,10 @@ public class HeadService {
             return;
         }
 
-        locations.getKeys(false).forEach(uuid -> {
+        var i = 0;
+        for (String uuid : locations.getKeys(false)) {
+            i++;
+
             ConfigurationSection configSection = config.getConfigurationSection("locations." + uuid);
 
             if (configSection != null) {
@@ -98,18 +106,31 @@ public class HeadService {
                     }
                 } catch (Exception ex) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
-                    return;
+                    continue;
                 }
 
                 try {
-                    headLocations.add(HeadLocation.fromConfig(config, headUuid));
+                    var headLoc = HeadLocation.fromConfig(config, headUuid);
+                    addHeadToSpin(headLoc, i);
+
+                    headLocations.add(headLoc);
                 } catch (Exception e) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head &e" + uuid + "&c. Cause: &e" + e.getMessage()));
                 }
             }
-        });
+        }
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded &e" + headLocations.size() + " locations!"));
+    }
+
+    private static void addHeadToSpin(HeadLocation headLoc, int offset) {
+        if (!ConfigService.isSpinEnabled() || ConfigService.isSpinLinked()) {
+            return;
+        }
+
+        var task = Bukkit.getScheduler().runTaskTimer(HeadBlocks.getInstance(),
+                () -> rotateHead(headLoc), 5L * offset, ConfigService.getSpinSpeed());
+        tasksHeadSpin.put(headLoc.getUuid(), task);
     }
 
     public static UUID saveHeadLocation(Location location, String texture) throws InternalException {
@@ -125,6 +146,8 @@ public class HeadService {
         saveHeadInConfig(headLocation);
 
         headLocations.add(headLocation);
+        addHeadToSpin(headLocation, 1);
+
         return uniqueUuid;
     }
 
@@ -149,6 +172,11 @@ public class HeadService {
             saveConfig();
 
             headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
+            var spinTask = tasksHeadSpin.get(headLocation.getUuid());
+            if (spinTask != null) {
+                spinTask.cancel();
+                tasksHeadSpin.remove(headLocation.getUuid());
+            }
         }
     }
 
@@ -243,8 +271,7 @@ public class HeadService {
         }
 
         var headsHdb = heads.stream()
-                .filter(HBHeadHDB.class::isInstance)
-                .map(HBHeadHDB.class::cast).count();
+                .filter(HBHeadHDB.class::isInstance).count();
 
         HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded &e" + (Math.abs(heads.size() - headsHdb)) + " &8&o(+" + headsHdb + " HeadDatabase heads) &aconfiguration heads!"));
     }
@@ -309,5 +336,22 @@ public class HeadService {
 
         HologramService.removeHolograms(oldBlock.getLocation());
         HologramService.createHolograms(newBlock.getLocation());
+
+        addHeadToSpin(headLocation,1);
+    }
+
+    public static void rotateHead(HeadLocation headLocation) {
+        var block = headLocation.getLocation().getBlock();
+        if (block.getType() != Material.PLAYER_HEAD) {
+            return;
+        }
+
+        var currentRotation = InternalUtils.getKeyByValue(HeadUtils.skullRotationList, HeadUtils.getRotation(block));
+        if (currentRotation == null) {
+            currentRotation = 0;
+        }
+
+        var rotation = HeadUtils.skullRotationList.get((currentRotation + 1) % HeadUtils.skullRotationList.size());
+        HeadUtils.rotateHead(block, rotation);
     }
 }
