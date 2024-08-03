@@ -1,25 +1,20 @@
 package fr.aerwyn81.headblocks.utils.bukkit;
 
-import com.google.gson.JsonParser;
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.services.HeadService;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Skull;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.io.StringReader;
-import java.net.URI;
 import java.util.*;
 
 public class HeadUtils {
@@ -77,27 +72,6 @@ public class HeadUtils {
         });
 
         return itemStack;
-    }
-
-    public static void applyTextureToBlock(Block block, String texture) {
-        var json = JsonParser.parseReader(new StringReader(new String(Base64.getDecoder().decode(texture)))).getAsJsonObject();
-        var skin = json.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
-
-        var profile = Bukkit.createPlayerProfile(UUID.randomUUID());
-
-        try {
-            profile.getTextures().setSkin(new URI(skin).toURL());
-        } catch (Exception e) {
-
-        }
-
-        if (block.getType() != Material.PLAYER_HEAD) {
-            block.setType(Material.PLAYER_HEAD);
-        }
-
-        var skull = (Skull) block.getState();
-        skull.setOwnerProfile(profile);
-        skull.update();
     }
 
     public static String getHeadTexture(ItemStack head) {
