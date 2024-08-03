@@ -164,6 +164,14 @@ public class ConfigService {
         return config.getStringList("headClick.commands");
     }
 
+    public static boolean isHeadClickEjectEnabled() {
+        return config.getBoolean("headClick.pushBack.enabled", false);
+    }
+
+    public static double getHeadClickEjectPower() {
+        return config.getDouble("headClick.pushBack.power", 1D);
+    }
+
     public static boolean shouldResetPlayerData() {
         return config.getBoolean("shouldResetPlayerData", true);
     }

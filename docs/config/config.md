@@ -391,13 +391,24 @@ It is possible to execute a command list when a player clicks on the head.
 You can also define a number of slots required to execute the command with `slotsRequired`,
 and you can randomize the commands executed.
 
-?> Hex colors (format: {#ffffff}), placeholders and centering (use: {center}) are supported
+?> Hex colors (format: {#ffffff}), placeholders, and centering (use: {center}) are supported
+
+#### Headclick - Pushback
+
+```
+headClick:
+  pushBack:
+    enabled: false
+    power: 1
+```
+
+Allows setting the pushback power on clicking the head when it has already been found.
 
 #### Holograms
 
 ```
 holograms:
-  plugin: DEFAULT (or DECENT for DecentHolograms or HD for HolographicDisplays or CMI for CMI)
+  plugin: DEFAULT
   heightAboveHead: 0.4
   found:
     enabled: true
@@ -410,7 +421,12 @@ holograms:
 ```
 
 It is possible to add holograms over the head and show it if the player has found the head or not. Can be configurable by:
-- plugin: you can specify some other plugin to handle holograms like DecentHolograms or CMI
+- plugin: 
+  - DEFAULT - (internal require ProtocolLib)
+  - DECENT - DecentHolograms
+  - HD - HolographicDisplays
+  - CMI - CMI
+  - FH - FancyHolograms
 - heightAboveHead: height from the top of head and bottom of the last line of the hologram (support decimals)
 - enabled: set enabled or disabled found or noFound hologram
 - lines: lines displayed in the hologram

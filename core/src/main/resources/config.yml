@@ -133,14 +133,19 @@ headClick:
   # Run the command only if the player has enough space in inventory
   slotsRequired: -1
 
+  # If enabled and when a head is already found, the player will be push back on click
+  pushBack:
+    enabled: false
+    power: 1.0
+
 # Holograms displayed above heads
 # Placeholders are not supported
-# Plugins supported :
-# DECENT : DecentHolograms
-# HD : HolographicDisplays
-# CMI : CMI
-# FH : FancyHolograms
-# DEFAULT : Internal need ProtocolLib
+# Plugins supported:
+# DECENT: DecentHolograms
+# HD: HolographicDisplays
+# CMI: CMI
+# FH: FancyHolograms
+# DEFAULT: Internal need ProtocolLib
 holograms:
   plugin: DEFAULT
   heightAboveHead: 0.4

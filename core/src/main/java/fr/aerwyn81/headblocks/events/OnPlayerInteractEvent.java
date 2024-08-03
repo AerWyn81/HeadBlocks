@@ -18,6 +18,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +86,14 @@ public class OnPlayerInteractEvent implements Listener {
 
                 if (!message.trim().isEmpty()) {
                     player.sendMessage(message);
+                }
+
+                if (ConfigService.isHeadClickEjectEnabled()) {
+                    var power = ConfigService.getHeadClickEjectPower();
+
+                    var oppositeDir = player.getLocation().getDirection().multiply(-1).normalize();
+                    oppositeDir = oppositeDir.multiply(power).setY(0.3);
+                    player.setVelocity(oppositeDir);
                 }
 
                 // Already own song if not empty
