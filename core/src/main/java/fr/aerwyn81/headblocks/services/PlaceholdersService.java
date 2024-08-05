@@ -34,10 +34,6 @@ public class PlaceholdersService {
         return MessageUtils.centerMessage(message);
     }
 
-    public static String[] parse(Player player, List<String> messages) {
-        return parse(player, null, messages);
-    }
-
     public static String[] parse(Player player, HeadLocation headLocation, List<String> messages) {
         List<String> msgs = new ArrayList<>();
 

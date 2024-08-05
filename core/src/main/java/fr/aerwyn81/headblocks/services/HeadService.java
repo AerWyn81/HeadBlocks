@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class HeadService {
@@ -76,7 +75,7 @@ public class HeadService {
         try {
             config.save(configFile);
         } catch (IOException e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Cannot save the config file to {0}", configFile.getName());
+            HeadBlocks.log.sendMessage("&cCannot save the config file to {0}", configFile.getName());
         }
     }
 

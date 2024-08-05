@@ -14,16 +14,17 @@ dependencies {
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.8")
     compileOnly("me.filoghost.holographicdisplays:holographicdisplays-api:3.0.4")
+    compileOnly("de.oliver:FancyHolograms:2.3.1")
     compileOnly(files("../libs/CMILib1.4.7.16.jar"))
     compileOnly(files("../libs/CMI-9.7.3.2.jar"))
-    compileOnly("de.oliver:FancyHolograms:2.3.0")
-    implementation(files("../libs/holoeasy-core-3.4.4.jar"))
-    //implementation("com.github.unldenis.holoeasy:holoeasy-core:3.4.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.21")
     implementation("redis.clients:jedis:5.1.3")
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("de.tr7zw:item-nbt-api:2.13.1")
+    implementation(files("../libs/holoeasy-core-3.4.4.jar"))
+    implementation("net.kyori:adventure-api:4.17.0")
+    implementation("net.kyori:adventure-platform-bukkit:4.3.3")
 }
 
 tasks {
@@ -38,7 +39,19 @@ tasks {
     }
 
     shadowJar {
-        relocate("de.tr7zw.changeme.nbtapi", "fr.aerwyn81.headblocks.bukkit.shaded.nbtapi")
+        relocate("kotlin", "fr.aerwyn81.libs.kotlin")
+        relocate("com.google.gson", "fr.aerwyn81.libs.gson")
+        relocate("com.jetbrains.annotations", "fr.headblocks.libs.gson")
+        relocate("redis.clients.jedis", "fr.aerwyn81.libs.jedis")
+        relocate("com.zaxxer", "fr.aerwyn81.libs.hikariCP")
+        relocate("org.apache.commons", "fr.aerwyn81.libs.commons-lang3")
+        relocate("de.tr7zw.changeme.nbtapi", "fr.aerwyn81.libs.nbtapi")
+        relocate("org.lushplugins", "fr.aerwyn81.libs.chatColorHandler")
+        relocate("org.holoeasy", "fr.aerwyn81.libs.holoEasy")
+        relocate("org.jetbrains.annotations", "fr.aerwyn81.libs.jetbrains-annotations")
+        relocate("org.json", "fr.aerwyn81.libs.json")
+        relocate("org.slf4j", "fr.aerwyn81.libs.slf4j")
+        relocate("net.kyori", "fr.aerwyn81.libs.adventure-api")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")

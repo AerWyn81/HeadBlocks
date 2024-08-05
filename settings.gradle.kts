@@ -1,2 +1,3 @@
-include("HeadBlocks")
+rootProject.name = "HeadBlocks"
+
 include("core")
