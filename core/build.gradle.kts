@@ -21,7 +21,7 @@ dependencies {
     implementation("redis.clients:jedis:5.1.3")
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.apache.commons:commons-lang3:3.12.0")
-    implementation("de.tr7zw:item-nbt-api:2.13.1")
+    implementation("de.tr7zw:item-nbt-api:2.13.2")
     implementation(files("../libs/holoeasy-core-3.4.4.jar"))
     implementation("net.kyori:adventure-api:4.17.0")
     implementation("net.kyori:adventure-platform-bukkit:4.3.3")

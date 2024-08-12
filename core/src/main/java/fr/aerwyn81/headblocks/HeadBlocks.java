@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks;
 
+import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.events.*;
@@ -41,11 +42,7 @@ public final class HeadBlocks extends JavaPlugin {
         instance = this;
         log = Bukkit.getConsoleSender();
 
-        MinecraftVersion.disableBStats();
-
-        try {
-            Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
-        } catch (Exception ignored) { }
+        initializeExternals();
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
 
@@ -57,7 +54,7 @@ public final class HeadBlocks extends JavaPlugin {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads", "headsTheme"));
         } catch (IOException e) {
             log.sendMessage(MessageUtils.colorize("&cError while loading config file: " + e.getMessage()));
-            this.setEnabled(false);
+            getPluginLoader().disablePlugin(this);
             return;
         }
         reloadConfig();
@@ -66,7 +63,7 @@ public final class HeadBlocks extends JavaPlugin {
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
             log.sendMessage(MessageUtils.colorize("&cHeadBlocks does not support your Minecraft Server version: " + VersionUtils.getVersion()));
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
-            this.setEnabled(false);
+            getPluginLoader().disablePlugin(this);
             return;
         }
 
@@ -116,6 +113,20 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(), this);
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
+    }
+
+    private void initializeExternals() {
+        if (!NBT.preloadApi()) {
+            log.sendMessage(MessageUtils.colorize("&cNBT-API wasn't initialized properly, disabling the plugin..."));
+            getPluginLoader().disablePlugin(this);
+            return;
+        }
+
+        MinecraftVersion.disableBStats();
+
+        try {
+            Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
+        } catch (Exception ignored) { }
     }
 
     @Override
