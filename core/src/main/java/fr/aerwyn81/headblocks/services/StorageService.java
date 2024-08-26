@@ -283,8 +283,6 @@ public class StorageService {
     }
 
     public static void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
-        invalidateCachePlayer(playerUuid);
-
         storage.addHead(playerUuid, headUuid);
         database.addHead(playerUuid, headUuid);
     }
@@ -431,7 +429,7 @@ public class StorageService {
         return database.getPlayerByName(pName);
     }
 
-    private static void invalidateCachePlayer(UUID playerUuid) {
+    public static void invalidateCachePlayer(UUID playerUuid) {
         _cacheTop.clear();
 
         if (!_cacheHeads.containsKey(playerUuid))

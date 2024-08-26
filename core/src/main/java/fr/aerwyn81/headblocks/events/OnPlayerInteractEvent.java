@@ -161,6 +161,9 @@ public class OnPlayerInteractEvent implements Listener {
             for (var reward : headLocation.getRewards()) {
                 reward.execute(player, headLocation);
             }
+
+            // Invalidate cache after give reward else tiered rewards is not give
+            StorageService.invalidateCachePlayer(player.getUniqueId());
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to save a head found by " + player.getName() + " from the storage: " + ex.getMessage()));
