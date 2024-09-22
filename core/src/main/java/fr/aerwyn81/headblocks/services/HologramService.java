@@ -63,39 +63,8 @@ public class HologramService {
                 createHolograms(loc.getLocation());
             }
         }
-
-        if (enumTypeHologram == EnumTypeHologram.FH || enumTypeHologram == EnumTypeHologram.DEFAULT) {
-            hideHoloTooFarTask = startTimerHideHoloTooFar();
-        }
     }
-
-    private static BukkitTask startTimerHideHoloTooFar() {
-        return Bukkit.getScheduler().runTaskTimerAsynchronously(HeadBlocks.getInstance(), () -> {
-            var players = Collections.synchronizedCollection(Bukkit.getOnlinePlayers());
-
-            foundHolograms.values().forEach(h -> players.stream()
-                    .filter(h::isHologramVisible)
-                    .filter(p -> !isWithinVisibilityDistance(p, h.getLocation()))
-                    .forEach(h::hide));
-
-            notFoundHolograms.values().forEach(h -> players.stream()
-                    .filter(h::isHologramVisible)
-                    .filter(p -> !isWithinVisibilityDistance(p, h.getLocation()))
-                    .forEach(h::hide));
-        }, 0, 20L);
-    }
-
-    public static boolean isWithinVisibilityDistance(Player player, Location holoLoc) {
-        if (!player.getWorld().equals(holoLoc.getWorld())) {
-            return false;
-        }
-
-        int visibilityDistance = ConfigService.getHologramParticlePlayerViewDistance();
-        double distanceSquared = holoLoc.distanceSquared(player.getLocation());
-
-        return distanceSquared <= visibilityDistance * visibilityDistance;
-    }
-
+    
     public static void createHolograms(Location location) {
         if (!enable) {
             if (enumTypeHologram == EnumTypeHologram.DEFAULT) {
@@ -134,6 +103,10 @@ public class HologramService {
             return;
         }
 
+        if (!ConfigService.isHologramsFoundEnabled()) {
+            return;
+        }
+
         var holoFound = getHologramByLocation(foundHolograms, location);
         if (holoFound != null) {
             if (!holoFound.isSupportedPerPlayerView() || !holoFound.isHologramVisible(player)) {
@@ -154,6 +127,10 @@ public class HologramService {
             return;
         }
 
+        if (!ConfigService.isHologramsNotFoundEnabled()) {
+            return;
+        }
+
         var holoFound = getHologramByLocation(foundHolograms, location);
         if (holoFound != null) {
             if (!holoFound.isSupportedPerPlayerView() || holoFound.isHologramVisible(player)) {
@@ -165,6 +142,26 @@ public class HologramService {
         if (holoNotFound != null) {
             if (!holoNotFound.isSupportedPerPlayerView() || !holoNotFound.isHologramVisible(player)) {
                 holoNotFound.show(player);
+            }
+        }
+    }
+
+    public static void hideHolograms(HeadLocation headLocation, Player player) {
+        if (!enable) {
+            return;
+        }
+
+        if (ConfigService.isHologramsFoundEnabled()) {
+            var holoFound = getHologramByLocation(foundHolograms, headLocation.getLocation());
+            if (holoFound != null && holoFound.isHologramVisible(player)) {
+                holoFound.hide(player);
+            }
+        }
+
+        if (ConfigService.isHologramsNotFoundEnabled()) {
+            var holoNotFound = getHologramByLocation(notFoundHolograms, headLocation.getLocation());
+            if (holoNotFound != null && holoNotFound.isHologramVisible(player)) {
+                holoNotFound.hide(player);
             }
         }
     }

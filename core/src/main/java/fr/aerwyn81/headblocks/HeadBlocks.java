@@ -90,8 +90,7 @@ public final class HeadBlocks extends JavaPlugin {
         HologramService.load();
         GuiService.initialize();
 
-        this.globalTask = new GlobalTask();
-        globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
+        startInternalTaskTimer();
 
         if (isHeadDatabaseActive) {
             this.headDatabaseHook = new HeadDatabaseHook();
@@ -134,6 +133,21 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &cdisabled!"));
+    }
+
+    public void startInternalTaskTimer() {
+        if (this.globalTask != null) {
+            this.globalTask.cancel();
+            this.globalTask = null;
+        }
+
+        this.globalTask = new GlobalTask();
+
+        if (!ConfigService.isHologramsEnabled() && !ConfigService.isParticlesEnabled()) {
+            return;
+        }
+
+        globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
     }
 
     public static HeadBlocks getInstance() {

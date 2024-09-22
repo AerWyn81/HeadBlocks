@@ -9,69 +9,55 @@ import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 public class GlobalTask extends BukkitRunnable {
 
+    private static final int CHUNK_SIZE = 16;
+    private static int VIEW_RADIUS_CHUNKS = 1;
+
+    public GlobalTask() {
+        VIEW_RADIUS_CHUNKS = (int) Math.ceil(ConfigService.getHologramParticlePlayerViewDistance() / (double)CHUNK_SIZE);
+    }
+
     @Override
     public void run() {
-        if (HeadService.getChargedHeadLocations().isEmpty()) {
+        if (HeadBlocks.isReloadInProgress)
             return;
-        }
 
-        if (!ConfigService.isHologramsEnabled() && !ConfigService.isParticlesEnabled()) {
-            return;
-        }
-
-        for (HeadLocation headLocation : HeadService.getChargedHeadLocations()) {
-            Location location = headLocation.getLocation();
-
+        HeadService.getChargedHeadLocations().forEach(headLocation -> {
+            var location = headLocation.getLocation();
             if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
-                continue;
+                return;
 
             if (ConfigService.isSpinEnabled() && ConfigService.isSpinLinked()) {
                 HeadService.rotateHead(headLocation);
             }
 
-            List<Player> players = playersInRange(location);
-
-            players.forEach(p -> {
-                try {
-                    if (StorageService.hasHead(p.getUniqueId(), headLocation.getUuid())) {
-                        if (ConfigService.isParticlesFoundEnabled()) {
-                            spawnParticles(location, Particle.valueOf(ConfigService.getParticlesFoundType()),
-                                    ConfigService.getParticlesFoundAmount(), ConfigService.getParticlesFoundColors(), p);
-                        }
-
-                        if (ConfigService.isHologramsFoundEnabled()) {
-                            HologramService.showFoundTo(p, location);
-                        }
-                    } else {
-                        if (ConfigService.isParticlesNotFoundEnabled()) {
-                            spawnParticles(location, Particle.valueOf(ConfigService.getParticlesNotFoundType()),
-                                    ConfigService.getParticlesNotFoundAmount(), ConfigService.getParticlesNotFoundColors(), p);
-                        }
-
-                        if (ConfigService.isHologramsNotFoundEnabled()) {
-                            HologramService.showNotFoundTo(p, location);
-                        }
-                    }
-                } catch (InternalException ex) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to communicate with the storage : " + ex.getMessage()));
-                    this.cancel();
-                }
-            });
-        }
+            handleHologramAndParticles(headLocation);
+        });
     }
 
-    private void spawnParticles(Location location, Particle particle, int amount, ArrayList<String> colors, Player... players) {
+
+    private void spawnParticles(Location location, boolean isFound, Player... players) {
+        if (isFound ? !ConfigService.isParticlesFoundEnabled() : !ConfigService.isParticlesNotFoundEnabled())
+            return;
+
+        var particle = isFound ? Particle.valueOf(ConfigService.getParticlesFoundType())
+                : Particle.valueOf(ConfigService.getParticlesNotFoundType());
+
+        var amount = isFound ? ConfigService.getParticlesFoundAmount()
+                : ConfigService.getParticlesNotFoundAmount();
+
+        var colors = isFound ? ConfigService.getParticlesFoundColors()
+                : ConfigService.getParticlesNotFoundColors();
+
         try {
             ParticlesUtils.spawn(location, particle, amount, colors, players);
         } catch (Exception ex) {
@@ -81,16 +67,48 @@ public class GlobalTask extends BukkitRunnable {
         }
     }
 
-    private List<Player> playersInRange(Location loc) {
+    private void handleHologramAndParticles(HeadLocation headLocation) {
         int range = ConfigService.getHologramParticlePlayerViewDistance();
 
-        if (loc.getWorld() == null) {
-            return new ArrayList<>();
-        }
+        var location = headLocation.getLocation();
+        if (location.getWorld() == null)
+            return;
 
-        return loc.getWorld().getNearbyEntities(loc, range, range, range).stream()
-                .filter(Player.class::isInstance)
-                .map(e -> (Player) e)
-                .collect(Collectors.toList());
+        var hologramChunkX = location.getBlockX() / CHUNK_SIZE;
+        var hologramChunkZ = location.getBlockZ() / CHUNK_SIZE;
+
+        for (var player : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
+            var playerLoc = player.getLocation();
+            if (playerLoc.getWorld() != location.getWorld())
+                continue;
+
+            var playerChunkX = playerLoc.getBlockX() / CHUNK_SIZE;
+            var playerChunkZ = playerLoc.getBlockZ() / CHUNK_SIZE;
+
+            var chunkDistanceX = Math.abs(hologramChunkX - playerChunkX);
+            var chunkDistanceZ = Math.abs(hologramChunkZ - playerChunkZ);
+
+            if (chunkDistanceX <= VIEW_RADIUS_CHUNKS && chunkDistanceZ <= VIEW_RADIUS_CHUNKS) {
+                var distance = location.distance(playerLoc);
+
+                if (distance <= range) {
+                    try {
+                        if (StorageService.hasHead(player.getUniqueId(), headLocation.getUuid())) {
+                            spawnParticles(location, true, player);
+                            HologramService.showFoundTo(player, location);
+                        } else {
+                            spawnParticles(location, false, player);
+                            HologramService.showNotFoundTo(player, location);
+                        }
+                    } catch (InternalException ex) {
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to communicate with the storage : " + ex.getMessage()));
+                        this.cancel();
+                    }
+                    continue;
+                }
+            }
+
+            HologramService.hideHolograms(headLocation, player);
+        }
     }
 }

@@ -20,7 +20,9 @@ public class Memory implements Storage {
     }
 
     @Override
-    public void close() throws InternalException { }
+    public void close() throws InternalException {
+        headsFound.clear();
+    }
 
     @Override
     public boolean hasHead(UUID playerUuid, UUID headUuid) {

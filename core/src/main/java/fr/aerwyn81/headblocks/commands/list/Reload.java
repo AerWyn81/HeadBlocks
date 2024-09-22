@@ -28,19 +28,13 @@ public class Reload implements Cmd {
         LanguageService.pushMessages();
 
         HologramService.unload();
+
+        GuiService.clearCache();
+
         StorageService.close();
-
-        StorageService.initialize();
-        for (Player player : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
-            StorageService.unloadPlayer(player);
-            StorageService.loadPlayer(player);
-        }
-
-        plugin.getParticlesTask().cancel();
 
         HeadService.load();
         HologramService.load();
-        GuiService.clearCache();
 
         if (HeadBlocks.isHeadDatabaseActive) {
             if (plugin.getHeadDatabaseHook() == null) {
@@ -53,13 +47,18 @@ public class Reload implements Cmd {
             plugin.getHeadDatabaseHook().loadHeadsHDB();
         }
 
-        plugin.setParticlesTask(new GlobalTask());
-        plugin.getParticlesTask().runTaskTimer(plugin, 0, ConfigService.getDelayGlobalTask());
+        StorageService.initialize();
+
+        for (var player : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
+            StorageService.loadPlayer(player);
+        }
 
         if (StorageService.hasStorageError()) {
             sender.sendMessage(LanguageService.getMessage("Messages.ReloadWithErrors"));
             return true;
         }
+
+        plugin.startInternalTaskTimer();
 
         HeadBlocks.isReloadInProgress = false;
 
