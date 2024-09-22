@@ -17,20 +17,14 @@ public class InternalHologram {
             case DECENT:
                 hologram = new DecentHologram();
                 break;
-            case HD:
-                hologram = new HolographicDisplaysHologram();
-                break;
             case CMI:
                 hologram = new CMIHologram();
-                break;
-            case DEFAULT:
-                hologram = new DefaultHologram();
                 break;
             case FH:
                 hologram = new FHHologram();
                 break;
             default:
-                hologram = null; //todo
+                hologram = new DefaultHologram();
                 break;
         }
     }

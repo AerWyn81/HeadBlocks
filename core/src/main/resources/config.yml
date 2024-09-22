@@ -142,10 +142,9 @@ headClick:
 # Placeholders are not supported
 # Plugins supported:
 # DECENT: DecentHolograms
-# HD: HolographicDisplays
 # CMI: CMI
 # FH: FancyHolograms
-# DEFAULT: Internal need ProtocolLib
+# DEFAULT: use TextDisplay
 holograms:
   plugin: DEFAULT
   heightAboveHead: 0.4

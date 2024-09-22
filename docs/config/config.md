@@ -422,9 +422,8 @@ holograms:
 
 It is possible to add holograms over the head and show it if the player has found the head or not. Can be configurable by:
 - plugin: 
-  - DEFAULT - (internal require ProtocolLib)
+  - DEFAULT - use TextDisplay
   - DECENT - DecentHolograms
-  - HD - HolographicDisplays
   - CMI - CMI
   - FH - FancyHolograms
 - heightAboveHead: height from the top of head and bottom of the last line of the hologram (support decimals)

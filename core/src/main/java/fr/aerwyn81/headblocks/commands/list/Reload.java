@@ -6,7 +6,6 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.services.*;
-import fr.aerwyn81.headblocks.utils.internal.HoloLibSingleton;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -40,7 +39,6 @@ public class Reload implements Cmd {
         plugin.getParticlesTask().cancel();
 
         HeadService.load();
-        HoloLibSingleton.updateViewDistance();
         HologramService.load();
         GuiService.clearCache();
 

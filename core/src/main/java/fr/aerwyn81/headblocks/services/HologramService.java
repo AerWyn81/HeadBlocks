@@ -53,8 +53,6 @@ public class HologramService {
         }
 
         if ((enumTypeHologram == EnumTypeHologram.DECENT && !HeadBlocks.isDecentHologramsActive) ||
-                (enumTypeHologram == EnumTypeHologram.DEFAULT && !HeadBlocks.isProtocolLibActive) ||
-                (enumTypeHologram == EnumTypeHologram.HD && !HeadBlocks.isHolographicDisplaysActive) ||
                 (enumTypeHologram == EnumTypeHologram.FH && !HeadBlocks.isFancyHologramsActive) ||
                 (enumTypeHologram == EnumTypeHologram.CMI && !HeadBlocks.isCMIActive)) {
             enable = false;
@@ -66,7 +64,7 @@ public class HologramService {
             }
         }
 
-        if (enumTypeHologram == EnumTypeHologram.FH) {
+        if (enumTypeHologram == EnumTypeHologram.FH || enumTypeHologram == EnumTypeHologram.DEFAULT) {
             hideHoloTooFarTask = startTimerHideHoloTooFar();
         }
     }

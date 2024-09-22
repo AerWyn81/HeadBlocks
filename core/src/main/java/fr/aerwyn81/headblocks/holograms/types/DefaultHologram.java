@@ -1,45 +1,50 @@
 package fr.aerwyn81.headblocks.holograms.types;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.holograms.IHologram;
-import fr.aerwyn81.headblocks.utils.internal.HoloLibSingleton;
-import org.bukkit.Bukkit;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
-import org.holoeasy.builder.HologramBuilder;
-import org.holoeasy.hologram.Hologram;
+import org.bukkit.entity.TextDisplay;
 
-import java.util.Collections;
 import java.util.List;
 
-import static org.holoeasy.builder.HologramBuilder.hologram;
-
 public class DefaultHologram implements IHologram {
-    Hologram hologram;
+    TextDisplay hologram;
+
+    private final HeadBlocks plugin = HeadBlocks.getInstance();
 
     @Override
     public void show(Player player) {
-        hologram.show(player);
+        player.showEntity(plugin, hologram);
     }
 
     @Override
     public void hide(Player player) {
-        hologram.hide(player);
+        player.hideEntity(plugin, hologram);
     }
 
     @Override
     public void delete() {
-        HoloLibSingleton.getHologramPool().remove(hologram.getId());
+        hologram.remove();
     }
 
     @Override
     public IHologram create(String name, Location location, List<String> lines, int displayRange) {
-        HoloLibSingleton.getHologramPool().registerHolograms(() -> hologram = hologram(location.subtract(0, 2.3, 0),
-                () -> lines.forEach(HologramBuilder::textline)));
-
-        for (Player pl : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
-            hide(pl);
+        var world = location.getWorld();
+        if (world == null) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError creating internal hologram, world is null!"));
+            return this;
         }
+
+        hologram = world.spawn(location, TextDisplay.class, entity -> {
+            lines.forEach(l -> entity.setText(MessageUtils.colorize(l)));
+            entity.setVisibleByDefault(false);
+            entity.setPersistent(false);
+            entity.setBillboard(Display.Billboard.CENTER);
+        });
 
         return this;
     }
@@ -51,7 +56,6 @@ public class DefaultHologram implements IHologram {
 
     @Override
     public boolean isVisible(Player player) {
-        return hologram.isShownFor(player);
+        return player.canSee(hologram);
     }
-
 }
