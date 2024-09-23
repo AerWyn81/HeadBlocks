@@ -45,76 +45,72 @@ public class Stats implements Cmd {
             return true;
         }
 
-        ArrayList<HeadLocation> playerHeads;
-        try {
-            playerHeads = StorageService.getHeadsPlayer(playerProfileLight.uuid(), playerProfileLight.name()).stream()
+        StorageService.getHeadsPlayer(playerProfileLight.uuid(), playerProfileLight.name()).whenComplete(pHeads -> {
+            var playerHeads = pHeads.stream()
                     .map(HeadService::getHeadByUUID)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(ArrayList::new));
-        } catch (InternalException ex) {
-            sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving stats of the player " + playerProfileLight.name() + " from the storage: " + ex.getMessage()));
-            return true;
-        }
 
-        headsSpawned.sort(Comparator.comparingInt(playerHeads::indexOf));
+            headsSpawned.sort(Comparator.comparingInt(playerHeads::indexOf));
 
-        ChatPageUtils cpu = new ChatPageUtils(sender)
-                .entriesCount(headsSpawned.size())
-                .currentPage(args);
+            ChatPageUtils cpu = new ChatPageUtils(sender)
+                    .entriesCount(headsSpawned.size())
+                    .currentPage(args);
 
-        String message = LanguageService.getMessage("Chat.LineTitle");
-        if (sender instanceof Player) {
-            TextComponent titleComponent = new TextComponent(PlaceholdersService.parse(playerProfileLight.name(), playerProfileLight.uuid(), LanguageService.getMessage("Chat.StatsTitleLine")
-                    .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
-            cpu.addTitleLine(titleComponent);
-        } else {
-            sender.sendMessage(message);
-        }
-
-        for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
-            UUID uuid = headsSpawned.get(i).getUuid();
-            Location location = headsSpawned.get(i).getLocation();
-
-            String hover = LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), location);
-
-            var headLocation = HeadService.getHeadByUUID(uuid);
-            var headName = headLocation != null ? headLocation.getName() : uuid.toString();
-            if (headName.isEmpty()) {
-                headName = uuid.toString();
-            }
-
+            String message = LanguageService.getMessage("Chat.LineTitle");
             if (sender instanceof Player) {
-                TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + headName));
-                msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
-
-                TextComponent own;
-                if (playerHeads.stream().anyMatch(s -> s.getUuid() == uuid)) {
-                    own = new TextComponent(LanguageService.getMessage("Chat.Box.Own"));
-                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Own"))));
-                } else {
-                    own = new TextComponent(LanguageService.getMessage("Chat.Box.NotOwn"));
-                    own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.NotOwn"))));
-                }
-
-                TextComponent tp = new TextComponent(LanguageService.getMessage("Chat.Box.Teleport"));
-
-                if (location.getWorld() != null) {
-                    tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + location.getWorld().getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
-                }
-                tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Teleport"))));
-
-                TextComponent space = new TextComponent(" ");
-                cpu.addLine(own, space, tp, space, msg, space);
+                TextComponent titleComponent = new TextComponent(PlaceholdersService.parse(playerProfileLight.name(), playerProfileLight.uuid(), LanguageService.getMessage("Chat.StatsTitleLine")
+                        .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
+                cpu.addTitleLine(titleComponent);
             } else {
-                sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getUuid().equals(uuid)) ?
-                                LanguageService.getMessage("Chat.Box.Own") : LanguageService.getMessage("Chat.Box.NotOwn")) + " " +
-                                MessageUtils.colorize("&6" + headName));
+                sender.sendMessage(message);
             }
-        }
 
-        cpu.addPageLine("stats " + playerProfileLight.name());
-        cpu.build();
+            for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
+                UUID uuid = headsSpawned.get(i).getUuid();
+                Location location = headsSpawned.get(i).getLocation();
+
+                String hover = LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), location);
+
+                var headLocation = HeadService.getHeadByUUID(uuid);
+                var headName = headLocation != null ? headLocation.getName() : uuid.toString();
+                if (headName.isEmpty()) {
+                    headName = uuid.toString();
+                }
+
+                if (sender instanceof Player) {
+                    TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + headName));
+                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
+
+                    TextComponent own;
+                    if (playerHeads.stream().anyMatch(s -> s.getUuid() == uuid)) {
+                        own = new TextComponent(LanguageService.getMessage("Chat.Box.Own"));
+                        own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Own"))));
+                    } else {
+                        own = new TextComponent(LanguageService.getMessage("Chat.Box.NotOwn"));
+                        own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.NotOwn"))));
+                    }
+
+                    TextComponent tp = new TextComponent(LanguageService.getMessage("Chat.Box.Teleport"));
+
+                    if (location.getWorld() != null) {
+                        tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + location.getWorld().getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
+                    }
+                    tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Teleport"))));
+
+                    TextComponent space = new TextComponent(" ");
+                    cpu.addLine(own, space, tp, space, msg, space);
+                } else {
+                    sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getUuid().equals(uuid)) ?
+                            LanguageService.getMessage("Chat.Box.Own") : LanguageService.getMessage("Chat.Box.NotOwn")) + " " +
+                            MessageUtils.colorize("&6" + headName));
+                }
+            }
+
+            cpu.addPageLine("stats " + playerProfileLight.name());
+            cpu.build();
+        });
+
         return true;
     }
 

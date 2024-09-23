@@ -13,12 +13,15 @@ import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.runnables.BukkitFutureResult;
+import fr.aerwyn81.headblocks.utils.runnables.CompletableBukkitFuture;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.entity.Player;
 
 import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -185,36 +188,40 @@ public class StorageService {
         return true;
     }
 
-    public static void loadPlayer(Player player) {
-        UUID pUuid = player.getUniqueId();
-        String playerName = player.getName();
+    public static void loadPlayers(Player... players) {
+        CompletableBukkitFuture.runAsync(HeadBlocks.getInstance(), () -> {
+            for (var player : players) {
+                UUID pUuid = player.getUniqueId();
+                String playerName = player.getName();
 
-        try {
-            boolean isExist = containsPlayer(pUuid);
+                try {
+                    boolean isExist = containsPlayer(pUuid);
 
-            String playerDisplayName = getCustomDisplay(player);
+                    String playerDisplayName = getCustomDisplay(player);
 
-            var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
+                    var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
 
-            if (isExist) {
-                boolean hasRenamed = hasPlayerRenamed(playerProfile);
+                    if (isExist) {
+                        boolean hasRenamed = hasPlayerRenamed(playerProfile);
 
-                if (hasRenamed) {
-                    updatePlayerName(playerProfile);
+                        if (hasRenamed) {
+                            updatePlayerName(playerProfile);
+                        }
+
+                        for (UUID hUuid : database.getHeadsPlayer(pUuid, playerName)) {
+                            storage.addHead(pUuid, hUuid);
+                        }
+
+                        _cacheHeads.put(pUuid, new ArrayList<>());
+                    } else {
+                        updatePlayerName(playerProfile);
+                    }
+                } catch (InternalException ex) {
+                    storageError = true;
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to load player " + playerName + " from SQL database: " + ex.getMessage()));
                 }
-
-                for (UUID hUuid : database.getHeadsPlayer(pUuid, playerName)) {
-                    storage.addHead(pUuid, hUuid);
-                }
-
-                _cacheHeads.put(pUuid, new ArrayList<>());
-            } else {
-                updatePlayerName(playerProfile);
             }
-        } catch (InternalException ex) {
-            storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to load player " + playerName + " from SQL database: " + ex.getMessage()));
-        }
+        });
     }
 
     private static String getCustomDisplay(Player player) {
@@ -289,25 +296,32 @@ public class StorageService {
         database.addHead(playerUuid, headUuid);
     }
 
-    public static boolean containsPlayer(UUID playerUuid) throws InternalException {
+    public static Boolean containsPlayer(UUID playerUuid) throws InternalException {
         return storage.containsPlayer(playerUuid) || database.containsPlayer(playerUuid);
     }
 
-    public static List<UUID> getHeadsPlayer(UUID playerUuid, String pName) throws InternalException {
-        if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
-            return _cacheHeads.get(playerUuid);
+    public static BukkitFutureResult<List<UUID>> getHeadsPlayer(UUID playerUuid, String pName) {
+        return CompletableBukkitFuture.supplyAsync(HeadBlocks.getInstance(), () -> {
+            try {
+                if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
+                    return _cacheHeads.get(playerUuid);
 
-        var headsUuid = database.getHeadsPlayer(playerUuid, pName);
-        _cacheHeads.compute(playerUuid, (key, playerHeads) -> {
-            if (playerHeads == null) {
+                var headsUuid = database.getHeadsPlayer(playerUuid, pName);
+                _cacheHeads.compute(playerUuid, (key, playerHeads) -> {
+                    if (playerHeads == null) {
+                        return headsUuid;
+                    } else {
+                        playerHeads.addAll(headsUuid);
+                        return playerHeads;
+                    }
+                });
+
                 return headsUuid;
-            } else {
-                playerHeads.addAll(headsUuid);
-                return playerHeads;
+            } catch (Exception ex) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to get heads for " + pName + ": " + ex.getMessage()));
+                return new ArrayList<>();
             }
         });
-
-        return headsUuid;
     }
 
     public static void resetPlayer(UUID playerUuid) throws InternalException {

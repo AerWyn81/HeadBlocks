@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 public class ParticlesUtils {
 
-    public static void spawn(Location loc, Particle particle, int amount, ArrayList<String> colors, Player... players) {
+    public static void spawn(Location loc, Particle particle, int amount, ArrayList<String> colors, Player player) {
         double size = amount == 1 ? 0 : .25f;
         Location location = loc.clone().add(.5f, .75f, .5f);
 
@@ -31,14 +31,12 @@ public class ParticlesUtils {
             }
         }
 
-        for (Player player : players) {
-            if (!dustOptions.isEmpty()) {
-                dustOptions.forEach(dustOpt ->
-                        player.spawnParticle(particle, location, amount, size, size, size, dustOpt));
-                continue;
-            }
-
-            player.spawnParticle(particle, location, amount, size, size, size, 0);
+        if (!dustOptions.isEmpty()) {
+            dustOptions.forEach(dustOpt ->
+                    player.spawnParticle(particle, location, amount, size, size, size, dustOpt));
+            return;
         }
+
+        player.spawnParticle(particle, location, amount, size, size, size, 0);
     }
 }

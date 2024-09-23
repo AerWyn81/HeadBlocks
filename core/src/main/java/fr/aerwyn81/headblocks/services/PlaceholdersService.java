@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 public class PlaceholdersService {
 
@@ -44,32 +45,32 @@ public class PlaceholdersService {
 
     public static String parseInternal(String pName, UUID pUuid, String message, HeadLocation headLocation) {
         String progress;
-        int current;
+
+        var future = StorageService.getHeadsPlayer(pUuid, pName).asFuture();
 
         try {
-            current = StorageService.getHeadsPlayer(pUuid, pName).size();
-        } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + pName + ": " + ex.getMessage()));
-            return MessageUtils.colorize(message);
-        }
+            var current = future.get().size();
 
-        int total = HeadService.getChargedHeadLocations().size();
+            int total = HeadService.getChargedHeadLocations().size();
 
-        message = message.replaceAll("%current%", String.valueOf(current))
-                .replaceAll("%max%", String.valueOf(total));
+            message = message.replaceAll("%current%", String.valueOf(current))
+                    .replaceAll("%max%", String.valueOf(total));
 
-        if (message.contains("%progress%")) {
-            progress = MessageUtils.createProgressBar(current, total,
-                    ConfigService.getProgressBarBars(),
-                    ConfigService.getProgressBarSymbol(),
-                    ConfigService.getProgressBarCompletedColor(),
-                    ConfigService.getProgressBarNotCompletedColor());
+            if (message.contains("%progress%")) {
+                progress = MessageUtils.createProgressBar(current, total,
+                        ConfigService.getProgressBarBars(),
+                        ConfigService.getProgressBarSymbol(),
+                        ConfigService.getProgressBarCompletedColor(),
+                        ConfigService.getProgressBarNotCompletedColor());
 
-            message = message.replaceAll("%progress%", progress);
-        }
+                message = message.replaceAll("%progress%", progress);
+            }
 
-        if (message.contains("%left%")) {
-            message = message.replaceAll("%left%", String.valueOf(total - current));
+            if (message.contains("%left%")) {
+                message = message.replaceAll("%left%", String.valueOf(total - current));
+            }
+        } catch (Exception ignored) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError retrieving heads from storage, cannot parse all HeadBlocks placeholders"));
         }
 
         if (message.contains("%headName%")) {

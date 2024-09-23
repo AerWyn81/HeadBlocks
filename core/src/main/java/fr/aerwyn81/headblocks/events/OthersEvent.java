@@ -53,7 +53,7 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        StorageService.loadPlayer(e.getPlayer());
+        StorageService.loadPlayers(e.getPlayer());
     }
 
     @EventHandler
@@ -67,7 +67,7 @@ public class OthersEvent implements Listener {
         var headsInWorld = HeadService.getHeadLocations()
                 .stream()
                 .filter(h -> !h.isCharged() && e.getWorld().getName().equals(h.getConfigWorldName()))
-                .collect(Collectors.toList());
+                .toList();
 
         for (HeadLocation head : headsInWorld) {
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));

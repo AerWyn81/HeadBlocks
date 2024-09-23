@@ -22,6 +22,7 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class OnPlayerInteractEvent implements Listener {
 
@@ -77,10 +78,8 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
-        try {
-            // Check if the player has already clicked on the head
-            var playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
-
+        // Check if the player has already clicked on the head
+        StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).whenComplete(playerHeads -> {
             if (playerHeads.contains(headLocation.getUuid())) {
                 String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, LanguageService.getMessage("Messages.AlreadyClaimHead"));
 
@@ -138,11 +137,16 @@ public class OnPlayerInteractEvent implements Listener {
             }
 
             if (headLocation.getHitCount() != -1) {
-                var players = StorageService.getPlayers(headLocation.getUuid());
+                try {
+                    var players = StorageService.getPlayers(headLocation.getUuid());
 
-                if (players.size() == headLocation.getHitCount()) {
-                    player.sendMessage(LanguageService.getMessage("Messages.HitClickMax")
-                            .replaceAll("%count%", headLocation.getDisplayedHitCount()));
+                    if (players.size() == headLocation.getHitCount()) {
+                        player.sendMessage(LanguageService.getMessage("Messages.HitClickMax")
+                                .replaceAll("%count%", headLocation.getDisplayedHitCount()));
+                        return;
+                    }
+                } catch (InternalException ex) {
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError retrieving players from storage when calculating hit count: " + ex.getMessage()));
                     return;
                 }
             }
@@ -161,7 +165,12 @@ public class OnPlayerInteractEvent implements Listener {
             playerHeads.add(headLocation.getUuid());
 
             // Save player click in storage
-            StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
+            try {
+                StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
+            } catch (InternalException ex) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError saving player found head in storage: " + ex.getMessage()));
+                return;
+            }
 
             // Check and give reward if triggerRewards is used
             var isRewardGiven = RewardService.giveReward(player, playerHeads, headLocation);
@@ -175,11 +184,7 @@ public class OnPlayerInteractEvent implements Listener {
 
             // Invalidate cache after give reward else tiered rewards is not give
             StorageService.invalidateCachePlayer(player.getUniqueId());
-        } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to save a head found by " + player.getName() + " from the storage: " + ex.getMessage()));
-            return;
-        }
+        });
 
         // Success song if not empty
         String songName = ConfigService.getHeadClickNotOwnSound();

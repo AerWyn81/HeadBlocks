@@ -1,11 +1,8 @@
 package fr.aerwyn81.headblocks.hooks;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.StorageService;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -55,18 +52,18 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         // %headblocks_current% | %headblocks_left%
         if (identifier.equals("current") || identifier.equals("left")) {
-            int current;
-            try {
-                current = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).size();
-            } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("Error while retrieving heads of " + player.getName() + ": " + ex.getMessage()));
-                return "-1";
-            }
+            var future = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).asFuture();
 
-            if (identifier.equals("current")) {
-                return "" + current;
-            } else {
-                return "" + (HeadService.getChargedHeadLocations().size() - current);
+            try {
+                var current = future.get().size();
+
+                if (identifier.equals("current")) {
+                    return "" + current;
+                } else {
+                    return "" + (HeadService.getChargedHeadLocations().size() - current);
+                }
+            } catch (Exception ex) {
+                return "Future error get heads";
             }
         }
 
@@ -139,43 +136,41 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 return "No loaded heads";
             }
 
-            List<UUID> playerHeads;
+            var future = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).asFuture();
 
             try {
-                playerHeads = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName());
+                var playerHeadLocations = new ArrayList<HeadLocation>();
+                for (var headLocation : heads) {
+                    var optHead = future.get().stream().filter(uuid -> uuid.equals(headLocation.getUuid())).findFirst();
+                    if (optHead.isPresent())
+                        playerHeadLocations.add(headLocation);
+                }
+
+                if (subIdentifier.equals("current")) {
+                    if (playerHeadLocations.size() - 1 < 0) {
+                        return "-";
+                    }
+
+                    return playerHeadLocations.get(playerHeadLocations.size() - 1).getDisplayedName();
+                }
+
+                if (subIdentifier.equals("previous")) {
+                    if (playerHeadLocations.isEmpty() || playerHeadLocations.size() - 2 < 0) {
+                        return "-";
+                    }
+
+                    return playerHeadLocations.get(playerHeadLocations.size() - 2).getDisplayedName();
+                }
+
+                if (subIdentifier.equals("next")) {
+                    if (playerHeadLocations.size() >= heads.size()) {
+                        return "-";
+                    }
+
+                    return heads.get(playerHeadLocations.size()).getDisplayedName();
+                }
             } catch (Exception ex) {
-                return "Internal error when retrieving player heads:" + ex.getMessage();
-            }
-
-            var playerHeadLocations = new ArrayList<HeadLocation>();
-            for (var headLocation : heads) {
-                var optHead = playerHeads.stream().filter(uuid -> uuid.equals(headLocation.getUuid())).findFirst();
-                if (optHead.isPresent())
-                    playerHeadLocations.add(headLocation);
-            }
-
-            if (subIdentifier.equals("current")) {
-                if (playerHeadLocations.size() - 1 < 0) {
-                    return "-";
-                }
-
-                return playerHeadLocations.get(playerHeadLocations.size() - 1).getDisplayedName();
-            }
-
-            if (subIdentifier.equals("previous")) {
-                if (playerHeadLocations.isEmpty() || playerHeadLocations.size() - 2 < 0) {
-                    return "-";
-                }
-
-                return playerHeadLocations.get(playerHeadLocations.size() - 2).getDisplayedName();
-            }
-
-            if (subIdentifier.equals("next")) {
-                if (playerHeadLocations.size() >= heads.size()) {
-                    return "-";
-                }
-
-                return heads.get(playerHeadLocations.size()).getDisplayedName();
+                return "Future error get heads";
             }
         }
 

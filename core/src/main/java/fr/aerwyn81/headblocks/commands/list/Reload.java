@@ -33,8 +33,8 @@ public class Reload implements Cmd {
 
         StorageService.close();
 
+        StorageService.initialize();
         HeadService.load();
-        HologramService.load();
 
         if (HeadBlocks.isHeadDatabaseActive) {
             if (plugin.getHeadDatabaseHook() == null) {
@@ -47,16 +47,10 @@ public class Reload implements Cmd {
             plugin.getHeadDatabaseHook().loadHeadsHDB();
         }
 
-        StorageService.initialize();
+        HologramService.load();
 
-        for (var player : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
-            StorageService.loadPlayer(player);
-        }
-
-        if (StorageService.hasStorageError()) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ReloadWithErrors"));
-            return true;
-        }
+        var players = Collections.synchronizedCollection(Bukkit.getOnlinePlayers());
+        StorageService.loadPlayers(players.toArray(new Player[0]));
 
         plugin.startInternalTaskTimer();
 

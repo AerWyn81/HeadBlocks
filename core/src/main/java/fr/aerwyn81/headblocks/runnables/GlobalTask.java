@@ -45,7 +45,7 @@ public class GlobalTask extends BukkitRunnable {
     }
 
 
-    private void spawnParticles(Location location, boolean isFound, Player... players) {
+    private void spawnParticles(Location location, boolean isFound, Player player) {
         if (isFound ? !ConfigService.isParticlesFoundEnabled() : !ConfigService.isParticlesNotFoundEnabled())
             return;
 
@@ -59,7 +59,7 @@ public class GlobalTask extends BukkitRunnable {
                 : ConfigService.getParticlesNotFoundColors();
 
         try {
-            ParticlesUtils.spawn(location, particle, amount, colors, players);
+            ParticlesUtils.spawn(location, particle, amount, colors, player);
         } catch (Exception ex) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cTo prevent log spamming, particles is disabled until reload"));
