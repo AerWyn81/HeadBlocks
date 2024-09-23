@@ -68,16 +68,6 @@ public class RewardService {
         }
 
         var isRandomCommand = ConfigService.isHeadClickCommandsRandomized();
-        var slotsRequired = ConfigService.getHeadClickCommandsSlotsRequired();
-
-        if (slotsRequired != -1 && PlayerUtils.getEmptySlots(p) < slotsRequired) {
-            var message = LanguageService.getMessage("Messages.InventoryFullReward");
-            if (!message.trim().isEmpty()) {
-                p.sendMessage(message);
-            }
-
-            return false;
-        }
 
         if (isRandomCommand) {
             String randomCommand = ConfigService.getHeadClickCommands().get(new Random().nextInt(ConfigService.getHeadClickCommands().size()));

@@ -147,6 +147,17 @@ public class OnPlayerInteractEvent implements Listener {
                 }
             }
 
+            var slotsRequired = ConfigService.getHeadClickCommandsSlotsRequired();
+
+            if (slotsRequired != -1 && PlayerUtils.getEmptySlots(player) < slotsRequired) {
+                var message = LanguageService.getMessage("Messages.InventoryFullReward");
+                if (!message.trim().isEmpty()) {
+                    player.sendMessage(message);
+                }
+
+                return;
+            }
+
             playerHeads.add(headLocation.getUuid());
 
             // Save player click in storage
