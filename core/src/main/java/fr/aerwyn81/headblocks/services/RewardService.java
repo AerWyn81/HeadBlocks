@@ -12,7 +12,7 @@ import java.util.Random;
 import java.util.UUID;
 
 public class RewardService {
-    public static boolean giveReward(Player p, List<UUID> playerHeads, HeadLocation headLocation) {
+    public static void giveReward(Player p, List<UUID> playerHeads, HeadLocation headLocation) {
         var plugin = HeadBlocks.getInstance();
 
         TieredReward tieredReward;
@@ -23,15 +23,6 @@ public class RewardService {
                     .orElse(null);
 
             if (tieredReward != null) {
-                if (tieredReward.getSlotsRequired() != -1 && PlayerUtils.getEmptySlots(p) < tieredReward.getSlotsRequired()) {
-                    var message = LanguageService.getMessage("Messages.InventoryFullReward");
-                    if (!message.trim().isEmpty()) {
-                        p.sendMessage(message);
-                    }
-
-                    return false;
-                }
-
                 List<String> messages = tieredReward.getMessages();
                 if (!messages.isEmpty()) {
                     p.sendMessage(PlaceholdersService.parse(p, headLocation, messages));
@@ -64,7 +55,7 @@ public class RewardService {
 
         // Only the tieredReward was given
         if (ConfigService.isPreventCommandsOnTieredRewardsLevel() && tieredReward != null) {
-            return true;
+            return;
         }
 
         var isRandomCommand = ConfigService.isHeadClickCommandsRandomized();
@@ -77,7 +68,25 @@ public class RewardService {
             Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
                     plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward))), 1L);
         }
+    }
 
-        return true;
+    public static boolean hasPlayerSlotsRequired(Player player, List<UUID> playerHeads) {
+        var slotsRequired = ConfigService.getHeadClickCommandsSlotsRequired();
+
+        if (slotsRequired != -1 && PlayerUtils.getEmptySlots(player) < slotsRequired) {
+            return false;
+        }
+
+        if (ConfigService.getTieredRewards().isEmpty()) {
+            return true;
+        }
+
+        var tieredReward = ConfigService.getTieredRewards().stream()
+                .filter(t -> t.getLevel() == playerHeads.size())
+                .findFirst()
+                .orElse(null);
+
+        return tieredReward == null ||
+                tieredReward.getSlotsRequired() == -1 || PlayerUtils.getEmptySlots(player) >= tieredReward.getSlotsRequired();
     }
 }

@@ -126,7 +126,7 @@ public class StorageService {
 
         int dbVersion = database.checkVersion();
 
-        if (dbVersion == database.version) {
+        if (dbVersion == Database.version) {
             return;
         }
 
@@ -139,14 +139,14 @@ public class StorageService {
 
         if (dbVersion == -1) {
             database.migrate();
-            dbVersion = database.version;
+            dbVersion = Database.version;
         }
 
         if (dbVersion == 0) {
             database.insertVersion();
             database.addColumnHeadTexture();
             database.addColumnDisplayName();
-            dbVersion = database.version;
+            dbVersion = Database.version;
         }
 
         if (dbVersion == 1) {
@@ -157,7 +157,7 @@ public class StorageService {
             database.addColumnDisplayName();
         }
 
-        if (dbVersion != database.version) {
+        if (dbVersion != Database.version) {
             database.upsertTableVersion(dbVersion);
         }
     }
@@ -294,6 +294,8 @@ public class StorageService {
     public static void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
         storage.addHead(playerUuid, headUuid);
         database.addHead(playerUuid, headUuid);
+
+        StorageService.invalidateCachePlayer(playerUuid);
     }
 
     public static Boolean containsPlayer(UUID playerUuid) throws InternalException {

@@ -136,6 +136,7 @@ public class OnPlayerInteractEvent implements Listener {
                 }
             }
 
+            // Check hit count
             if (headLocation.getHitCount() != -1) {
                 try {
                     var players = StorageService.getPlayers(headLocation.getUuid());
@@ -151,18 +152,17 @@ public class OnPlayerInteractEvent implements Listener {
                 }
             }
 
-            var slotsRequired = ConfigService.getHeadClickCommandsSlotsRequired();
+            playerHeads.add(headLocation.getUuid());
 
-            if (slotsRequired != -1 && PlayerUtils.getEmptySlots(player) < slotsRequired) {
+            if (!RewardService.hasPlayerSlotsRequired(player, playerHeads)) {
                 var message = LanguageService.getMessage("Messages.InventoryFullReward");
                 if (!message.trim().isEmpty()) {
                     player.sendMessage(message);
                 }
 
+                playerHeads.remove(headLocation.getUuid());
                 return;
             }
-
-            playerHeads.add(headLocation.getUuid());
 
             // Save player click in storage
             try {
@@ -172,58 +172,53 @@ public class OnPlayerInteractEvent implements Listener {
                 return;
             }
 
-            // Check and give reward if triggerRewards is used
-            var isRewardGiven = RewardService.giveReward(player, playerHeads, headLocation);
-            if (!isRewardGiven)
-                return;
+            // Give reward if triggerRewards is used
+            RewardService.giveReward(player, playerHeads, headLocation);
 
             // Give special head rewards
             for (var reward : headLocation.getRewards()) {
                 reward.execute(player, headLocation);
             }
 
-            // Invalidate cache after give reward else tiered rewards is not give
-            StorageService.invalidateCachePlayer(player.getUniqueId());
-        });
-
-        // Success song if not empty
-        String songName = ConfigService.getHeadClickNotOwnSound();
-        if (!songName.trim().isEmpty()) {
-            try {
-                XSound.play(player, songName);
-            } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click! Cannot parse provided name..."));
+            // Success song if not empty
+            String songName = ConfigService.getHeadClickNotOwnSound();
+            if (!songName.trim().isEmpty()) {
+                try {
+                    XSound.play(player, songName);
+                } catch (Exception ex) {
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click! Cannot parse provided name..."));
+                }
             }
-        }
 
-        // Send title to the player if enabled
-        if (ConfigService.isHeadClickTitleEnabled()) {
-            String firstLine = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHeadClickTitleFirstLine());
-            String subTitle = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHeadClickTitleSubTitle());
-            int fadeIn = ConfigService.getHeadClickTitleFadeIn();
-            int stay = ConfigService.getHeadClickTitleStay();
-            int fadeOut = ConfigService.getHeadClickTitleFadeOut();
+            // Send title to the player if enabled
+            if (ConfigService.isHeadClickTitleEnabled()) {
+                String firstLine = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHeadClickTitleFirstLine());
+                String subTitle = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHeadClickTitleSubTitle());
+                int fadeIn = ConfigService.getHeadClickTitleFadeIn();
+                int stay = ConfigService.getHeadClickTitleStay();
+                int fadeOut = ConfigService.getHeadClickTitleFadeOut();
 
-            player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
-        }
+                player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
+            }
 
-        // Fire firework if enabled
-        if (ConfigService.isFireworkEnabled()) {
-            List<Color> colors = ConfigService.getHeadClickFireworkColors();
-            List<Color> fadeColors = ConfigService.getHeadClickFireworkFadeColors();
-            boolean isFlickering = ConfigService.isFireworkFlickerEnabled();
-            int power = ConfigService.getHeadClickFireworkPower();
+            // Fire firework if enabled
+            if (ConfigService.isFireworkEnabled()) {
+                List<Color> colors = ConfigService.getHeadClickFireworkColors();
+                List<Color> fadeColors = ConfigService.getHeadClickFireworkFadeColors();
+                boolean isFlickering = ConfigService.isFireworkFlickerEnabled();
+                int power = ConfigService.getHeadClickFireworkPower();
 
-            Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
+                Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
 
-            FireworkUtils.launchFirework(loc, isFlickering,
-                    colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
-        }
+                FireworkUtils.launchFirework(loc, isFlickering,
+                        colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
+            }
 
-        // Show hologram
-        HologramService.showFoundTo(player, clickedLocation);
+            // Show hologram
+            HologramService.showFoundTo(player, clickedLocation);
 
-        // Trigger the event HeadClick with success
-        Bukkit.getPluginManager().callEvent(new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true));
+            // Trigger the event HeadClick with success
+            Bukkit.getPluginManager().callEvent(new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true));
+        });
     }
 }
