@@ -17,7 +17,7 @@ public class ParticlesUtils {
 
         Particle redstoneParticle;
 
-        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
             redstoneParticle = Particle.valueOf("DUST");
         } else {
             redstoneParticle = Particle.REDSTONE;

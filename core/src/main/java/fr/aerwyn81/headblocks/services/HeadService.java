@@ -311,15 +311,14 @@ public class HeadService {
         rotatable.setRotation(skullRotation.getRotation());
         newSkull.setBlockData(rotatable);
 
-        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
             NBT.modify(newSkull, nbt -> {
                 nbt.mergeCompound(new NBTTileEntity(oldSkull));
             });
-            newSkull.setOwnerProfile(oldSkull.getOwnerProfile());
         } else {
-            newSkull.setBlockData(rotatable);
             new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
         }
+        newSkull.setOwnerProfile(oldSkull.getOwnerProfile());
 
         newSkull.update(true);
 

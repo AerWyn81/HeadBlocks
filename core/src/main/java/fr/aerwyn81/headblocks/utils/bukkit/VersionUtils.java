@@ -56,8 +56,8 @@ public enum VersionUtils {
         return getVersion().getVersionId() >= version.getVersionId();
     }
 
-    public static boolean isNewerThan(VersionUtils version) {
-        return getVersion().getVersionId() > version.getVersionId();
+    public static boolean isNewerOrEqualsTo(VersionUtils version) {
+        return getVersion().getVersionId() >= version.getVersionId();
     }
 
     public static boolean isOlderThan(VersionUtils version) {

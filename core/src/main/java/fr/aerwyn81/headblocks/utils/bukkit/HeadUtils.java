@@ -1,21 +1,28 @@
 package fr.aerwyn81.headblocks.utils.bukkit;
 
+import com.google.gson.JsonParser;
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.Skull;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HeadUtils {
 
@@ -47,7 +54,7 @@ public class HeadUtils {
     }
 
     public static ItemStack applyTextureToItemStack(ItemStack itemStack, String texture) {
-        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
             NBT.modifyComponents(itemStack, nbt -> {
                 ReadWriteNBT profileCompound = nbt.getOrCreateCompound("minecraft:profile");
                 profileCompound.setUUID("id", UUID.randomUUID());
@@ -74,8 +81,57 @@ public class HeadUtils {
         return itemStack;
     }
 
+    public static boolean applyTextureToBlock(Block block, String texture) {
+        var isApplied = new AtomicBoolean(true);
+
+        if (block.getType() != Material.PLAYER_HEAD)
+            block.setType(Material.PLAYER_HEAD);
+
+        var skull = (Skull)block.getState();
+
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+            NBT.modify(skull, nbt -> {
+                var playerProfile = Bukkit.createPlayerProfile(UUID.randomUUID());
+                var textures = playerProfile.getTextures();
+
+                // Dirty, use it only for debug command
+                URL url;
+                try {
+                    var decoded = Base64.getDecoder().decode(texture);
+                    var jsonObject = JsonParser.parseString(new String(decoded)).getAsJsonObject();
+                    url = new URI(jsonObject.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString()).toURL();
+                } catch (Exception ex) {
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError when trying to decode texture: " + ex.getMessage()));
+                    isApplied.set(false);
+                    return;
+                }
+
+                textures.setSkin(url);
+                playerProfile.setTextures(textures);
+
+                skull.setOwnerProfile(playerProfile);
+                skull.update();
+            });
+        } else {
+            NBT.modify(skull, nbt -> {
+                ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound("SkullOwner");
+
+                skullOwnerCompound.setUUID("Id", UUID.randomUUID());
+
+                skullOwnerCompound.getOrCreateCompound("Properties")
+                        .getCompoundList("textures")
+                        .addCompound()
+                        .setString("Value", texture);
+
+                skull.update();
+            });
+        }
+
+        return isApplied.get();
+    }
+
     public static String getHeadTexture(ItemStack head) {
-        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
             return NBT.modifyComponents(head, nbt -> (String) nbt.resolveOrNull("minecraft:profile.properties[0].value", String.class));
         } else {
             var nbtItem = new NBTItem(head);

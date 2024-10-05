@@ -4,7 +4,6 @@ import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
-import org.bukkit.block.data.type.Fire;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -19,9 +18,8 @@ public class FireworkUtils {
         }
 
         EntityType entityType;
-        if (VersionUtils.isNewerThan(VersionUtils.v1_20_R4)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
             entityType = EntityType.valueOf("FIREWORK_ROCKET");
-
         } else {
             entityType = EntityType.FIREWORK;
         }
