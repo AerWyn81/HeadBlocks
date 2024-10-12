@@ -5,9 +5,9 @@ import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.HologramService;
 import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -18,8 +18,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
-import java.util.stream.Collectors;
-
 public class OthersEvent implements Listener {
 
     @EventHandler
@@ -27,7 +25,7 @@ public class OthersEvent implements Listener {
         Block block = e.getBlock();
 
         // Check if block is a head
-        if (block.getType() != Material.PLAYER_WALL_HEAD || block.getType() != Material.PLAYER_HEAD) {
+        if (!HeadUtils.isPlayerHead(block)) {
             return;
         }
 

@@ -99,17 +99,19 @@ public class HeadService {
                 UUID headUuid = UUID.fromString(uuid);
 
                 try {
-                    boolean isExist = StorageService.isHeadExist(headUuid);
-                    if (!isExist) {
-                        StorageService.createNewHead(headUuid, "");
-                    }
-                } catch (Exception ex) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
-                    continue;
-                }
-
-                try {
                     var headLoc = HeadLocation.fromConfig(config, headUuid);
+
+                    try {
+                        boolean isExist = StorageService.isHeadExist(headUuid);
+                        if (!isExist) {
+                            var headTexture = headLoc.getLocation() != null ? HeadUtils.getHeadTexture(headLoc.getLocation().getBlock()) : "";
+                            StorageService.createNewHead(headUuid, headTexture);
+                        }
+                    } catch (Exception ex) {
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
+                        continue;
+                    }
+
                     addHeadToSpin(headLoc, i);
 
                     headLocations.add(headLoc);

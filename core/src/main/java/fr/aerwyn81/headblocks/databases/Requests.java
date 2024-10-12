@@ -28,7 +28,9 @@ public class Requests {
     public static final String UPDATE_PLAYER_MYSQL = "REPLACE INTO hb_players (pUUID, pName, pDisplayName) VALUES (?, ?, ?)";
 
     public static final String GET_HEADS = "SELECT * FROM hb_heads WHERE hExist = True";
-    public static final String CREATE_HEAD = "INSERT INTO hb_heads (hUUID, hExist, hTexture) VALUES (?, true, ?)";
+
+    public static final String UPDATE_HEAD = "INSERT OR REPLACE INTO hb_heads (hUUID, hExist, hTexture) VALUES (?, true, ?)";
+    public static final String UPDATE_HEAD_MYSQL = "REPLACE INTO hb_heads (hUUID, hExist, hTexture) VALUES (?, true, ?)";
 
     public static final String SAVE_PLAYERHEAD = "INSERT INTO hb_playerHeads (pUUID, hUUID) VALUES (?, ?)";
 

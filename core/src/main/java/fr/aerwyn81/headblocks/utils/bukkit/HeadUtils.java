@@ -21,7 +21,9 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HeadUtils {
@@ -84,9 +86,6 @@ public class HeadUtils {
     public static boolean applyTextureToBlock(Block block, String texture) {
         var isApplied = new AtomicBoolean(true);
 
-        if (block.getType() != Material.PLAYER_HEAD)
-            block.setType(Material.PLAYER_HEAD);
-
         var skull = (Skull)block.getState();
 
         if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
@@ -131,12 +130,31 @@ public class HeadUtils {
     }
 
     public static String getHeadTexture(ItemStack head) {
+        if (!isPlayerHead(head))
+            return "";
+
         if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            return NBT.modifyComponents(head, nbt -> (String) nbt.resolveOrNull("minecraft:profile.properties[0].value", String.class));
+            return NBT.modifyComponents(head, nbt -> (String) nbt.resolveOrDefault("minecraft:profile.properties[0].value", ""));
         } else {
-            var nbtItem = new NBTItem(head);
             try {
-                return nbtItem.getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value");
+                //noinspection deprecation, DataFlowIssue
+                return new NBTItem(head).getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").getFirst().getString("Value");
+            } catch (Exception ex) {
+                return "";
+            }
+        }
+    }
+
+    public static String getHeadTexture(Block headBlock) {
+        if (!isPlayerHead(headBlock))
+            return "";
+
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+            return NBT.get(headBlock.getState(), nbt -> (String) nbt.resolveOrDefault("profile.properties[0].value", ""));
+        } else {
+            try {
+                // noinspection DataFlowIssue
+                return NBT.get(headBlock.getState(), nbt -> (String) nbt.getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value"));
             } catch (Exception ex) {
                 return "";
             }
@@ -144,7 +162,7 @@ public class HeadUtils {
     }
 
     public static boolean areEquals(ItemStack i1, ItemStack i2) {
-        if (!isValidItemStack(i1) || !isValidItemStack(i2)) {
+        if (isNotValidItemStack(i1) || isNotValidItemStack(i2)) {
             return false;
         }
 
@@ -156,8 +174,8 @@ public class HeadUtils {
                 i2Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_KEY), PersistentDataType.STRING);
     }
 
-    private static boolean isValidItemStack(ItemStack i) {
-        return i != null && i.getType() != Material.AIR;
+    private static boolean isNotValidItemStack(ItemStack i) {
+        return i == null || i.getType() == Material.AIR;
     }
 
     public static void rotateHead(Block block, BlockFace face) {
@@ -170,4 +188,19 @@ public class HeadUtils {
         var blockData = block.getBlockData();
         return ((Rotatable) blockData).getRotation();
     }
+
+    public static boolean isPlayerHead(ItemStack i) {
+        if (i == null)
+            return false;
+
+        return i.getType() == Material.PLAYER_HEAD || i.getType() == Material.PLAYER_WALL_HEAD;
+    }
+
+    public static boolean isPlayerHead(Block b) {
+        if (b == null)
+            return false;
+
+        return b.getType() == Material.PLAYER_HEAD || b.getType() == Material.PLAYER_WALL_HEAD;
+    }
+
 }

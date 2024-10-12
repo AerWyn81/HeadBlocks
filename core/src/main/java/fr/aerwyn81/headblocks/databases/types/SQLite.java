@@ -27,6 +27,7 @@ public class SQLite implements Database {
      *
      * @throws InternalException SQL exception
      */
+    @SuppressWarnings("SqlNoDataSourceInspection")
     @Override
     public void open() throws InternalException {
         if (connection != null)
@@ -143,7 +144,7 @@ public class SQLite implements Database {
      */
     @Override
     public void createNewHead(UUID hUUID, String texture) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.CREATE_HEAD)) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.UPDATE_HEAD)) {
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
 
@@ -279,7 +280,7 @@ public class SQLite implements Database {
     /**
      * Retrieve top players with a limit
      *
-     * @return list of player name with head count
+     * @return map of player name with head count
      * @throws InternalException SQL Exception
      */
     @Override

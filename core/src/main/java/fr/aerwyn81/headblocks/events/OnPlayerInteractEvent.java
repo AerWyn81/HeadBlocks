@@ -4,10 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.*;
-import fr.aerwyn81.headblocks.utils.bukkit.FireworkUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.XSound;
+import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.*;
@@ -18,11 +15,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class OnPlayerInteractEvent implements Listener {
 
@@ -36,7 +31,7 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Check if clickedBlock is a head
-        if (block.getType() != Material.PLAYER_WALL_HEAD && block.getType() != Material.PLAYER_HEAD) {
+        if (!HeadUtils.isPlayerHead(block)) {
             return;
         }
 

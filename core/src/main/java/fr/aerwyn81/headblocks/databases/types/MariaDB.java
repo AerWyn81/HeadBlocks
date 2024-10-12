@@ -70,7 +70,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public void load() throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -106,7 +106,7 @@ public final class MariaDB implements Database {
         PreparedStatement statement;
 
         try {
-            if (!checkAlive()) {
+            if (notAlive()) {
                 open();
             }
 
@@ -135,7 +135,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public void updatePlayerInfo(PlayerProfileLight profile) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -158,11 +158,11 @@ public final class MariaDB implements Database {
      */
     @Override
     public void createNewHead(UUID hUUID, String texture) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.CREATE_HEAD)) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.UPDATE_HEAD_MYSQL)) {
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
             ps.executeUpdate();
@@ -180,7 +180,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public boolean containsPlayer(UUID pUUID) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -206,7 +206,7 @@ public final class MariaDB implements Database {
     public ArrayList<UUID> getHeadsPlayer(UUID pUUID, String pName) throws InternalException {
         ArrayList<UUID> heads = new ArrayList<>();
 
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -234,7 +234,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public void addHead(UUID pUUID, UUID hUUID) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -255,7 +255,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public void resetPlayer(UUID pUUID) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -276,7 +276,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -298,7 +298,7 @@ public final class MariaDB implements Database {
     public ArrayList<UUID> getAllPlayers() throws InternalException {
         ArrayList<UUID> players = new ArrayList<>();
 
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -317,14 +317,14 @@ public final class MariaDB implements Database {
     /**
      * Retrieve top players with a limit
      *
-     * @return list of player name with head count
+     * @return map of player name with head count
      * @throws InternalException SQL Exception
      */
     @Override
     public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
 
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -349,7 +349,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -375,7 +375,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public boolean isHeadExist(UUID hUUID) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -396,7 +396,7 @@ public final class MariaDB implements Database {
     @Override
     public void migrate() throws InternalException {
         try {
-            if (!checkAlive()) {
+            if (notAlive()) {
                 open();
             }
 
@@ -445,7 +445,7 @@ public final class MariaDB implements Database {
     }
 
     public void insertVersion() throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -463,7 +463,7 @@ public final class MariaDB implements Database {
 
     @Override
     public void addColumnDisplayName() throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -477,7 +477,7 @@ public final class MariaDB implements Database {
 
     @Override
     public ArrayList<UUID> getHeads() throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -502,7 +502,7 @@ public final class MariaDB implements Database {
      */
     @Override
     public void upsertTableVersion(int oldVersion) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -523,7 +523,7 @@ public final class MariaDB implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = new ArrayList<>();
 
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -544,7 +544,7 @@ public final class MariaDB implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayerHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -565,7 +565,7 @@ public final class MariaDB implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayers() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -584,7 +584,7 @@ public final class MariaDB implements Database {
 
     @Override
     public void addColumnHeadTexture() throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -608,7 +608,7 @@ public final class MariaDB implements Database {
 
     @Override
     public String getHeadTexture(UUID headUuid) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -631,7 +631,7 @@ public final class MariaDB implements Database {
     public ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
         var players = new ArrayList<UUID>();
 
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -651,7 +651,7 @@ public final class MariaDB implements Database {
 
     @Override
     public PlayerProfileLight getPlayerByName(String pName) throws InternalException {
-        if (!checkAlive()) {
+        if (notAlive()) {
             open();
         }
 
@@ -673,7 +673,7 @@ public final class MariaDB implements Database {
     @Override
     public boolean isDefaultTablesExist() {
         try {
-            if (!checkAlive()) {
+            if (notAlive()) {
                 open();
             }
 
@@ -685,15 +685,15 @@ public final class MariaDB implements Database {
         }
     }
 
-    private boolean checkAlive() {
+    private boolean notAlive() {
         if (connection == null) {
-            return false;
+            return true;
         }
 
         try {
-            return connection.isValid(1);
+            return !connection.isValid(1);
         } catch (Exception e) {
-            return false;
+            return true;
         }
     }
 }

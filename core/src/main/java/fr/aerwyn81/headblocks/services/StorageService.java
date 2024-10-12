@@ -391,8 +391,8 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = database.getTableHeads();
         for (AbstractMap.SimpleEntry<String, Boolean> head : heads) {
-            instructions.add("INSERT INTO hb_heads (hUUID, hExist) VALUES ('" + head.getKey() +
-                    "', " + (head.getValue() ? 1 : 0) + ");");
+            instructions.add("INSERT INTO hb_heads (hUUID, hExist, hTexture) VALUES ('" + head.getKey() +
+                    "', " + (head.getValue() ? 1 : 0) + ", '');");
         }
 
         instructions.add("");
@@ -433,7 +433,7 @@ public class StorageService {
         // Table : hb_version
         instructions.add("DROP TABLE IF EXISTS hb_version;");
         instructions.add(Requests.CREATE_TABLE_VERSION + ";");
-        instructions.add(Requests.UPSERT_VERSION.replaceAll("\\?", String.valueOf(database.version)) + ";");
+        instructions.add(Requests.UPSERT_VERSION.replaceAll("\\?", String.valueOf(Database.version)) + ";");
 
         return instructions;
     }
