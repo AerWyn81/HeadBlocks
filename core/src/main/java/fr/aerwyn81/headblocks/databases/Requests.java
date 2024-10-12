@@ -1,83 +1,214 @@
 package fr.aerwyn81.headblocks.databases;
 
+import fr.aerwyn81.headblocks.services.ConfigService;
+
 public class Requests {
-    public static final String IS_TABLE_PLAYERS_EXIST_SQLITE = "SELECT name FROM sqlite_master WHERE type='table' AND name='hb_players'";
-    public static final String TABLE_HEADS_COLUMNS_SQLITE = "SELECT COUNT(*) AS count FROM pragma_table_info('hb_heads');";
-    public static final String IS_TABLE_PLAYERS_EXIST_MYSQL = "SELECT TABLE_NAME FROM information_schema.tables WHERE table_name = 'hb_players' LIMIT 1";
-    public static final String TABLE_HEADS_COLUMNS_MYSQL = "SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = 'hb_heads'";
+    private static String getTablePlayers() {
+        return ConfigService.getDatabasePrefix() + "hb_players";
+    }
 
-    public static final String CREATE_TABLE_PLAYERS = "CREATE TABLE IF NOT EXISTS hb_players (`pId` INTEGER PRIMARY KEY AUTOINCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NOT NULL)";
-    public static final String CREATE_TABLE_PLAYERS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_players (`pId` INTEGER PRIMARY KEY AUTO_INCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NOT NULL)";
-    public static final String GET_TABLE_PLAYER = "SELECT pUUID, pName FROM hb_players";
+    private static String getTableHeads() {
+        return ConfigService.getDatabasePrefix() + "hb_heads";
+    }
 
-    public static final String CREATE_TABLE_HEADS = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255))";
-    public static final String CONTAINS_TABLE_HEADS = "SELECT * FROM hb_heads LIMIT 1";
-    public static final String CREATE_TABLE_HEADS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_heads (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255))";
-    public static final String GET_TABLE_HEADS = "SELECT hUUID, hExist FROM hb_heads";
+    private static String getTablePlayerHeads() {
+        return ConfigService.getDatabasePrefix() + "hb_playerHeads";
+    }
 
-    public static final String CREATE_TABLE_PLAYERHEADS = "CREATE TABLE IF NOT EXISTS hb_playerHeads (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES hb_heads(hUUID) ON DELETE CASCADE, PRIMARY KEY(pUUID, hUUID))";
-    public static final String CREATE_TABLE_PLAYERHEADS_MYSQL = "CREATE TABLE IF NOT EXISTS hb_playerHeads (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36), FOREIGN KEY (`hUUID`) REFERENCES hb_heads (`hUUID`) ON DELETE CASCADE)";
-    public static final String GET_TABLE_PLAYERHEADS = "SELECT pUUID, hUUID FROM hb_playerHeads";
+    private static String getTableVersion() {
+        return ConfigService.getDatabasePrefix() + "hb_version";
+    }
 
-    public static final String CREATE_TABLE_VERSION = "CREATE TABLE IF NOT EXISTS hb_version (`current` INTEGER)";
-    public static final String GET_TABLE_VERSION = "SELECT current FROM hb_version";
-    public static final String INSERT_VERSION = "INSERT INTO hb_version VALUES (?)";
-    public static final String UPSERT_VERSION = "UPDATE hb_version SET current = (?) WHERE current = (?)";
+    public static String getIsTablePlayersExistSQLite() {
+        return String.format("SELECT name FROM sqlite_master WHERE type='table' AND name='%s'", getTablePlayers());
+    }
 
-    public static final String UPDATE_PLAYER = "INSERT OR REPLACE INTO hb_players (pUUID, pName, pDisplayName) VALUES (?, ?, ?)";
-    public static final String UPDATE_PLAYER_MYSQL = "REPLACE INTO hb_players (pUUID, pName, pDisplayName) VALUES (?, ?, ?)";
+    public static String getTableHeadsColumnsSQLite() {
+        return String.format("SELECT COUNT(*) AS count FROM pragma_table_info('%s');", getTableHeads());
+    }
 
-    public static final String GET_HEADS = "SELECT * FROM hb_heads WHERE hExist = True";
+    public static String getIsTablePlayersExistMySQL() {
+        return String.format("SELECT TABLE_NAME FROM information_schema.tables WHERE table_name = '%s' LIMIT 1", getTablePlayers());
+    }
 
-    public static final String UPDATE_HEAD = "INSERT OR REPLACE INTO hb_heads (hUUID, hExist, hTexture) VALUES (?, true, ?)";
-    public static final String UPDATE_HEAD_MYSQL = "REPLACE INTO hb_heads (hUUID, hExist, hTexture) VALUES (?, true, ?)";
+    public static String getTableHeadsColumnsMySQL() {
+        return String.format("SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '%s'", getTableHeads());
+    }
 
-    public static final String SAVE_PLAYERHEAD = "INSERT INTO hb_playerHeads (pUUID, hUUID) VALUES (?, ?)";
+    public static String getCreateTablePlayers() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pId` INTEGER PRIMARY KEY AUTOINCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NOT NULL)", getTablePlayers());
+    }
 
-    public static final String CONTAINS_PLAYER = "SELECT 1 FROM hb_players WHERE pUUID = ?";
+    public static String getCreateTablePlayersMySQL() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pId` INTEGER PRIMARY KEY AUTO_INCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NOT NULL)", getTablePlayers());
+    }
 
-    public static final String PLAYER_HEADS = "SELECT * FROM hb_playerHeads hbph INNER JOIN hb_heads hbh ON hbph.hUUID = hbh.hUUID INNER JOIN hb_players hbp ON hbph.pUUID = hbp.pUUID WHERE hbp.pUUID = ? AND hbh.hExist = True";
+    public static String getTablePlayer() {
+        return String.format("SELECT pUUID, pName FROM %s", getTablePlayers());
+    }
 
-    public static final String RESET_PLAYER = "DELETE FROM hb_playerHeads WHERE pUUID = ?";
+    public static String getCreateTableHeads() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255))", getTableHeads());
+    }
 
-    public static final String REMOVE_HEAD = "UPDATE hb_heads SET hExist=False WHERE hUUID = ?";
+    public static String getContainsTableHeads() {
+        return String.format("SELECT * FROM %s LIMIT 1", getTableHeads());
+    }
 
-    public static final String DELETE_HEAD = "DELETE FROM hb_heads WHERE hUUID = ?";
+    public static String getCreateTableHeadsMySQL() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255))", getTableHeads());
+    }
 
-    public static final String ALL_PLAYERS = "SELECT pUUID FROM hb_players";
+    public static String getTableHeadsData() {
+        return String.format("SELECT hUUID, hExist FROM %s", getTableHeads());
+    }
 
-    public static final String TOP_PLAYERS = "SELECT hbp.pUUID, pName, pDisplayName, COUNT(*) as hCount FROM hb_playerHeads hbph INNER JOIN hb_players hbp ON hbph.pUUID = hbp.pUUID INNER JOIN hb_heads hbh ON hbph.hUUID = hbh.hUUID WHERE hbh.hExist = True GROUP BY pName ORDER BY hCount DESC";
+    public static String getCreateTablePlayerHeads() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES %s(hUUID) ON DELETE CASCADE, PRIMARY KEY(pUUID, hUUID))", getTablePlayerHeads(), getTableHeads());
+    }
 
-    public static final String CHECK_PLAYER_NAME = "SELECT pName, pDisplayName FROM hb_players WHERE pUUID = ?";
+    public static String getCreateTablePlayerHeadsMySQL() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36), FOREIGN KEY (`hUUID`) REFERENCES %s (`hUUID`) ON DELETE CASCADE)", getTablePlayerHeads(), getTableHeads());
+    }
 
-    public static final String HEAD_EXIST = "SELECT 1 FROM hb_heads WHERE hUUID = ? AND hExist = True";
+    public static String getTablePlayerHeadsData() {
+        return String.format("SELECT pUUID, hUUID FROM %s", getTablePlayerHeads());
+    }
 
-    // Migrate
-    public static final String MIG_ARCHIVE_TABLE = "CREATE TABLE IF NOT EXISTS hb_players_old (`pUUID` varchar(40) NOT NULL, `hUUID` varchar(40) NOT NULL, PRIMARY KEY (pUUID,`hUUID`))";
+    public static String getCreateTableVersion() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`current` INTEGER)", getTableVersion());
+    }
 
-    public static final String MIG_COPY_OLD_TO_ARCHIVE = "INSERT INTO hb_players_old SELECT * FROM hb_players";
+    public static String getTableVersionData() {
+        return String.format("SELECT current FROM %s", getTableVersion());
+    }
 
-    public static final String MIG_DELETE_OLD = "DROP TABLE hb_players";
+    public static String getInsertVersion() {
+        return String.format("INSERT INTO %s VALUES (?)", getTableVersion());
+    }
 
-    public static final String MIG_IMPORT_OLD_USERS = "SELECT DISTINCT pUUID FROM hb_players_old";
+    public static String getUpsertVersion() {
+        return String.format("UPDATE %s SET current = (?) WHERE current = (?)", getTableVersion());
+    }
 
-    public static final String MIG_INSERT_PLAYER = "INSERT INTO hb_players(`pUUID`, `pName`) VALUES (?, ?)";
+    public static String getUpdatePlayer() {
+        return String.format("INSERT OR REPLACE INTO %s (pUUID, pName, pDisplayName) VALUES (?, ?, ?)", getTablePlayers());
+    }
 
-    public static final String MIG_IMPORT_OLD_HEADS = "INSERT INTO hb_heads(`hUUID`, `hExist`) SELECT DISTINCT hUUID, True FROM hb_players_old";
+    public static String getUpdatePlayerMySQL() {
+        return String.format("REPLACE INTO %s (pUUID, pName, pDisplayName) VALUES (?, ?, ?)", getTablePlayers());
+    }
 
-    public static final String MIG_REMAP = "INSERT INTO hb_playerHeads SELECT * FROM hb_players_old";
+    public static String getHeads() {
+        return String.format("SELECT * FROM %s WHERE hExist = True", getTableHeads());
+    }
 
-    public static final String MIG_DEL_ARCHIVE = "DROP TABLE hb_players_old";
+    public static String getUpdateHead() {
+        return String.format("INSERT OR REPLACE INTO %s (hUUID, hExist, hTexture) VALUES (?, true, ?)", getTableHeads());
+    }
 
-    public static final String ADD_COLUMN_HEAD_TEXTURE_MYSQL = "ALTER TABLE hb_heads ADD COLUMN IF NOT EXISTS hTexture VARCHAR(255) DEFAULT ''";
-    public static final String ADD_COLUMN_HEAD_TEXTURE_SQLITE = "ALTER TABLE hb_heads ADD COLUMN hTexture VARCHAR(255) DEFAULT ''";
+    public static String getUpdateHeadMySQL() {
+        return String.format("REPLACE INTO %s (hUUID, hExist, hTexture) VALUES (?, true, ?)", getTableHeads());
+    }
 
-    public static final String GET_HEAD_TEXTURE = "SELECT hTexture FROM hb_heads WHERE hUUID = (?)";
+    public static String getSavePlayerHead() {
+        return String.format("INSERT INTO %s (pUUID, hUUID) VALUES (?, ?)", getTablePlayerHeads());
+    }
 
-    public static final String GET_PLAYERS_BY_HEAD = "SELECT pUUID FROM hb_playerHeads WHERE hUUID = (?)";
+    public static String getContainsPlayer() {
+        return String.format("SELECT 1 FROM %s WHERE pUUID = ?", getTablePlayers());
+    }
 
-    public static final String GET_PLAYER = "SELECT pUUID, pDisplayName FROM hb_players WHERE pName = (?)";
+    public static String getPlayerHeads() {
+        return String.format("SELECT * FROM %s hbph INNER JOIN %s hbh ON hbph.hUUID = hbh.hUUID INNER JOIN %s hbp ON hbph.pUUID = hbp.pUUID WHERE hbp.pUUID = ? AND hbh.hExist = True", getTablePlayerHeads(), getTableHeads(), getTablePlayers());
+    }
 
-    public static final String ADD_COLUMN_PLAYER_DISPLAYNAME_MYSQL = "ALTER TABLE hb_players ADD COLUMN IF NOT EXISTS pDisplayName VARCHAR(255) DEFAULT ''";
-    public static final String ADD_COLUMN_PLAYER_DISPLAYNAME_SQLITE = "ALTER TABLE hb_players ADD COLUMN pDisplayName VARCHAR(255) DEFAULT ''";
+    public static String getResetPlayer() {
+        return String.format("DELETE FROM %s WHERE pUUID = ?", getTablePlayerHeads());
+    }
+
+    public static String getRemoveHead() {
+        return String.format("UPDATE %s SET hExist=False WHERE hUUID = ?", getTableHeads());
+    }
+
+    public static String getDeleteHead() {
+        return String.format("DELETE FROM %s WHERE hUUID = ?", getTableHeads());
+    }
+
+    public static String getAllPlayers() {
+        return String.format("SELECT pUUID FROM %s", getTablePlayers());
+    }
+
+    public static String getTopPlayers() {
+        return String.format("SELECT hbp.pUUID, pName, pDisplayName, COUNT(*) as hCount FROM %s hbph INNER JOIN %s hbp ON hbph.pUUID = hbp.pUUID INNER JOIN %s hbh ON hbph.hUUID = hbh.hUUID WHERE hbh.hExist = True GROUP BY pName ORDER BY hCount DESC", getTablePlayerHeads(), getTablePlayers(), getTableHeads());
+    }
+
+    public static String getCheckPlayerName() {
+        return String.format("SELECT pName, pDisplayName FROM %s WHERE pUUID = ?", getTablePlayers());
+    }
+
+    public static String getHeadExist() {
+        return String.format("SELECT 1 FROM %s WHERE hUUID = ? AND hExist = True", getTableHeads());
+    }
+
+    // Migrations
+    public static String getMigArchiveTable() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` varchar(40) NOT NULL, `hUUID` varchar(40) NOT NULL, PRIMARY KEY (pUUID,`hUUID`))", "hb_players_old");
+    }
+
+    public static String getMigCopyOldToArchive() {
+        return String.format("INSERT INTO %s SELECT * FROM %s", "hb_players_old", getTablePlayers());
+    }
+
+    public static String getMigDeleteOld() {
+        return String.format("DROP TABLE %s", getTablePlayers());
+    }
+
+    public static String getMigImportOldUsers() {
+        return String.format("SELECT DISTINCT pUUID FROM %s", "hb_players_old");
+    }
+
+    public static String getMigInsertPlayer() {
+        return String.format("INSERT INTO %s(`pUUID`, `pName`) VALUES (?, ?)", getTablePlayers());
+    }
+
+    public static String getMigImportOldHeads() {
+        return String.format("INSERT INTO %s(`hUUID`, `hExist`) SELECT DISTINCT hUUID, True FROM %s", getTableHeads(), "hb_players_old");
+    }
+
+    public static String getMigRemap() {
+        return String.format("INSERT INTO %s SELECT * FROM %s", getTablePlayerHeads(), "hb_players_old");
+    }
+
+    public static String getMigDelArchive() {
+        return String.format("DROP TABLE %s", "hb_players_old");
+    }
+
+    public static String getAddColumnHeadTextureMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS hTexture VARCHAR(255) DEFAULT ''", getTableHeads());
+    }
+
+    public static String getAddColumnHeadTextureSQLite() {
+        return String.format("ALTER TABLE %s ADD COLUMN hTexture VARCHAR(255) DEFAULT ''", getTableHeads());
+    }
+
+    public static String getHeadTexture() {
+        return String.format("SELECT hTexture FROM %s WHERE hUUID = (?)", getTableHeads());
+    }
+
+    public static String getPlayersByHead() {
+        return String.format("SELECT pUUID FROM %s WHERE hUUID = (?)", getTablePlayerHeads());
+    }
+
+    public static String getPlayer() {
+        return String.format("SELECT pUUID, pDisplayName FROM %s WHERE pName = (?)", getTablePlayers());
+    }
+
+    public static String getAddColumnPlayerDisplayNameMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS pDisplayName VARCHAR(255) DEFAULT ''", getTablePlayers());
+    }
+
+    public static String getAddColumnPlayerDisplayNameSQLite() {
+        return String.format("ALTER TABLE %s ADD COLUMN pDisplayName VARCHAR(255) DEFAULT ''", getTablePlayers());
+    }
 }

@@ -4,7 +4,6 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
-import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.services.*;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -21,17 +20,17 @@ public class Reload implements Cmd {
         var plugin = HeadBlocks.getInstance();
         HeadBlocks.isReloadInProgress = true;
 
+        GuiService.clearCache();
+
+        HologramService.unload();
+
+        StorageService.close();
+
         plugin.reloadConfig();
         ConfigService.load();
 
         LanguageService.setLanguage(ConfigService.getLanguage());
         LanguageService.pushMessages();
-
-        HologramService.unload();
-
-        GuiService.clearCache();
-
-        StorageService.close();
 
         StorageService.initialize();
         HeadService.load();

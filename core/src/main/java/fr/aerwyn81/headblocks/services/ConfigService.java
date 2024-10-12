@@ -246,6 +246,10 @@ public class ConfigService {
 
     public static boolean getDatabaseSsl() { return config.getBoolean("database.settings.ssl", false); }
 
+    public static String getDatabasePrefix() {
+        return config.getString("database.settings.prefix", "");
+    }
+
     public static boolean isPreventCommandsOnTieredRewardsLevel() {
         return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
     }

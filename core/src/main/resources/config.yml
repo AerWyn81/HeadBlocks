@@ -62,6 +62,7 @@ database:
     password: ''
     port: 3306
     ssl: false
+    prefix: ''
 
 # Multi-server support with Redis
 redis:

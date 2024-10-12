@@ -384,14 +384,14 @@ public class StorageService {
         instructions.add("DROP TABLE IF EXISTS hb_heads;");
 
         if (type == EnumTypeDatabase.MySQL) {
-            instructions.add(Requests.CREATE_TABLE_HEADS_MYSQL + ";");
+            instructions.add(Requests.getCreateTableHeadsMySQL() + ";");
         } else if (type == EnumTypeDatabase.SQLite) {
-            instructions.add(Requests.CREATE_TABLE_HEADS + ";");
+            instructions.add(Requests.getCreateTableHeads() + ";");
         }
 
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = database.getTableHeads();
         for (AbstractMap.SimpleEntry<String, Boolean> head : heads) {
-            instructions.add("INSERT INTO hb_heads (hUUID, hExist, hTexture) VALUES ('" + head.getKey() +
+            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_heads (hUUID, hExist, hTexture) VALUES ('" + head.getKey() +
                     "', " + (head.getValue() ? 1 : 0) + ", '');");
         }
 
@@ -401,14 +401,14 @@ public class StorageService {
         instructions.add("DROP TABLE IF EXISTS hb_playerHeads;");
 
         if (type == EnumTypeDatabase.MySQL) {
-            instructions.add(Requests.CREATE_TABLE_PLAYERHEADS_MYSQL + ";");
+            instructions.add(Requests.getCreateTablePlayerHeadsMySQL() + ";");
         } else if (type == EnumTypeDatabase.SQLite) {
-            instructions.add(Requests.CREATE_TABLE_PLAYERHEADS + ";");
+            instructions.add(Requests.getCreateTablePlayerHeads() + ";");
         }
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = database.getTablePlayerHeads();
         for (AbstractMap.SimpleEntry<String, String> pHead : playerHeads) {
-            instructions.add("INSERT INTO hb_playerHeads (pUUID, hUUID) VALUES ('" + pHead.getKey() +
+            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + pHead.getKey() +
                     "', '" + pHead.getValue() + "');");
         }
 
@@ -418,22 +418,22 @@ public class StorageService {
         instructions.add("DROP TABLE IF EXISTS hb_players;");
 
         if (type == EnumTypeDatabase.MySQL) {
-            instructions.add(Requests.CREATE_TABLE_PLAYERS_MYSQL + ";");
+            instructions.add(Requests.getCreateTablePlayersMySQL() + ";");
         } else if (type == EnumTypeDatabase.SQLite) {
-            instructions.add(Requests.CREATE_TABLE_PLAYERS + ";");
+            instructions.add(Requests.getCreateTablePlayers() + ";");
         }
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getTablePlayers();
         for (AbstractMap.SimpleEntry<String, String> player : players) {
-            instructions.add("INSERT INTO hb_players (pUUID, pName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "');");
+            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_players (pUUID, pName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "');");
         }
 
         instructions.add("");
 
         // Table : hb_version
         instructions.add("DROP TABLE IF EXISTS hb_version;");
-        instructions.add(Requests.CREATE_TABLE_VERSION + ";");
-        instructions.add(Requests.UPSERT_VERSION.replaceAll("\\?", String.valueOf(Database.version)) + ";");
+        instructions.add(Requests.getCreateTableVersion() + ";");
+        instructions.add(Requests.getUpsertVersion().replaceAll("\\?", String.valueOf(Database.version)) + ";");
 
         return instructions;
     }
