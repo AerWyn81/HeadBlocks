@@ -1,8 +1,8 @@
 package fr.aerwyn81.headblocks.utils;
 
-import de.tr7zw.changeme.nbtapi.NBTCompound;
+import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.NBTItem;
-import de.tr7zw.changeme.nbtapi.NBTListCompound;
+import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
 import fr.aerwyn81.headblocks.data.head.Head;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -15,20 +15,17 @@ public class HeadUtils {
         if (head.getTexture() == null)
             return head;
 
-        NBTItem nbti = new NBTItem(head.getHead());
-        NBTCompound skull = nbti.addCompound("SkullOwner");
-        skull.setString("Name", "HeadBlocks");
+        NBT.modify(head.getHead(), nbt -> {
+            ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound("SkullOwner");
 
-        if (Version.getCurrent().isOlderOrSameThan(Version.v1_15)) {
-            skull.setString("Id", "f032de26-fde9-469f-a6eb-c453470894a5");
-        } else {
-            skull.setUUID("Id", UUID.fromString("f032de26-fde9-469f-a6eb-c453470894a5"));
-        }
+            skullOwnerCompound.setUUID("Id", UUID.randomUUID());
 
-        NBTListCompound textCompound = skull.addCompound("Properties").getCompoundList("textures").addCompound();
-        textCompound.setString("Value", head.getTexture());
+            skullOwnerCompound.getOrCreateCompound("Properties")
+                    .getCompoundList("textures")
+                    .addCompound()
+                    .setString("Value", head.getTexture());
+        });
 
-        head.setHead(nbti.getItem());
         head.setLoaded(true);
         return head;
     }

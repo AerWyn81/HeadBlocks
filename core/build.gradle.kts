@@ -9,16 +9,16 @@ plugins {
 version = rootProject.version
 
 repositories {
-    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+    maven("https://repo.extendedclip.com/releases")
     maven("https://jitpack.io")
 }
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
-    compileOnly("me.clip:placeholderapi:2.10.10")
+    compileOnly("me.clip:placeholderapi:2.11.5")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.1")
     implementation("redis.clients:jedis:3.6.3")
-    implementation("de.tr7zw:item-nbt-api:2.9.2")
+    implementation("de.tr7zw:item-nbt-api:2.13.2")
     implementation("com.zaxxer:HikariCP:4.0.3")
     implementation("org.javatuples:javatuples:1.2")
     implementation("org.yaml:snakeyaml:1.29")
