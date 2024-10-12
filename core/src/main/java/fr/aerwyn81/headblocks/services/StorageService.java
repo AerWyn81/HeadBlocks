@@ -211,7 +211,7 @@ public class StorageService {
                             updatePlayerName(playerProfile);
                         }
 
-                        for (UUID hUuid : database.getHeadsPlayer(pUuid, playerName)) {
+                        for (UUID hUuid : database.getHeadsPlayer(pUuid)) {
                             storage.addHead(pUuid, hUuid);
                         }
 
@@ -305,13 +305,13 @@ public class StorageService {
         return storage.containsPlayer(playerUuid) || database.containsPlayer(playerUuid);
     }
 
-    public static BukkitFutureResult<List<UUID>> getHeadsPlayer(UUID playerUuid, String pName) {
+    public static BukkitFutureResult<List<UUID>> getHeadsPlayer(UUID playerUuid) {
         return CompletableBukkitFuture.supplyAsync(HeadBlocks.getInstance(), () -> {
             try {
                 if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
                     return _cacheHeads.get(playerUuid);
 
-                var headsUuid = database.getHeadsPlayer(playerUuid, pName);
+                var headsUuid = database.getHeadsPlayer(playerUuid);
                 _cacheHeads.compute(playerUuid, (key, playerHeads) -> {
                     if (playerHeads == null) {
                         return headsUuid;
@@ -323,7 +323,7 @@ public class StorageService {
 
                 return headsUuid;
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to get heads for " + pName + ": " + ex.getMessage()));
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to get heads for " + playerUuid + ": " + ex.getMessage()));
                 return new ArrayList<>();
             }
         });

@@ -22,7 +22,7 @@ public class PlaceholdersService {
                 .replaceAll("%prefix%", LanguageService.getPrefix());
 
         if (message.contains("%progress%") || message.contains("%current%") || message.contains("%max%") || message.contains("%left%") || message.contains("%headName%")) {
-            message = parseInternal(pName, pUuid, message, headLocation);
+            message = parseInternal(pUuid, message, headLocation);
         } else {
             message = MessageUtils.colorize(message);
         }
@@ -41,10 +41,10 @@ public class PlaceholdersService {
         return msgs.toArray(new String[0]);
     }
 
-    public static String parseInternal(String pName, UUID pUuid, String message, HeadLocation headLocation) {
+    public static String parseInternal(UUID pUuid, String message, HeadLocation headLocation) {
         String progress;
 
-        var future = StorageService.getHeadsPlayer(pUuid, pName).asFuture();
+        var future = StorageService.getHeadsPlayer(pUuid).asFuture();
 
         try {
             var current = future.get().size();

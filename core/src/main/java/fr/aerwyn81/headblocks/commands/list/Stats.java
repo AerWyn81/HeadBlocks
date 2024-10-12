@@ -50,7 +50,7 @@ public class Stats implements Cmd {
             return true;
         }
 
-        StorageService.getHeadsPlayer(playerProfileLight.uuid(), playerProfileLight.name()).whenComplete(pHeads -> {
+        StorageService.getHeadsPlayer(playerProfileLight.uuid()).whenComplete(pHeads -> {
             var playerHeads = new ArrayList<>(pHeads);
 
             heads.sort(Comparator.comparingInt(playerHeads::indexOf));

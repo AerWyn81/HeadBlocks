@@ -54,7 +54,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         // %headblocks_current% | %headblocks_left%
         if (identifier.equals("current") || identifier.equals("left")) {
-            var future = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).asFuture();
+            var future = StorageService.getHeadsPlayer(player.getUniqueId()).asFuture();
 
             try {
                 var current = future.get().size();
@@ -138,7 +138,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 return "No loaded heads";
             }
 
-            var future = StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).asFuture();
+            var future = StorageService.getHeadsPlayer(player.getUniqueId()).asFuture();
 
             try {
                 var playerHeadLocations = new ArrayList<HeadLocation>();

@@ -74,7 +74,7 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Check if the player has already clicked on the head
-        StorageService.getHeadsPlayer(player.getUniqueId(), player.getName()).whenComplete(p -> {
+        StorageService.getHeadsPlayer(player.getUniqueId()).whenComplete(p -> {
             var playerHeads = new ArrayList<>(p);
 
             if (playerHeads.contains(headLocation.getUuid())) {

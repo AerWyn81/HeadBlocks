@@ -36,7 +36,7 @@ public class Requests {
 
     public static final String CONTAINS_PLAYER = "SELECT 1 FROM hb_players WHERE pUUID = ?";
 
-    public static final String PLAYER_HEADS = "SELECT * FROM hb_playerHeads hbph INNER JOIN hb_heads hbh ON hbph.hUUID = hbh.hUUID INNER JOIN hb_players hbp ON hbph.pUUID = hbp.pUUID WHERE hbp.pUUID = ? AND pName = ? AND hbh.hExist = True";
+    public static final String PLAYER_HEADS = "SELECT * FROM hb_playerHeads hbph INNER JOIN hb_heads hbh ON hbph.hUUID = hbh.hUUID INNER JOIN hb_players hbp ON hbph.pUUID = hbp.pUUID WHERE hbp.pUUID = ? AND hbh.hExist = True";
 
     public static final String RESET_PLAYER = "DELETE FROM hb_playerHeads WHERE pUUID = ?";
 
