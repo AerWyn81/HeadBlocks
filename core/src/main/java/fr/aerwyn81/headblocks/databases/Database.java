@@ -64,4 +64,6 @@ public interface Database {
     void insertVersion() throws InternalException;
 
     void addColumnDisplayName() throws InternalException;
+
+    ArrayList<UUID> getHeads() throws InternalException;
 }

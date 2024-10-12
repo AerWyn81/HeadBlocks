@@ -68,12 +68,14 @@ Messages:
 Chat:
   Hover:
     Teleport: "&7&oSe téléporter au HeadBlock"
+    BlockedTeleport: "&7&oTéléportation impossible"
     Remove: "&7&oSupprimer ce HeadBlock"
     PreviousPage: "&7&oPage précédente"
     NextPage: "&7&oPage suivante"
     Own: "&7&oA trouvé la tête"
     NotOwn: "&7&oN'a pas trouvé la tête"
     LineTop: "&7&oAfficher les détails du joueur"
+    HeadIsNotOnThisServer: "&7&oLa tête n'est pas sur ce serveur"
   Box:
     Teleport: "&8[&a☄&8] &7|"
     Remove: "&7| &8[&c✘&8]"

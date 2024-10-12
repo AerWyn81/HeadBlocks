@@ -32,6 +32,10 @@ public class LanguageService {
 		language = lang;
 	}
 
+	public static String getLanguage() {
+		return language;
+	}
+
 	public static String getPrefix() {
 		return MessageUtils.colorize(messages.get("Prefix").toString());
 	}

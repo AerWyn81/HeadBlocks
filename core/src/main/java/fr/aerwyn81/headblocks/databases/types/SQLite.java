@@ -7,7 +7,10 @@ import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.sql.*;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.UUID;
 
 @SuppressWarnings({"DuplicatedCode", "SqlResolve"})
 public class SQLite implements Database {
@@ -408,6 +411,24 @@ public class SQLite implements Database {
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
+    }
+
+    @Override
+    public ArrayList<UUID> getHeads() throws InternalException {
+        var heads = new ArrayList<UUID>();
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.GET_HEADS);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                heads.add(UUID.fromString(rs.getString("hUUID")));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return heads;
     }
 
     /**

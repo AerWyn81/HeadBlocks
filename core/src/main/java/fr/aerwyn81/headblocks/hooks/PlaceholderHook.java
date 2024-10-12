@@ -8,7 +8,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.UUID;
 
 public class PlaceholderHook extends PlaceholderExpansion {
 
@@ -60,7 +62,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 if (identifier.equals("current")) {
                     return "" + current;
                 } else {
-                    return "" + (HeadService.getChargedHeadLocations().size() - current);
+                    return "" + (StorageService.getHeads().size() - current);
                 }
             } catch (Exception ex) {
                 return "Future error get heads";
@@ -107,7 +109,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         // %headblocks_max%
         if (identifier.equals("max")) {
-            return "" +  HeadService.getChargedHeadLocations().size();
+            return "" + HeadService.getHeads().size();
         }
 
         // %headblocks_hasHead_uuid%

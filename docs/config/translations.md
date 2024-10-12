@@ -101,12 +101,14 @@ Messages:
 Chat:
   Hover:
     Teleport: "&7&oTeleport to the HeadBlock"
+    BlockedTeleport: "&7&oTeleportation impossible"
     Remove: "&7&oDelete this HeadBlock"
     PreviousPage: "&7&oPrevious page"
     NextPage: "&7&oNext page"
     Own: "&7&oHead found"
     NotOwn: "&7&oHead not found yet"
     LineTop: "&7&oShow details for player"
+    HeadIsNotOnThisServer: "&7&oHead is not on this server"
   Box:
     Teleport: "&8[&a☄&8] &7|"
     Remove: "&7| &8[&c✘&8]"
@@ -133,7 +135,7 @@ Chat:
     OrderIndex: "&aOrder index: "
 
 Other:
-  NameNotSet: "Name not set"
+  NameNotSet: "&cName not set"
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &c&lOptions"

@@ -475,6 +475,27 @@ public final class MariaDB implements Database {
         }
     }
 
+    @Override
+    public ArrayList<UUID> getHeads() throws InternalException {
+        if (!checkAlive()) {
+            open();
+        }
+
+        var heads = new ArrayList<UUID>();
+
+        try (PreparedStatement ps = connection.prepareStatement(Requests.GET_HEADS)) {
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                heads.add(UUID.fromString(rs.getString("hUUID")));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return heads;
+    }
+
     /**
      * Add table version
      * @throws InternalException SQL Exception

@@ -21,7 +21,6 @@ import org.bukkit.entity.Player;
 import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -117,6 +116,10 @@ public class StorageService {
 
     public static boolean hasStorageError() {
         return storageError;
+    }
+
+    public static String selectedStorageType() {
+        return ConfigService.getDatabaseType().name();
     }
 
     private static void verifyDatabaseMigration() throws InternalException {
@@ -454,5 +457,9 @@ public class StorageService {
             return;
 
         _cacheHeads.get(playerUuid).clear();
+    }
+
+    public static ArrayList<UUID> getHeads() throws InternalException {
+        return database.getHeads();
     }
 }

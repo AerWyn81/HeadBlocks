@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks.commands.list;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
@@ -19,13 +18,11 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,22 +36,27 @@ public class Stats implements Cmd {
             return true;
         }
 
-        ArrayList<HeadLocation> headsSpawned = new ArrayList<>(HeadService.getChargedHeadLocations());
-        if (headsSpawned.isEmpty()) {
+        ArrayList<UUID> heads;
+
+        try {
+            heads = StorageService.getHeads();
+        } catch (InternalException e) {
+            sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            return true;
+        }
+
+        if (heads.isEmpty()) {
             sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 
         StorageService.getHeadsPlayer(playerProfileLight.uuid(), playerProfileLight.name()).whenComplete(pHeads -> {
-            var playerHeads = pHeads.stream()
-                    .map(HeadService::getHeadByUUID)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toCollection(ArrayList::new));
+            var playerHeads = new ArrayList<>(pHeads);
 
-            headsSpawned.sort(Comparator.comparingInt(playerHeads::indexOf));
+            heads.sort(Comparator.comparingInt(playerHeads::indexOf));
 
             ChatPageUtils cpu = new ChatPageUtils(sender)
-                    .entriesCount(headsSpawned.size())
+                    .entriesCount(heads.size())
                     .currentPage(args);
 
             String message = LanguageService.getMessage("Chat.LineTitle");
@@ -67,12 +69,21 @@ public class Stats implements Cmd {
             }
 
             for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
-                UUID uuid = headsSpawned.get(i).getUuid();
-                Location location = headsSpawned.get(i).getLocation();
+                UUID uuid = heads.get(i);
 
-                String hover = LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), location);
+                HeadLocation headLocation = null;
 
-                var headLocation = HeadService.getHeadByUUID(uuid);
+                var chargedHead = HeadService.getChargedHeadLocations().stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
+                if (chargedHead.isPresent()) {
+                    headLocation = chargedHead.get();
+                }
+
+                var hover = LanguageService.getMessage("Chat.Hover.HeadIsNotOnThisServer");
+
+                if (headLocation != null) {
+                    hover = LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), headLocation.getLocation());
+                }
+
                 var headName = headLocation != null ? headLocation.getName() : uuid.toString();
                 if (headName.isEmpty()) {
                     headName = uuid.toString();
@@ -83,7 +94,7 @@ public class Stats implements Cmd {
                     msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
 
                     TextComponent own;
-                    if (playerHeads.stream().anyMatch(s -> s.getUuid() == uuid)) {
+                    if (playerHeads.stream().anyMatch(s -> s.equals(uuid))) {
                         own = new TextComponent(LanguageService.getMessage("Chat.Box.Own"));
                         own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Own"))));
                     } else {
@@ -93,15 +104,21 @@ public class Stats implements Cmd {
 
                     TextComponent tp = new TextComponent(LanguageService.getMessage("Chat.Box.Teleport"));
 
-                    if (location.getWorld() != null) {
-                        tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + location.getWorld().getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
+                    if (headLocation != null) {
+                        var location = headLocation.getLocation();
+
+                        if (location.getWorld() != null) {
+                            tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + location.getWorld().getName() + " " + (location.getX() + 0.5) + " " + (location.getY() + 1) + " " + (location.getZ() + 0.5 + " 0.0 90.0")));
+                        }
+                        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Teleport"))));
+                    } else {
+                        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.BlockedTeleport"))));
                     }
-                    tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Teleport"))));
 
                     TextComponent space = new TextComponent(" ");
                     cpu.addLine(own, space, tp, space, msg, space);
                 } else {
-                    sender.sendMessage((playerHeads.stream().anyMatch(s -> s.getUuid().equals(uuid)) ?
+                    sender.sendMessage((playerHeads.stream().anyMatch(s -> s.equals(uuid)) ?
                             LanguageService.getMessage("Chat.Box.Own") : LanguageService.getMessage("Chat.Box.NotOwn")) + " " +
                             MessageUtils.colorize("&6" + headName));
                 }

@@ -78,10 +78,6 @@ public final class HeadBlocks extends JavaPlugin {
 
         ConfigService.initialize(configFile);
 
-        if (ConfigService.isMetricsEnabled()) {
-            new Metrics(this, 15495);
-        }
-
         LanguageService.initialize(ConfigService.getLanguage());
         LanguageService.pushMessages();
 
@@ -106,6 +102,21 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OthersEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(), this);
+
+        if (ConfigService.isMetricsEnabled()) {
+            var m = new Metrics(this, 15495);
+            m.addCustomChart(new Metrics.SimplePie("database_type", StorageService::selectedStorageType));
+            m.addCustomChart(new Metrics.SingleLineChart("heads", () -> HeadService.getChargedHeadLocations().size()));
+            m.addCustomChart(new Metrics.SimplePie("lang", LanguageService::getLanguage));
+            m.addCustomChart(new Metrics.SimplePie("feat_order", () -> {
+                var anyOrder = HeadService.getChargedHeadLocations().stream().anyMatch(h -> h.getOrderIndex() != -1);
+                return anyOrder ? "True" : "False";
+            }));
+            m.addCustomChart(new Metrics.SimplePie("feat_hit", () -> {
+                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(h -> h.getHitCount() != -1);
+                return anyHit ? "True" : "False";
+            }));
+        }
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
     }

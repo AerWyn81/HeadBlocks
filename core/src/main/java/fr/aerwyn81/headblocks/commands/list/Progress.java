@@ -3,7 +3,6 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -23,12 +22,6 @@ public class Progress implements Cmd {
     public boolean perform(CommandSender sender, String[] args) {
         PlayerProfileLight playerProfileLight = CommandsUtils.extractAndGetPlayerUuidByName(sender, args, PlayerUtils.hasPermission(sender, "headblocks.commands.progress.other"));
         if (playerProfileLight == null) {
-            return true;
-        }
-
-        int max = HeadService.getChargedHeadLocations().size();
-        if (max == 0) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
             return true;
         }
 

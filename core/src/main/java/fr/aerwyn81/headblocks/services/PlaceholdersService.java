@@ -2,7 +2,6 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
@@ -11,7 +10,6 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 public class PlaceholdersService {
 
@@ -51,7 +49,7 @@ public class PlaceholdersService {
         try {
             var current = future.get().size();
 
-            int total = HeadService.getChargedHeadLocations().size();
+            int total = StorageService.getHeads().size();
 
             message = message.replaceAll("%current%", String.valueOf(current))
                     .replaceAll("%max%", String.valueOf(total));
