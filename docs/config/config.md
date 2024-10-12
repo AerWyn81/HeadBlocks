@@ -133,6 +133,7 @@ database:
     password: ''
     port: 3306
     ssl: false
+    prefix: ''
 ```
 
 By default, all data is stored locally in SQLite in the file `plugins/HeadBlocks/headblocks.db` but you can use a remote database. First enable this configuration and specify a database type, currently supported: `MySQL` or `MariaDB`.
@@ -144,6 +145,7 @@ Now you can configure all the required parameter below to connect.
 - password: password used for connection
 - port: 3306 port used for connection (_default is 3306_)
 - ssl: enable ssl requests
+- prefix: prefix for HeadBlocks tables (example: srv1_) (advice: use underscore to separate the prefix)
 
 !> By switching SQLite to MySQL, the data is not migrated.
 
@@ -220,7 +222,7 @@ preventMessagesOnTieredRewardsLevel: false
 By activating this configuration, messages on `headClick` configuration section will not be sent to the player if the number of heads the player has is part of a tieredRewards.
 Example:
 > I want it to show the normal "You found a head" messages for rewards 1-14.  
-And then for reward 15 only show the "Congrats you found 15 heads!" which is what is configured with TieredRewards
+> And then for reward 15 only show the "Congrats you found 15 heads!" which is what is configured with TieredRewards
 
 #### Prevent commands if tieredRewards contains the current number
 
@@ -232,8 +234,8 @@ By activating this configuration, if the number of heads the player has is part 
 clicking the head will not be executed.  
 Example:
 > I have 40 heads and the headClick command is "eco give %player% 500"  
-At tiered rewards I have (at 10 heads): "eco give %player% 2000"  
-Instead of giving both, that will just give 2000 and not the 500 + 2000
+> At tiered rewards I have (at 10 heads): "eco give %player% 2000"  
+> Instead of giving both, that will just give 2000 and not the 500 + 2000
 
 #### TieredRewards
 
