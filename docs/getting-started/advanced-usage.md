@@ -50,4 +50,4 @@ Some examples:
 `/hb debug give all random 30`
 
 !> **Very important! Rewards are not given.**  
-!> **Click order and hit count options are not taken into account, so this will force the insertion in the database!**
+**Click order and hit count options are not taken into account, so this will force the insertion in the database!**
