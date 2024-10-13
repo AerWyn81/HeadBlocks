@@ -105,7 +105,7 @@ public class HeadService {
                         boolean isExist = StorageService.isHeadExist(headUuid);
                         if (!isExist) {
                             var headTexture = headLoc.getLocation() != null ? HeadUtils.getHeadTexture(headLoc.getLocation().getBlock()) : "";
-                            StorageService.createNewHead(headUuid, headTexture);
+                            StorageService.createOrUpdateHead(headUuid, headTexture);
                         }
                     } catch (Exception ex) {
                         HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
@@ -118,6 +118,33 @@ public class HeadService {
                 } catch (Exception e) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head &e" + uuid + "&c. Cause: &e" + e.getMessage()));
                 }
+            }
+        }
+
+        // Purge for remote database
+        if (ConfigService.isDatabaseEnabled()) {
+            try {
+                var heads = StorageService.getHeadsByServerId();
+                if (heads.isEmpty()) {
+                    for (var headLoc : getHeadLocations()) {
+                        StorageService.createOrUpdateHead(headLoc.getUuid(), HeadUtils.getHeadTexture(headLoc.getLocation().getBlock()));
+                    }
+                } else {
+                    heads.removeAll(getHeadLocations().stream().map(HeadLocation::getUuid).toList());
+
+                    if (!heads.isEmpty()) {
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cFound &e" + heads.size() + " &cheads &7(" +
+                                String.join(", ", heads.stream().map(UUID::toString).toList()) + ") &cout of sync with the server, deleting..."));
+
+                        for (var head : heads) {
+                            StorageService.removeHead(head, true);
+                        }
+
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&aHeadblocks heads table cleaned!"));
+                    }
+                }
+            } catch (Exception e) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError when purging heads out of sync in the database: " + e.getMessage()));
             }
         }
 
@@ -137,7 +164,7 @@ public class HeadService {
     public static UUID saveHeadLocation(Location location, String texture) throws InternalException {
         UUID uniqueUuid = InternalUtils.generateNewUUID(headLocations.stream().map(HeadLocation::getUuid).collect(Collectors.toList()));
 
-        StorageService.createNewHead(uniqueUuid, texture);
+        StorageService.createOrUpdateHead(uniqueUuid, texture);
 
         if (ConfigService.isHologramsEnabled()) {
             HologramService.createHolograms(location);

@@ -45,11 +45,11 @@ public class Requests {
         return String.format("SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '%s'", getTableHeads());
     }
 
-    public static String getCreateTablePlayers() {
+    public static String createTablePlayers() {
         return String.format("CREATE TABLE IF NOT EXISTS %s (`pId` INTEGER PRIMARY KEY AUTOINCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NOT NULL)", getTablePlayers());
     }
 
-    public static String getCreateTablePlayersMySQL() {
+    public static String createTablePlayersMySQL() {
         return String.format("CREATE TABLE IF NOT EXISTS %s (`pId` INTEGER PRIMARY KEY AUTO_INCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NOT NULL)", getTablePlayers());
     }
 
@@ -57,27 +57,27 @@ public class Requests {
         return String.format("SELECT pUUID, pName FROM %s", getTablePlayers());
     }
 
-    public static String getCreateTableHeads() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255))", getTableHeads());
+    public static String createTableHeads() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8))", getTableHeads());
     }
 
     public static String getContainsTableHeads() {
         return String.format("SELECT * FROM %s LIMIT 1", getTableHeads());
     }
 
-    public static String getCreateTableHeadsMySQL() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255))", getTableHeads());
+    public static String createTableHeadsMySQL() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8))", getTableHeads());
     }
 
     public static String getTableHeadsData() {
         return String.format("SELECT hUUID, hExist FROM %s", getTableHeads());
     }
 
-    public static String getCreateTablePlayerHeads() {
+    public static String createTablePlayerHeads() {
         return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES %s(hUUID) ON DELETE CASCADE, PRIMARY KEY(pUUID, hUUID))", getTablePlayerHeads(), getTableHeads());
     }
 
-    public static String getCreateTablePlayerHeadsMySQL() {
+    public static String createTablePlayerHeadsMySQL() {
         return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36), FOREIGN KEY (`hUUID`) REFERENCES %s (`hUUID`) ON DELETE CASCADE)", getTablePlayerHeads(), getTableHeads());
     }
 
@@ -85,7 +85,7 @@ public class Requests {
         return String.format("SELECT pUUID, hUUID FROM %s", getTablePlayerHeads());
     }
 
-    public static String getCreateTableVersion() {
+    public static String createTableVersion() {
         return String.format("CREATE TABLE IF NOT EXISTS %s (`current` INTEGER)", getTableVersion());
     }
 
@@ -93,19 +93,19 @@ public class Requests {
         return String.format("SELECT current FROM %s", getTableVersion());
     }
 
-    public static String getInsertVersion() {
+    public static String insertVersion() {
         return String.format("INSERT INTO %s VALUES (?)", getTableVersion());
     }
 
-    public static String getUpsertVersion() {
+    public static String upsertVersion() {
         return String.format("UPDATE %s SET current = (?) WHERE current = (?)", getTableVersion());
     }
 
-    public static String getUpdatePlayer() {
+    public static String updatePlayer() {
         return String.format("INSERT OR REPLACE INTO %s (pUUID, pName, pDisplayName) VALUES (?, ?, ?)", getTablePlayers());
     }
 
-    public static String getUpdatePlayerMySQL() {
+    public static String updatePlayerMySQL() {
         return String.format("REPLACE INTO %s (pUUID, pName, pDisplayName) VALUES (?, ?, ?)", getTablePlayers());
     }
 
@@ -113,15 +113,23 @@ public class Requests {
         return String.format("SELECT * FROM %s WHERE hExist = True", getTableHeads());
     }
 
-    public static String getUpdateHead() {
-        return String.format("INSERT OR REPLACE INTO %s (hUUID, hExist, hTexture) VALUES (?, true, ?)", getTableHeads());
+    public static String getHeadsMySQL() {
+        return String.format("SELECT * FROM %s WHERE hExist = True AND serverId != ''", getTableHeads());
     }
 
-    public static String getUpdateHeadMySQL() {
-        return String.format("REPLACE INTO %s (hUUID, hExist, hTexture) VALUES (?, true, ?)", getTableHeads());
+    public static String getHeadsByServerId() {
+        return String.format("SELECT * FROM %s WHERE hExist = True AND serverId = ?", getTableHeads());
     }
 
-    public static String getSavePlayerHead() {
+    public static String updateHead() {
+        return String.format("INSERT OR REPLACE INTO %s (hUUID, hExist, hTexture, serverId) VALUES (?, true, ?, ?)", getTableHeads());
+    }
+
+    public static String updateHeadMySQL() {
+        return String.format("REPLACE INTO %s (hUUID, hExist, hTexture, serverId) VALUES (?, true, ?, ?)", getTableHeads());
+    }
+
+    public static String savePlayerHead() {
         return String.format("INSERT INTO %s (pUUID, hUUID) VALUES (?, ?)", getTablePlayerHeads());
     }
 
@@ -133,15 +141,15 @@ public class Requests {
         return String.format("SELECT * FROM %s hbph INNER JOIN %s hbh ON hbph.hUUID = hbh.hUUID INNER JOIN %s hbp ON hbph.pUUID = hbp.pUUID WHERE hbp.pUUID = ? AND hbh.hExist = True", getTablePlayerHeads(), getTableHeads(), getTablePlayers());
     }
 
-    public static String getResetPlayer() {
+    public static String resetPlayer() {
         return String.format("DELETE FROM %s WHERE pUUID = ?", getTablePlayerHeads());
     }
 
-    public static String getRemoveHead() {
+    public static String removeHead() {
         return String.format("UPDATE %s SET hExist=False WHERE hUUID = ?", getTableHeads());
     }
 
-    public static String getDeleteHead() {
+    public static String deleteHead() {
         return String.format("DELETE FROM %s WHERE hUUID = ?", getTableHeads());
     }
 
@@ -162,43 +170,43 @@ public class Requests {
     }
 
     // Migrations
-    public static String getMigArchiveTable() {
+    public static String migArchiveTable() {
         return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` varchar(40) NOT NULL, `hUUID` varchar(40) NOT NULL, PRIMARY KEY (pUUID,`hUUID`))", "hb_players_old");
     }
 
-    public static String getMigCopyOldToArchive() {
+    public static String migCopyOldToArchive() {
         return String.format("INSERT INTO %s SELECT * FROM %s", "hb_players_old", getTablePlayers());
     }
 
-    public static String getMigDeleteOld() {
+    public static String migDeleteOld() {
         return String.format("DROP TABLE %s", getTablePlayers());
     }
 
-    public static String getMigImportOldUsers() {
+    public static String migImportOldUsers() {
         return String.format("SELECT DISTINCT pUUID FROM %s", "hb_players_old");
     }
 
-    public static String getMigInsertPlayer() {
+    public static String migInsertPlayer() {
         return String.format("INSERT INTO %s(`pUUID`, `pName`) VALUES (?, ?)", getTablePlayers());
     }
 
-    public static String getMigImportOldHeads() {
+    public static String migImportOldHeads() {
         return String.format("INSERT INTO %s(`hUUID`, `hExist`) SELECT DISTINCT hUUID, True FROM %s", getTableHeads(), "hb_players_old");
     }
 
-    public static String getMigRemap() {
+    public static String migRemap() {
         return String.format("INSERT INTO %s SELECT * FROM %s", getTablePlayerHeads(), "hb_players_old");
     }
 
-    public static String getMigDelArchive() {
+    public static String migDelArchive() {
         return String.format("DROP TABLE %s", "hb_players_old");
     }
 
-    public static String getAddColumnHeadTextureMySQL() {
+    public static String addColumnHeadTextureMySQL() {
         return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS hTexture VARCHAR(255) DEFAULT ''", getTableHeads());
     }
 
-    public static String getAddColumnHeadTextureSQLite() {
+    public static String addColumnHeadTextureSQLite() {
         return String.format("ALTER TABLE %s ADD COLUMN hTexture VARCHAR(255) DEFAULT ''", getTableHeads());
     }
 
@@ -214,11 +222,19 @@ public class Requests {
         return String.format("SELECT pUUID, pDisplayName FROM %s WHERE pName = (?)", getTablePlayers());
     }
 
-    public static String getAddColumnPlayerDisplayNameMySQL() {
+    public static String addColumnPlayerDisplayNameMySQL() {
         return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS pDisplayName VARCHAR(255) DEFAULT ''", getTablePlayers());
     }
 
-    public static String getAddColumnPlayerDisplayNameSQLite() {
+    public static String addColumnPlayerDisplayNameSQLite() {
         return String.format("ALTER TABLE %s ADD COLUMN pDisplayName VARCHAR(255) DEFAULT ''", getTablePlayers());
+    }
+
+    public static String addColumnServerIdentifierSQLite() {
+        return String.format("ALTER TABLE %s ADD COLUMN serverId VARCHAR(8) DEFAULT ''", getTableHeads());
+    }
+
+    public static String addColumnServerIdentifierMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS serverId VARCHAR(8) DEFAULT ''", getTableHeads());
     }
 }

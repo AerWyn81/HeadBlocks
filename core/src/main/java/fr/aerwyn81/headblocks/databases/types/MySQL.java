@@ -75,16 +75,16 @@ public final class MySQL implements Database {
 
         PreparedStatement statement;
         try {
-            statement = connection.prepareStatement(Requests.getCreateTablePlayersMySQL());
+            statement = connection.prepareStatement(Requests.createTablePlayersMySQL());
             statement.execute();
 
-            statement = connection.prepareStatement(Requests.getCreateTableHeadsMySQL());
+            statement = connection.prepareStatement(Requests.createTableHeadsMySQL());
             statement.execute();
 
-            statement = connection.prepareStatement(Requests.getCreateTablePlayerHeadsMySQL());
+            statement = connection.prepareStatement(Requests.createTablePlayerHeadsMySQL());
             statement.execute();
 
-            statement = connection.prepareStatement(Requests.getCreateTableVersion());
+            statement = connection.prepareStatement(Requests.createTableVersion());
             statement.execute();
 
             if (checkVersion() == 0) {
@@ -105,17 +105,6 @@ public final class MySQL implements Database {
         PreparedStatement statement;
 
         try {
-            if (notAlive()) {
-                open();
-            }
-
-            statement = connection.prepareStatement(Requests.getContainsTableHeads());
-            statement.executeQuery();
-        } catch (Exception ex) {
-            return -1;
-        }
-
-        try {
             statement = connection.prepareStatement(Requests.getTableVersionData());
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
@@ -123,7 +112,7 @@ public final class MySQL implements Database {
             } else
                 return 0;
         } catch (Exception ex) {
-            return 0;
+            return -1;
         }
     }
 
@@ -138,7 +127,7 @@ public final class MySQL implements Database {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getUpdatePlayerMySQL())) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.updatePlayerMySQL())) {
             ps.setString(1, profile.uuid().toString());
             ps.setString(2, profile.name());
             ps.setString(3, profile.customDisplay());
@@ -153,17 +142,19 @@ public final class MySQL implements Database {
      *
      * @param hUUID head UUID
      * @param texture head texture
+     * @param serverId server identifier
      * @throws InternalException SQL Exception
      */
     @Override
-    public void createNewHead(UUID hUUID, String texture) throws InternalException {
+    public void createNewHead(UUID hUUID, String texture, String serverId) throws InternalException {
         if (notAlive()) {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getUpdateHeadMySQL())) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.updateHeadMySQL())) {
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
+            ps.setString(3, serverId);
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -235,7 +226,7 @@ public final class MySQL implements Database {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getSavePlayerHead())) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.savePlayerHead())) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, hUUID.toString());
             ps.executeUpdate();
@@ -256,7 +247,7 @@ public final class MySQL implements Database {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getResetPlayer())) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.resetPlayer())) {
             ps.setString(1, pUUID.toString());
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -277,7 +268,7 @@ public final class MySQL implements Database {
             open();
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.getDeleteHead() : Requests.getRemoveHead())) {
+        try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.deleteHead() : Requests.removeHead())) {
             ps.setString(1, hUUID.toString());
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -399,43 +390,43 @@ public final class MySQL implements Database {
             }
 
             // Create of the archive table
-            PreparedStatement ps = connection.prepareStatement(Requests.getMigArchiveTable());
+            PreparedStatement ps = connection.prepareStatement(Requests.migArchiveTable());
             ps.executeUpdate();
 
             // Copy old data into the archive table
-            ps = connection.prepareStatement(Requests.getMigCopyOldToArchive());
+            ps = connection.prepareStatement(Requests.migCopyOldToArchive());
             ps.executeUpdate();
 
             // Delete old table
-            ps = connection.prepareStatement(Requests.getMigDeleteOld());
+            ps = connection.prepareStatement(Requests.migDeleteOld());
             ps.executeUpdate();
 
             // Creation of new v2 tables
             load();
 
             // Import old users
-            ps = connection.prepareStatement(Requests.getMigImportOldUsers());
+            ps = connection.prepareStatement(Requests.migImportOldUsers());
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 String pUUID = rs.getString("pUUID");
                 String pName = PlayerUtils.getPseudoFromSession(pUUID);
 
-                ps = connection.prepareStatement(Requests.getMigInsertPlayer());
+                ps = connection.prepareStatement(Requests.migInsertPlayer());
                 ps.setString(1, pUUID);
                 ps.setString(2, pName);
                 ps.executeUpdate();
             }
 
             // Import old heads
-            ps = connection.prepareStatement(Requests.getMigImportOldHeads());
+            ps = connection.prepareStatement(Requests.migImportOldHeads());
             ps.executeUpdate();
 
             // Remap
-            ps = connection.prepareStatement(Requests.getMigRemap());
+            ps = connection.prepareStatement(Requests.migRemap());
             ps.executeUpdate();
 
             // Delete archive table
-            ps = connection.prepareStatement(Requests.getMigDelArchive());
+            ps = connection.prepareStatement(Requests.migDelArchive());
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -448,10 +439,10 @@ public final class MySQL implements Database {
         }
 
         try {
-            PreparedStatement ps = connection.prepareStatement(Requests.getCreateTableVersion());
+            PreparedStatement ps = connection.prepareStatement(Requests.createTableVersion());
             ps.execute();
 
-            ps = connection.prepareStatement(Requests.getInsertVersion());
+            ps = connection.prepareStatement(Requests.insertVersion());
             ps.setInt(1, version);
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -466,7 +457,7 @@ public final class MySQL implements Database {
         }
 
         try {
-            PreparedStatement ps = connection.prepareStatement(Requests.getAddColumnPlayerDisplayNameMySQL());
+            PreparedStatement ps = connection.prepareStatement(Requests.addColumnPlayerDisplayNameMySQL());
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -481,7 +472,7 @@ public final class MySQL implements Database {
 
         var heads = new ArrayList<UUID>();
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getHeads())) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.getHeadsMySQL())) {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -492,6 +483,42 @@ public final class MySQL implements Database {
         }
 
         return heads;
+    }
+
+    @Override
+    public ArrayList<UUID> getHeads(String serverId) throws InternalException {
+        if (notAlive()) {
+            open();
+        }
+
+        var heads = new ArrayList<UUID>();
+
+        try (PreparedStatement ps = connection.prepareStatement(Requests.getHeadsByServerId())) {
+            ps.setString(1, serverId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                heads.add(UUID.fromString(rs.getString("hUUID")));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return heads;
+    }
+
+    @Override
+    public void addColumnServerIdentifier() throws InternalException {
+        if (notAlive()) {
+            open();
+        }
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.addColumnServerIdentifierMySQL());
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
     }
 
     /**
@@ -505,10 +532,10 @@ public final class MySQL implements Database {
         }
 
         try {
-            PreparedStatement ps = connection.prepareStatement(Requests.getCreateTableVersion());
+            PreparedStatement ps = connection.prepareStatement(Requests.createTableVersion());
             ps.execute();
 
-            ps = connection.prepareStatement(Requests.getUpsertVersion());
+            ps = connection.prepareStatement(Requests.upsertVersion());
             ps.setInt(1, version);
             ps.setInt(2, oldVersion);
             ps.executeUpdate();
@@ -596,7 +623,7 @@ public final class MySQL implements Database {
             }
 
             if (colCount == 3) {
-                ps = connection.prepareStatement(Requests.getAddColumnHeadTextureMySQL());
+                ps = connection.prepareStatement(Requests.addColumnHeadTextureMySQL());
                 ps.executeUpdate();
             }
         } catch (Exception ex) {

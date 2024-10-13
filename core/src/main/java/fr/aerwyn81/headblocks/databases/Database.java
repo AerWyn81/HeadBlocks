@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.UUID;
 
 public interface Database {
-    int version = 3;
+    int version = 4;
 
     void close() throws InternalException;
 
@@ -21,7 +21,7 @@ public interface Database {
 
     void updatePlayerInfo(PlayerProfileLight profile) throws InternalException;
 
-    void createNewHead(UUID hUUID, String texture) throws InternalException;
+    void createNewHead(UUID hUUID, String texture, String serverIdentifier) throws InternalException;
 
     boolean containsPlayer(UUID pUUID) throws InternalException;
 
@@ -66,4 +66,8 @@ public interface Database {
     void addColumnDisplayName() throws InternalException;
 
     ArrayList<UUID> getHeads() throws InternalException;
+
+    ArrayList<UUID> getHeads(String serverId) throws InternalException;
+
+    void addColumnServerIdentifier() throws InternalException;
 }

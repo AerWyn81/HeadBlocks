@@ -70,15 +70,15 @@ public class SQLite implements Database {
     public void load() throws InternalException {
         try {
             // Players
-            PreparedStatement statement = connection.prepareStatement(Requests.getCreateTablePlayers());
+            PreparedStatement statement = connection.prepareStatement(Requests.createTablePlayers());
             statement.execute();
 
             // Heads
-            statement = connection.prepareStatement(Requests.getCreateTableHeads());
+            statement = connection.prepareStatement(Requests.createTableHeads());
             statement.execute();
 
             // Junction table (n-n)
-            statement = connection.prepareStatement(Requests.getCreateTablePlayerHeads());
+            statement = connection.prepareStatement(Requests.createTablePlayerHeads());
             statement.execute();
 
             if (checkVersion() == 0) {
@@ -124,7 +124,7 @@ public class SQLite implements Database {
      */
     @Override
     public void updatePlayerInfo(PlayerProfileLight profile) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getUpdatePlayer())) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.updatePlayer())) {
             ps.setString(1, profile.uuid().toString());
             ps.setString(2, profile.name());
             ps.setString(3, profile.customDisplay());
@@ -140,13 +140,15 @@ public class SQLite implements Database {
      *
      * @param hUUID head UUID
      * @param texture head texture
+     * @param serverId server identifier
      * @throws InternalException SQL Exception
      */
     @Override
-    public void createNewHead(UUID hUUID, String texture) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getUpdateHead())) {
+    public void createNewHead(UUID hUUID, String texture, String serverId) throws InternalException {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.updateHead())) {
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
+            ps.setString(3, serverId);
 
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -207,7 +209,7 @@ public class SQLite implements Database {
      */
     @Override
     public void addHead(UUID pUUID, UUID hUUID) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getSavePlayerHead())) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.savePlayerHead())) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, hUUID.toString());
 
@@ -225,7 +227,7 @@ public class SQLite implements Database {
      */
     @Override
     public void resetPlayer(UUID pUUID) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getResetPlayer())) {
+        try (PreparedStatement ps = connection.prepareStatement(Requests.resetPlayer())) {
             ps.setString(1, pUUID.toString());
 
             ps.executeUpdate();
@@ -243,7 +245,7 @@ public class SQLite implements Database {
      */
     @Override
     public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
-        try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.getDeleteHead() : Requests.getRemoveHead())) {
+        try (PreparedStatement ps = connection.prepareStatement(withDelete ? Requests.deleteHead() : Requests.removeHead())) {
             ps.setString(1, hUUID.toString());
 
             ps.executeUpdate();
@@ -346,43 +348,43 @@ public class SQLite implements Database {
     public void migrate() throws InternalException {
         try {
             // Create of the archive table
-            PreparedStatement ps = connection.prepareStatement(Requests.getMigArchiveTable());
+            PreparedStatement ps = connection.prepareStatement(Requests.migArchiveTable());
             ps.executeUpdate();
 
             // Copy old data into the archive table
-            ps = connection.prepareStatement(Requests.getMigCopyOldToArchive());
+            ps = connection.prepareStatement(Requests.migCopyOldToArchive());
             ps.executeUpdate();
 
             // Delete old table
-            ps = connection.prepareStatement(Requests.getMigDeleteOld());
+            ps = connection.prepareStatement(Requests.migDeleteOld());
             ps.executeUpdate();
 
             // Creation of new v2 tables
             load();
 
             // Import old users
-            ps = connection.prepareStatement(Requests.getMigImportOldUsers());
+            ps = connection.prepareStatement(Requests.migImportOldUsers());
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 String pUUID = rs.getString("pUUID");
                 String pName = PlayerUtils.getPseudoFromSession(pUUID);
 
-                ps = connection.prepareStatement(Requests.getMigInsertPlayer());
+                ps = connection.prepareStatement(Requests.migInsertPlayer());
                 ps.setString(1, pUUID);
                 ps.setString(2, pName);
                 ps.executeUpdate();
             }
 
             // Import old heads
-            ps = connection.prepareStatement(Requests.getMigImportOldHeads());
+            ps = connection.prepareStatement(Requests.migImportOldHeads());
             ps.executeUpdate();
 
             // Remap
-            ps = connection.prepareStatement(Requests.getMigRemap());
+            ps = connection.prepareStatement(Requests.migRemap());
             ps.executeUpdate();
 
             // Delete archive table
-            ps = connection.prepareStatement(Requests.getMigDelArchive());
+            ps = connection.prepareStatement(Requests.migDelArchive());
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -391,10 +393,10 @@ public class SQLite implements Database {
 
     public void insertVersion() throws InternalException {
         try {
-            PreparedStatement ps = connection.prepareStatement(Requests.getCreateTableVersion());
+            PreparedStatement ps = connection.prepareStatement(Requests.createTableVersion());
             ps.execute();
 
-            ps = connection.prepareStatement(Requests.getInsertVersion());
+            ps = connection.prepareStatement(Requests.insertVersion());
             ps.setInt(1, version);
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -405,7 +407,7 @@ public class SQLite implements Database {
     @Override
     public void addColumnDisplayName() throws InternalException {
         try {
-            PreparedStatement ps = connection.prepareStatement(Requests.getAddColumnPlayerDisplayNameSQLite());
+            PreparedStatement ps = connection.prepareStatement(Requests.addColumnPlayerDisplayNameSQLite());
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -430,6 +432,34 @@ public class SQLite implements Database {
         return heads;
     }
 
+    @Override
+    public ArrayList<UUID> getHeads(String serverId) throws InternalException {
+        var heads = new ArrayList<UUID>();
+
+        try (PreparedStatement ps = connection.prepareStatement(Requests.getHeadsByServerId())) {
+            ps.setString(1, serverId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                heads.add(UUID.fromString(rs.getString("hUUID")));
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return heads;
+    }
+
+    @Override
+    public void addColumnServerIdentifier() throws InternalException {
+        try {
+            PreparedStatement ps = connection.prepareStatement(Requests.addColumnServerIdentifierSQLite());
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
     /**
      * Add table version
      * @throws InternalException SQL Exception
@@ -437,10 +467,10 @@ public class SQLite implements Database {
     @Override
     public void upsertTableVersion(int oldVersion) throws InternalException {
         try {
-            PreparedStatement ps = connection.prepareStatement(Requests.getCreateTableVersion());
+            PreparedStatement ps = connection.prepareStatement(Requests.createTableVersion());
             ps.execute();
 
-            ps = connection.prepareStatement(Requests.getUpsertVersion());
+            ps = connection.prepareStatement(Requests.upsertVersion());
             ps.setInt(1, version);
             ps.setInt(2, oldVersion);
             ps.executeUpdate();
@@ -512,7 +542,7 @@ public class SQLite implements Database {
             }
 
             if (colCount == 3) {
-                ps = connection.prepareStatement(Requests.getAddColumnHeadTextureSQLite());
+                ps = connection.prepareStatement(Requests.addColumnHeadTextureSQLite());
                 ps.executeUpdate();
             }
         } catch (Exception ex) {

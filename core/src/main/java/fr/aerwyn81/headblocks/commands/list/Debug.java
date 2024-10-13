@@ -58,7 +58,7 @@ public class Debug implements Cmd {
 
             if (applied) {
                 try {
-                    StorageService.createNewHead(headLoc.getUuid(), args[2]);
+                    StorageService.createOrUpdateHead(headLoc.getUuid(), args[2]);
                 } catch (InternalException e) {
                     HeadBlocks.log.sendMessage("&cError with storage, head new texture not saved: " + e.getMessage());
                     applied = false;

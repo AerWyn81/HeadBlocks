@@ -18,6 +18,7 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.entity.Player;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +32,8 @@ public class StorageService {
 
     private static ConcurrentHashMap<UUID, List<UUID>> _cacheHeads;
     private static LinkedHashMap<PlayerProfileLight, Integer> _cacheTop;
+
+    private static String serverIdentifier = "";
 
     public static void initialize() {
         _cacheHeads = new ConcurrentHashMap<>();
@@ -58,6 +61,8 @@ public class StorageService {
         var isFileExist = new File(pathToDatabase).exists();
 
         if (ConfigService.isDatabaseEnabled()) {
+            generateServerIdentifier();
+
             database = new MySQL(
                     ConfigService.getDatabaseUsername(),
                     ConfigService.getDatabasePassword(),
@@ -100,6 +105,30 @@ public class StorageService {
             } else {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&aSQLite storage properly connected!"));
             }
+        }
+    }
+
+    private static void generateServerIdentifier() {
+        var file = new File(HeadBlocks.getInstance().getDataFolder() + File.separator + "server.identifier");
+        if (ConfigService.isDatabaseEnabled() && file.exists()) {
+            try {
+                serverIdentifier = Files.readAllLines(file.toPath()).getFirst();
+            } catch (Exception ex) {
+                storageError = true;
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError reading server identifier file. Storage disabled. " + ex.getMessage()));
+            }
+
+            return;
+        }
+
+        try {
+            var writer = new FileWriter(file);
+            serverIdentifier = UUID.randomUUID().toString().split("-")[0];
+            writer.write(serverIdentifier);
+            writer.close();
+        } catch (Exception ex) {
+            storageError = true;
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError generating server identifier file. Storage disabled. " + ex.getMessage()));
         }
     }
 
@@ -147,6 +176,10 @@ public class StorageService {
 
         if (dbVersion == 2) {
             database.addColumnDisplayName();
+        }
+
+        if (dbVersion == 3) {
+            database.addColumnServerIdentifier();
         }
 
         if (dbVersion != Database.version) {
@@ -358,8 +391,8 @@ public class StorageService {
         return database.hasPlayerRenamed(profile);
     }
 
-    public static void createNewHead(UUID headUuid, String texture) throws InternalException {
-        database.createNewHead(headUuid, texture);
+    public static void createOrUpdateHead(UUID headUuid, String texture) throws InternalException {
+        database.createNewHead(headUuid, texture, serverIdentifier);
     }
 
     public static boolean isHeadExist(UUID headUuid) throws InternalException {
@@ -373,15 +406,15 @@ public class StorageService {
         instructions.add("DROP TABLE IF EXISTS hb_heads;");
 
         if (type == EnumTypeDatabase.MySQL) {
-            instructions.add(Requests.getCreateTableHeadsMySQL() + ";");
+            instructions.add(Requests.createTableHeadsMySQL() + ";");
         } else if (type == EnumTypeDatabase.SQLite) {
-            instructions.add(Requests.getCreateTableHeads() + ";");
+            instructions.add(Requests.createTableHeads() + ";");
         }
 
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = database.getTableHeads();
         for (AbstractMap.SimpleEntry<String, Boolean> head : heads) {
-            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_heads (hUUID, hExist, hTexture) VALUES ('" + head.getKey() +
-                    "', " + (head.getValue() ? 1 : 0) + ", '');");
+            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + head.getKey() +
+                    "', " + (head.getValue() ? 1 : 0) + ", '', '" + serverIdentifier + "');");
         }
 
         instructions.add("");
@@ -390,9 +423,9 @@ public class StorageService {
         instructions.add("DROP TABLE IF EXISTS hb_playerHeads;");
 
         if (type == EnumTypeDatabase.MySQL) {
-            instructions.add(Requests.getCreateTablePlayerHeadsMySQL() + ";");
+            instructions.add(Requests.createTablePlayerHeadsMySQL() + ";");
         } else if (type == EnumTypeDatabase.SQLite) {
-            instructions.add(Requests.getCreateTablePlayerHeads() + ";");
+            instructions.add(Requests.createTablePlayerHeads() + ";");
         }
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = database.getTablePlayerHeads();
@@ -407,9 +440,9 @@ public class StorageService {
         instructions.add("DROP TABLE IF EXISTS hb_players;");
 
         if (type == EnumTypeDatabase.MySQL) {
-            instructions.add(Requests.getCreateTablePlayersMySQL() + ";");
+            instructions.add(Requests.createTablePlayersMySQL() + ";");
         } else if (type == EnumTypeDatabase.SQLite) {
-            instructions.add(Requests.getCreateTablePlayers() + ";");
+            instructions.add(Requests.createTablePlayers() + ";");
         }
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getTablePlayers();
@@ -421,8 +454,8 @@ public class StorageService {
 
         // Table : hb_version
         instructions.add("DROP TABLE IF EXISTS hb_version;");
-        instructions.add(Requests.getCreateTableVersion() + ";");
-        instructions.add(Requests.getUpsertVersion().replaceAll("\\?", String.valueOf(Database.version)) + ";");
+        instructions.add(Requests.createTableVersion() + ";");
+        instructions.add(Requests.upsertVersion().replaceAll("\\?", String.valueOf(Database.version)) + ";");
 
         return instructions;
     }
@@ -450,5 +483,9 @@ public class StorageService {
 
     public static ArrayList<UUID> getHeads() throws InternalException {
         return database.getHeads();
+    }
+
+    public static ArrayList<UUID> getHeadsByServerId() throws InternalException {
+        return database.getHeads(serverIdentifier);
     }
 }
