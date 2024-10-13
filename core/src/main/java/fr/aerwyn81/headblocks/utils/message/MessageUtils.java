@@ -42,7 +42,7 @@ public class MessageUtils {
 	 */
 	public static String createProgressBar(int current, int max, int totalBars, String symbol, String completedColor, String notCompletedColor) {
 		float percent = (float) current / max;
-		int progressBars = (int) (totalBars * percent);
+		int progressBars = Math.min((int) (totalBars * percent), 100);
 
 		return colorize(Strings.repeat(completedColor + symbol, progressBars) +
 				Strings.repeat(notCompletedColor + symbol, totalBars - progressBars));
