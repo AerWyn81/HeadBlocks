@@ -4,23 +4,33 @@ import fr.aerwyn81.headblocks.services.ConfigService;
 
 public class Requests {
     private static String getTablePlayers() {
-        return ConfigService.getDatabasePrefix() + "hb_players";
+        return addPrefix() + "hb_players";
     }
 
     private static String getTableHeads() {
-        return ConfigService.getDatabasePrefix() + "hb_heads";
+        return addPrefix() + "hb_heads";
     }
 
     private static String getTablePlayerHeads() {
-        return ConfigService.getDatabasePrefix() + "hb_playerHeads";
+        return addPrefix() + "hb_playerHeads";
     }
 
     private static String getTableVersion() {
-        return ConfigService.getDatabasePrefix() + "hb_version";
+        return addPrefix() + "hb_version";
+    }
+
+    private static String addPrefix() {
+        var prefix = "";
+
+        if (ConfigService.isDatabaseEnabled()) {
+            prefix = ConfigService.getDatabasePrefix();
+        }
+
+        return prefix;
     }
 
     public static String getIsTablePlayersExistSQLite() {
-        return String.format("SELECT name FROM sqlite_master WHERE type='table' AND name='%s'", getTablePlayers());
+        return String.format("SELECT name FROM sqlite_master WHERE type='table' AND name='%s'", "hb_players");
     }
 
     public static String getTableHeadsColumnsSQLite() {
