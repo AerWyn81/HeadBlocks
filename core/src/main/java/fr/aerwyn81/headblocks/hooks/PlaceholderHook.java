@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.hooks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -109,7 +110,11 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         // %headblocks_max%
         if (identifier.equals("max")) {
-            return "" + HeadService.getHeads().size();
+            try {
+                return "" + StorageService.getHeads().size();
+            } catch (InternalException e) {
+                return "";
+            }
         }
 
         // %headblocks_hasHead_uuid%

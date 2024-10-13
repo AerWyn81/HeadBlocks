@@ -5,7 +5,6 @@ import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.databases.Requests;
-import fr.aerwyn81.headblocks.databases.types.MariaDB;
 import fr.aerwyn81.headblocks.databases.types.MySQL;
 import fr.aerwyn81.headblocks.databases.types.SQLite;
 import fr.aerwyn81.headblocks.storages.Storage;
@@ -59,23 +58,13 @@ public class StorageService {
         var isFileExist = new File(pathToDatabase).exists();
 
         if (ConfigService.isDatabaseEnabled()) {
-            if (ConfigService.getDatabaseType() == EnumTypeDatabase.MariaDB) {
-                database = new MariaDB(
-                        ConfigService.getDatabaseUsername(),
-                        ConfigService.getDatabasePassword(),
-                        ConfigService.getDatabaseHostname(),
-                        ConfigService.getDatabasePort(),
-                        ConfigService.getDatabaseName(),
-                        ConfigService.getDatabaseSsl());
-            } else {
-                database = new MySQL(
-                        ConfigService.getDatabaseUsername(),
-                        ConfigService.getDatabasePassword(),
-                        ConfigService.getDatabaseHostname(),
-                        ConfigService.getDatabasePort(),
-                        ConfigService.getDatabaseName(),
-                        ConfigService.getDatabaseSsl());
-            }
+            database = new MySQL(
+                    ConfigService.getDatabaseUsername(),
+                    ConfigService.getDatabasePassword(),
+                    ConfigService.getDatabaseHostname(),
+                    ConfigService.getDatabasePort(),
+                    ConfigService.getDatabaseName(),
+                    ConfigService.getDatabaseSsl());
         } else {
             database = new SQLite(pathToDatabase);
         }
