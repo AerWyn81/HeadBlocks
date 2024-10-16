@@ -138,7 +138,7 @@ public class HeadUtils {
         } else {
             try {
                 //noinspection deprecation, DataFlowIssue
-                return new NBTItem(head).getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").getFirst().getString("Value");
+                return new NBTItem(head).getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value");
             } catch (Exception ex) {
                 return "";
             }

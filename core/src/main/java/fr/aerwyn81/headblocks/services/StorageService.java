@@ -112,7 +112,7 @@ public class StorageService {
         var file = new File(HeadBlocks.getInstance().getDataFolder() + File.separator + "server.identifier");
         if (ConfigService.isDatabaseEnabled() && file.exists()) {
             try {
-                serverIdentifier = Files.readAllLines(file.toPath()).getFirst();
+                serverIdentifier = Files.readAllLines(file.toPath()).get(0);
             } catch (Exception ex) {
                 storageError = true;
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError reading server identifier file. Storage disabled. " + ex.getMessage()));
