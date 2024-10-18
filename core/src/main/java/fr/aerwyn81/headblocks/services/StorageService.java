@@ -167,6 +167,7 @@ public class StorageService {
             database.insertVersion();
             database.addColumnHeadTexture();
             database.addColumnDisplayName();
+            database.addColumnServerIdentifier();
             dbVersion = Database.version;
         }
 

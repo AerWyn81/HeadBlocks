@@ -3,19 +3,19 @@ package fr.aerwyn81.headblocks.databases;
 import fr.aerwyn81.headblocks.services.ConfigService;
 
 public class Requests {
-    private static String getTablePlayers() {
+    public static String getTablePlayers() {
         return addPrefix() + "hb_players";
     }
 
-    private static String getTableHeads() {
+    public static String getTableHeads() {
         return addPrefix() + "hb_heads";
     }
 
-    private static String getTablePlayerHeads() {
+    public static String getTablePlayerHeads() {
         return addPrefix() + "hb_playerHeads";
     }
 
-    private static String getTableVersion() {
+    public static String getTableVersion() {
         return addPrefix() + "hb_version";
     }
 
@@ -38,7 +38,7 @@ public class Requests {
     }
 
     public static String getIsTablePlayersExistMySQL() {
-        return String.format("SELECT TABLE_NAME FROM information_schema.tables WHERE table_name = '%s' LIMIT 1", getTablePlayers());
+        return String.format("SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = '%s' AND table_name = '%s' LIMIT 1", ConfigService.getDatabaseName(), getTablePlayers());
     }
 
     public static String getTableHeadsColumnsMySQL() {
@@ -202,8 +202,12 @@ public class Requests {
         return String.format("DROP TABLE %s", "hb_players_old");
     }
 
-    public static String addColumnHeadTextureMySQL() {
+    public static String addColumnHeadTextureMariaDb() {
         return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS hTexture VARCHAR(255) DEFAULT ''", getTableHeads());
+    }
+
+    public static String addColumnHeadTextureMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN hTexture VARCHAR(255) DEFAULT ''", getTableHeads());
     }
 
     public static String addColumnHeadTextureSQLite() {
@@ -222,7 +226,7 @@ public class Requests {
         return String.format("SELECT pUUID, pDisplayName FROM %s WHERE pName = (?)", getTablePlayers());
     }
 
-    public static String addColumnPlayerDisplayNameMySQL() {
+    public static String addColumnPlayerDisplayNameMariaDb() {
         return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS pDisplayName VARCHAR(255) DEFAULT ''", getTablePlayers());
     }
 
@@ -234,7 +238,19 @@ public class Requests {
         return String.format("ALTER TABLE %s ADD COLUMN serverId VARCHAR(8) DEFAULT ''", getTableHeads());
     }
 
-    public static String addColumnServerIdentifierMySQL() {
+    public static String addColumnServerIdentifierMariaDb() {
         return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS serverId VARCHAR(8) DEFAULT ''", getTableHeads());
+    }
+
+    public static String isColumnExist() {
+        return String.format("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = ? AND COLUMN_NAME = ?", ConfigService.getDatabaseName());
+    }
+
+    public static String addColumnServerIdentifierMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN serverId VARCHAR(8) DEFAULT ''", getTableHeads());
+    }
+
+    public static String addColumnPlayerDisplayNameMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN pDisplayName VARCHAR(255) DEFAULT ''", getTablePlayers());
     }
 }

@@ -457,9 +457,21 @@ public final class MySQL implements Database {
         }
 
         try {
-            PreparedStatement ps = connection.prepareStatement(Requests.addColumnPlayerDisplayNameMySQL());
+            PreparedStatement ps = connection.prepareStatement(Requests.addColumnPlayerDisplayNameMariaDb());
             ps.executeUpdate();
         } catch (Exception ex) {
+            try {
+                // MySQL doesn't support add column if not exists
+                if (isColumnNotExist(Requests.getTablePlayers(), "pDisplayName")) {
+                    try (var alterStmt = connection.createStatement()) {
+                        alterStmt.executeUpdate(Requests.addColumnPlayerDisplayNameMySQL());
+                    }
+                    return;
+                }
+            } catch (Exception exe) {
+                throw new InternalException(ex);
+            }
+
             throw new InternalException(ex);
         }
     }
@@ -514,9 +526,21 @@ public final class MySQL implements Database {
         }
 
         try {
-            PreparedStatement ps = connection.prepareStatement(Requests.addColumnServerIdentifierMySQL());
+            PreparedStatement ps = connection.prepareStatement(Requests.addColumnServerIdentifierMariaDb());
             ps.executeUpdate();
         } catch (Exception ex) {
+            try {
+                // MySQL doesn't support add column if not exists
+                if (isColumnNotExist(Requests.getTableHeads(), "serverId")) {
+                    try (var alterStmt = connection.createStatement()) {
+                        alterStmt.executeUpdate(Requests.addColumnServerIdentifierMySQL());
+                    }
+                    return;
+                }
+            } catch (Exception exe) {
+                throw new InternalException(ex);
+            }
+
             throw new InternalException(ex);
         }
     }
@@ -622,10 +646,20 @@ public final class MySQL implements Database {
                 colCount = rs.getInt("count");
             }
 
-            if (colCount == 3) {
-                ps = connection.prepareStatement(Requests.addColumnHeadTextureMySQL());
-                ps.executeUpdate();
+            try {
+                if (colCount == 3) {
+                    ps = connection.prepareStatement(Requests.addColumnHeadTextureMariaDb());
+                    ps.executeUpdate();
+                }
+            } catch (Exception ex) {
+                // MySQL doesn't support add column if not exists
+                if (isColumnNotExist(Requests.getTableHeads(), "hTexture")) {
+                    try (var alterStmt = connection.createStatement()) {
+                        alterStmt.executeUpdate(Requests.addColumnHeadTextureMySQL());
+                    }
+                }
             }
+
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -720,5 +754,18 @@ public final class MySQL implements Database {
         } catch (SQLException e) {
             return true;
         }
+    }
+
+    private boolean isColumnNotExist(String tableName, String columnName) throws Exception {
+        if (notAlive()) {
+            open();
+        }
+
+        var ps = connection.prepareStatement(Requests.isColumnExist());
+        ps.setString(1, tableName);
+        ps.setString(2, columnName);
+
+        var rs = ps.executeQuery();
+        return rs.next() && rs.getInt(1) == 0;
     }
 }
