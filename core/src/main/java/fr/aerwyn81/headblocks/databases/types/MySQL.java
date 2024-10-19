@@ -462,17 +462,15 @@ public final class MySQL implements Database {
         } catch (Exception ex) {
             try {
                 // MySQL doesn't support add column if not exists
-                if (isColumnNotExist(Requests.getTablePlayers(), "pDisplayName")) {
-                    try (var alterStmt = connection.createStatement()) {
-                        alterStmt.executeUpdate(Requests.addColumnPlayerDisplayNameMySQL());
-                    }
+                if (isColumnExist(Requests.getTablePlayers(), "pDisplayName")) {
                     return;
                 }
+
+                var alterStmt = connection.createStatement();
+                alterStmt.executeUpdate(Requests.addColumnPlayerDisplayNameMySQL());
             } catch (Exception exe) {
                 throw new InternalException(ex);
             }
-
-            throw new InternalException(ex);
         }
     }
 
@@ -531,17 +529,15 @@ public final class MySQL implements Database {
         } catch (Exception ex) {
             try {
                 // MySQL doesn't support add column if not exists
-                if (isColumnNotExist(Requests.getTableHeads(), "serverId")) {
-                    try (var alterStmt = connection.createStatement()) {
-                        alterStmt.executeUpdate(Requests.addColumnServerIdentifierMySQL());
-                    }
+                if (isColumnExist(Requests.getTableHeads(), "serverId")) {
                     return;
                 }
+
+                var alterStmt = connection.createStatement();
+                alterStmt.executeUpdate(Requests.addColumnServerIdentifierMySQL());
             } catch (Exception exe) {
                 throw new InternalException(ex);
             }
-
-            throw new InternalException(ex);
         }
     }
 
@@ -653,11 +649,12 @@ public final class MySQL implements Database {
                 }
             } catch (Exception ex) {
                 // MySQL doesn't support add column if not exists
-                if (isColumnNotExist(Requests.getTableHeads(), "hTexture")) {
-                    try (var alterStmt = connection.createStatement()) {
-                        alterStmt.executeUpdate(Requests.addColumnHeadTextureMySQL());
-                    }
+                if (isColumnExist(Requests.getTableHeads(), "hTexture")) {
+                    return;
                 }
+
+                var alterStmt = connection.createStatement();
+                alterStmt.executeUpdate(Requests.addColumnHeadTextureMySQL());
             }
 
         } catch (Exception ex) {
@@ -756,7 +753,7 @@ public final class MySQL implements Database {
         }
     }
 
-    private boolean isColumnNotExist(String tableName, String columnName) throws Exception {
+    private boolean isColumnExist(String tableName, String columnName) throws Exception {
         if (notAlive()) {
             open();
         }
@@ -766,6 +763,6 @@ public final class MySQL implements Database {
         ps.setString(2, columnName);
 
         var rs = ps.executeQuery();
-        return rs.next() && rs.getInt(1) == 0;
+        return !rs.next() || rs.getInt(1) != 0;
     }
 }
