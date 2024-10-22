@@ -21,6 +21,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -311,7 +312,7 @@ public class StorageService {
     }
 
     public static boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
-        if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
+        if (_cacheHeads.containsKey(playerUuid))
             return _cacheHeads.get(playerUuid).contains(headUuid);
 
         return storage.hasHead(playerUuid, headUuid);
@@ -321,7 +322,11 @@ public class StorageService {
         storage.addHead(playerUuid, headUuid);
         database.addHead(playerUuid, headUuid);
 
-        StorageService.invalidateCachePlayer(playerUuid);
+        _cacheHeads.get(playerUuid).add(headUuid);
+
+        if (!_cacheTop.isEmpty()) {
+            _cacheTop.clear();
+        }
     }
 
     public static Boolean containsPlayer(UUID playerUuid) throws InternalException {
@@ -329,11 +334,11 @@ public class StorageService {
     }
 
     public static BukkitFutureResult<List<UUID>> getHeadsPlayer(UUID playerUuid) {
+        if (_cacheHeads.containsKey(playerUuid))
+            return BukkitFutureResult.of(HeadBlocks.getInstance(), CompletableFuture.completedFuture(_cacheHeads.get(playerUuid)));
+
         return CompletableBukkitFuture.supplyAsync(HeadBlocks.getInstance(), () -> {
             try {
-                if (_cacheHeads.containsKey(playerUuid) && !_cacheHeads.get(playerUuid).isEmpty())
-                    return _cacheHeads.get(playerUuid);
-
                 var headsUuid = database.getHeadsPlayer(playerUuid);
                 _cacheHeads.compute(playerUuid, (key, playerHeads) -> {
                     if (playerHeads == null) {
