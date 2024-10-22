@@ -1,1 +1,3 @@
-rootProject.name = "headBlocks"
+rootProject.name = "HeadBlocks"
+
+include("common", "core", "spigot", "paper")
