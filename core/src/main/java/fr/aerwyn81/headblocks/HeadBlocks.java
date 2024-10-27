@@ -148,8 +148,13 @@ public final class HeadBlocks extends JavaPlugin {
 
     public void startInternalTaskTimer() {
         if (this.globalTask != null) {
-            this.globalTask.cancel();
-            this.globalTask = null;
+            try {
+                this.globalTask.cancel();
+            } catch (IllegalStateException ignored) {
+            } // Not scheduled yet
+            finally {
+                this.globalTask = null;
+            }
         }
 
         this.globalTask = new GlobalTask();
