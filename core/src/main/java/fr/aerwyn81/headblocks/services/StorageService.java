@@ -235,11 +235,14 @@ public class StorageService {
                             updatePlayerName(playerProfile);
                         }
 
+                        var playerHeads = new ArrayList<UUID>();
+
                         for (UUID hUuid : database.getHeadsPlayer(pUuid)) {
                             storage.addHead(pUuid, hUuid);
+                            playerHeads.add(hUuid);
                         }
 
-                        _cacheHeads.put(pUuid, new ArrayList<>());
+                        _cacheHeads.put(pUuid, playerHeads);
                     } else {
                         updatePlayerName(playerProfile);
                     }
