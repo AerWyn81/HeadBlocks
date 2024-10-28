@@ -20,7 +20,7 @@ import org.javatuples.Pair;
 import java.util.ArrayList;
 import java.util.UUID;
 
-@HBAnnotations(command = "top", permission = "headblocks.admin")
+@HBAnnotations(command = "top", permission = "headblocks.commands.top")
 public class Top implements Cmd {
     private final LanguageHandler languageHandler;
     private final HeadBlocksAPI headBlocksAPI;
