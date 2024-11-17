@@ -31,7 +31,7 @@ public class StorageService {
 
     private static boolean storageError;
 
-    private static ConcurrentHashMap<UUID, List<UUID>> _cacheHeads;
+    private static ConcurrentHashMap<UUID, Set<UUID>> _cacheHeads;
     private static LinkedHashMap<PlayerProfileLight, Integer> _cacheTop;
 
     private static String serverIdentifier = "";
@@ -228,7 +228,7 @@ public class StorageService {
 
                     var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
 
-                    var playerHeads = new ArrayList<UUID>();
+                    var playerHeads = new HashSet<UUID>();
 
                     if (isExist) {
                         boolean hasRenamed = hasPlayerRenamed(playerProfile);
@@ -278,14 +278,14 @@ public class StorageService {
         UUID uuid = player.getUniqueId();
         String playerName = player.getName();
 
+        _cacheHeads.remove(uuid);
+
         try {
             boolean isExist = containsPlayer(uuid);
 
             if (isExist) {
                 storage.resetPlayer(uuid);
             }
-
-            _cacheHeads.remove(uuid);
         } catch (InternalException ex) {
             storageError = true;
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to unload player " + playerName + " from SQL database: " + ex.getMessage()));
@@ -336,26 +336,25 @@ public class StorageService {
         return storage.containsPlayer(playerUuid) || database.containsPlayer(playerUuid);
     }
 
-    public static BukkitFutureResult<List<UUID>> getHeadsPlayer(UUID playerUuid) {
+    public static BukkitFutureResult<Set<UUID>> getHeadsPlayer(UUID playerUuid) {
         if (_cacheHeads.containsKey(playerUuid))
             return BukkitFutureResult.of(HeadBlocks.getInstance(), CompletableFuture.completedFuture(_cacheHeads.get(playerUuid)));
 
         return CompletableBukkitFuture.supplyAsync(HeadBlocks.getInstance(), () -> {
             try {
                 var headsUuid = database.getHeadsPlayer(playerUuid);
-                _cacheHeads.compute(playerUuid, (key, playerHeads) -> {
-                    if (playerHeads == null) {
-                        return headsUuid;
-                    } else {
-                        playerHeads.addAll(headsUuid);
-                        return playerHeads;
-                    }
-                });
 
-                return headsUuid;
+                if (!_cacheHeads.containsKey(playerUuid)) {
+                    _cacheHeads.put(playerUuid, new HashSet<>());
+                }
+
+                var playerHeads = _cacheHeads.get(playerUuid);
+                playerHeads.addAll(headsUuid);
+
+                return playerHeads;
             } catch (Exception ex) {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to get heads for " + playerUuid + ": " + ex.getMessage()));
-                return new ArrayList<>();
+                return new HashSet<>();
             }
         });
     }
