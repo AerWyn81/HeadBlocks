@@ -101,7 +101,7 @@ public class GuiService {
 
                 var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
                         .setName(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.OrderItemName")
-                                        .replaceAll("%headName%", headLocation.getDisplayedName()), headLocation.getLocation()))
+                                .replaceAll("%headName%", headLocation.getNameOrUnnamed()), headLocation.getLocation()))
                         .setLore(LanguageService.getMessages("Gui.OrderItemLore").stream().map(s ->
                                         s.replaceAll("%position%", headLocation.getDisplayedOrderIndex()))
                                 .collect(Collectors.toList())).toItemStack(), true)
@@ -146,7 +146,7 @@ public class GuiService {
 
                 var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
                         .setName(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.CounterClickItemName")
-                                .replaceAll("%headName%", headLocation.getDisplayedName()), headLocation.getLocation()))
+                                .replaceAll("%headName%", headLocation.getNameOrUnnamed()), headLocation.getLocation()))
                         .setLore(LanguageService.getMessages("Gui.CounterClickItemLore").stream().map(s ->
                                         s.replaceAll("%count%", headLocation.getDisplayedHitCount()))
                                 .collect(Collectors.toList())).toItemStack(), true)

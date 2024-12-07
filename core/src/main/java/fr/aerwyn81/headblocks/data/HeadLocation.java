@@ -57,9 +57,23 @@ public class HeadLocation {
         return name;
     }
 
-    public String getDisplayedName() {
+    public String getNameOrUnnamed() {
         if (name.isEmpty())
             return LanguageService.getMessage("Gui.Unnamed");
+
+        return MessageUtils.colorize(name);
+    }
+
+    public String getRawNameOrUuid() {
+        if (name.isEmpty())
+            return headUUID.toString();
+
+        return MessageUtils.unColorize(name);
+    }
+
+    public String getNameOrUuid() {
+        if (name.isEmpty())
+            return headUUID.toString();
 
         return MessageUtils.colorize(name);
     }

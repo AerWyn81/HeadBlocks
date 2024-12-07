@@ -37,7 +37,7 @@ public class RemoveAll implements Cmd {
                     headRemoved++;
                 } catch (InternalException ex) {
                     sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getUuid().toString() + " at " + head.getLocation().toString() + ") from the storage: " + ex.getMessage()));
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getNameOrUuid() + " at " + head.getLocation().toString() + ") from the storage: " + ex.getMessage()));
                 }
             }
 

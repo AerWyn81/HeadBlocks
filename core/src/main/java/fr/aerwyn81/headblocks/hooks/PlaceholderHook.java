@@ -158,7 +158,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                         return "-";
                     }
 
-                    return playerHeadLocations.get(playerHeadLocations.size() - 1).getDisplayedName();
+                    return playerHeadLocations.get(playerHeadLocations.size() - 1).getNameOrUuid();
                 }
 
                 if (subIdentifier.equals("previous")) {
@@ -166,7 +166,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                         return "-";
                     }
 
-                    return playerHeadLocations.get(playerHeadLocations.size() - 2).getDisplayedName();
+                    return playerHeadLocations.get(playerHeadLocations.size() - 2).getNameOrUuid();
                 }
 
                 if (subIdentifier.equals("next")) {
@@ -174,7 +174,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                         return "-";
                     }
 
-                    return heads.get(playerHeadLocations.size()).getDisplayedName();
+                    return heads.get(playerHeadLocations.size()).getNameOrUuid();
                 }
             } catch (Exception ex) {
                 return "Future error get heads";

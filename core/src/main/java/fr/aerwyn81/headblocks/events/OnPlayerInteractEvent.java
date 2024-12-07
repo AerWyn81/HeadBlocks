@@ -128,7 +128,7 @@ public class OnPlayerInteractEvent implements Listener {
                         .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
                     player.sendMessage(PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation,
                             LanguageService.getMessage("Messages.OrderClickError")
-                                    .replaceAll("%name%", headLocation.getDisplayedName())));
+                                    .replaceAll("%name%", headLocation.getNameOrUnnamed())));
                     return;
                 }
             }

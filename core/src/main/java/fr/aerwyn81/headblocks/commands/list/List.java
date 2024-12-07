@@ -44,7 +44,7 @@ public class List implements Cmd {
         for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
             HeadLocation headLocation = headLocations.get(i);
 
-            TextComponent msg = new TextComponent(MessageUtils.colorize((headLocation.isCharged() ? "&6" : "&7| &c&o") + headLocation.getUuid()));
+            TextComponent msg = new TextComponent(MessageUtils.colorize((headLocation.isCharged() ? "&6" : "&7| &c&o") + headLocation.getNameOrUuid()));
             TextComponent space = new TextComponent(" ");
 
             if (headLocation.isCharged()) {
@@ -67,7 +67,7 @@ public class List implements Cmd {
 
                     cpu.addLine(del, space, tp, space, msg, space);
                 } else {
-                    sender.sendMessage(MessageUtils.colorize("&6" + headLocation.getUuid()));
+                    sender.sendMessage(MessageUtils.colorize("&6" + headLocation.getNameOrUuid()));
                 }
             } else {
                 if (sender instanceof Player) {
@@ -77,7 +77,7 @@ public class List implements Cmd {
                     msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
                     cpu.addLine(msg, space);
                 } else {
-                    sender.sendMessage(MessageUtils.colorize("&c&o" + headLocation.getUuid()));
+                    sender.sendMessage(MessageUtils.colorize("&c&o" + headLocation.getNameOrUuid()));
                 }
             }
         }

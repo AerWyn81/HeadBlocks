@@ -20,6 +20,10 @@ public class MessageUtils {
 		return IridiumColorAPI.process(message);
 	}
 
+	public static String unColorize(String name) {
+		return IridiumColorAPI.stripColorFormatting(name);
+	}
+
 	/**
 	 * Clean message string
 	 * @param message to translate

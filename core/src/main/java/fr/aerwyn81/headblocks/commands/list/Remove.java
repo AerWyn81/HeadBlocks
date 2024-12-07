@@ -48,7 +48,12 @@ public class Remove implements Cmd {
 
             head = targetHead;
         } else {
-            head = HeadService.getHeadByUUID(UUID.fromString(args[1]));
+            try {
+                head = HeadService.getHeadByUUID(UUID.fromString(args[1]));
+            } catch (Exception ex) {
+                head = HeadService.getHeadByName(args[1]);
+            }
+
             if (head == null) {
                 sender.sendMessage(LanguageService.getMessage("Messages.RemoveLocationError"));
                 return true;
@@ -61,7 +66,7 @@ public class Remove implements Cmd {
             HeadService.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getUuid().toString() + " at " + loc.toString() + ") from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getNameOrUuid() + " at " + loc.toString() + ") from the storage: " + ex.getMessage()));
             return true;
         }
 
@@ -72,7 +77,7 @@ public class Remove implements Cmd {
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
         return args.length == 2 ? HeadService.getChargedHeadLocations().stream()
-                .map(h -> h.getUuid().toString())
+                .map(HeadLocation::getRawNameOrUuid)
                 .collect(Collectors.toCollection(ArrayList::new)) : new ArrayList<>();
     }
 }

@@ -74,7 +74,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
             HeadService.removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getUuid() + ") from the storage: " + ex.getMessage()));
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getNameOrUuid() + ") from the storage: " + ex.getMessage()));
         }
 
         // Send player success message

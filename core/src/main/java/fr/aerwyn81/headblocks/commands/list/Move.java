@@ -50,7 +50,7 @@ public class Move implements Cmd {
             }
 
             String message = LanguageService.getMessage("Messages.TargetBlockInfo")
-                    .replaceAll("%uuid%", headLocation.getUuid().toString());
+                    .replaceAll("%uuid%", headLocation.getNameOrUuid());
 
             HeadService.getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), targetLoc));
 

@@ -35,7 +35,7 @@ public class Info implements Cmd {
         player.sendMessage(MessageUtils.colorize("&7----------- [ &e&oTarget head information &7]-----------"));
         player.sendMessage("");
 
-        TextComponent msgName = new TextComponent(LanguageService.getMessage("Chat.Info.Name") + headLocation.getDisplayedName());
+        TextComponent msgName = new TextComponent(LanguageService.getMessage("Chat.Info.Name") + headLocation.getNameOrUnnamed());
         msgName.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Info.HoverCopyName"))));
         msgName.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, headLocation.getName()));
         player.spigot().sendMessage(msgName);

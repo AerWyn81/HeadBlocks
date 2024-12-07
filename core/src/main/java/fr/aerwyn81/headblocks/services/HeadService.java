@@ -214,6 +214,12 @@ public class HeadService {
                 .orElse(null);
     }
 
+    public static HeadLocation getHeadByName(String name) {
+        return headLocations.stream().filter(h -> h.getRawNameOrUuid().equals(name))
+                .findFirst()
+                .orElse(null);
+    }
+
     public static HeadLocation getHeadAt(Location location) {
         return headLocations.stream().filter(h -> LocationUtils.areEquals(h.getLocation(), location))
                 .findFirst()
