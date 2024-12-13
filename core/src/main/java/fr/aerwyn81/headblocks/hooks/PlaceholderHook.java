@@ -117,7 +117,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
             }
         }
 
-        // %headblocks_hasHead_uuid%
+        // %headblocks_hasHead_<uuid|name>%
         if (identifier.contains("hasHead")) {
             var str = identifier.split("_");
 
@@ -125,6 +125,20 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 var hUUID = UUID.fromString(str[str.length - 1]);
                 return String.valueOf(StorageService.hasHead(player.getUniqueId(), hUUID));
             } catch (Exception ignored) { }
+
+            try {
+                var name = identifier.replace("hasHead_", "");
+                name = name.replaceAll("_", " ").trim();
+
+                var head = HeadService.getHeadByName(name);
+
+                if (head == null) {
+                    return "Unknown head " + name;
+                }
+
+                return String.valueOf(StorageService.hasHead(player.getUniqueId(), head.getUuid()));
+            } catch (Exception ignored) {
+            }
         }
 
         // %headblocks_order_<previous|current|next>%
