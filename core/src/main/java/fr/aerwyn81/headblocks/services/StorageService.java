@@ -293,7 +293,9 @@ public class StorageService {
     }
 
     public static void close() {
-        _cacheHeads.clear();
+        if (_cacheHeads != null) {
+            _cacheHeads.clear();
+        }
 
         try {
             if (storage != null) {

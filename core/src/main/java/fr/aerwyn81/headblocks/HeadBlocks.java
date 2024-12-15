@@ -122,11 +122,7 @@ public final class HeadBlocks extends JavaPlugin {
     }
 
     private void initializeExternals() {
-        if (!NBT.preloadApi()) {
-            log.sendMessage(MessageUtils.colorize("&cNBT-API wasn't initialized properly, disabling the plugin..."));
-            getPluginLoader().disablePlugin(this);
-            return;
-        }
+        NBT.preloadApi();
 
         MinecraftVersion.disableBStats();
 
