@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-version = "2.6.14"
+version = "2.6.15"
 
 allprojects {
     repositories {
@@ -14,6 +14,5 @@ allprojects {
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
         maven("https://repo.fancyplugins.de/releases")
         maven("https://jitpack.io")
-        maven("https://ci.codemc.io/job/Tr7zw/job/Item-NBT-API/")
     }
 }

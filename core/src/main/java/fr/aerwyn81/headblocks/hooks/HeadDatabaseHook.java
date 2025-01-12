@@ -57,9 +57,12 @@ public class HeadDatabaseHook {
                 .map(h -> (HBHeadHDB) h)
                 .filter(h -> !h.isLoaded())
                 .forEach(h -> {
-                    HeadUtils.createHead(h, headDatabaseAPI.getBase64(h.getId()));
-                    h.setLoaded(true);
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded HeadDatabase head id &e" + h.getId() + "."));
+                    var texture = headDatabaseAPI.getBase64(h.getId());
+                    if (!texture.isEmpty()) {
+                        HeadUtils.createHead(h, texture);
+                        h.setLoaded(true);
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded HeadDatabase head id &e" + h.getId() + "."));
+                    }
                 });
     }
 }
