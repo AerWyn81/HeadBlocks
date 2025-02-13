@@ -4,7 +4,11 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.*;
-import fr.aerwyn81.headblocks.utils.bukkit.*;
+import fr.aerwyn81.headblocks.utils.bukkit.FireworkUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.XSeries.XSound;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.*;
@@ -96,7 +100,7 @@ public class OnPlayerInteractEvent implements Listener {
                 String songName = ConfigService.getHeadClickAlreadyOwnSound();
                 if (!songName.trim().isEmpty()) {
                     try {
-                        XSound.play(player, ConfigService.getHeadClickAlreadyOwnSound());
+                        XSound.play(ConfigService.getHeadClickAlreadyOwnSound(), s -> s.forPlayers(player));
                     } catch (Exception ex) {
                         player.sendMessage(LanguageService.getMessage("Messages.ErrorCannotPlaySound"));
                         HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click: " + ex.getMessage()));
@@ -180,7 +184,7 @@ public class OnPlayerInteractEvent implements Listener {
             String songName = ConfigService.getHeadClickNotOwnSound();
             if (!songName.trim().isEmpty()) {
                 try {
-                    XSound.play(player, songName);
+                    XSound.play(songName, s -> s.forPlayers(player));
                 } catch (Exception ex) {
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click! Cannot parse provided name..."));
                 }

@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-version = "2.6.15"
+version = "2.6.16"
 
 allprojects {
     repositories {
