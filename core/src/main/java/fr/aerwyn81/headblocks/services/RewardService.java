@@ -29,9 +29,15 @@ public class RewardService {
                 }
 
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    List<String> commands = tieredReward.getCommands();
-                    commands.forEach(command ->
-                            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, command)));
+                    if (tieredReward.isRandom()) {
+                        String randomCommand = tieredReward.getCommands().get(new Random().nextInt(tieredReward.getCommands().size()));
+                        Bukkit.getScheduler().runTaskLater(plugin, () ->
+                                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand)), 1L);
+                    } else {
+                        List<String> commands = tieredReward.getCommands();
+                        commands.forEach(command ->
+                                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, command)));
+                    }
 
                     List<String> broadcastMessages = tieredReward.getBroadcastMessages();
                     if (!broadcastMessages.isEmpty()) {

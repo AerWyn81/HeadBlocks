@@ -8,13 +8,15 @@ public class TieredReward {
     private final List<String> commands;
     private final List<String> broadcastMessages;
     private final int slotsRequired;
+    private final boolean isRandom;
 
-    public TieredReward(int level, List<String> messages, List<String> commands, List<String> broadcastMessages, int slotsRequired) {
+    public TieredReward(int level, List<String> messages, List<String> commands, List<String> broadcastMessages, int slotsRequired, boolean isRandom) {
         this.level = level;
         this.messages = messages;
         this.commands = commands;
         this.broadcastMessages = broadcastMessages;
         this.slotsRequired = slotsRequired;
+        this.isRandom = isRandom;
     }
 
     public int getLevel() {
@@ -35,5 +37,9 @@ public class TieredReward {
 
     public int getSlotsRequired() {
         return slotsRequired;
+    }
+
+    public boolean isRandom() {
+        return isRandom;
     }
 }

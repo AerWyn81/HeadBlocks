@@ -267,10 +267,13 @@ tieredRewards:
       - '%prefix% &6%player% &afound &6100 heads&a!!!'
       - ''
     slotsRequired: 2
+    randomizeCommands: false
 ```
 
 It is possible to set up reward levels. When the player reaches the level, that will send a message containing several
-lines and execute a list of commands. You can also define a number of slots required to receive the reward with `slotsRequired` per level.
+lines and execute a list of commands.   
+You can also define a number of slots required to execute the command with `slotsRequired`,
+and you can randomize the commands executed.
 
 ?> Hex colors, placeholders and centering (use: {center}) are supported
 

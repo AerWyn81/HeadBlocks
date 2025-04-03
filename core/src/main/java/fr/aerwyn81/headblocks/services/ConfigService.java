@@ -328,8 +328,13 @@ public class ConfigService {
                     slotsRequired = config.getInt("tieredRewards." + level + ".slotsRequired", -1);
                 }
 
+                boolean isRandom = false;
+                if (config.contains("tieredRewards." + level + ".randomizeCommands")) {
+                    isRandom = config.getBoolean("tieredRewards." + level + ".randomizeCommands", false);
+                }
+
                 if (!messages.isEmpty() || !commands.isEmpty() || !broadcastMessages.isEmpty() || slotsRequired != -1) {
-                    tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages, slotsRequired));
+                    tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages, slotsRequired, isRandom));
                 }
             } catch (Exception ex) {
                 HeadBlocks.log.sendMessage(MessageUtils.colorize(
