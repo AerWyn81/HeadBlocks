@@ -413,7 +413,7 @@ public class StorageService {
         ArrayList<String> instructions = new ArrayList<>();
 
         // Table : hb_heads
-        instructions.add("DROP TABLE IF EXISTS hb_heads;");
+        instructions.add("DROP TABLE IF EXISTS " + ConfigService.getDatabasePrefix() + "hb_heads;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTableHeadsMySQL() + ";");
@@ -430,7 +430,7 @@ public class StorageService {
         instructions.add("");
 
         // Table : hb_playerHeads
-        instructions.add("DROP TABLE IF EXISTS hb_playerHeads;");
+        instructions.add("DROP TABLE IF EXISTS " + ConfigService.getDatabasePrefix() + "hb_playerHeads;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTablePlayerHeadsMySQL() + ";");
@@ -447,7 +447,7 @@ public class StorageService {
         instructions.add("");
 
         // Table : hb_players
-        instructions.add("DROP TABLE IF EXISTS hb_players;");
+        instructions.add("DROP TABLE IF EXISTS " + ConfigService.getDatabasePrefix() + "hb_players;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTablePlayersMySQL() + ";");
@@ -457,13 +457,13 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getTablePlayers();
         for (AbstractMap.SimpleEntry<String, String> player : players) {
-            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_players (pUUID, pName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "');");
+            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + " hb_players (pUUID, pName, pDisplayName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "', '');");
         }
 
         instructions.add("");
 
         // Table : hb_version
-        instructions.add("DROP TABLE IF EXISTS hb_version;");
+        instructions.add("DROP TABLE IF EXISTS " + ConfigService.getDatabasePrefix() + "hb_version;");
         instructions.add(Requests.createTableVersion() + ";");
         instructions.add(Requests.upsertVersion().replaceAll("\\?", String.valueOf(Database.version)) + ";");
 

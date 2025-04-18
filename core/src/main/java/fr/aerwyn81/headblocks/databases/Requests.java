@@ -46,11 +46,11 @@ public class Requests {
     }
 
     public static String createTablePlayers() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`pId` INTEGER PRIMARY KEY AUTOINCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NOT NULL)", getTablePlayers());
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pId` INTEGER PRIMARY KEY AUTOINCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NULL)", getTablePlayers());
     }
 
     public static String createTablePlayersMySQL() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`pId` INTEGER PRIMARY KEY AUTO_INCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NOT NULL)", getTablePlayers());
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pId` INTEGER PRIMARY KEY AUTO_INCREMENT, `pUUID` VARCHAR(36) UNIQUE NOT NULL, `pName` VARCHAR(16) NOT NULL, `pDisplayName` VARCHAR(255) NULL)", getTablePlayers());
     }
 
     public static String getTablePlayer() {
