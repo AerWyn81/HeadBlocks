@@ -457,7 +457,7 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getTablePlayers();
         for (AbstractMap.SimpleEntry<String, String> player : players) {
-            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + " hb_players (pUUID, pName, pDisplayName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "', '');");
+            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "', '');");
         }
 
         instructions.add("");
