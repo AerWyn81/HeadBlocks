@@ -163,7 +163,7 @@ Gui:
 Help:
   LineTop: "&7--------------------[ &e&lHelp &7]--------------------"
   Help: "&6/hb help&8: &7&oDisplay this message"
-  Me: "&6/hb me&8: &7&oDisplays your progress"
+  Progress: "&6/hb progress&8: &7&oDisplays your progress"
   Remove: "&6/hb remove (headUuid)&8: &7&oRemove head by it's <headUuid> or head targeted"
   RemoveAll: "&6/hb removeall&8: &7&oRemove all spawned head"
   Give: "&6/hb give <player> <*|number>&8: &7&oGives a HeadBlock to <player>. <number> when multi HeadBlocks are defined"

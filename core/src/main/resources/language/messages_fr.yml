@@ -161,7 +161,7 @@ Gui:
 Help:
   LineTop: "&7--------------------[ &e&lAide &7]--------------------"
   Help: "&6/hb help &8: &7&oAffiche ce message"
-  Me: "&6/hb me &8: &7&oAffiche votre progression"
+  Progress: "&6/hb progress &8: &7&oAffiche votre progression"
   Remove: "&6/hb remove (headUuid) &8: &7&oSupprime la tête par son <headUuid> ou la tête ciblée"
   RemoveAll: "&6/hb removeall &8: &7&oSupprime toutes les têtes spawn"
   Give: "&6/hb give <player> <*|number> &8: &7&oDonne un HeadBlock à poser au <joueur>. <number> dans le cas où plusieurs têtes sont définies"
