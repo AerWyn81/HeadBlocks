@@ -70,16 +70,33 @@ public class PlaceholderHook extends PlaceholderExpansion {
             }
         }
 
+        // %headblocks_leaderboard_position%
         // %headblocks_leaderboard_<position>_<name|custom|value>%
         if (identifier.contains("leaderboard")) {
             var str = identifier.split("_");
             try {
-                var position = Integer.parseInt(str[str.length - (str.length == 2 ? 1 : 2)]);
+                var top = new ArrayList<>(StorageService.getTopPlayers().entrySet());
+
+                var positionParam = str[str.length - (str.length == 2 ? 1 : 2)];
+
+                if (positionParam.equals("position")) {
+                    var findPlayerPos = top.stream()
+                            .filter(p -> p.getKey().uuid().equals(player.getUniqueId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    var playerPosition = top.indexOf(findPlayerPos);
+
+                    if (playerPosition == -1)
+                        return "-";
+
+                    return String.valueOf(playerPosition + 1);
+                }
+
+                var position = Integer.parseInt(positionParam);
                 if (position < 1) {
                     position = 1;
                 }
-
-                var top = new ArrayList<>(StorageService.getTopPlayers().entrySet());
 
                 if (position > top.size()) {
                     return "-";
@@ -88,6 +105,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 var p = top.get(position - 1);
 
                 var elt = str[str.length - 1];
+
                 switch (elt) {
                     case "name" -> {
                         return p.getKey().name();
