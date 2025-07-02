@@ -58,11 +58,14 @@ public class HeadDatabaseHook {
                 .filter(h -> !h.isLoaded())
                 .forEach(h -> {
                     var texture = headDatabaseAPI.getBase64(h.getId());
-                    if (!texture.isEmpty()) {
-                        HeadUtils.createHead(h, texture);
-                        h.setLoaded(true);
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded HeadDatabase head id &e" + h.getId() + "."));
+                    if (texture == null || texture.isEmpty()) {
+                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cHeadDatabase head id &e" + h.getId() + " is not found. Please check if the head id exists."));
+                        return;
                     }
+
+                    HeadUtils.createHead(h, texture);
+                    h.setLoaded(true);
+                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded HeadDatabase head id &e" + h.getId() + "."));
                 });
     }
 }
