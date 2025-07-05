@@ -30,7 +30,7 @@ tasks.register<Jar>("spigotJar") {
 
     @Suppress("UnstableApiUsage")
     manifest {
-        attributes["Main-Class"] = "com.example.MyPlugin"
+        attributes["Main-Class"] = "fr.aerwyn81.HeadBlocks"
     }
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
