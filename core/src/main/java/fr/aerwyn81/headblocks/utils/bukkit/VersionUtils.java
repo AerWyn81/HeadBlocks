@@ -16,7 +16,10 @@ public enum VersionUtils {
     v1_21_R1(1211, 121),
     v1_21_R2(1212, 122),
     v1_21_R3(1213, 123),
-    v1_21_R4(1214, 124);
+    v1_21_R4(1214, 124),
+    v1_21_R5(1215, 125),
+    v1_21_R6(1216, 126),
+    v1_21_R7(1217, 127);
 
     private static VersionUtils version;
     private final int[] versionId;
@@ -40,8 +43,8 @@ public enum VersionUtils {
         try {
             version = extractFromString(Bukkit.getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
         } catch (Exception e) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError extracting server version" + e.getMessage() + ". Using " + v1_21_R4.name()));
-            version = v1_21_R4;
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError extracting server version" + e.getMessage() + ". Using " + v1_21_R7.name()));
+            version = v1_21_R7;
         }
 
         return version;
@@ -61,9 +64,5 @@ public enum VersionUtils {
 
     public static boolean isNewerOrEqualsTo(VersionUtils version) {
         return getVersion().getVersionId() >= version.getVersionId();
-    }
-
-    public static boolean isOlderThan(VersionUtils version) {
-        return getVersion().getVersionId() < version.getVersionId();
     }
 }
