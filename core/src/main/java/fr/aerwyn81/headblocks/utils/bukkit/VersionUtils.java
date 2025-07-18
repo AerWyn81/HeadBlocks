@@ -44,8 +44,8 @@ public enum VersionUtils {
         try {
             version = extractFromString(Bukkit.getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
         } catch (Exception e) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError extracting server version" + e.getMessage() + ". Using " + v1_21_R7.name()));
-            version = v1_21_R7;
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError extracting server version" + e.getMessage() + ". Using " + v1_21_R8.name()));
+            version = v1_21_R8;
         }
 
         return version;
