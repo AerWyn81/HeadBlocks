@@ -2,7 +2,7 @@ import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
 
 plugins {
     id("java")
-    id("io.github.goooler.shadow") version "8.1.7"
+    id("io.github.goooler.shadow") version "8.1.8"
     id("net.minecrell.plugin-yml.bukkit") version "0.6.0"
 }
 
@@ -13,16 +13,16 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.8")
-    compileOnly("de.oliver:FancyHolograms:2.3.1")
+    compileOnly("de.oliver:FancyHolograms:2.7.0")
     compileOnly(files("../libs/CMILib1.4.7.16.jar"))
     compileOnly(files("../libs/CMI-9.7.3.2.jar"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.21")
     implementation("redis.clients:jedis:5.1.3")
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.apache.commons:commons-lang3:3.12.0")
-    implementation("de.tr7zw:item-nbt-api:2.15.1")
+    implementation("de.tr7zw:item-nbt-api:2.15.2")
     implementation("net.kyori:adventure-api:4.17.0")
-    implementation("net.kyori:adventure-platform-bukkit:4.3.3")
+    implementation("net.kyori:adventure-platform-bukkit:4.4.1")
 }
 
 tasks {
