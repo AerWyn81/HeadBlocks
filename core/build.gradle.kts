@@ -13,7 +13,7 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.8")
-    compileOnly("de.oliver:FancyHolograms:2.7.0")
+    compileOnly("de.oliver:FancyHolograms:2.8.0")
     compileOnly(files("../libs/CMILib1.4.7.16.jar"))
     compileOnly(files("../libs/CMI-9.7.3.2.jar"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.21")
@@ -21,7 +21,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("de.tr7zw:item-nbt-api:2.15.2")
-    implementation("net.kyori:adventure-api:4.17.0")
+    implementation("net.kyori:adventure-api:4.25.0")
     implementation("net.kyori:adventure-platform-bukkit:4.4.1")
 }
 
