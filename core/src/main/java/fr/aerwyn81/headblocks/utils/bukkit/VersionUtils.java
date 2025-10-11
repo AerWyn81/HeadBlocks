@@ -20,7 +20,9 @@ public enum VersionUtils {
     v1_21_R5(1215, 125),
     v1_21_R6(1216, 126),
     v1_21_R7(1217, 127),
-    v1_21_R8(1218, 128);
+    v1_21_R8(1218, 128),
+    v1_21_R9(1219, 129),
+    v1_21_R10(12110, 1210);
 
     private static VersionUtils version;
     private final int[] versionId;
