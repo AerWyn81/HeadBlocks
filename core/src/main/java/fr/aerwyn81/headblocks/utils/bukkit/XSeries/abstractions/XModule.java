@@ -55,6 +55,7 @@ public abstract class XModule<XForm extends XModule<XForm, BukkitForm>, BukkitFo
     }
 
     @ApiStatus.Experimental
+    @SuppressWarnings("unchecked")
     protected void setEnumName(XRegistry<XForm, BukkitForm> registry, String enumName) {
         if (names[0] != null)
             throw new IllegalStateException("Enum name already set " + enumName + " -> " + Arrays.toString(names));
