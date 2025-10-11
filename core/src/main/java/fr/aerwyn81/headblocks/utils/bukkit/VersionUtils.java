@@ -20,7 +20,9 @@ public enum VersionUtils {
     v1_21_R5(1215, 125),
     v1_21_R6(1216, 126),
     v1_21_R7(1217, 127),
-    v1_21_R8(1218, 128);
+    v1_21_R8(1218, 128),
+    v1_21_R9(1219, 129),
+    v1_21_R10(12110, 1210);
 
     private static VersionUtils version;
     private final int[] versionId;
@@ -44,8 +46,8 @@ public enum VersionUtils {
         try {
             version = extractFromString(Bukkit.getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
         } catch (Exception e) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError extracting server version" + e.getMessage() + ". Using " + v1_21_R8.name()));
-            version = v1_21_R8;
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError extracting server version" + e.getMessage() + ". Using " + v1_21_R10.name()));
+            version = v1_21_R10;
         }
 
         return version;
