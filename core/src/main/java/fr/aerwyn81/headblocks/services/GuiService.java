@@ -75,7 +75,13 @@ public class GuiService {
         //        .toItemStack(), true)
         //        .addOnClickEvent(event -> {}));
 
-        int[] borders = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 9,  10, 11, 14, 15, 16, 17 };
+        optionsMenu.setItem(0, 14, new ItemGUI(new ItemBuilder(Material.ENDER_EYE)
+                .setName(LanguageService.getMessage("Gui.HintName"))
+                .setLore(LanguageService.getMessages("Gui.HintLore"))
+                .toItemStack(), true)
+                .addOnClickEvent(event -> openHintGui((Player) event.getWhoClicked())));
+
+        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> optionsMenu.setItem(0, borders[index], new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack()))
         );
@@ -169,6 +175,50 @@ public class GuiService {
         }
 
         p.openInventory(clickCounterMenu.getInventory());
+    }
+
+    public static void openHintGui(Player p) {
+        HBMenu hintMenu = new HBMenu(HeadBlocks.getInstance(), LanguageService.getMessage("Gui.TitleHint"), true, 5);
+
+        List<HeadLocation> headLocations = HeadService.getHeadLocations();
+
+        if (headLocations.isEmpty()) {
+            hintMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
+                    .setName(LanguageService.getMessage("Gui.NoHeads"))
+                    .toItemStack(), true));
+        } else {
+            for (int i = 0; i < headLocations.size(); i++) {
+                HeadLocation headLocation = headLocations.get(i);
+
+                var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
+                        .setName(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.HintItemName")
+                                .replaceAll("%headName%", headLocation.getNameOrUnnamed()), headLocation.getLocation()))
+                        .setLore(LanguageService.getMessages("Gui.HintItemLore").stream().map(s ->
+                                        s.replaceAll("%state%", headLocation.isHintSoundEnabled()
+                                                ? LanguageService.getMessage("Gui.Enabled")
+                                                : LanguageService.getMessage("Gui.Disabled")))
+                                .collect(Collectors.toList())).toItemStack(), true)
+                        .addOnClickEvent(event -> {
+                            var hintBefore = headLocation.isHintSoundEnabled();
+
+                            if (event.getClick() == ClickType.LEFT && !hintBefore) {
+                                headLocation.setHintSound(true);
+                            } else if (event.getClick() == ClickType.RIGHT && hintBefore) {
+                                headLocation.setHintSound(false);
+                            }
+
+                            if (headLocation.isHintSoundEnabled() != hintBefore) {
+                                HeadService.saveHeadInConfig(headLocation);
+                            }
+
+                            openHintGui((Player) event.getWhoClicked());
+                        });
+
+                hintMenu.addItem(i, orderItemGui);
+            }
+        }
+
+        p.openInventory(hintMenu.getInventory());
     }
 
     public static ItemGUI getDefaultPaginationButtonBuilder(HBPaginationButtonType type, HBMenu inventory) {

@@ -25,21 +25,23 @@ public class HeadLocation {
     private boolean isCharged;
     private int hitCount;
     private int orderIndex;
+    private boolean hintSound;
 
     private final ArrayList<Reward> rewards;
 
     public HeadLocation(String name, UUID headUUID, Location location) {
-        this(name, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, new ArrayList<>());
+        this(name, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, false, new ArrayList<>());
 
         this.location = location;
         this.isCharged = true;
     }
 
-    public HeadLocation(String name, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, ArrayList<Reward> rewards) {
+    public HeadLocation(String name, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, boolean hintSound, ArrayList<Reward> rewards) {
         this.name = name;
         this.headUUID = headUUID;
         this.hitCount = hitCount;
         this.orderIndex = orderIndex;
+        this.hintSound = hintSound;
 
         this.configWorldName = configWorldName;
         this.x = x;
@@ -88,6 +90,14 @@ public class HeadLocation {
 
     public void setHitCount(int hitCount) {
         this.hitCount = hitCount;
+    }
+
+    public boolean isHintSoundEnabled() {
+        return hintSound;
+    }
+
+    public void setHintSound(boolean isHintSound) {
+        this.hintSound = isHintSound;
     }
 
     public String getDisplayedHitCount() {
@@ -170,6 +180,7 @@ public class HeadLocation {
 
         section.set("locations." + hUUID + ".hitCount", hitCount == -1 ? null : hitCount);
         section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
+        section.set("locations." + hUUID + ".hintSound", !hintSound ? null : true);
 
         if (!rewards.isEmpty()) {
             var confRewards = new ArrayList<>();
@@ -215,6 +226,11 @@ public class HeadLocation {
             orderIndex = section.getInt("locations." + hUUID + ".orderIndex");
         }
 
+        boolean hintSound = false;
+        if (section.contains("locations." + hUUID + ".hintSound")) {
+            hintSound = section.getBoolean("locations." + hUUID + ".hintSound");
+        }
+
         var rewards = new ArrayList<Reward>();
         if (section.contains("locations." + hUUID + ".rewards")) {
             var rewardsSection = section.get("locations." + hUUID + ".rewards");
@@ -232,7 +248,7 @@ public class HeadLocation {
             }
         }
 
-        var headLocation = new HeadLocation(name, headUUID, worldName, x, y, z, hitCount, orderIndex, rewards);
+        var headLocation = new HeadLocation(name, headUUID, worldName, x, y, z, hitCount, orderIndex, hintSound, rewards);
 
         World world = Bukkit.getWorld(worldName);
         if (world != null) {

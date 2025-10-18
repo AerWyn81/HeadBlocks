@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
+import fr.aerwyn81.headblocks.utils.bukkit.XSeries.XSound;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -433,5 +434,28 @@ public class ConfigService {
 
     public static boolean isSpinLinked() {
         return config.getBoolean("spin.linked", true);
+    }
+
+    public static int getHintSoundFrequency() {
+        return config.getInt("hint.sound.frequency", 5);
+    }
+
+    public static int getHintSoundVolume() {
+        return config.getInt("hint.sound.volume", 1);
+    }
+
+    public static XSound getHintSoundType() {
+        var soundInConfig = config.getString("hint.sound.sound", "BLOCK_AMETHYST_BLOCK_CHIME");
+
+        var sound = XSound.BLOCK_AMETHYST_BLOCK_CHIME;
+
+        var optSound = XSound.of(soundInConfig);
+        if (optSound.isPresent()) {
+            sound = optSound.get();
+        } else {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError, cannot parse sound of \"" + soundInConfig + "\"."));
+        }
+
+        return sound;
     }
 }

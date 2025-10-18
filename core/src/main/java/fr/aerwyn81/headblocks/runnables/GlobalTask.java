@@ -16,11 +16,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Collections;
+import java.util.Random;
 
 public class GlobalTask extends BukkitRunnable {
 
     private static final int CHUNK_SIZE = 16;
     private static int VIEW_RADIUS_CHUNKS = 1;
+
+    private static final Random random = new Random();
 
     public GlobalTask() {
         VIEW_RADIUS_CHUNKS = (int) Math.ceil(ConfigService.getHologramParticlePlayerViewDistance() / (double)CHUNK_SIZE);
@@ -43,7 +46,6 @@ public class GlobalTask extends BukkitRunnable {
             handleHologramAndParticles(headLocation);
         });
     }
-
 
     private void spawnParticles(Location location, boolean isFound, Player player) {
         if (isFound ? !ConfigService.isParticlesFoundEnabled() : !ConfigService.isParticlesNotFoundEnabled())
@@ -97,6 +99,19 @@ public class GlobalTask extends BukkitRunnable {
                             spawnParticles(location, true, player);
                             HologramService.showFoundTo(player, location);
                         } else {
+                            if (headLocation.isHintSoundEnabled()) {
+                                if (random.nextInt(ConfigService.getHintSoundFrequency()) == 0) {
+                                    ConfigService.getHintSoundType()
+                                            .record()
+                                            .withVolume(ConfigService.getHintSoundVolume())
+                                            .withPitch(random.nextInt(3))
+                                            .soundPlayer()
+                                            .forPlayers(player)
+                                            .atLocation(location)
+                                            .play();
+                                }
+                            }
+
                             spawnParticles(location, false, player);
                             HologramService.showNotFoundTo(player, location);
                         }

@@ -158,6 +158,14 @@ holograms:
     lines:
       - "&c&lNot found"
 
+# Hint system to help player finding heads
+# Configurable via the command /hb options
+hint:
+  sound:
+    frequency: 5 # Less = more frequent
+    volume: 1
+    sound: BLOCK_AMETHYST_BLOCK_CHIME
+
 # Internal settings for internal tasks
 # Increase delay or reduce view distance can improve performance but decreases the quality
 internalTask:
