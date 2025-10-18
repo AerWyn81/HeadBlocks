@@ -12,8 +12,10 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class HologramService {
@@ -103,6 +105,14 @@ public class HologramService {
             return;
         }
 
+        var holoNotFound = getHologramByLocation(notFoundHolograms, location);
+        if (holoNotFound != null) {
+            if (!holoNotFound.isSupportedPerPlayerView() || holoNotFound.isHologramVisible(player)) {
+                holoNotFound.hide(player);
+            }
+        }
+
+        // FoundEnabled only concern found holograms, we want to hide not found first
         if (!ConfigService.isHologramsFoundEnabled()) {
             return;
         }
@@ -113,21 +123,10 @@ public class HologramService {
                 holoFound.show(player);
             }
         }
-
-        var holoNotFound = getHologramByLocation(notFoundHolograms, location);
-        if (holoNotFound != null) {
-            if (!holoNotFound.isSupportedPerPlayerView() || holoNotFound.isHologramVisible(player)) {
-                holoNotFound.hide(player);
-            }
-        }
     }
 
     public static void showNotFoundTo(Player player, Location location) {
         if (!enable) {
-            return;
-        }
-
-        if (!ConfigService.isHologramsNotFoundEnabled()) {
             return;
         }
 
@@ -136,6 +135,11 @@ public class HologramService {
             if (!holoFound.isSupportedPerPlayerView() || holoFound.isHologramVisible(player)) {
                 holoFound.hide(player);
             }
+        }
+
+        // NotFoundEnabled only concern not found holograms, we want to hide found first
+        if (!ConfigService.isHologramsNotFoundEnabled()) {
+            return;
         }
 
         var holoNotFound = getHologramByLocation(notFoundHolograms, location);
