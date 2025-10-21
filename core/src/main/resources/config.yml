@@ -216,9 +216,11 @@ preventMessagesOnTieredRewardsLevel: false
 # Disable these options can significantly increase performance
 #  -> piston will prevent any piston extension interaction (extension destroying head)
 #  -> water will prevent any liquid flow interaction (water destroying head)
+#  -> explosion will prevent any type of explosion that can destroy the head
 externalInteractions:
   piston: true
   water: true
+  explosion: true
 
 # Used to customize the %headblocks_leaderboard_<position>_custom% placeholder
 # Support placeholders (PlaceholderAPI)

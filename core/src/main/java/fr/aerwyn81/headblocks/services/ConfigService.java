@@ -412,6 +412,10 @@ public class ConfigService {
 
     public static boolean isPreventLiquidFlow() { return config.getBoolean("externalInteractions.water", true); }
 
+    public static boolean isPreventExplosion() {
+        return config.getBoolean("externalInteractions.explosion", true);
+    }
+
     public static String getPlaceholdersLeaderboardPrefix() {
         return config.getString("placeholders.leaderboard.prefix", "");
     }

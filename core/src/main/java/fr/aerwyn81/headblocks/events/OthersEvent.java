@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
@@ -83,5 +84,20 @@ public class OthersEvent implements Listener {
         if (e.getBlock().isLiquid() && HeadService.getHeadAt(e.getToBlock().getLocation()) != null) {
             e.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onExplosion(EntityExplodeEvent e) {
+        if (!ConfigService.isPreventExplosion()) {
+            return;
+        }
+
+        e.blockList().removeIf(block -> {
+            if (HeadUtils.isPlayerHead(block)) {
+                var headLocation = HeadService.getHeadAt(block.getLocation());
+                return headLocation != null;
+            }
+            return false;
+        });
     }
 }
