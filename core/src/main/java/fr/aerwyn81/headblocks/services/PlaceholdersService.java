@@ -28,7 +28,7 @@ public class PlaceholdersService {
         }
 
         if (HeadBlocks.isPlaceholderApiActive)
-            return PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(pUuid), message);
+            return PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(pUuid), MessageUtils.centerMessage(message));
 
         return MessageUtils.centerMessage(message);
     }
