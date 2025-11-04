@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks;
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
@@ -114,6 +115,10 @@ public final class HeadBlocks extends JavaPlugin {
             }));
             m.addCustomChart(new Metrics.SimplePie("feat_hit", () -> {
                 var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(h -> h.getHitCount() != -1);
+                return anyHit ? "True" : "False";
+            }));
+            m.addCustomChart(new Metrics.SimplePie("feat_hint", () -> {
+                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintSoundEnabled);
                 return anyHit ? "True" : "False";
             }));
         }
