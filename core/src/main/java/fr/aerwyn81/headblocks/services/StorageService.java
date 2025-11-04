@@ -140,6 +140,9 @@ public class StorageService {
     }
 
     public static String selectedStorageType() {
+        if (!ConfigService.isDatabaseEnabled())
+            return "SQLite";
+
         return ConfigService.getDatabaseType().name();
     }
 
