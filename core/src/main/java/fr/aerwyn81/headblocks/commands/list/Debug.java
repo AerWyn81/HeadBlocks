@@ -4,10 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.services.ConfigService;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -16,8 +13,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -228,6 +225,12 @@ public class Debug implements Cmd {
             return true;
         }
 
+        if (args[1].equals("holograms")) {
+            HologramService.unload();
+            HologramService.load();
+            return true;
+        }
+
         sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cUnknown debug command!"));
 
         return true;
@@ -250,7 +253,7 @@ public class Debug implements Cmd {
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
         return switch (args.length) {
-            case 2 -> new ArrayList<>(List.of("texture", "give"));
+            case 2 -> new ArrayList<>(List.of("texture", "give", "holograms"));
             case 3 -> {
                 var completion = new ArrayList<String>();
 
