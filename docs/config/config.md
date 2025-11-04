@@ -491,3 +491,8 @@ With the `/hb options` command, you can set additional parameters for the heads 
   It is global.
   If the number is reached, the head is no longer clickable and the rewards are not distributed.
   If you increase the number, it will be possible for your players to click on it again.
+
+
+- **Hint:**  
+  Head will produce a song when the player is near the head.
+  This is highly configurable in config.yml.

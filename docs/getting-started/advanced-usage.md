@@ -8,6 +8,7 @@ From the game, you can run the `/hb debug` command with two options:
 
 - texture
 - give
+- holograms
 
 The debug argument is not listed in the in-game help, nor in autocomplete.
 
@@ -51,3 +52,7 @@ Some examples:
 
 !> **Very important! Rewards are not given.**  
 **Click order and hit count options are not taken into account, so this will force the insertion in the database!**
+
+### Holograms
+
+This allows you to force holograms to reappear.
