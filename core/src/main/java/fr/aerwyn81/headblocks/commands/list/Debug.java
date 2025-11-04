@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@HBAnnotations(command = "debug", permission = "headblocks.debug", isPlayerCommand = true, isVisible = false, args = {"texture", "give"})
+@HBAnnotations(command = "debug", permission = "headblocks.debug", isPlayerCommand = true, isVisible = false, args = {"texture", "give", "holograms"})
 public class Debug implements Cmd {
 
     @Override
