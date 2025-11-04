@@ -228,6 +228,8 @@ public class Debug implements Cmd {
         if (args[1].equals("holograms")) {
             HologramService.unload();
             HologramService.load();
+
+            sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &aHolograms reloaded!"));
             return true;
         }
 
