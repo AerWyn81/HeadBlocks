@@ -19,13 +19,18 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-@HBAnnotations(command = "debug", permission = "headblocks.debug", isPlayerCommand = true, isVisible = false)
+@HBAnnotations(command = "debug", permission = "headblocks.debug", isVisible = false)
 public class Debug implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         switch (args[1]) {
             case "texture" -> {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(LanguageService.getMessage("Messages.PlayerOnly"));
+                    return true;
+                }
+
                 var blockView = ((Player) sender).getTargetBlock(null, 50);
                 var blockLocation = blockView.getLocation();
                 var block = blockLocation.getBlock();
