@@ -460,7 +460,7 @@ hint:
   sound:
     volume: 1
     sound: BLOCK_AMETHYST_BLOCK_CHIME
-  actionBar: "%prefix% &aPssst, a head is near &7(%arrow%) !"
+  actionBarMessage: "%prefix% &aPssst, a head is near &7(%arrow%) !"
 ```
 
 Option to set a sound when a head is not found to give the player a hint.  

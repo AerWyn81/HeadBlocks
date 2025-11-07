@@ -468,6 +468,6 @@ public class ConfigService {
     }
 
     public static String getHintActionBarMessage() {
-        return config.getString("hint.actionBar", "%prefix% &aPssst, a mystery block is near! &7(%arrow%)");
+        return config.getString("hint.actionBarMessage", "%prefix% &aPssst, a mystery block is near! &7(%arrow%)");
     }
 }

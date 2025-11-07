@@ -104,6 +104,8 @@ Chat:
 
 Other:
   NameNotSet: "&cNom non défini"
+  Sound: "Son"
+  ActionBar: "Barre d'action"
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &cOptions"
