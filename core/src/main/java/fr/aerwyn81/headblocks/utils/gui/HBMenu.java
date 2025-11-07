@@ -205,7 +205,10 @@ public class HBMenu implements InventoryHolder {
                 int offset = i - pageSize;
 
                 ItemGUI paginationButton = GuiService.getDefaultPaginationButtonBuilder(HBPaginationButtonType.forSlot(offset), this);
-                inventory.setItem(i, paginationButton != null ? paginationButton.getIcon() : null);
+
+                if (!items.containsKey(i)) {
+                    inventory.setItem(i, paginationButton != null ? paginationButton.getIcon() : null);
+                }
             }
         }
 

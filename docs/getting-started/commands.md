@@ -19,3 +19,4 @@
 | **/hb move**      |     m     |   Player   | `--confirm / --cancel`         | headblocks.admin                                                      | Move the HeadBlock targeted to another location                         |
 | **/hb export**    |     e     |    Any     | `<database> <MySQL or SQLite>` | headblocks.admin                                                      | Export the database to an SQL file with player data                     |
 | **/hb rename**    |     r     |   Player   | `(name)`                       | headblocks.admin                                                      | Rename target head                                                      |
+| **/hb options**   |     o     |   Player   | `counter / hint / order`       | headblocks.admin                                                      | Customize head mechanics                                                |

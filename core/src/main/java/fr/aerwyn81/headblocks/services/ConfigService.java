@@ -440,8 +440,12 @@ public class ConfigService {
         return config.getBoolean("spin.linked", true);
     }
 
-    public static int getHintSoundFrequency() {
-        return config.getInt("hint.sound.frequency", 5);
+    public static int getHintDistanceBlocks() {
+        return config.getInt("hint.distance", 16);
+    }
+
+    public static int getHintFrequency() {
+        return config.getInt("hint.frequency", 5);
     }
 
     public static int getHintSoundVolume() {
@@ -461,5 +465,9 @@ public class ConfigService {
         }
 
         return sound;
+    }
+
+    public static String getHintActionBarMessage() {
+        return config.getString("hint.actionBar", "%prefix% &aPssst, a mystery block is near! &7(%arrow%)");
     }
 }

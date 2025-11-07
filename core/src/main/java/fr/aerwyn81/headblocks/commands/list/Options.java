@@ -23,6 +23,9 @@ public class Options implements Cmd {
                 case "counter":
                     GuiService.openClickCounterGui((Player) sender);
                     return true;
+                case "hint":
+                    GuiService.openHintGui((Player) sender);
+                    return true;
             }
         }
 
@@ -32,6 +35,6 @@ public class Options implements Cmd {
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 ? new ArrayList<>(Arrays.asList("order", "counter")) : new ArrayList<>();
+        return args.length == 2 ? new ArrayList<>(Arrays.asList("counter", "hint", "order")) : new ArrayList<>();
     }
 }

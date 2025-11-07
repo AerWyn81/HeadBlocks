@@ -184,6 +184,14 @@ public class HeadService {
         saveConfig();
     }
 
+    public static void saveAllHeadsInConfig() {
+        for (var headLocation : headLocations) {
+            headLocation.saveInConfig(config);
+        }
+
+        saveConfig();
+    }
+
     public static void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
         if (headLocation != null) {
             StorageService.removeHead(headLocation.getUuid(), withDelete);

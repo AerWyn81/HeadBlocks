@@ -26,22 +26,24 @@ public class HeadLocation {
     private int hitCount;
     private int orderIndex;
     private boolean hintSound;
+    private boolean hintActionBar;
 
     private final ArrayList<Reward> rewards;
 
     public HeadLocation(String name, UUID headUUID, Location location) {
-        this(name, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, false, new ArrayList<>());
+        this(name, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, false, false, new ArrayList<>());
 
         this.location = location;
         this.isCharged = true;
     }
 
-    public HeadLocation(String name, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, boolean hintSound, ArrayList<Reward> rewards) {
+    public HeadLocation(String name, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, boolean hintSound, boolean hintActionBar, ArrayList<Reward> rewards) {
         this.name = name;
         this.headUUID = headUUID;
         this.hitCount = hitCount;
         this.orderIndex = orderIndex;
         this.hintSound = hintSound;
+        this.hintActionBar = hintActionBar;
 
         this.configWorldName = configWorldName;
         this.x = x;
@@ -98,6 +100,14 @@ public class HeadLocation {
 
     public void setHintSound(boolean isHintSound) {
         this.hintSound = isHintSound;
+    }
+
+    public boolean isHintActionBarEnabled() {
+        return hintActionBar;
+    }
+
+    public void setHintActionBar(boolean isHintActionBar) {
+        this.hintActionBar = isHintActionBar;
     }
 
     public String getDisplayedHitCount() {
@@ -181,6 +191,7 @@ public class HeadLocation {
         section.set("locations." + hUUID + ".hitCount", hitCount == -1 ? null : hitCount);
         section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
         section.set("locations." + hUUID + ".hintSound", !hintSound ? null : true);
+        section.set("locations." + hUUID + ".hintActionBar", !hintActionBar ? null : true);
 
         if (!rewards.isEmpty()) {
             var confRewards = new ArrayList<>();
@@ -231,6 +242,11 @@ public class HeadLocation {
             hintSound = section.getBoolean("locations." + hUUID + ".hintSound");
         }
 
+        boolean hintActionBar = false;
+        if (section.contains("locations." + hUUID + ".hintActionBar")) {
+            hintActionBar = section.getBoolean("locations." + hUUID + ".hintActionBar");
+        }
+
         var rewards = new ArrayList<Reward>();
         if (section.contains("locations." + hUUID + ".rewards")) {
             var rewardsSection = section.get("locations." + hUUID + ".rewards");
@@ -248,7 +264,7 @@ public class HeadLocation {
             }
         }
 
-        var headLocation = new HeadLocation(name, headUUID, worldName, x, y, z, hitCount, orderIndex, hintSound, rewards);
+        var headLocation = new HeadLocation(name, headUUID, worldName, x, y, z, hitCount, orderIndex, hintSound, hintActionBar, rewards);
 
         World world = Bukkit.getWorld(worldName);
         if (world != null) {

@@ -2,13 +2,12 @@ package fr.aerwyn81.headblocks.runnables;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.services.ConfigService;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.HologramService;
-import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -70,7 +69,8 @@ public class GlobalTask extends BukkitRunnable {
     }
 
     private void handleHologramAndParticles(HeadLocation headLocation) {
-        int range = ConfigService.getHologramParticlePlayerViewDistance();
+        int rangeParticles = ConfigService.getHologramParticlePlayerViewDistance();
+        int rangeHint = ConfigService.getHintDistanceBlocks();
 
         var location = headLocation.getLocation();
         if (location.getWorld() == null)
@@ -93,14 +93,26 @@ public class GlobalTask extends BukkitRunnable {
             if (chunkDistanceX <= VIEW_RADIUS_CHUNKS && chunkDistanceZ <= VIEW_RADIUS_CHUNKS) {
                 var distance = location.distance(playerLoc);
 
-                if (distance <= range) {
+                if (distance <= rangeParticles || distance <= rangeHint) {
                     try {
-                        if (StorageService.hasHead(player.getUniqueId(), headLocation.getUuid())) {
-                            spawnParticles(location, true, player);
-                            HologramService.showFoundTo(player, location);
-                        } else {
-                            if (headLocation.isHintSoundEnabled()) {
-                                if (random.nextInt(ConfigService.getHintSoundFrequency()) == 0) {
+                        var hasHead = StorageService.hasHead(player.getUniqueId(), headLocation.getUuid());
+
+                        if (distance <= rangeParticles) {
+                            if (hasHead) {
+                                spawnParticles(location, true, player);
+                                HologramService.showFoundTo(player, location);
+                            } else {
+                                spawnParticles(location, false, player);
+                                HologramService.showNotFoundTo(player, location);
+                            }
+                        }
+
+                        if (distance <= rangeHint) {
+                            if (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled()) {
+                                var shouldTriggerHintSound = random.nextInt(ConfigService.getHintFrequency()) == 0;
+                                var shouldTriggerHintActionBar = random.nextInt(ConfigService.getHintFrequency()) == 0;
+
+                                if (headLocation.isHintSoundEnabled() && shouldTriggerHintSound) {
                                     ConfigService.getHintSoundType()
                                             .record()
                                             .withVolume(ConfigService.getHintSoundVolume())
@@ -110,10 +122,17 @@ public class GlobalTask extends BukkitRunnable {
                                             .atLocation(location)
                                             .play();
                                 }
-                            }
 
-                            spawnParticles(location, false, player);
-                            HologramService.showNotFoundTo(player, location);
+                                if (headLocation.isHintActionBarEnabled() && shouldTriggerHintActionBar) {
+                                    var message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHintActionBarMessage());
+                                    message = message
+                                            .replaceAll("%distance%", String.valueOf(distance))
+                                            .replaceAll("%position%", String.valueOf(rangeHint - distance))
+                                            .replaceAll("%arrow%", getHintDirectionArrow(player.getLocation(), location));
+
+                                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+                                }
+                            }
                         }
                     } catch (InternalException ex) {
                         HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to communicate with the storage : " + ex.getMessage()));
@@ -125,5 +144,57 @@ public class GlobalTask extends BukkitRunnable {
 
             HologramService.hideHolograms(headLocation, player);
         }
+    }
+
+    private String getHintDirectionArrow(Location playerLoc, Location targetLoc) {
+        if (playerLoc.distance(targetLoc) < 1.5) {
+            return "●";
+        }
+
+        var playerToHead = targetLoc.clone().subtract(playerLoc.toVector());
+        var playerLooking = playerLoc.getDirection();
+
+        var dy = targetLoc.getY() - playerLoc.getY();
+        var angle = Math.atan2(
+                playerToHead.getX() * playerLooking.getZ() - playerToHead.getZ() * playerLooking.getX(),
+                playerToHead.getX() * playerLooking.getX() + playerToHead.getZ() * playerLooking.getZ()
+        ) * 180 / Math.PI;
+
+        var up = dy > 2;
+        var down = dy < -2;
+
+        if (angle >= -22.5 && angle < 22.5) {
+            if (up)
+                return "⬆";
+            return down ? "⬇" : "⬆";
+        }
+        if (angle >= 22.5 && angle < 67.5) {
+            if (up)
+                return "⬉";
+            return down ? "⬋" : "⬉";
+        }
+        if (angle >= 67.5 && angle < 112.5) {
+            if (up)
+                return "⬉";
+            return down ? "⬋" : "⬅";
+        }
+        if (angle >= 112.5 && angle < 157.5) {
+            return "⬋";
+        }
+        if (angle >= -67.5 && angle < -22.5) {
+            if (up)
+                return "⬈";
+            return down ? "⬊" : "⬈";
+        }
+        if (angle >= -112.5 && angle < -67.5) {
+            if (up)
+                return "⬈";
+            return down ? "⬊" : "➡";
+        }
+        if (angle >= -157.5 && angle < -112.5) {
+            return "⬊";
+        }
+
+        return "⬇";
     }
 }

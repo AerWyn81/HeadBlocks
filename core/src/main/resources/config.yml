@@ -160,11 +160,16 @@ holograms:
 
 # Hint system to help player finding heads
 # Configurable via the command /hb options
+# Distance is calculated in blocks
+# Frequency, less = more frequent
+# Message is displayed in actionbar, support placeholders and extra: %position%, %distance%, %arrow%
 hint:
+  distance: 16
+  frequency: 20
   sound:
-    frequency: 5 # Less = more frequent
     volume: 1
     sound: BLOCK_AMETHYST_BLOCK_CHIME
+  actionBar: "%prefix% &aPssst, a mystery block is near! &7(%arrow%)"
 
 # Internal settings for internal tasks
 # Increase delay or reduce view distance can improve performance but decreases the quality

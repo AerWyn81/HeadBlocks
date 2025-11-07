@@ -455,10 +455,12 @@ If `linked` mode is disabled, heads will rotate with a delay (five ticks between
 
 ```
 hint:
+  distance: 16
+  frequency: 20
   sound:
-    frequency: 5
     volume: 1
     sound: BLOCK_AMETHYST_BLOCK_CHIME
+  actionBar: "%prefix% &aPssst, a head is near &7(%arrow%) !"
 ```
 
 Option to set a sound when a head is not found to give the player a hint.  
