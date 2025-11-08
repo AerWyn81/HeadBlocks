@@ -4,10 +4,7 @@ import java.util.Arrays;
 
 public enum EnumTypeHologram {
     DEFAULT("DEFAULT"),
-    DECENT("DecentHolograms"),
-    HD("HD"),
-    CMI("CMI"),
-    FH("FancyHolograms");
+    ADVANCED("DEFAULT_ADVANCED");
 
     private final String value;
 

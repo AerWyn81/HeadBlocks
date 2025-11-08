@@ -141,11 +141,8 @@ headClick:
 
 # Holograms displayed above heads
 # Placeholders are not supported
-# Plugins supported:
-# DECENT: DecentHolograms
-# CMI: CMI
-# FH: FancyHolograms
-# DEFAULT: use TextDisplay
+# DEFAULT: use Minecraft TextDisplay (simple text)
+# ADVANCED: use for placeholders (require PacketEvents)
 holograms:
   plugin: DEFAULT
   heightAboveHead: 0.4
@@ -157,6 +154,11 @@ holograms:
     enabled: true
     lines:
       - "&c&lNot found"
+  advanced:
+    foundPlaceholder: "&a&lFound"
+    notFoundPlaceholder: "&c&lNot found"
+    lines:
+      - "%state% &7(%current%/%max%)"
 
 # Hint system to help player finding heads
 # Configurable via the command /hb options

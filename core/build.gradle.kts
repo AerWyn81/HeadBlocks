@@ -13,17 +13,12 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
-    compileOnly("com.github.decentsoftware-eu:decentholograms:2.8.8")
-    compileOnly("de.oliver:FancyHolograms:2.8.0")
-    compileOnly(files("../libs/CMILib1.5.7.1.jar"))
-    compileOnly(files("../libs/CMI-9.8.2.2.jar"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.21")
+    compileOnly("com.github.retrooper:packetevents-spigot:2.10.1")
     implementation("redis.clients:jedis:5.1.3")
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("de.tr7zw:item-nbt-api:2.15.3")
-    implementation("net.kyori:adventure-api:4.25.0")
-    implementation("net.kyori:adventure-platform-bukkit:4.4.1")
+    implementation("com.github.AerWyn81.holoeasy:holoeasy-core:master-SNAPSHOT")
 }
 
 tasks {
@@ -42,7 +37,6 @@ tasks {
     }
 
     shadowJar {
-        relocate("kotlin", "fr.aerwyn81.libs.kotlin")
         relocate("com.google.gson", "fr.aerwyn81.libs.gson")
         relocate("com.jetbrains.annotations", "fr.headblocks.libs.gson")
         relocate("redis.clients.jedis", "fr.aerwyn81.libs.jedis")
@@ -54,7 +48,6 @@ tasks {
         relocate("org.jetbrains.annotations", "fr.aerwyn81.libs.jetbrains-annotations")
         relocate("org.json", "fr.aerwyn81.libs.json")
         relocate("org.slf4j", "fr.aerwyn81.libs.slf4j")
-        relocate("net.kyori", "fr.aerwyn81.libs.adventure-api")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")
@@ -73,7 +66,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "DecentHolograms", "CMI", "FancyHolograms")
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "packetevents")
     version = rootProject.version.toString()
     website = "https://just2craft.fr"
 

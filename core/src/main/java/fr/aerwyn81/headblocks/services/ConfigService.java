@@ -380,6 +380,18 @@ public class ConfigService {
         return new ArrayList<>(config.getStringList("holograms.notFound.lines"));
     }
 
+    public static String getHologramAdvancedFoundPlaceholder() {
+        return config.getString("holograms.advanced.foundPlaceholder", "&a&lFound");
+    }
+
+    public static String getHologramAdvancedNotFoundPlaceholder() {
+        return config.getString("holograms.advanced.notFoundPlaceholder", "&c&lNot found");
+    }
+
+    public static ArrayList<String> getHologramsAdvancedLines() {
+        return new ArrayList<>(config.getStringList("holograms.advanced.lines"));
+    }
+
     public static ItemBuilder getGuiBackIcon() {
         return new ItemBuilder(Material.valueOf(config.getString("gui.backIcon.type", Material.SPRUCE_DOOR.name())));
     }

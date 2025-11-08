@@ -13,9 +13,9 @@ public interface IHologram {
 
     void delete();
 
-    IHologram create(String name, Location location, List<String> lines, int displayRange);
-
-    EnumTypeHologram getTypeHologram();
+    IHologram create(String name, Location location, List<String> lines);
 
     boolean isVisible(Player player);
+
+    void refresh(Player player);
 }

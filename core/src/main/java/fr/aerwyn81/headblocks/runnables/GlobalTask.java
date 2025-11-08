@@ -105,6 +105,8 @@ public class GlobalTask extends BukkitRunnable {
                                 spawnParticles(location, false, player);
                                 HologramService.showNotFoundTo(player, location);
                             }
+
+                            HologramService.refresh(player, location);
                         }
 
                         if (distance <= rangeHint) {

@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.holograms.types;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.holograms.IHologram;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
@@ -11,7 +10,7 @@ import org.bukkit.entity.TextDisplay;
 
 import java.util.List;
 
-public class DefaultHologram implements IHologram {
+public class BasicHologram implements IHologram {
     TextDisplay hologram;
 
     private final HeadBlocks plugin = HeadBlocks.getInstance();
@@ -32,7 +31,7 @@ public class DefaultHologram implements IHologram {
     }
 
     @Override
-    public IHologram create(String name, Location location, List<String> lines, int displayRange) {
+    public IHologram create(String name, Location location, List<String> lines) {
         var world = location.getWorld();
         if (world == null) {
             HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError creating internal hologram, world is null!"));
@@ -50,12 +49,11 @@ public class DefaultHologram implements IHologram {
     }
 
     @Override
-    public EnumTypeHologram getTypeHologram() {
-        return EnumTypeHologram.DEFAULT;
+    public boolean isVisible(Player player) {
+        return player.canSee(hologram);
     }
 
     @Override
-    public boolean isVisible(Player player) {
-        return player.canSee(hologram);
+    public void refresh(Player player) {
     }
 }

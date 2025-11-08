@@ -5,7 +5,9 @@ import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.events.*;
+import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
+import fr.aerwyn81.headblocks.hooks.PacketEventsHook;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.services.*;
@@ -16,6 +18,9 @@ import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.holoeasy.HoloEasy;
+import org.holoeasy.hologram.Hologram;
+import org.holoeasy.pool.IHologramPool;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,26 +35,24 @@ public final class HeadBlocks extends JavaPlugin {
     private static HeadBlocks instance;
     public static boolean isPlaceholderApiActive;
     public static boolean isReloadInProgress;
-    public static boolean isDecentHologramsActive;
-    public static boolean isFancyHologramsActive;
-    public static boolean isCMIActive;
     public static boolean isHeadDatabaseActive;
+    public static boolean isPacketEventsActive;
 
     private GlobalTask globalTask;
     private HeadDatabaseHook headDatabaseHook;
+    private PacketEventsHook packetEventsHook;
+
+    private HoloEasy holoEasyLib;
+    private IHologramPool<Hologram> holoEasyHologramPool;
 
     @Override
-    public void onEnable() {
-        instance = this;
+    public void onLoad() {
         log = Bukkit.getConsoleSender();
 
-        initializeExternals();
-
-        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
+        packetEventsHook = new PacketEventsHook();
+        var isPacketEventsLoaded = packetEventsHook.load(this);
 
         File configFile = new File(getDataFolder(), "config.yml");
-        File locationFile = new File(getDataFolder(), "locations.yml");
-
         saveDefaultConfig();
         try {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads", "headsTheme"));
@@ -59,6 +62,28 @@ public final class HeadBlocks extends JavaPlugin {
             return;
         }
         reloadConfig();
+
+        ConfigService.initialize(configFile);
+
+        if (ConfigService.isHologramsEnabled()
+                && HologramService.getHologramTypeFromConfig() != EnumTypeHologram.DEFAULT) {
+            if (isPacketEventsLoaded) {
+                holoEasyLib = new HoloEasy(this);
+            } else {
+                Bukkit.getConsoleSender().sendMessage(MessageUtils.colorize("&cError while loading Holograms: PacketEvents is not loaded."));
+            }
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        instance = this;
+
+        initializeExternals();
+
+        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
+
+        File locationFile = new File(getDataFolder(), "locations.yml");
 
         if (!VersionUtils.isAtLeastVersion(VersionUtils.v1_20_R1)) {
             log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
@@ -75,11 +100,7 @@ public final class HeadBlocks extends JavaPlugin {
             new PlaceholderHook().register();
         }
 
-        isDecentHologramsActive = Bukkit.getPluginManager().isPluginEnabled("DecentHolograms");
-        isCMIActive = Bukkit.getPluginManager().isPluginEnabled("CMI");
-        isFancyHologramsActive = Bukkit.getPluginManager().isPluginEnabled("FancyHolograms");
-
-        ConfigService.initialize(configFile);
+        isPacketEventsActive = Bukkit.getPluginManager().isPluginEnabled("packetevents");
 
         LanguageService.initialize(ConfigService.getLanguage());
         LanguageService.pushMessages();
@@ -135,13 +156,16 @@ public final class HeadBlocks extends JavaPlugin {
     }
 
     private void initializeExternals() {
+        packetEventsHook.init();
+
         NBT.preloadApi();
 
         MinecraftVersion.disableBStats();
 
         try {
             Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
-        } catch (Exception ignored) { }
+        } catch (Exception | NoClassDefFoundError ignored) {
+        }
     }
 
     @Override
@@ -151,6 +175,12 @@ public final class HeadBlocks extends JavaPlugin {
         GuiService.clearCache();
 
         Bukkit.getScheduler().cancelTasks(this);
+
+        packetEventsHook.unload();
+
+        if (holoEasyLib != null) {
+            holoEasyLib.destroyPools();
+        }
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &cdisabled!"));
     }
@@ -179,19 +209,15 @@ public final class HeadBlocks extends JavaPlugin {
         return instance;
     }
 
-    public void setParticlesTask(GlobalTask globalTask) {
-        this.globalTask = globalTask;
-    }
-
-    public GlobalTask getParticlesTask() {
-        return globalTask;
-    }
-
     public HeadDatabaseHook getHeadDatabaseHook() {
         return headDatabaseHook;
     }
 
     public void setHeadDatabaseHook(HeadDatabaseHook headDatabaseHook) {
         this.headDatabaseHook = headDatabaseHook;
+    }
+
+    public HoloEasy getHoloEasyLib() {
+        return holoEasyLib;
     }
 }

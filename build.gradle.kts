@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-version = "2.7.4"
+version = "2.8.0"
 
 allprojects {
     repositories {
@@ -12,7 +12,6 @@ allprojects {
         maven("https://oss.sonatype.org/content/repositories/snapshots/")
         maven("https://repo.codemc.org/repository/maven-public")
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
-        maven("https://repo.fancyplugins.de/releases")
         maven("https://jitpack.io")
     }
 }

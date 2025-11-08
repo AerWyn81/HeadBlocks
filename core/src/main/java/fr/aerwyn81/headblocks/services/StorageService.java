@@ -33,14 +33,14 @@ public class StorageService {
 
     private static ConcurrentHashMap<UUID, Set<UUID>> _cachePlayerHeads;
     private static LinkedHashMap<PlayerProfileLight, Integer> _cacheTop;
-    private static ArrayList<UUID> _cacheHeads;
+    private static Set<UUID> _cacheHeads;
 
     private static String serverIdentifier = "";
 
     public static void initialize() {
         _cachePlayerHeads = new ConcurrentHashMap<>();
         _cacheTop = new LinkedHashMap<>();
-        _cacheHeads = new ArrayList<>();
+        _cacheHeads = ConcurrentHashMap.newKeySet();
 
         storageError = false;
 
@@ -380,7 +380,7 @@ public class StorageService {
 
         storage.removeHead(headUuid);
         database.removeHead(headUuid, withDelete);
-        _cacheHeads.clear();
+        _cacheHeads.remove(headUuid);
     }
 
     public static List<UUID> getAllPlayers() throws InternalException {
@@ -410,9 +410,7 @@ public class StorageService {
     public static void createOrUpdateHead(UUID headUuid, String texture) throws InternalException {
         database.createNewHead(headUuid, texture, serverIdentifier);
 
-        if (!_cacheHeads.isEmpty()) {
-            _cacheHeads.clear();
-        }
+        _cacheHeads.add(headUuid);
     }
 
     public static boolean isHeadExist(UUID headUuid) throws InternalException {
@@ -503,10 +501,11 @@ public class StorageService {
 
     public static ArrayList<UUID> getHeads() throws InternalException {
         if (!_cacheHeads.isEmpty())
-            return _cacheHeads;
+            return new ArrayList<>(_cacheHeads);
 
-        _cacheHeads.addAll(database.getHeads());
-        return _cacheHeads;
+        var heads = database.getHeads();
+        _cacheHeads.addAll(heads);
+        return new ArrayList<>(_cacheHeads);
     }
 
     public static ArrayList<UUID> getHeadsByServerId() throws InternalException {

@@ -423,21 +423,29 @@ holograms:
     enabled: true
     lines:
       - "&c&lNot found"
+  advanced:
+    foundPlaceholder: "&a&lFound"
+    notFoundPlaceholder: "&c&lNot found"
+    lines:
+      - "%state% &7(%current%/%max%)"
 ```
 
 It is possible to add holograms over the head and show it if the player has found the head or not. Can be configurable by:
 - plugin: 
-  - DEFAULT - use TextDisplay
-  - DECENT - DecentHolograms
-  - CMI - CMI
-  - FH - FancyHolograms
+  - **DEFAULT** : use Minecraft TextDisplay (simple text)
+  - **ADVANCED** : use for placeholders (require PacketEvents)
 - heightAboveHead: height from the top of head and bottom of the last line of the hologram (support decimals)
 - enabled: set enabled or disabled found or noFound hologram
 - lines: lines displayed in the hologram
+- advanced :
+  - You can define an internal placeholder for lines `%state%` that will
+    be converted automatically by the plugin to the value `foundPlaceholder` if the
+    head is found by the player, or to the value `notFoundPlaceholder` if player doesn't have found the head.
+  - Advanced mode natively allows the hologram to be hidden if it is not in the player's field of vision.
 
 ?> Hex colors (format: {#ffffff}) supported
 
-!> Placeholders aren't supported
+?> Placeholders are supported
 
 #### Spin mode
 ```

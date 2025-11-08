@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.holograms;
 
-import fr.aerwyn81.headblocks.holograms.types.*;
+import fr.aerwyn81.headblocks.holograms.types.AdvancedHologram;
+import fr.aerwyn81.headblocks.holograms.types.BasicHologram;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -13,20 +14,12 @@ public class InternalHologram {
     private IHologram hologram;
 
     public InternalHologram(EnumTypeHologram enumTypeHologram) {
-        switch (enumTypeHologram) {
-            case DECENT:
-                hologram = new DecentHologram();
-                break;
-            case CMI:
-                hologram = new CMIHologram();
-                break;
-            case FH:
-                hologram = new FHHologram();
-                break;
-            default:
-                hologram = new DefaultHologram();
-                break;
+        if (enumTypeHologram == EnumTypeHologram.ADVANCED) {
+            hologram = new AdvancedHologram();
+            return;
         }
+
+        hologram = new BasicHologram();
     }
 
     public void show(Player player) {
@@ -37,14 +30,14 @@ public class InternalHologram {
         hologram.hide(player);
     }
 
-    public void createHologram(UUID uuid, Location loc, List<String> lines, double configHeightAbove, int displayRange) {
+    public void createHologram(UUID uuid, Location loc, List<String> lines, double configHeightAbove) {
         this.uuid = uuid;
         location = loc;
 
         var headLocation = loc.clone();
         headLocation.add(0.5, 0.5 + configHeightAbove, 0.5);
 
-        hologram = hologram.create(uuid.toString(), headLocation, lines, displayRange);
+        hologram = hologram.create(uuid.toString(), headLocation, lines);
     }
 
     public void deleteHologram() {
@@ -55,14 +48,6 @@ public class InternalHologram {
         return location;
     }
 
-    public IHologram getHologram() {
-        return hologram;
-    }
-
-    public EnumTypeHologram getTypeHologram() {
-        return hologram.getTypeHologram();
-    }
-
     public UUID getUuid() {
         return uuid;
     }
@@ -71,7 +56,7 @@ public class InternalHologram {
         return hologram.isVisible(player);
     }
 
-    public boolean isSupportedPerPlayerView() {
-        return hologram.getTypeHologram() != EnumTypeHologram.CMI;
+    public void refresh(Player player) {
+        hologram.refresh(player);
     }
 }

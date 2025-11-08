@@ -214,9 +214,6 @@ public class OnPlayerInteractEvent implements Listener {
                         colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
             }
 
-            // Show hologram
-            HologramService.showFoundTo(player, clickedLocation);
-
             // Trigger the event HeadClick with success
             Bukkit.getPluginManager().callEvent(new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true));
         });
