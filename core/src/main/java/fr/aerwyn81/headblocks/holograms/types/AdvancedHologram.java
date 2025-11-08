@@ -36,7 +36,11 @@ public class AdvancedHologram implements IHologram {
     @Override
     public void delete() {
         Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
-            hologram.hide(getPool());
+            var pool = getPool();
+            if (pool != null) {
+                hologram.hide(getPool());
+            }
+
             playerContentHash.clear();
         });
     }
