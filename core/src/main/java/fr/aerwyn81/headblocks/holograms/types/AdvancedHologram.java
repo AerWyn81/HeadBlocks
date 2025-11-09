@@ -25,7 +25,7 @@ public class AdvancedHologram implements IHologram {
 
     @Override
     public void hide(Player player) {
-        hologram.hide(player);
+        // Used only by Default hologram.
     }
 
     @Override
@@ -76,7 +76,8 @@ public class AdvancedHologram implements IHologram {
 
     @Override
     public boolean isVisible(Player player) {
-        return hologram.isShownFor(player);
+        // Used only by Default hologram.
+        return false;
     }
 
     public void refresh(Player player) {
