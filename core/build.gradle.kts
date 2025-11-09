@@ -16,6 +16,7 @@ dependencies {
     compileOnly("com.github.retrooper:packetevents-spigot:2.10.1")
     implementation("redis.clients:jedis:5.1.3")
     implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("com.google.code.gson:gson:2.11.0")
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("de.tr7zw:item-nbt-api:2.15.3")
     implementation("com.github.AerWyn81.holoeasy:holoeasy-core:master-SNAPSHOT")

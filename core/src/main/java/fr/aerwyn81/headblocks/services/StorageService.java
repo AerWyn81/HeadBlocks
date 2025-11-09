@@ -22,7 +22,6 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class StorageService {
@@ -31,17 +30,9 @@ public class StorageService {
 
     private static boolean storageError;
 
-    private static ConcurrentHashMap<UUID, Set<UUID>> _cachePlayerHeads;
-    private static LinkedHashMap<PlayerProfileLight, Integer> _cacheTop;
-    private static Set<UUID> _cacheHeads;
-
     private static String serverIdentifier = "";
 
     public static void initialize() {
-        _cachePlayerHeads = new ConcurrentHashMap<>();
-        _cacheTop = new LinkedHashMap<>();
-        _cacheHeads = ConcurrentHashMap.newKeySet();
-
         storageError = false;
 
         if (ConfigService.isRedisEnabled() && !ConfigService.isDatabaseEnabled()) {
@@ -250,7 +241,7 @@ public class StorageService {
                         updatePlayerName(playerProfile);
                     }
 
-                    _cachePlayerHeads.put(pUuid, playerHeads);
+                    storage.setCachedPlayerHeads(pUuid, playerHeads);
                 } catch (InternalException ex) {
                     storageError = true;
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to load player " + playerName + " from SQL database: " + ex.getMessage()));
@@ -283,7 +274,12 @@ public class StorageService {
         UUID uuid = player.getUniqueId();
         String playerName = player.getName();
 
-        _cachePlayerHeads.remove(uuid);
+        try {
+            storage.removeCachedPlayerHeads(uuid);
+        } catch (InternalException ex) {
+            storageError = true;
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to clear player cache: " + ex.getMessage()));
+        }
 
         try {
             boolean isExist = containsPlayer(uuid);
@@ -298,10 +294,6 @@ public class StorageService {
     }
 
     public static void close() {
-        if (_cachePlayerHeads != null) {
-            _cachePlayerHeads.clear();
-        }
-
         try {
             if (storage != null) {
                 storage.close();
@@ -322,8 +314,9 @@ public class StorageService {
     }
 
     public static boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
-        if (_cachePlayerHeads.containsKey(playerUuid))
-            return _cachePlayerHeads.get(playerUuid).contains(headUuid);
+        Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
+        if (cachedHeads != null)
+            return cachedHeads.contains(headUuid);
 
         return storage.hasHead(playerUuid, headUuid);
     }
@@ -332,11 +325,9 @@ public class StorageService {
         storage.addHead(playerUuid, headUuid);
         database.addHead(playerUuid, headUuid);
 
-        _cachePlayerHeads.get(playerUuid).add(headUuid);
+        storage.addCachedPlayerHead(playerUuid, headUuid);
 
-        if (!_cacheTop.isEmpty()) {
-            _cacheTop.clear();
-        }
+        storage.clearCachedTopPlayers();
     }
 
     public static Boolean containsPlayer(UUID playerUuid) throws InternalException {
@@ -344,19 +335,24 @@ public class StorageService {
     }
 
     public static BukkitFutureResult<Set<UUID>> getHeadsPlayer(UUID playerUuid) {
-        if (_cachePlayerHeads.containsKey(playerUuid))
-            return BukkitFutureResult.of(HeadBlocks.getInstance(), CompletableFuture.completedFuture(_cachePlayerHeads.get(playerUuid)));
+        try {
+            Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
+            if (cachedHeads != null)
+                return BukkitFutureResult.of(HeadBlocks.getInstance(), CompletableFuture.completedFuture(cachedHeads));
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to get cached heads for " + playerUuid + ": " + ex.getMessage()));
+        }
 
         return CompletableBukkitFuture.supplyAsync(HeadBlocks.getInstance(), () -> {
             try {
                 var headsUuid = database.getHeadsPlayer(playerUuid);
 
-                if (!_cachePlayerHeads.containsKey(playerUuid)) {
-                    _cachePlayerHeads.put(playerUuid, new HashSet<>());
+                Set<UUID> playerHeads = storage.getCachedPlayerHeads(playerUuid);
+                if (playerHeads == null) {
+                    playerHeads = new HashSet<>();
                 }
-
-                var playerHeads = _cachePlayerHeads.get(playerUuid);
                 playerHeads.addAll(headsUuid);
+                storage.setCachedPlayerHeads(playerUuid, playerHeads);
 
                 return playerHeads;
             } catch (Exception ex) {
@@ -374,13 +370,9 @@ public class StorageService {
     }
 
     public static void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
-        for (var head : _cachePlayerHeads.entrySet()) {
-            head.getValue().remove(headUuid);
-        }
-
         storage.removeHead(headUuid);
         database.removeHead(headUuid, withDelete);
-        _cacheHeads.remove(headUuid);
+        storage.removeCachedHead(headUuid);
     }
 
     public static List<UUID> getAllPlayers() throws InternalException {
@@ -388,15 +380,17 @@ public class StorageService {
     }
 
     public static LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
-        var copy = _cacheTop.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+        LinkedHashMap<PlayerProfileLight, Integer> cached = storage.getCachedTopPlayers();
 
-        if (!copy.isEmpty())
-            return copy;
+        if (!cached.isEmpty()) {
+            return cached.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+        }
 
-        _cacheTop.putAll(database.getTopPlayers());
+        LinkedHashMap<PlayerProfileLight, Integer> topPlayers = database.getTopPlayers();
+        storage.setCachedTopPlayers(topPlayers);
 
-        return _cacheTop;
+        return topPlayers;
     }
 
     public static void updatePlayerName(PlayerProfileLight profile) throws InternalException {
@@ -410,7 +404,7 @@ public class StorageService {
     public static void createOrUpdateHead(UUID headUuid, String texture) throws InternalException {
         database.createNewHead(headUuid, texture, serverIdentifier);
 
-        _cacheHeads.add(headUuid);
+        storage.addCachedHead(headUuid);
     }
 
     public static boolean isHeadExist(UUID headUuid) throws InternalException {
@@ -491,21 +485,29 @@ public class StorageService {
     }
 
     public static void invalidateCachePlayer(UUID playerUuid) {
-        _cacheTop.clear();
+        try {
+            storage.clearCachedTopPlayers();
 
-        if (!_cachePlayerHeads.containsKey(playerUuid))
-            return;
-
-        _cachePlayerHeads.get(playerUuid).clear();
+            Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
+            if (cachedHeads != null) {
+                cachedHeads.clear();
+                storage.setCachedPlayerHeads(playerUuid, cachedHeads);
+            }
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while invalidating cache for player " + playerUuid + ": " + ex.getMessage()));
+        }
     }
 
     public static ArrayList<UUID> getHeads() throws InternalException {
-        if (!_cacheHeads.isEmpty())
-            return new ArrayList<>(_cacheHeads);
+        Set<UUID> cachedHeads = storage.getCachedHeads();
+        if (!cachedHeads.isEmpty())
+            return new ArrayList<>(cachedHeads);
 
         var heads = database.getHeads();
-        _cacheHeads.addAll(heads);
-        return new ArrayList<>(_cacheHeads);
+        for (UUID head : heads) {
+            storage.addCachedHead(head);
+        }
+        return heads;
     }
 
     public static ArrayList<UUID> getHeadsByServerId() throws InternalException {

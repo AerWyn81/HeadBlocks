@@ -74,8 +74,7 @@ public class AdvancedHologram implements IHologram {
                         } catch (InternalException e) {
                             throw new RuntimeException(e);
                         }
-                    })
-                            .backgroundColor(0).billboard((byte) 3)));
+                    }).backgroundColor(0).billboard((byte) 3)));
             hologram.show(getPool());
         });
 
