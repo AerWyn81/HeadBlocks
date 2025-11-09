@@ -89,6 +89,11 @@ public class HeadService {
             return;
         }
 
+        if (StorageService.hasStorageError()) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot load locations from storage, theres an issue with the database."));
+            return;
+        }
+
         var i = 0;
         for (String uuid : locations.getKeys(false)) {
             i++;

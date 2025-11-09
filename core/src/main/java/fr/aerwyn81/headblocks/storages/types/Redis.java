@@ -27,8 +27,7 @@ public class Redis implements Storage {
     private JedisPool pool;
     private final Gson gson = new Gson();
 
-    private static final String KEY_PLAYER_HEADS = "headblocks:";
-    private static final String KEY_CACHE_PLAYER_HEADS = "headblocks:cache:playerheads:";
+    private static final String KEY_PLAYER_HEADS = "headblocks:playerheads:";
     private static final String KEY_CACHE_TOP_PLAYERS = "headblocks:cache:topplayers";
     private static final String KEY_CACHE_HEADS = "headblocks:cache:heads";
 
@@ -60,7 +59,7 @@ public class Redis implements Storage {
     @Override
     public boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
-            return redis.lrange(KEY_PLAYER_HEADS + playerUuid.toString(), 0, -1).stream().anyMatch(e -> e.equals(headUuid.toString()));
+            return redis.sismember(KEY_PLAYER_HEADS + playerUuid.toString(), headUuid.toString());
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -78,7 +77,7 @@ public class Redis implements Storage {
     @Override
     public void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
-            redis.rpush(KEY_PLAYER_HEADS + playerUuid.toString(), headUuid.toString());
+            redis.sadd(KEY_PLAYER_HEADS + playerUuid.toString(), headUuid.toString());
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -97,7 +96,7 @@ public class Redis implements Storage {
     public void removeHead(UUID headUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
             Set<String> keys = redis.keys(KEY_PLAYER_HEADS + "*");
-            keys.forEach(key -> redis.lrem(key, -1, headUuid.toString()));
+            keys.forEach(key -> redis.srem(key, headUuid.toString()));
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -106,7 +105,8 @@ public class Redis implements Storage {
     @Override
     public ArrayList<UUID> getHeadsPlayer(UUID pUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
-            return redis.lrange(KEY_PLAYER_HEADS + pUuid.toString(), 0, -1).stream().map(UUID::fromString).collect(Collectors.toCollection(ArrayList::new));
+            Set<String> members = redis.smembers(KEY_PLAYER_HEADS + pUuid.toString());
+            return members.stream().map(UUID::fromString).collect(Collectors.toCollection(ArrayList::new));
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -115,7 +115,7 @@ public class Redis implements Storage {
     @Override
     public Set<UUID> getCachedPlayerHeads(UUID playerUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
-            Set<String> members = redis.smembers(KEY_CACHE_PLAYER_HEADS + playerUuid.toString());
+            Set<String> members = redis.smembers(KEY_PLAYER_HEADS + playerUuid.toString());
             if (members == null || members.isEmpty()) {
                 return null;
             }
@@ -128,7 +128,7 @@ public class Redis implements Storage {
     @Override
     public void setCachedPlayerHeads(UUID playerUuid, Set<UUID> heads) throws InternalException {
         try (Jedis redis = pool.getResource()) {
-            String key = KEY_CACHE_PLAYER_HEADS + playerUuid.toString();
+            String key = KEY_PLAYER_HEADS + playerUuid.toString();
             redis.del(key);
             if (heads != null && !heads.isEmpty()) {
                 String[] headArray = heads.stream().map(UUID::toString).toArray(String[]::new);
@@ -142,7 +142,7 @@ public class Redis implements Storage {
     @Override
     public void addCachedPlayerHead(UUID playerUuid, UUID headUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
-            redis.sadd(KEY_CACHE_PLAYER_HEADS + playerUuid.toString(), headUuid.toString());
+            redis.sadd(KEY_PLAYER_HEADS + playerUuid.toString(), headUuid.toString());
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -151,7 +151,7 @@ public class Redis implements Storage {
     @Override
     public void removeCachedPlayerHeads(UUID playerUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
-            redis.del(KEY_CACHE_PLAYER_HEADS + playerUuid.toString());
+            redis.del(KEY_PLAYER_HEADS + playerUuid.toString());
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
