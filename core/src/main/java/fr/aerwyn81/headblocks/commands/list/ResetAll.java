@@ -71,7 +71,6 @@ public class ResetAll extends ResetBase {
                 try {
                     StorageService.resetPlayerHead(playerUuid, headUuid);
 
-                    // Show the head for online players
                     Player onlinePlayer = Bukkit.getPlayer(playerUuid);
                     if (onlinePlayer != null) {
                         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
@@ -118,7 +117,6 @@ public class ResetAll extends ResetBase {
                 try {
                     StorageService.resetPlayer(uuid);
 
-                    // Invalidate cache for online players
                     Player onlinePlayer = Bukkit.getPlayer(uuid);
                     if (onlinePlayer != null) {
                         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
