@@ -59,6 +59,9 @@ Messages:
   InventoryFullReward: "%prefix% &cVous n'avez pas l'espace disponible dans votre inventaire pour recevoir la récompense."
   NameCannotBeEmpty: "%prefix% &cle nom de la tête ne peut pas être vide."
   HeadRenamed: "%prefix% &aLa tête a été renommé avec succès en &e%name%&a."
+  EnterRewardCommand: "%prefix% &aVeuillez entrer la commande de récompense dans le chat &7(sans /, écrivez 'cancel' pour annuler)&a :"
+  RewardAdded: "%prefix% &aRécompense ajoutée avec succès !"
+  RewardUpdated: "%prefix% &aRécompense mise à jour avec succès !"
   ProgressCommand:
     - ""
     - "&aJoueur : &e&l%player%"
@@ -164,6 +167,31 @@ Gui:
     - "&a&lCLIC DROIT &8: &7Augmente la position"
     - ""
     - "&7Compteur: &e%count%"
+  RewardsName: "&7Configurer &8- &b&lRécompenses"
+  RewardsLore:
+    - ""
+    - "&e&lINFO:"
+    - "&7 Cette interface permet de configurer"
+    - "&7 les récompenses pour chaque tête"
+  TitleRewardsSelection: "&8HeadBlocks &7- &b&lSélection de récompenses"
+  RewardsSelectionItemName: "&6%headName% &7(%world%, %x%, %y%, %z%)"
+  RewardsSelectionItemLore:
+    - ""
+    - "&7Récompenses configurées : &e%count%"
+    - ""
+    - "&a&lCLIC&8: &7Gérer les récompenses"
+  TitleRewards: "&8Récompenses &7- &6%headName%"
+  RewardItemName: "&bRécompense #%index%"
+  RewardType: "&7Type : &e%type%"
+  RewardCommand: "&7Commande : &e%command%"
+  RewardItemLore:
+    - ""
+    - "&c&lCLIC GAUCHE&8: &7Modifier la récompense"
+    - "&4&lSHIFT+CLIC GAUCHE&8: &7Supprimer la récompense"
+  AddRewardName: "&a&lAjouter une récompense"
+  AddRewardLore:
+    - ""
+    - "&a&lCLIC&8: &7Ajouter une nouvelle récompense"
   HintName: "&7Configurer &8- &b&lIndice"
   HintLore:
     - ""

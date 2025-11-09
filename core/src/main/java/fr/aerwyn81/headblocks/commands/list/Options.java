@@ -18,13 +18,16 @@ public class Options implements Cmd {
             switch (args[1])
             {
                 case "order":
-                    GuiService.openOrderGui((Player) sender);
+                    GuiService.getOrderManager().openOrderGui((Player) sender);
                     return true;
                 case "counter":
-                    GuiService.openClickCounterGui((Player) sender);
+                    GuiService.getClickCounterManager().openClickCounterGui((Player) sender);
                     return true;
                 case "hint":
-                    GuiService.openHintGui((Player) sender);
+                    GuiService.getHintManager().openHintGui((Player) sender);
+                    return true;
+                case "rewards":
+                    GuiService.getRewardsManager().openRewardsSelectionGui((Player) sender);
                     return true;
             }
         }
@@ -35,6 +38,6 @@ public class Options implements Cmd {
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 ? new ArrayList<>(Arrays.asList("counter", "hint", "order")) : new ArrayList<>();
+        return args.length == 2 ? new ArrayList<>(Arrays.asList("counter", "hint", "order", "rewards")) : new ArrayList<>();
     }
 }

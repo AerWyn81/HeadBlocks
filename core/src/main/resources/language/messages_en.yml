@@ -59,6 +59,9 @@ Messages:
   InventoryFullReward: "%prefix% &cYou do not have the available space in your inventory to receive the reward."
   NameCannotBeEmpty: "%prefix% &cHead name cannot be empty."
   HeadRenamed: "%prefix% &aSuccessfully renamed head to &e%name%&a."
+  EnterRewardCommand: "%prefix% &aPlease enter the reward command in chat &7(without /, type 'cancel' to abort)&a:"
+  RewardAdded: "%prefix% &aReward successfully added!"
+  RewardUpdated: "%prefix% &aReward successfully updated!"
   ProgressCommand:
     - ""
     - "&aPlayer: &e&l%player%"
@@ -164,6 +167,31 @@ Gui:
     - "&a&lRIGHT CLICK&8: &7Increase count"
     - ""
     - "&7Count: &e%count%"
+  RewardsName: "&7Set up &8- &b&lRewards"
+  RewardsLore:
+    - ""
+    - "&e&lINFO:"
+    - "&7 This interface allows you to configure"
+    - "&7 the rewards for each head"
+  TitleRewardsSelection: "&8HeadBlocks &7- &b&lRewards Selection"
+  RewardsSelectionItemName: "&6%headName% &7(%world%, %x%, %y%, %z%)"
+  RewardsSelectionItemLore:
+    - ""
+    - "&7Rewards configured: &e%count%"
+    - ""
+    - "&a&lCLICK&8: &7Manage rewards"
+  TitleRewards: "&8Rewards &7- &6%headName%"
+  RewardItemName: "&bReward #%index%"
+  RewardType: "&7Type: &e%type%"
+  RewardCommand: "&7Command: &e%command%"
+  RewardItemLore:
+    - ""
+    - "&c&lLEFT CLICK&8: &7Edit reward"
+    - "&4&lSHIFT+LEFT CLICK&8: &7Delete reward"
+  AddRewardName: "&a&lAdd new reward"
+  AddRewardLore:
+    - ""
+    - "&a&lCLICK&8: &7Add a new reward"
   HintName: "&7Set up &8- &b&lHint"
   HintLore:
     - ""

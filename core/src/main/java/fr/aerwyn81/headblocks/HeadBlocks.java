@@ -108,7 +108,6 @@ public final class HeadBlocks extends JavaPlugin {
         StorageService.initialize();
         HeadService.initialize(locationFile);
         HologramService.load();
-        GuiService.initialize();
 
         startInternalTaskTimer();
 
@@ -126,6 +125,7 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OthersEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(), this);
 
         if (ConfigService.isMetricsEnabled()) {
             var m = new Metrics(this, 15495);
