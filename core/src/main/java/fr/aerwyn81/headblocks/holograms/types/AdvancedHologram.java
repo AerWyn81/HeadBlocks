@@ -69,7 +69,7 @@ public class AdvancedHologram implements IHologram {
                                 hasHeadFormatted = ConfigService.getHologramAdvancedFoundPlaceholder();
                             }
 
-                            return PlaceholdersService.parse(player.getName(), player.getUniqueId(), l
+                            return PlaceholdersService.parse(player.getName(), player.getUniqueId(), head, l
                                     .replaceAll("%state%", hasHeadFormatted));
                         } catch (InternalException e) {
                             throw new RuntimeException(e);

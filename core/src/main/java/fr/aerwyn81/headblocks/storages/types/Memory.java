@@ -58,6 +58,13 @@ public class Memory implements Storage {
     }
 
     @Override
+    public void resetPlayerHead(UUID playerUuid, UUID headUuid) {
+        if (containsPlayer(playerUuid)) {
+            headsFound.get(playerUuid).remove(headUuid);
+        }
+    }
+
+    @Override
     public void removeHead(UUID headUuid) {
         headsFound.values().forEach(u -> u.remove(headUuid));
     }

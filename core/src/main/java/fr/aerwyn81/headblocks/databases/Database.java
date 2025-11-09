@@ -31,6 +31,8 @@ public interface Database {
 
     void resetPlayer(UUID pUUID) throws InternalException;
 
+    void resetPlayerHead(UUID pUUID, UUID hUUID) throws InternalException;
+
     void removeHead(UUID hUUID, boolean withDelete) throws InternalException;
 
     ArrayList<UUID> getAllPlayers() throws InternalException;

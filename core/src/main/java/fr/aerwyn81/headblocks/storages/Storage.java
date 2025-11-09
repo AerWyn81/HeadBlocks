@@ -18,6 +18,8 @@ public interface Storage {
 
     void resetPlayer(UUID playerUuid) throws InternalException;
 
+    void resetPlayerHead(UUID playerUuid, UUID headUuid) throws InternalException;
+
     void addHead(UUID playerUuid, UUID headUuid) throws InternalException;
 
     boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException;

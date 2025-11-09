@@ -93,6 +93,15 @@ public class Redis implements Storage {
     }
 
     @Override
+    public void resetPlayerHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        try (Jedis redis = pool.getResource()) {
+            redis.srem(KEY_PLAYER_HEADS + playerUuid.toString(), headUuid.toString());
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
     public void removeHead(UUID headUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
             Set<String> keys = redis.keys(KEY_PLAYER_HEADS + "*");

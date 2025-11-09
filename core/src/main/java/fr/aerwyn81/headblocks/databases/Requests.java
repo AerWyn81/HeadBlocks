@@ -145,6 +145,10 @@ public class Requests {
         return String.format("DELETE FROM %s WHERE pUUID = ?", getTablePlayerHeads());
     }
 
+    public static String resetPlayerHead() {
+        return String.format("DELETE FROM %s WHERE pUUID = ? AND hUUID = ?", getTablePlayerHeads());
+    }
+
     public static String removeHead() {
         return String.format("UPDATE %s SET hExist=False WHERE hUUID = ?", getTableHeads());
     }

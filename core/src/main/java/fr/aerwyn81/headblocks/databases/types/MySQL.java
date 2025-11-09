@@ -260,6 +260,28 @@ public final class MySQL implements Database {
     }
 
     /**
+     * Reset a specific head for a player
+     *
+     * @param pUUID player UUID
+     * @param hUUID head UUID
+     * @throws InternalException SQL Exception
+     */
+    @Override
+    public void resetPlayerHead(UUID pUUID, UUID hUUID) throws InternalException {
+        if (notAlive()) {
+            open();
+        }
+
+        try (var ps = connection.prepareStatement(Requests.resetPlayerHead())) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, hUUID.toString());
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    /**
      * Remove a head
      *
      * @param hUUID head UUID

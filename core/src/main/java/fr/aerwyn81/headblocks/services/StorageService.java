@@ -369,6 +369,23 @@ public class StorageService {
         database.resetPlayer(playerUuid);
     }
 
+    public static void resetPlayerHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        try {
+            Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
+            if (cachedHeads != null) {
+                cachedHeads.remove(headUuid);
+                storage.setCachedPlayerHeads(playerUuid, cachedHeads);
+            }
+
+            storage.clearCachedTopPlayers();
+        } catch (InternalException ex) {
+            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while invalidating cache for player " + playerUuid + " and head " + headUuid + ": " + ex.getMessage()));
+        }
+
+        storage.resetPlayerHead(playerUuid, headUuid);
+        database.resetPlayerHead(playerUuid, headUuid);
+    }
+
     public static void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
         storage.removeHead(headUuid);
         database.removeHead(headUuid, withDelete);
