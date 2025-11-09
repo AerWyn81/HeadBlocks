@@ -19,14 +19,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.holoeasy.HoloEasy;
-import org.holoeasy.hologram.Hologram;
-import org.holoeasy.pool.IHologramPool;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
@@ -43,7 +39,6 @@ public final class HeadBlocks extends JavaPlugin {
     private PacketEventsHook packetEventsHook;
 
     private HoloEasy holoEasyLib;
-    private IHologramPool<Hologram> holoEasyHologramPool;
 
     @Override
     public void onLoad() {
@@ -140,12 +135,19 @@ public final class HeadBlocks extends JavaPlugin {
                 var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(h -> h.getHitCount() != -1);
                 return anyHit ? "True" : "False";
             }));
-            m.addCustomChart(new Metrics.AdvancedBarChart("feat_hint", () -> {
-                Map<String, int[]> map = new HashMap<>();
-                map.put("Hint sound", getChartArray(HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintSoundEnabled)));
-                map.put("Hint actionBarMessage", getChartArray(HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintActionBarEnabled)));
-                return map;
+            m.addCustomChart(new Metrics.SimplePie("feat_hint_sound", () -> {
+                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintSoundEnabled);
+                return anyHit ? "True" : "False";
             }));
+            m.addCustomChart(new Metrics.SimplePie("feat_hint_actionBarMessage", () -> {
+                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintActionBarEnabled);
+                return anyHit ? "True" : "False";
+            }));
+            m.addCustomChart(new Metrics.SimplePie("feat_hint_rewards", () -> {
+                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(h -> !h.getRewards().isEmpty());
+                return anyHit ? "True" : "False";
+            }));
+            m.addCustomChart(new Metrics.SimplePie("feat_hide_heads", () -> ConfigService.hideFoundHeads() ? "True" : "False"));
         }
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
@@ -219,5 +221,9 @@ public final class HeadBlocks extends JavaPlugin {
 
     public HoloEasy getHoloEasyLib() {
         return holoEasyLib;
+    }
+
+    public PacketEventsHook getPacketEventsHook() {
+        return packetEventsHook;
     }
 }

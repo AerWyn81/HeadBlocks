@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -69,6 +70,15 @@ public class ResetAll extends ResetBase {
             for (UUID playerUuid : playersWithHead) {
                 try {
                     StorageService.resetPlayerHead(playerUuid, headUuid);
+
+                    // Show the head for online players
+                    Player onlinePlayer = Bukkit.getPlayer(playerUuid);
+                    if (onlinePlayer != null) {
+                        var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
+                        if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
+                            packetEventsHook.getHeadHidingListener().removeFoundHead(onlinePlayer, headUuid);
+                        }
+                    }
                 } catch (InternalException ex) {
                     player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + playerUuid.toString() + " from the storage: " + ex.getMessage()));
@@ -107,6 +117,15 @@ public class ResetAll extends ResetBase {
             for (UUID uuid : allPlayers) {
                 try {
                     StorageService.resetPlayer(uuid);
+
+                    // Invalidate cache for online players
+                    Player onlinePlayer = Bukkit.getPlayer(uuid);
+                    if (onlinePlayer != null) {
+                        var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
+                        if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
+                            packetEventsHook.getHeadHidingListener().invalidatePlayerCache(uuid);
+                        }
+                    }
                 } catch (InternalException ex) {
                     player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
                     HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + uuid.toString() + " from the storage: " + ex.getMessage()));

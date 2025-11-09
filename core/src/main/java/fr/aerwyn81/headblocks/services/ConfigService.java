@@ -177,6 +177,10 @@ public class ConfigService {
         return config.getBoolean("shouldResetPlayerData", true);
     }
 
+    public static boolean hideFoundHeads() {
+        return config.getBoolean("hideFoundHeads", false);
+    }
+
     public static int getProgressBarBars() {
         return config.getInt("progressBar.totalBars", 100);
     }

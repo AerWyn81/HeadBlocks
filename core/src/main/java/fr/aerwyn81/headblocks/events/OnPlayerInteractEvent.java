@@ -172,6 +172,12 @@ public class OnPlayerInteractEvent implements Listener {
                 return;
             }
 
+            // Hide the head for this player if enabled
+            var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
+            if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
+                packetEventsHook.getHeadHidingListener().addFoundHead(player, headLocation.getUuid());
+            }
+
             // Give reward if triggerRewards is used
             RewardService.giveReward(player, playerHeads, headLocation);
 

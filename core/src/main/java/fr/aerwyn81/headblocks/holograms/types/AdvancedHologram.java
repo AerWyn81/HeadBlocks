@@ -13,15 +13,10 @@ import org.holoeasy.line.Line;
 import org.holoeasy.pool.IHologramPool;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AdvancedHologram implements IHologram {
 
     Hologram hologram;
-
-    private final Map<UUID, Integer> playerContentHash = new ConcurrentHashMap<>();
 
     @Override
     public void show(Player player) {
@@ -30,7 +25,7 @@ public class AdvancedHologram implements IHologram {
 
     @Override
     public void hide(Player player) {
-        // Used only by Default hologram.
+        hologram.hide(player);
     }
 
     @Override
@@ -40,8 +35,6 @@ public class AdvancedHologram implements IHologram {
             if (pool != null) {
                 hologram.hide(getPool());
             }
-
-            playerContentHash.clear();
         });
     }
 
@@ -83,35 +76,15 @@ public class AdvancedHologram implements IHologram {
 
     @Override
     public boolean isVisible(Player player) {
-        // Used only by Default hologram.
-        return false;
+        return hologram.isShownFor(player);
     }
 
     public void refresh(Player player) {
         Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
-            var playerId = player.getUniqueId();
-
-            var newHash = computeContentHash(player);
-
-            var cachedHash = playerContentHash.get(playerId);
-
-            if (cachedHash == null || cachedHash != newHash) {
-                for (Line<?> line : hologram.getLines()) {
-                    line.update(player);
-                }
-                playerContentHash.put(playerId, newHash);
+            for (Line<?> line : hologram.getLines()) {
+                line.update(player);
             }
         });
-    }
-
-    private int computeContentHash(Player player) {
-        int hash = 1;
-        for (Line<?> line : hologram.getLines()) {
-            if (line instanceof DisplayTextLine displayLine) {
-                hash = 31 * hash + displayLine.getValue(player).hashCode();
-            }
-        }
-        return hash;
     }
 
     private IHologramPool<Hologram> getPool() {

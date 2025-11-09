@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.events;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
@@ -51,12 +52,22 @@ public class OthersEvent implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         StorageService.loadPlayers(e.getPlayer());
+
+        var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
+        if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
+            packetEventsHook.getHeadHidingListener().onPlayerJoin(e.getPlayer());
+        }
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         StorageService.unloadPlayer(e.getPlayer());
         HeadService.getHeadMoves().remove(e.getPlayer().getUniqueId());
+
+        var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
+        if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
+            packetEventsHook.getHeadHidingListener().invalidatePlayerCache(e.getPlayer().getUniqueId());
+        }
     }
 
     @EventHandler

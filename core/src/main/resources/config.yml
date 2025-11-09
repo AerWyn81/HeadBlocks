@@ -214,6 +214,11 @@ spin:
 # If false, Headblocks destroyed will remain in database. There's no purge command atm
 shouldResetPlayerData: true
 
+# If true, heads that the player has already found will be hidden
+# This requires PacketEvents to be installed
+# Require a server restart to apply
+hideFoundHeads: false
+
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
 preventCommandsOnTieredRewardsLevel: false
 

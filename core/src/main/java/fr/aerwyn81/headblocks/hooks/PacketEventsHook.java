@@ -1,12 +1,14 @@
 package fr.aerwyn81.headblocks.hooks;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class PacketEventsHook {
 
     private boolean isEnabled;
+    private HeadHidingPacketListener headHidingListener;
 
     public boolean load(JavaPlugin plugin) {
         try {
@@ -27,6 +29,9 @@ public class PacketEventsHook {
 
         PacketEvents.getAPI().getSettings().checkForUpdates(false);
         PacketEvents.getAPI().init();
+
+        headHidingListener = new HeadHidingPacketListener();
+        PacketEvents.getAPI().getEventManager().registerListener(headHidingListener, PacketListenerPriority.NORMAL);
     }
 
     public void unload() {
@@ -34,6 +39,18 @@ public class PacketEventsHook {
             return;
         }
 
+        if (headHidingListener != null) {
+            headHidingListener.clearCache();
+        }
+
         PacketEvents.getAPI().terminate();
+    }
+
+    public HeadHidingPacketListener getHeadHidingListener() {
+        return headHidingListener;
+    }
+
+    public boolean isEnabled() {
+        return isEnabled;
     }
 }

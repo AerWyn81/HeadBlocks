@@ -32,9 +32,21 @@ public class Reset extends ResetBase {
                 String headName = getHeadDisplayName(headUuid);
                 sender.sendMessage(LanguageService.getMessage("Messages.PlayerHeadReset", args[1])
                         .replaceAll("%headName%", headName));
+
+                // Show the head again for this player
+                var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
+                if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
+                    packetEventsHook.getHeadHidingListener().removeFoundHead(player, headUuid);
+                }
             } else {
                 StorageService.resetPlayer(player.getUniqueId());
                 sender.sendMessage(LanguageService.getMessage("Messages.PlayerReset", args[1]));
+
+                // Invalidate cache and refresh all heads for this player
+                var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
+                if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
+                    packetEventsHook.getHeadHidingListener().invalidatePlayerCache(player.getUniqueId());
+                }
             }
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));

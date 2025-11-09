@@ -167,7 +167,15 @@ public class HologramService {
     }
 
     public static void hideHolograms(HeadLocation headLocation, Player player) {
-        if (!enable || enumTypeHologram == EnumTypeHologram.ADVANCED) {
+        if (!enable) {
+            return;
+        }
+
+        if (enumTypeHologram == EnumTypeHologram.ADVANCED) {
+            var holo = getHologramByLocation(holograms, headLocation.getLocation());
+            if (holo != null && holo.isHologramVisible(player)) {
+                holo.hide(player);
+            }
             return;
         }
 
