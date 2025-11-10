@@ -226,6 +226,11 @@ public class Redis implements Storage {
     public void removeCachedHead(UUID headUuid) throws InternalException {
         try (Jedis redis = pool.getResource()) {
             redis.srem(KEY_CACHE_HEADS, headUuid.toString());
+
+            Set<String> keys = redis.keys(KEY_PLAYER_HEADS + "*");
+            keys.forEach(key -> redis.srem(key, headUuid.toString()));
+
+            redis.del(KEY_CACHE_TOP_PLAYERS);
         } catch (Exception ex) {
             throw new InternalException(ex);
         }

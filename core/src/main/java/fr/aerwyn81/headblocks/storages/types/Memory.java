@@ -126,5 +126,9 @@ public class Memory implements Storage {
     @Override
     public void removeCachedHead(UUID headUuid) {
         cacheHeads.remove(headUuid);
+
+        cachePlayerHeads.values().forEach(playerHeads -> playerHeads.remove(headUuid));
+
+        clearCachedTopPlayers();
     }
 }
