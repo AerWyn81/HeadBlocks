@@ -49,6 +49,7 @@ public class HeadDatabaseHook {
         } catch (Exception ignored) {
         }
 
+        HeadBlocks.log.sendMessage(MessageUtils.colorize("&eHeadDatabase &asuccessfully hooked!"));
         return true;
     }
 

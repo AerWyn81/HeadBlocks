@@ -1,56 +1,51 @@
 package fr.aerwyn81.headblocks.hooks;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
+import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class PacketEventsHook {
 
+    private PacketEventsHookImpl packetEventsImpl;
     private boolean isEnabled;
-    private HeadHidingPacketListener headHidingListener;
 
     public boolean load(JavaPlugin plugin) {
         try {
-            PacketEvents.setAPI(SpigotPacketEventsBuilder.build(plugin));
-            PacketEvents.getAPI().load();
+            Class.forName("com.github.retrooper.packetevents.PacketEvents");
 
-            isEnabled = PacketEvents.getAPI().isLoaded();
+            packetEventsImpl = new PacketEventsHookImpl();
+            isEnabled = packetEventsImpl.load(plugin);
+
+            if (isEnabled) {
+                HeadBlocks.log.sendMessage(MessageUtils.colorize("HeadBlocks &ePacketEvents &asuccessfully hooked!"));
+            }
+
             return isEnabled;
-        } catch (Exception | NoClassDefFoundError ignored) {
+        } catch (ClassNotFoundException e) {
+            isEnabled = false;
             return false;
         }
     }
 
     public void init() {
-        if (!isEnabled) {
-            return;
+        if (packetEventsImpl != null && isEnabled) {
+            packetEventsImpl.init();
         }
-
-        PacketEvents.getAPI().getSettings().checkForUpdates(false);
-        PacketEvents.getAPI().init();
-
-        headHidingListener = new HeadHidingPacketListener();
-        PacketEvents.getAPI().getEventManager().registerListener(headHidingListener, PacketListenerPriority.NORMAL);
     }
 
     public void unload() {
-        if (!isEnabled) {
-            return;
+        if (packetEventsImpl != null && isEnabled) {
+            packetEventsImpl.unload();
         }
-
-        if (headHidingListener != null) {
-            headHidingListener.clearCache();
-        }
-
-        PacketEvents.getAPI().terminate();
     }
 
     public HeadHidingPacketListener getHeadHidingListener() {
-        return headHidingListener;
+        return packetEventsImpl != null
+                ? packetEventsImpl.getHeadHidingListener()
+                : null;
     }
 
     public boolean isEnabled() {
-        return isEnabled;
+        return isEnabled && packetEventsImpl != null && packetEventsImpl.isEnabled();
     }
 }

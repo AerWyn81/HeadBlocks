@@ -65,7 +65,7 @@ public final class HeadBlocks extends JavaPlugin {
             if (isPacketEventsLoaded) {
                 holoEasyLib = new HoloEasy(this);
             } else {
-                Bukkit.getConsoleSender().sendMessage(MessageUtils.colorize("&cError while loading Holograms: PacketEvents is not loaded."));
+                log.sendMessage(MessageUtils.colorize("&cError while loading Holograms: PacketEvents is not loaded."));
             }
         }
     }
@@ -151,10 +151,6 @@ public final class HeadBlocks extends JavaPlugin {
         }
 
         log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
-    }
-
-    private int[] getChartArray(boolean value) {
-        return new int[]{!value ? 1 : 0, value ? 0 : 1};
     }
 
     private void initializeExternals() {
