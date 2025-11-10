@@ -1,10 +1,10 @@
 import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
 
 plugins {
-    id("java")
-    id("com.gradleup.shadow") version "8.3.5"
-    id("net.minecrell.plugin-yml.bukkit") version "0.6.0"
-    id("xyz.jpenilla.run-paper") version "3.0.2"
+    java
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.plugin.yml)
+    alias(libs.plugins.run.paper)
 }
 
 version = "2.8.1"
@@ -20,16 +20,19 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT")
-    compileOnly("me.clip:placeholderapi:2.11.6")
-    compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
-    compileOnly("com.github.retrooper:packetevents-spigot:2.10.1")
-    implementation("redis.clients:jedis:5.1.3")
-    implementation("com.zaxxer:HikariCP:5.1.0")
-    implementation("com.google.code.gson:gson:2.11.0")
-    implementation("org.apache.commons:commons-lang3:3.12.0")
-    implementation("de.tr7zw:item-nbt-api:2.15.3")
-    implementation("com.github.AerWyn81.holoeasy:holoeasy-core:master-SNAPSHOT")
+    // Compile Only Dependencies
+    compileOnly(libs.spigot.api)
+    compileOnly(libs.placeholderapi)
+    compileOnly(libs.headdatabase.api)
+    compileOnly(libs.packetevents)
+
+    // Implementation Dependencies (will be shaded)
+    implementation(libs.jedis)
+    implementation(libs.hikaricp)
+    implementation(libs.gson)
+    implementation(libs.commons.lang3)
+    implementation(libs.nbt.api)
+    implementation(libs.holoeasy)
 }
 
 tasks {
