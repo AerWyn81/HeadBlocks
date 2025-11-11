@@ -79,9 +79,9 @@ jobs:
       - name: Get changelog from Changelog.md
         id: changelog
         run: |
-          if [ -f "Update.md" ]; then
+          if [ -f "Changelog.md" ]; then
             echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-            cat Update.md >> $GITHUB_OUTPUT
+            cat Changelog.md >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
             echo "CHANGELOG=No changelog provided." >> $GITHUB_OUTPUT
