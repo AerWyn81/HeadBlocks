@@ -108,6 +108,11 @@ Chat:
     Loaded: "&aChargé : &7"
     HitCount: "&aNombre maximum de clic : "
     OrderIndex: "&aPosition : "
+    HintSound: "&aIndice sonore : &7"
+    HintActionBar: "&aIndice barre d'action : &7"
+    HintsTitle: "&e&lIndices :"
+    RewardsTitle: "&e&lRécompenses : &7"
+    HoverForMore: "&8&oSurvolez pour détails"
 
 Other:
   NameNotSet: "&cNom non défini"
@@ -177,7 +182,7 @@ Gui:
     - "&e&lINFO:"
     - "&7 Cette interface permet de configurer"
     - "&7 les récompenses pour chaque tête"
-  TitleRewardsSelection: "&8HeadBlocks &7- &b&lSélection de récompenses"
+  TitleRewardsSelection: "&8HeadBlocks &7- &b&lRécompenses"
   RewardsSelectionItemName: "&6%headName% &7(%world%, %x%, %y%, %z%)"
   RewardsSelectionItemLore:
     - ""

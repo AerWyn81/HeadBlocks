@@ -17,9 +17,9 @@ public class HeadLocation {
     private String name;
 
     private String configWorldName;
-    private int x;
-    private int y;
-    private int z;
+    private double x;
+    private double y;
+    private double z;
 
     private Location location;
     private boolean isCharged;
@@ -31,13 +31,13 @@ public class HeadLocation {
     private final ArrayList<Reward> rewards;
 
     public HeadLocation(String name, UUID headUUID, Location location) {
-        this(name, headUUID, location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), -1, -1, false, false, new ArrayList<>());
+        this(name, headUUID, location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), -1, -1, false, false, new ArrayList<>());
 
         this.location = location;
         this.isCharged = true;
     }
 
-    public HeadLocation(String name, UUID headUUID, String configWorldName, int x, int y, int z, int hitCount, int orderIndex, boolean hintSound, boolean hintActionBar, ArrayList<Reward> rewards) {
+    public HeadLocation(String name, UUID headUUID, String configWorldName, double x, double y, double z, int hitCount, int orderIndex, boolean hintSound, boolean hintActionBar, ArrayList<Reward> rewards) {
         this.name = name;
         this.headUUID = headUUID;
         this.hitCount = hitCount;
@@ -159,15 +159,15 @@ public class HeadLocation {
         return configWorldName;
     }
 
-    public int getX() {
+    public double getX() {
         return x;
     }
 
-    public int getY() {
+    public double getY() {
         return y;
     }
 
-    public int getZ() {
+    public double getZ() {
         return z;
     }
 
@@ -183,9 +183,9 @@ public class HeadLocation {
         var hUUID = headUUID.toString();
 
         section.set("locations." + hUUID + ".name", name);
-        section.set("locations." + hUUID + ".location.x", location.getBlockX());
-        section.set("locations." + hUUID + ".location.y", location.getBlockY());
-        section.set("locations." + hUUID + ".location.z", location.getBlockZ());
+        section.set("locations." + hUUID + ".location.x", location.getX());
+        section.set("locations." + hUUID + ".location.y", location.getY());
+        section.set("locations." + hUUID + ".location.z", location.getZ());
         section.set("locations." + hUUID + ".location.world", location.getWorld().getName());
 
         section.set("locations." + hUUID + ".hitCount", hitCount == -1 ? null : hitCount);
@@ -212,19 +212,27 @@ public class HeadLocation {
 
         String name = section.getString("locations." + hUUID + ".name");
 
-        int x, y, z;
+        double x, y, z;
         String worldName;
 
         if (name != null) {
-            x = section.getInt("locations." + hUUID + ".location.x");
-            y = section.getInt("locations." + hUUID + ".location.y");
-            z = section.getInt("locations." + hUUID + ".location.z");
+            x = section.getDouble("locations." + hUUID + ".location.x");
+            y = section.getDouble("locations." + hUUID + ".location.y");
+            z = section.getDouble("locations." + hUUID + ".location.z");
             worldName = section.getString("locations." + hUUID + ".location.world", "");
         } else {
-            x = section.getInt("locations." + hUUID + ".x");
-            y = section.getInt("locations." + hUUID + ".y");
-            z = section.getInt("locations." + hUUID + ".z");
+            x = section.getDouble("locations." + hUUID + ".x");
+            y = section.getDouble("locations." + hUUID + ".y");
+            z = section.getDouble("locations." + hUUID + ".z");
             worldName = section.getString("locations." + hUUID + ".world", "");
+        }
+
+        // Compatibility, centering head
+        if (x % 1.0 == 0.0) {
+            x += 0.5;
+        }
+        if (z % 1.0 == 0.0) {
+            z += 0.5;
         }
 
         int hitCount = -1;

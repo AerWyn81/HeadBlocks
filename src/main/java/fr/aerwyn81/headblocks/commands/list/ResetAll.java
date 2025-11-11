@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -24,7 +25,7 @@ public class ResetAll extends ResetBase {
 
         boolean hasConfirm = hasParameterConfirm(args);
 
-        UUID headUuid = resolveHeadFromArgs(player, args, 1);
+        var headUuid = resolveHeadFromArgs(player, args, 1);
 
         if (hasHeadParameter(args, 1) && headUuid == null) {
             return true;
@@ -151,8 +152,9 @@ public class ResetAll extends ResetBase {
             if (args[1].equalsIgnoreCase("--head")) {
                 ArrayList<String> options = new ArrayList<>();
                 options.add("--confirm");
-                options.addAll(getHeadCompletions());
-                return options;
+                options.addAll(HeadService.getHeadRawNameOrUuid());
+                return new ArrayList<>(options.stream()
+                        .filter(s -> s.startsWith(args[2])).toList());
             } else if (args[1].equalsIgnoreCase("--confirm")) {
                 return new ArrayList<>(Collections.singletonList("--head"));
             }
@@ -162,7 +164,8 @@ public class ResetAll extends ResetBase {
             } else if (args[1].equalsIgnoreCase("--head") && !args[2].equalsIgnoreCase("--confirm")) {
                 return new ArrayList<>(Collections.singletonList("--confirm"));
             } else if (args[2].equalsIgnoreCase("--head")) {
-                return getHeadCompletions();
+                return new ArrayList<>(HeadService.getHeadRawNameOrUuid()
+                        .stream().filter(s -> s.startsWith(args[3])).toList());
             }
         } else if (args.length == 5 && args[2].equalsIgnoreCase("--head")) {
             return new ArrayList<>(Collections.singletonList("--confirm"));

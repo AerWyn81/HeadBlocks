@@ -55,6 +55,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         }
 
         Location headLocation = headBlock.getLocation();
+        headLocation = headLocation.clone().add(0.5, 0, 0.5);
 
         if (HeadService.getHeadAt(headLocation) != null) {
             e.setCancelled(true);

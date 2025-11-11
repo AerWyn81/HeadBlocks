@@ -108,6 +108,11 @@ Chat:
     Loaded: "&aLoaded: &7"
     HitCount: "&aHit count: "
     OrderIndex: "&aOrder index: "
+    HintSound: "&aHint sound: &7"
+    HintActionBar: "&aHint action bar: &7"
+    HintsTitle: "&e&lHints:"
+    RewardsTitle: "&e&lRewards: &7"
+    HoverForMore: "&8&oHover for details"
 
 Other:
   NameNotSet: "&cName not set"
@@ -177,7 +182,7 @@ Gui:
     - "&e&lINFO:"
     - "&7 This interface allows you to configure"
     - "&7 the rewards for each head"
-  TitleRewardsSelection: "&8HeadBlocks &7- &b&lRewards Selection"
+  TitleRewardsSelection: "&8HeadBlocks &7- &b&lRewards"
   RewardsSelectionItemName: "&6%headName% &7(%world%, %x%, %y%, %z%)"
   RewardsSelectionItemLore:
     - ""

@@ -15,9 +15,9 @@ public class LocationUtils {
 
     public static String toFormattedString(Location loc) {
         return MessageUtils.colorize("&7" + parseWorld(loc) +
-                " &8[&8X: &7" + loc.getBlockX() +
-                "&8, &8Y: &7" + loc.getBlockY() +
-                "&8, &8Z: &7" + loc.getBlockZ() + "&8]");
+                " &8[&8X: &7" + loc.getX() +
+                "&8, &8Y: &7" + loc.getY() +
+                "&8, &8Z: &7" + loc.getZ() + "&8]");
     }
 
     /**
@@ -28,9 +28,9 @@ public class LocationUtils {
      * @return parsed string
      */
     public static String parseLocationPlaceholders(String message, Location location) {
-        return message.replaceAll("%x%", String.valueOf(location.getBlockX()))
-                .replaceAll("%y%", String.valueOf(location.getBlockY()))
-                .replaceAll("%z%", String.valueOf(location.getBlockZ()))
+        return message.replaceAll("%x%", String.valueOf(location.getX()))
+                .replaceAll("%y%", String.valueOf(location.getY()))
+                .replaceAll("%z%", String.valueOf(location.getZ()))
                 .replaceAll("%world%", parseWorld(location))
                 .replaceAll("%worldName%", parseWorld(location));
     }

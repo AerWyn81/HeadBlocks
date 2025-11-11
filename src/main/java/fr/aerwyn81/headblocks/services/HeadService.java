@@ -336,6 +336,10 @@ public class HeadService {
         return headLocations;
     }
 
+    public static ArrayList<String> getHeadRawNameOrUuid() {
+        return headLocations.stream().map(HeadLocation::getRawNameOrUuid).collect(Collectors.toCollection(ArrayList::new));
+    }
+
     public static HashMap<UUID, HeadMove> getHeadMoves() {
         return headMoves;
     }
@@ -346,6 +350,15 @@ public class HeadService {
         }
 
         headMoves.clear();
+    }
+
+    public static HeadLocation resolveHeadIdentifier(String headIdentifier) {
+        try {
+            var headUuid = UUID.fromString(headIdentifier);
+            return getHeadByUUID(headUuid);
+        } catch (IllegalArgumentException e) {
+            return getHeadByName(headIdentifier);
+        }
     }
 
     public static void changeHeadLocation(UUID hUuid, @NotNull Block oldBlock, Block newBlock) {

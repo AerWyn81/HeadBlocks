@@ -61,17 +61,17 @@ public class GuiService {
                 .toItemStack(), true)
                 .addOnClickEvent(e -> clickCounterManager.openClickCounterGui((Player) e.getWhoClicked())));
 
-        optionsMenu.setItem(0, 14, new ItemGUI(new ItemBuilder(Material.DIAMOND)
-                .setName(LanguageService.getMessage("Gui.RewardsName"))
-                .setLore(LanguageService.getMessages("Gui.RewardsLore"))
-                .toItemStack(), true)
-                .addOnClickEvent(event -> rewardsManager.openRewardsSelectionGui((Player) event.getWhoClicked())));
-
-        optionsMenu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.ENDER_EYE)
+        optionsMenu.setItem(0, 14, new ItemGUI(new ItemBuilder(Material.ENDER_EYE)
                 .setName(LanguageService.getMessage("Gui.HintName"))
                 .setLore(LanguageService.getMessages("Gui.HintLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> hintManager.openHintGui((Player) event.getWhoClicked())));
+
+        optionsMenu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
+                .setName(LanguageService.getMessage("Gui.RewardsName"))
+                .setLore(LanguageService.getMessages("Gui.RewardsLore"))
+                .toItemStack(), true)
+                .addOnClickEvent(event -> rewardsManager.openRewardsSelectionGui((Player) event.getWhoClicked(), null)));
 
         int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(

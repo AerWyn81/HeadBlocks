@@ -16,7 +16,6 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @HBAnnotations(command = "remove", permission = "headblocks.admin")
 public class Remove implements Cmd {
@@ -75,8 +74,7 @@ public class Remove implements Cmd {
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 ? HeadService.getChargedHeadLocations().stream()
-                .map(HeadLocation::getRawNameOrUuid)
-                .collect(Collectors.toCollection(ArrayList::new)) : new ArrayList<>();
+        return args.length == 2 ? new ArrayList<>(HeadService.getHeadRawNameOrUuid()
+                .stream().filter(s -> s.startsWith(args[1])).toList()) : new ArrayList<>();
     }
 }

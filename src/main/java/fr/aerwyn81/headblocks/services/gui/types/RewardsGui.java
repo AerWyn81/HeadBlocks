@@ -34,7 +34,12 @@ public class RewardsGui extends GuiBase {
         pendingRewardInputs.clear();
     }
 
-    public void openRewardsSelectionGui(Player player) {
+    public void openRewardsSelectionGui(Player player, HeadLocation targetHead) {
+        if (targetHead != null) {
+            openRewardsGui(player, targetHead);
+            return;
+        }
+
         HBMenu rewardsSelectionMenu = new HBMenu(HeadBlocks.getInstance(),
                 LanguageService.getMessage("Gui.TitleRewardsSelection"), true, 5);
 

@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -64,7 +65,8 @@ public class Reset extends ResetBase {
         } else if (args.length == 3) {
             return new ArrayList<>(java.util.Collections.singletonList("--head"));
         } else if (args.length == 4 && args[2].equalsIgnoreCase("--head")) {
-            return getHeadCompletions();
+            return new ArrayList<>(HeadService.getHeadRawNameOrUuid().stream()
+                    .filter(s -> s.startsWith(args[3])).toList());
         }
         return new ArrayList<>();
     }

@@ -47,12 +47,44 @@ public class Info implements Cmd {
 
         TextComponent msgLoc = new TextComponent(LanguageService.getMessage("Chat.Info.Location") + LocationUtils.toFormattedString(headLocation.getLocation()));
         msgLoc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Info.HoverLocationTp"))));
-        msgLoc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + headLocation.getLocation().getWorld().getName() + " " + (headLocation.getLocation().getX() + 0.5) + " " + (headLocation.getLocation().getY() + 1) + " " + (headLocation.getLocation().getZ() + 0.5 + " 0.0 90.0")));
+        msgLoc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + headLocation.getLocation().getWorld().getName() + " " + headLocation.getX() + " " + (headLocation.getLocation().getY() + 1) + " " + headLocation.getZ() + " 0.0 90.0"));
         player.spigot().sendMessage(msgLoc);
 
         player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.Loaded") + headLocation.isCharged()));
         player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.HitCount") + headLocation.getDisplayedHitCount()));
         player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.OrderIndex") + headLocation.getDisplayedOrderIndex()));
+
+        player.sendMessage("");
+        player.sendMessage(LanguageService.getMessage("Chat.Info.HintsTitle"));
+        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.HintSound") + headLocation.isHintSoundEnabled()));
+        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.HintActionBar") + headLocation.isHintActionBarEnabled()));
+
+        var rewards = headLocation.getRewards();
+        if (!rewards.isEmpty()) {
+            player.sendMessage("");
+            var msgRewards = new TextComponent(LanguageService.getMessage("Chat.Info.RewardsTitle") + "(" + rewards.size() + ") " + LanguageService.getMessage("Chat.Info.HoverForMore"));
+
+            var hoverText = new StringBuilder();
+            for (int i = 0; i < rewards.size(); i++) {
+                var reward = rewards.get(i);
+
+                var typeColor = switch (reward.getType()) {
+                    case MESSAGE -> "&a";
+                    case COMMAND -> "&6";
+                    case BROADCAST -> "&b";
+                    default -> "&7";
+                };
+
+                hoverText.append(MessageUtils.colorize(typeColor + reward.getType().name() + "&7: " + reward.getValue()));
+                if (i < rewards.size() - 1) {
+                    hoverText.append("\n");
+                }
+            }
+
+            msgRewards.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hoverText.toString())));
+            msgRewards.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks options rewards " + headLocation.getUuid()));
+            player.spigot().sendMessage(msgRewards);
+        }
 
         player.sendMessage("");
         player.sendMessage(MessageUtils.colorize("&7----------------------------------------------"));

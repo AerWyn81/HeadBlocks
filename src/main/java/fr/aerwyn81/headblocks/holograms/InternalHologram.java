@@ -35,7 +35,7 @@ public class InternalHologram {
         location = loc;
 
         var headLocation = loc.clone();
-        headLocation.add(0.5, 0.5 + configHeightAbove, 0.5);
+        headLocation.add(0, 0.5 + configHeightAbove, 0);
 
         hologram = hologram.create(uuid.toString(), headLocation, lines);
     }
