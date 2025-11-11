@@ -181,3 +181,47 @@ jobs:
           name: changelog-bbcode-${{ steps.get_version.outputs.VERSION }}
           path: Changelog.bbcode
           retention-days: 1
+
+  publish-discord:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog sections
+        id: changelog
+        run: |
+          CHANGES=$(sed -n '/^## What/,/^---/p' Changelog.md | sed '1d;$d' | sed 's/^### /• /' | sed 's/^- /  ◦ /' | sed 's/\*\*\(.*\)\*\*/\1/g')
+          echo "CHANGES<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          SPIGOT_LINK="https://www.spigotmc.org/resources/headblocks.97630/updates"
+
+          # Format du message Discord
+          MESSAGE=":exclamation~1: __New update for HeadBlocks **${VERSION}** is out__ <@&1289687740484685938> :exclamation~1:
+
+          In this update:
+          ${{ steps.changelog.outputs.CHANGES }}
+
+          If you find a bug, let me know in <#912465021836083261> channel!
+
+          Link to the update:
+          ${SPIGOT_LINK}
+
+          Thanks ❤️"
+
+          # Envoie le webhook Discord
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": $(echo "$MESSAGE" | jq -Rs .)}" \
+               "$DISCORD_WEBHOOK"
