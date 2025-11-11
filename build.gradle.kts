@@ -36,6 +36,9 @@ dependencies {
 tasks {
     runServer {
         minecraftVersion("1.21.8")
+
+        systemProperty("com.mojang.eula.agree", "true")
+        systemProperty("terminal.ansi", true)
     }
 
     compileJava {
