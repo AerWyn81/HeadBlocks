@@ -30,7 +30,15 @@ public class OnPlayerClickInventoryEvent implements Listener {
             int offset = event.getRawSlot() - clickedGui.getPageSize();
             HBPaginationButtonType buttonType = HBPaginationButtonType.forSlot(offset);
 
-            ItemGUI paginationButton = GuiService.getDefaultPaginationButtonBuilder(buttonType, clickedGui);
+            ItemGUI paginationButton = null;
+
+            if (clickedGui.getPaginationButtonBuilder() != null) {
+                paginationButton = clickedGui.getPaginationButtonBuilder().buildPaginationButton(buttonType, clickedGui);
+            }
+
+            if (paginationButton == null) {
+                paginationButton = GuiService.getDefaultPaginationButtonBuilder(buttonType, clickedGui);
+            }
 
             if (paginationButton != null && paginationButton.getOnClickEvent() != null) {
                 paginationButton.getOnClickEvent().accept(event);

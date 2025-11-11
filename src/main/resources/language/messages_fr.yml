@@ -64,6 +64,8 @@ Messages:
   NameCannotBeEmpty: "%prefix% &cle nom de la tête ne peut pas être vide."
   HeadRenamed: "%prefix% &aLa tête a été renommé avec succès en &e%name%&a."
   EnterRewardCommand: "%prefix% &aVeuillez entrer la commande de récompense dans le chat &7(sans /, écrivez 'cancel' pour annuler)&a :"
+  EnterRewardMessage: "%prefix% &aVeuillez entrer le message de récompense dans le chat &7(écrivez 'cancel' pour annuler)&a :"
+  EnterRewardBroadcast: "%prefix% &aVeuillez entrer le message de broadcast dans le chat &7(écrivez 'cancel' pour annuler)&a :"
   RewardAdded: "%prefix% &aRécompense ajoutée avec succès !"
   RewardUpdated: "%prefix% &aRécompense mise à jour avec succès !"
   ProgressCommand:
@@ -193,6 +195,7 @@ Gui:
   RewardItemName: "&bRécompense #%index%"
   RewardType: "&7Type : &e%type%"
   RewardCommand: "&7Commande : &e%command%"
+  RewardMessage: "&7Message : %message%"
   RewardItemLore:
     - ""
     - "&c&lCLIC GAUCHE&8: &7Modifier la récompense"
@@ -201,6 +204,28 @@ Gui:
   AddRewardLore:
     - ""
     - "&a&lCLIC&8: &7Ajouter une nouvelle récompense"
+  TitleRewardTypeSelection: "&8Type de récompense"
+  RewardTypeMessage: "&a&lMessage"
+  RewardTypeMessageLore:
+    - ""
+    - "&7Envoie un message personnel au joueur"
+    - "&7qui trouve cette tête"
+    - ""
+    - "&a&lCLIC&8: &7Sélectionner ce type"
+  RewardTypeCommand: "&6&lCommande"
+  RewardTypeCommandLore:
+    - ""
+    - "&7Exécute une commande en tant que console"
+    - "&7quand un joueur trouve cette tête"
+    - ""
+    - "&a&lCLIC&8: &7Sélectionner ce type"
+  RewardTypeBroadcast: "&b&lBroadcast"
+  RewardTypeBroadcastLore:
+    - ""
+    - "&7Envoie un message à tous les joueurs en ligne"
+    - "&7quand un joueur trouve cette tête"
+    - ""
+    - "&a&lCLIC&8: &7Sélectionner ce type"
   HintName: "&7Configurer &8- &b&lIndice"
   HintLore:
     - ""

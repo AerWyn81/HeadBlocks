@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.data.reward.RewardType;
+import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
@@ -11,6 +12,8 @@ import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
+import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -27,7 +30,8 @@ public class RewardsGui extends GuiBase {
 
     private static final ConcurrentHashMap<UUID, PendingRewardInput> pendingRewardInputs = new ConcurrentHashMap<>();
 
-    private record PendingRewardInput(HeadLocation headLocation, boolean isEdit, int rewardIndex) {
+    private record PendingRewardInput(HeadLocation headLocation, boolean isEdit, int rewardIndex,
+                                      RewardType rewardType) {
     }
 
     public void clearCache() {
@@ -40,10 +44,10 @@ public class RewardsGui extends GuiBase {
             return;
         }
 
-        HBMenu rewardsSelectionMenu = new HBMenu(HeadBlocks.getInstance(),
+        var rewardsSelectionMenu = new HBMenu(HeadBlocks.getInstance(),
                 LanguageService.getMessage("Gui.TitleRewardsSelection"), true, 5);
 
-        List<HeadLocation> headLocations = HeadService.getHeadLocations();
+        var headLocations = HeadService.getHeadLocations();
 
         if (headLocations.isEmpty()) {
             rewardsSelectionMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
@@ -70,32 +74,52 @@ public class RewardsGui extends GuiBase {
     }
 
     public void openRewardsGui(Player player, HeadLocation headLocation) {
-        HBMenu rewardsMenu = new HBMenu(HeadBlocks.getInstance(),
+        var rewardsMenu = new HBMenu(HeadBlocks.getInstance(),
                 LanguageService.getMessage("Gui.TitleRewards").replaceAll("%headName%", headLocation.getNameOrUnnamed()),
                 true, 5);
 
-        List<Reward> rewards = headLocation.getRewards();
+        var rewards = headLocation.getRewards();
 
         for (int i = 0; i < rewards.size(); i++) {
             final int rewardIndex = i;
             Reward reward = rewards.get(i);
 
+            var rewardMaterial = switch (reward.getType()) {
+                case MESSAGE -> Material.PAPER;
+                case COMMAND -> Material.COMMAND_BLOCK;
+                case BROADCAST -> Material.BEACON;
+                default -> Material.DIAMOND;
+            };
+
             List<String> lore = new ArrayList<>();
-            lore.add(LanguageService.getMessage("Gui.RewardType").replaceAll("%type%", reward.getType().name()));
-            lore.add(LanguageService.getMessage("Gui.RewardCommand").replaceAll("%command%", reward.getValue()));
+            lore.add(LanguageService.getMessage("Gui.RewardType")
+                    .replaceAll("%type%", reward.getType().name()));
+
+            var valueLabel = switch (reward.getType()) {
+                case MESSAGE, BROADCAST -> LanguageService.getMessage("Gui.RewardMessage");
+                default -> LanguageService.getMessage("Gui.RewardCommand");
+            };
+
+            var displayValue = reward.getValue();
+            if (reward.getType() == RewardType.MESSAGE || reward.getType() == RewardType.BROADCAST) {
+                displayValue = MessageUtils.colorize(displayValue);
+            }
+
+            lore.add(valueLabel.replaceAll("%value%", displayValue)
+                    .replaceAll("%command%", displayValue)
+                    .replaceAll("%message%", displayValue)
+                    .replaceAll("%broadcast%", displayValue));
             lore.add("");
             lore.addAll(LanguageService.getMessages("Gui.RewardItemLore"));
 
-            var rewardItemGui = new ItemGUI(new ItemBuilder(Material.DIAMOND)
+            var rewardItemGui = new ItemGUI(new ItemBuilder(rewardMaterial)
                     .setName(LanguageService.getMessage("Gui.RewardItemName").replaceAll("%index%", String.valueOf(i + 1)))
                     .setLore(lore)
                     .toItemStack(), true)
                     .addOnClickEvent(event -> {
                         if (event.getClick() == ClickType.LEFT) {
-                            // Edit reward
-                            setPendingRewardInput(player, headLocation, true, rewardIndex);
+                            setPendingRewardInput(player, headLocation, true, rewardIndex, reward.getType());
                         } else if (event.getClick() == ClickType.SHIFT_LEFT) {
-                            // Delete reward
                             headLocation.getRewards().remove(rewardIndex);
                             HeadService.saveHeadInConfig(headLocation);
                             openRewardsGui(player, headLocation);
@@ -109,40 +133,101 @@ public class RewardsGui extends GuiBase {
                 .setName(LanguageService.getMessage("Gui.AddRewardName"))
                 .setLore(LanguageService.getMessages("Gui.AddRewardLore"))
                 .toItemStack(), true)
-                .addOnClickEvent(event -> setPendingRewardInput(player, headLocation, false, -1));
+                .addOnClickEvent(event -> openRewardTypeSelectionGui(player, headLocation, false, -1));
 
         rewardsMenu.addItem(rewards.size(), addRewardGui);
+
+        rewardsMenu.setPaginationButtonBuilder((type, inventory) -> {
+            if (type == HBPaginationButtonType.BACK_BUTTON) {
+                return new ItemGUI(ConfigService.getGuiBackIcon()
+                        .setName(LanguageService.getMessage("Gui.Back"))
+                        .setLore(LanguageService.getMessages("Gui.BackLore"))
+                        .toItemStack())
+                        .addOnClickEvent(event -> openRewardsSelectionGui((Player) event.getWhoClicked(), null));
+            }
+
+            return null;
+        });
 
         player.openInventory(rewardsMenu.getInventory());
     }
 
-    public void setPendingRewardInput(Player player, HeadLocation headLocation, boolean isEdit, int rewardIndex) {
-        pendingRewardInputs.put(player.getUniqueId(), new PendingRewardInput(headLocation, isEdit, rewardIndex));
+    public void openRewardTypeSelectionGui(Player player, HeadLocation headLocation, boolean isEdit, int rewardIndex) {
+        var typeSelectionMenu = new HBMenu(HeadBlocks.getInstance(),
+                LanguageService.getMessage("Gui.TitleRewardTypeSelection"), true, 3);
+
+        var messageGui = new ItemGUI(new ItemBuilder(Material.PAPER)
+                .setName(LanguageService.getMessage("Gui.RewardTypeMessage"))
+                .setLore(LanguageService.getMessages("Gui.RewardTypeMessageLore"))
+                .toItemStack(), true)
+                .addOnClickEvent(event -> setPendingRewardInput(player, headLocation, isEdit, rewardIndex, RewardType.MESSAGE));
+
+        var commandGui = new ItemGUI(new ItemBuilder(Material.COMMAND_BLOCK)
+                .setName(LanguageService.getMessage("Gui.RewardTypeCommand"))
+                .setLore(LanguageService.getMessages("Gui.RewardTypeCommandLore"))
+                .toItemStack(), true)
+                .addOnClickEvent(event -> setPendingRewardInput(player, headLocation, isEdit, rewardIndex, RewardType.COMMAND));
+
+        var broadcastGui = new ItemGUI(new ItemBuilder(Material.BEACON)
+                .setName(LanguageService.getMessage("Gui.RewardTypeBroadcast"))
+                .setLore(LanguageService.getMessages("Gui.RewardTypeBroadcastLore"))
+                .toItemStack(), true)
+                .addOnClickEvent(event -> setPendingRewardInput(player, headLocation, isEdit, rewardIndex, RewardType.BROADCAST));
+
+        typeSelectionMenu.setItem(0, 11, messageGui);
+        typeSelectionMenu.setItem(0, 13, commandGui);
+        typeSelectionMenu.setItem(0, 15, broadcastGui);
+
+        typeSelectionMenu.setPaginationButtonBuilder((type, inventory) -> {
+            if (type == HBPaginationButtonType.BACK_BUTTON) {
+                return new ItemGUI(ConfigService.getGuiBackIcon()
+                        .setName(LanguageService.getMessage("Gui.Back"))
+                        .setLore(LanguageService.getMessages("Gui.BackLore"))
+                        .toItemStack())
+                        .addOnClickEvent(event -> openRewardsGui((Player) event.getWhoClicked(), headLocation));
+            }
+
+            return null;
+        });
+
+        player.openInventory(typeSelectionMenu.getInventory());
+    }
+
+    public void setPendingRewardInput(Player player, HeadLocation headLocation, boolean isEdit, int rewardIndex, RewardType rewardType) {
+        pendingRewardInputs.put(player.getUniqueId(), new PendingRewardInput(headLocation, isEdit, rewardIndex, rewardType));
         player.closeInventory();
-        player.sendMessage(LanguageService.getMessage("Messages.EnterRewardCommand"));
+
+        var messageKey = switch (rewardType) {
+            case MESSAGE -> "Messages.EnterRewardMessage";
+            case COMMAND -> "Messages.EnterRewardCommand";
+            case BROADCAST -> "Messages.EnterRewardBroadcast";
+            default -> "Messages.EnterRewardCommand";
+        };
+
+        player.sendMessage(LanguageService.getMessage(messageKey));
     }
 
     public boolean hasPendingRewardInput(Player player) {
         return pendingRewardInputs.containsKey(player.getUniqueId());
     }
 
-    public void processPendingRewardInput(Player player, String command) {
-        PendingRewardInput pending = pendingRewardInputs.remove(player.getUniqueId());
+    public void processPendingRewardInput(Player player, String value) {
+        var pending = pendingRewardInputs.remove(player.getUniqueId());
         if (pending == null) return;
 
-        if (command.contains(CANCEL_CONST)) {
+        if (value.contains(CANCEL_CONST)) {
             openRewardsGui(player, pending.headLocation);
             return;
         }
 
         if (pending.isEdit) {
             if (pending.rewardIndex < pending.headLocation.getRewards().size()) {
-                pending.headLocation.getRewards().set(pending.rewardIndex, new Reward(RewardType.COMMAND, command));
+                pending.headLocation.getRewards().set(pending.rewardIndex, new Reward(pending.rewardType, value));
                 HeadService.saveHeadInConfig(pending.headLocation);
                 player.sendMessage(LanguageService.getMessage("Messages.RewardUpdated"));
             }
         } else {
-            pending.headLocation.addReward(new Reward(RewardType.COMMAND, command));
+            pending.headLocation.addReward(new Reward(pending.rewardType, value));
             HeadService.saveHeadInConfig(pending.headLocation);
             player.sendMessage(LanguageService.getMessage("Messages.RewardAdded"));
         }

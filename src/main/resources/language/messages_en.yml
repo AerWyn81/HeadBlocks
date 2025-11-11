@@ -64,6 +64,8 @@ Messages:
   NameCannotBeEmpty: "%prefix% &cHead name cannot be empty."
   HeadRenamed: "%prefix% &aSuccessfully renamed head to &e%name%&a."
   EnterRewardCommand: "%prefix% &aPlease enter the reward command in chat &7(without /, type 'cancel' to abort)&a:"
+  EnterRewardMessage: "%prefix% &aPlease enter the reward message in chat &7(type 'cancel' to abort)&a:"
+  EnterRewardBroadcast: "%prefix% &aPlease enter the broadcast message in chat &7(type 'cancel' to abort)&a:"
   RewardAdded: "%prefix% &aReward successfully added!"
   RewardUpdated: "%prefix% &aReward successfully updated!"
   ProgressCommand:
@@ -193,6 +195,7 @@ Gui:
   RewardItemName: "&bReward #%index%"
   RewardType: "&7Type: &e%type%"
   RewardCommand: "&7Command: &e%command%"
+  RewardMessage: "&7Message: %message%"
   RewardItemLore:
     - ""
     - "&c&lLEFT CLICK&8: &7Edit reward"
@@ -201,6 +204,28 @@ Gui:
   AddRewardLore:
     - ""
     - "&a&lCLICK&8: &7Add a new reward"
+  TitleRewardTypeSelection: "&8Select reward type"
+  RewardTypeMessage: "&a&lMessage"
+  RewardTypeMessageLore:
+    - ""
+    - "&7Send a personal message to the player"
+    - "&7who finds this head"
+    - ""
+    - "&a&lCLICK&8: &7Select this type"
+  RewardTypeCommand: "&6&lCommand"
+  RewardTypeCommandLore:
+    - ""
+    - "&7Execute a command as console"
+    - "&7when a player finds this head"
+    - ""
+    - "&a&lCLICK&8: &7Select this type"
+  RewardTypeBroadcast: "&b&lBroadcast"
+  RewardTypeBroadcastLore:
+    - ""
+    - "&7Send a message to all online players"
+    - "&7when a player finds this head"
+    - ""
+    - "&a&lCLICK&8: &7Select this type"
   HintName: "&7Set up &8- &b&lHint"
   HintLore:
     - ""
