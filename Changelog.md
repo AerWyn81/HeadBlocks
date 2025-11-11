@@ -1,6 +1,6 @@
 # HeadBlocks v2.8.2
 
-Thank you for using HeadBlocks ❤
+Thank you for using HeadBlocks ❤️
 
 If you find a bug or have a question, don't hesitate to :
 
