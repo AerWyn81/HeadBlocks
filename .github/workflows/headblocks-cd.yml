@@ -156,3 +156,28 @@ jobs:
 
           # Java version
           java: 17
+
+  generate-bbcode:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Convert Changelog to BBCode
+        run: python convert-to-bbcode.py
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Upload BBCode as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-bbcode-${{ steps.get_version.outputs.VERSION }}
+          path: Changelog.bbcode
+          retention-days: 1
