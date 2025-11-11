@@ -11,17 +11,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 21
+
       # - name: Install dependencies
       #  run: bash ./install-dependency.sh ${{ secrets.FILE_ID_CMI_9_8_2_2 }} ${{ secrets.FILE_ID_CMI_LIB_1_5_7_1 }} ${{ secrets.FILE_ID_HOLOEASY }}
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
       - name: Build with Gradle - Compile plugin
         run: ./gradlew clean build -Pcd
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -32,9 +37,11 @@ jobs:
           release_name: ${{ github.ref }}
           draft: false
           prerelease: false
+
       - name: Get the tag version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
       - name: Upload Release Jar
         id: upload-release-jar
         uses: actions/upload-release-asset@v1
@@ -45,3 +52,107 @@ jobs:
           asset_path: ./build/HeadBlocks.jar
           asset_name: HeadBlocks-${{ steps.get_version.outputs.VERSION }}.jar
           asset_content_type: application/java-archive
+
+  publish-modrinth:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew shadowJar --no-daemon
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Get changelog from Changelog.md
+        id: changelog
+        run: |
+          if [ -f "Update.md" ]; then
+            echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+            cat Update.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "CHANGELOG=No changelog provided." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Find built JAR
+        id: find_jar
+        run: |
+          JAR_FILE=$(find build -name "HeadBlocks-*.jar" -type f | head -n 1)
+          echo "JAR_PATH=$JAR_FILE" >> $GITHUB_OUTPUT
+          echo "Found JAR: $JAR_FILE"
+
+      - name: Determine version type
+        id: version_type
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          if [[ "$VERSION" == *"alpha"* ]]; then
+            echo "TYPE=alpha" >> $GITHUB_OUTPUT
+          elif [[ "$VERSION" == *"beta"* ]]; then
+            echo "TYPE=beta" >> $GITHUB_OUTPUT
+          else
+            echo "TYPE=release" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to Modrinth
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: bpD0tpKu
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          # Files to upload
+          files: ${{ steps.find_jar.outputs.JAR_PATH }}
+
+          # Version details
+          name: HeadBlocks ${{ steps.get_version.outputs.VERSION }}
+          version: ${{ steps.get_version.outputs.VERSION }}
+          version-type: ${{ steps.version_type.outputs.TYPE }}
+
+          # Changelog from Changelog.md
+          changelog: ${{ steps.changelog.outputs.CHANGELOG }}
+
+          # Game versions (adjust as needed)
+          game-versions: |
+            1.20
+            1.20.1
+            1.20.2
+            1.20.3
+            1.20.4
+            1.20.5
+            1.20.6
+            1.21
+            1.21.1
+            1.21.2
+            1.21.3
+            1.21.4
+            1.21.5
+            1.21.6
+            1.21.7
+            1.21.8
+            1.21.9
+            1.21.10
+
+          # Loaders
+          loaders: |
+            spigot
+
+          # Dependencies (optional)
+          dependencies: |
+            PlaceholderAPI(optional)
+            HeadDatabase(optional)
+            PacketEvents(optional)
+
+          # Java version
+          java: 17

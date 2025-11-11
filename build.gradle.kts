@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.run.paper)
 }
 
-version = "2.8.1"
+version = "2.8.2"
 
 repositories {
     mavenCentral()
@@ -20,13 +20,11 @@ repositories {
 }
 
 dependencies {
-    // Compile Only Dependencies
     compileOnly(libs.spigot.api)
     compileOnly(libs.placeholderapi)
     compileOnly(libs.headdatabase.api)
     compileOnly(libs.packetevents)
 
-    // Implementation Dependencies (will be shaded)
     implementation(libs.jedis)
     implementation(libs.hikaricp)
     implementation(libs.gson)
