@@ -213,6 +213,24 @@ shouldResetPlayerData: true
 By disabling this configuration, when a head is deleted (from the command or sneak), players' data will not be deleted.
 It is not recommended deactivating it because the data will never be deleted (not used atm).
 
+#### Hide found heads
+
+```
+hideFoundHeads: false
+```
+
+By enabling this configuration, heads that a player has already found will be hidden from their view using PacketEvents.
+This feature requires the [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/) plugin to be
+installed.
+When a player finds a head, it will disappear from their view.
+This allows players to focus only on heads they haven't found yet.
+
+!> It may happen that the hitbox is still present but invisible; this is a limitation.
+Also, remember to disable the ‘Found’ hologram or leave the placeholder empty in advanced hologram type to prevent the
+hologram from appearing above the head.
+
+!> This feature requires PacketEvents to be installed and a server restart to apply changes.
+
 #### Prevent messages if tieredRewards contains the current number
 
 ```

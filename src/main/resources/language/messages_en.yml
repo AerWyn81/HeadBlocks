@@ -1,35 +1,3 @@
-# Translations
-
-All plugin messages (except console messages) can be translated. Here is the list below:
-
-To add a translation, simply duplicate the `messages_en.yml` in language folder and name it as you wish but keep
-the `_xx.yml` somewhere.  
-Make your translations and then in the [config.yml](config.md) file, add the previous `xx` in language section.
-
-### Colors
-
-HeadBlocks supports Minecraft legacy colors, hexadecimal and gradients thanks to [IridiumColorAPI](https://github.com/Iridium-Development/IridiumColorAPI).
-
-**How to:**
-
-Minecraft native color:  
-`&6&lH&e&lead&6&lB&e&llocks`
-
-Hexadecimal color:  
-`<SOLID:FFFF00>HeadBlocks`
-
-Gradient:  
-`<GRADIENT:ff0000>HeadBlocks</GRADIENT:ffff00>`
-
-Bonus Rainbow:  
-`<RAINBOW1>HeadBlocks</RAINBOW>`
-
-Gradient saturation:  
-`<RAINBOW100>HeadBlocks</RAINBOW>`
-
----
-
-```
 Prefix: '&6&lH&e&lead&6&lB&e&llocks &7»&r'
 
 Head:
@@ -296,4 +264,3 @@ Help:
   Move: "&6/hb move&8: &7&oMove the HeadBlock to another location"
   Export: "&6/hb export database&8: &7&oExport the database to an SQL file with player data"
   Rename: "&6/hb rename <name>&8: &7&oRename target head"
-```
