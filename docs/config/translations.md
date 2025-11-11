@@ -1,30 +1,31 @@
 # Translations
 
-All plugin messages (except console messages) can be translated. Here is the list below:
+All plugin messages (except console messages) can be translated.
 
-To add a translation, simply duplicate the `messages_en.yml` in language folder and name it as you wish but keep
-the `_xx.yml` somewhere.  
-Make your translations and then in the [config.yml](config.md) file, add the previous `xx` in language section.
+To add a translation, duplicate the `messages_en.yml` file in the language folder and rename it, keeping the `_xx.yml`
+format.
+Make your translations and then in the [config.yml](config.md) file, set the `xx` code in the language section.
 
 ### Colors
 
-HeadBlocks supports Minecraft legacy colors, hexadecimal and gradients thanks to [IridiumColorAPI](https://github.com/Iridium-Development/IridiumColorAPI).
+HeadBlocks supports Minecraft legacy colors, hexadecimal colors, and gradients thanks
+to [IridiumColorAPI](https://github.com/Iridium-Development/IridiumColorAPI).
 
-**How to:**
+**How to use:**
 
-Minecraft native color:  
+Minecraft native color:
 `&6&lH&e&lead&6&lB&e&llocks`
 
-Hexadecimal color:  
+Hexadecimal color:
 `<SOLID:FFFF00>HeadBlocks`
 
-Gradient:  
+Gradient:
 `<GRADIENT:ff0000>HeadBlocks</GRADIENT:ffff00>`
 
-Bonus Rainbow:  
+Rainbow (bonus):
 `<RAINBOW1>HeadBlocks</RAINBOW>`
 
-Gradient saturation:  
+Gradient saturation:
 `<RAINBOW100>HeadBlocks</RAINBOW>`
 
 ---

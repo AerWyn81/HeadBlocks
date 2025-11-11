@@ -1,6 +1,6 @@
-# API:
+# API
 
-#### Using Maven:
+#### Using Maven
 
 ```
 <repositories>
@@ -17,7 +17,7 @@
 </dependency>
 ```
 
-#### Using Gradle:
+#### Using Gradle
 
 ```
 repositories {
@@ -29,7 +29,7 @@ dependencies {
 }
 ```
 
-#### Now you can get the HeadBlocks plugin instance:
+#### Getting the HeadBlocks Plugin Instance
 
 ```
 package package.artifactId;
@@ -43,15 +43,15 @@ public final class MyPlugin extends JavaPlugin {
             // HeadBlocks not enabled
         }
 
-        // Access at the entire plugin with the headBlocksInstance instance
+        // Access the plugin using the headBlocksInstance
         headBlocksInstance..
     }
 ```
 
-#### And use:
+#### Available Events
 
-| Events           | Explanations                                                       |
-|------------------|--------------------------------------------------------------------|
-| HeadClickEvent   | _Event triggered when a head is clicked (contains success or not)_ |
-| HeadCreatedEvent | _Event called when a head is created (contains the location)_      |
-| HeadDeletedEvent | _Event to trigger when a head is deleted_                          |
+| Events           | Description                                                  |
+|------------------|--------------------------------------------------------------|
+| HeadClickEvent   | _Triggered when a head is clicked (includes success status)_ |
+| HeadCreatedEvent | _Called when a head is created (includes the location)_      |
+| HeadDeletedEvent | _Triggered when a head is deleted_                           |

@@ -1,6 +1,6 @@
 # Config.yml
 
-Each configuration is explained in the detail below:
+Each configuration option is explained in detail below:
 
 #### Language
 
@@ -8,20 +8,21 @@ Each configuration is explained in the detail below:
 language: en
 ```
 
-This setting tells the configuration which language file to use. For this, the language file must be in the
-folder `plugins/HeadBlocks/language/` and must be named as follows: `messages_xx.yml` where `xx` corresponds to the
-above setting. By default, `en` is used.
+This setting specifies which language file to use. The language file must be located in the
+`plugins/HeadBlocks/language/` folder and named `messages_xx.yml` where `xx` corresponds to the language code. By
+default, `en` is used.
 
 #### Metrics
-You can safely disable this option if needed.  
-However, it allows me to have information about the use of my plugin.  
-I will not publish this information, it is exclusively for me  
+
+You can safely disable this option if needed.
+However, it allows me to gather usage statistics for the plugin.
+This information is private and for development purposes only.
 _Metrics by bStats_
 ```
 metrics: true
 ```
 
-!> Reload the plugin has no effect on this property, to change, please restart the server
+!> Reloading the plugin has no effect on this property. To change it, restart the server.
 
 
 #### Heads
@@ -33,29 +34,31 @@ heads:
   - 'player:PlayerName'
 ```
 
-You can use multiple texture on a HeadBlock. Two types are possible:
-- **default**: To get the Base64String, I advise you to
-visit [Minecraft-Heads](https://minecraft-heads.com/) to get this information. Find the head you want to use and in the
-same page, at the bottom, in **Other** section, copy the **Value** and paste it in place of `base64String`.
-- **hdb**: Plugin [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/) is needed. Now, you can
-retrieve the ID of the head with the plugin and use it in place of `Id`.
-- **player**: Retrieve the player name and the head will have the texture of the player head.
+You can use multiple textures for HeadBlocks. Three types are available:
 
-!> Note: Skulls and BetterHeads plugins cannot be supported because their API's is not working properly.
+- **default**: To get the Base64String, visit [Minecraft-Heads](https://minecraft-heads.com/). Find the head you want,
+  scroll to the bottom of the page, and in the **Other** section, copy the **Value** and paste it in place of
+  `base64String`.
+- **hdb**: Requires the [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/) plugin. Retrieve the
+  head ID from the plugin and use it in place of `Id`.
+- **player**: Use a player's name to display their head texture.
 
-When using the command `/hb give <playerName>`, you can specify what HeadBlock you want:
-- add a `*` at the end of the command and you will get all HeadBlocks
-- add a `number` at the end of the command and will get the head in order in the config
+!> Note: Skulls and BetterHeads plugins are not supported due to API incompatibility.
 
-!> Note: If you have only one head configured, just use the simple command /hb give
+When using the command `/hb give <playerName>`, you can specify which HeadBlock to give:
 
-#### Heads theme
+- Add `*` at the end to give all HeadBlocks
+- Add a `number` to give the head at that position in the config
+
+!> Note: If you have only one head configured, simply use `/hb give`
+
+#### Heads Theme
 ```
-# When enabling this, that will override above heads configuration
-# If you want some idea for default heads textures or customize yours, you can define that below
-# This configuration will not be updated on change, so if you want to add some another themes, simply follow the correct indentation and add your
-# Same configurations than above head textures
-# /!\ Will not update heads already placed /!\
+# Enabling this will override the above heads configuration
+# If you want ideas for default head textures or to customize your own, define them below
+# This configuration will not auto-update, so to add more themes, follow the correct indentation
+# Same configuration format as above head textures
+# /!\ Will not update already-placed heads /!\
 headsTheme:
   enabled: false
   selected: "Christmas"
@@ -194,15 +197,15 @@ particles:
     amount: 3
 ```
 
-It is possible to float particles over the head if the player has found or not found the head if **enabled**:
+Particles can float above heads based on whether the player has found them or not when **enabled**:
 
-- enabled: if particle found/not found is enabled
-- delay: time between each particle display (the longer the time, the less lag it can cause) (20 ticks - 1 second)
-- playerViewDistance: the range at which players can see the particles
-- type: particle type (you can see the list [here](reference/particles.md))
-- colors: only work for REDSTONE particle type
+- enabled: whether particle effect is enabled for found/not found heads
+- delay: time between each particle display in ticks (longer delays reduce server load) (20 ticks = 1 second)
+- playerViewDistance: distance at which players can see the particles
+- type: particle type (see full list [here](reference/particles.md))
+- colors: only works for REDSTONE particle type
   - can be a list of colors (format: 'r, g, b')
-- amount: number of particles displayed
+- amount: number of particles displayed per effect
 
 #### Reset player data
 
@@ -210,8 +213,9 @@ It is possible to float particles over the head if the player has found or not f
 shouldResetPlayerData: true
 ```
 
-By disabling this configuration, when a head is deleted (from the command or sneak), players' data will not be deleted.
-It is not recommended deactivating it because the data will never be deleted (not used atm).
+When this configuration is disabled, player progress data will not be deleted when a head is removed (via command or
+sneak+click).
+It is not recommended to disable this setting as unused data will accumulate in the database.
 
 #### Hide found heads
 
@@ -219,15 +223,15 @@ It is not recommended deactivating it because the data will never be deleted (no
 hideFoundHeads: false
 ```
 
-By enabling this configuration, heads that a player has already found will be hidden from their view using PacketEvents.
+When enabled, heads that a player has already found will be hidden from their view using PacketEvents.
 This feature requires the [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/) plugin to be
 installed.
-When a player finds a head, it will disappear from their view.
-This allows players to focus only on heads they haven't found yet.
+Once a player finds a head, it will disappear from their view, allowing them to focus only on heads they haven't found
+yet.
 
-!> It may happen that the hitbox is still present but invisible; this is a limitation.
-Also, remember to disable the ‘Found’ hologram or leave the placeholder empty in advanced hologram type to prevent the
-hologram from appearing above the head.
+!> Note: The hitbox may still be present even though the head is invisible; this is a known limitation.
+Also, remember to disable the 'Found' hologram or leave the placeholder empty in advanced hologram mode to prevent
+holograms from appearing above hidden heads.
 
 !> This feature requires PacketEvents to be installed and a server restart to apply changes.
 
@@ -237,10 +241,11 @@ hologram from appearing above the head.
 preventMessagesOnTieredRewardsLevel: false
 ```
 
-By activating this configuration, messages on `headClick` configuration section will not be sent to the player if the number of heads the player has is part of a tieredRewards.
+When enabled, messages from the `headClick` configuration section will not be sent to players if their current head
+count matches a tieredRewards milestone.
 Example:
-> I want it to show the normal "You found a head" messages for rewards 1-14.  
-> And then for reward 15 only show the "Congrats you found 15 heads!" which is what is configured with TieredRewards
+> Show the normal "You found a head" message for heads 1-14.
+> For head 15, only show the "Congrats you found 15 heads!" message configured in TieredRewards.
 
 #### Prevent commands if tieredRewards contains the current number
 
@@ -248,12 +253,12 @@ Example:
 preventCommandsOnTieredRewardsLevel: false
 ```
 
-By activating this configuration, if the number of heads the player has is part of a tieredRewards, the commands when
-clicking the head will not be executed.  
+When enabled, if a player's head count matches a tieredRewards milestone, the commands from `headClick` will not be
+executed.
 Example:
-> I have 40 heads and the headClick command is "eco give %player% 500"  
-> At tiered rewards I have (at 10 heads): "eco give %player% 2000"  
-> Instead of giving both, that will just give 2000 and not the 500 + 2000
+> The player has found 10 heads and the headClick command is "eco give %player% 500"
+> In tieredRewards for 10 heads: "eco give %player% 2000"
+> Only the tiered reward (2000) will be given, not both (500 + 2000)
 
 #### TieredRewards
 
@@ -288,20 +293,20 @@ tieredRewards:
     randomizeCommands: false
 ```
 
-It is possible to set up reward levels. When the player reaches the level, that will send a message containing several
-lines and execute a list of commands.   
-You can also define a number of slots required to execute the command with `slotsRequired`,
-and you can randomize the commands executed.
+You can configure milestone rewards that trigger when a player reaches a specific head count.
+When triggered, the plugin will send multi-line messages and execute a list of commands.
+You can also specify `slotsRequired` to ensure the player has enough inventory space,
+and enable `randomizeCommands` to execute commands in random order.
 
-?> Hex colors, placeholders and centering (use: {center}) are supported
+?> Hex colors, placeholders, and text centering (use: {center}) are supported.
 
-!> It is not yet possible to trigger a level with rewards if the player has already passed it (by doing the
-configuration later for example). Make sure that you don't have to add levels afterwards or they won't be triggered.
+!> Note: Milestone rewards cannot be triggered retroactively if a player has already passed the threshold (for example,
+if you add a new milestone later). Plan your milestones before players progress too far.
 
 ## Headclick
 
-_The following configuration is divided into several parts. This is the biggest one and it is the one that allows to
-customize the interactions when a player clicks on the head_
+_The following configuration section is the largest and allows you to customize all interactions when a player clicks on
+a head._
 
 #### Headclick - Message
 
@@ -313,9 +318,8 @@ headClick:
     - '&aProgression of &e%player%&7: %progress% &e%current%&7/&e%max%'
 ```
 
-As shown above, it is possible to send a message with several lines to a player when he clicks on the head. This message
-can be colored and can contain the placeholders of the plugin
-or [PlaceHolderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/).
+You can send multi-line messages to players when they click on a head. Messages support color codes and can include
+plugin placeholders or [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/) placeholders.
 
 #### Headclick - Title
 
@@ -330,15 +334,15 @@ headClick:
     fadeOut: 0
 ```
 
-It is also possible to send a title when the head is clicked, if `enabled`, to the player highly configurable:
+When enabled, you can display a highly configurable title to the player when they click on a head:
 
-- firstLine: first line of the title
-- subTitle: second line of the title
-- fadeIn: how long it takes to display in ticks (20 ticks -> 1 second)
-- stay: how long it stays displayed in ticks
-- fadeOut: how long it takes to disappear in ticks
+- firstLine: main title text
+- subTitle: subtitle text
+- fadeIn: fade-in duration in ticks (20 ticks = 1 second)
+- stay: display duration in ticks
+- fadeOut: fade-out duration in ticks
 
-?> Hex colors (format: {#ffffff}), placeholders and centering (use: {center}) are supported
+?> Hex colors (format: {#ffffff}), placeholders, and text centering (use: {center}) are supported.
 
 #### Headclick - Firework
 
@@ -356,16 +360,15 @@ headClick:
     power: 0
 ```
 
-This configuration, if `enabled`, allows to make an explosion of particles, like those with fireworks when the head is
-clicked with several options:
+When enabled, this creates a firework particle explosion when a head is clicked:
 
 - colors/fadeColors:
-  - if empty, that will generate a random list of colors
-  - else a list of colors (format: 'red, green, blue')
-- flicker: is the firework flickering
+  - if empty: generates a random color palette
+  - if specified: list of colors (format: 'red, green, blue')
+- flicker: whether the firework particles flicker
 - power:
-  - set to 0: the firework will explode on the head
-  - set to more: the firework will explode in height according to the power (1 and 2 is vanilla)
+  - 0: firework explodes at head location
+  - 1+: firework explodes at height based on power value (1 and 2 are vanilla heights)
 
 #### Headclick - Particles
 
@@ -381,10 +384,11 @@ headClick:
       amount: 1
 ```
 
-If `enabled`, you can define [particles](reference/particles.md) which will be displayed when the player will click on
-the head that it has already:
-- type: particle type (you can see the list [here](reference/particles.md))
-- colors: only work for REDSTONE particle type
+When enabled, you can configure [particles](reference/particles.md) that display when a player clicks on a head they've
+already found:
+
+- type: particle type (see full list [here](reference/particles.md))
+- colors: only works for REDSTONE particle type
   - can be a list of colors (format: 'r, g, b')
 - amount: number of particles displayed
 
@@ -397,8 +401,8 @@ headClick:
     notOwn: block_note_block_bell
 ```
 
-When clicking, it is possible to send two different [sounds](reference/sounds.md) to the player depending on whether he
-already has the head or not. Leave empty for no sound.
+You can play different [sounds](reference/sounds.md) depending on whether the player has already found the head or not.
+Leave empty for no sound.
 
 #### Headclick - Commands
 
@@ -410,11 +414,11 @@ headClick:
   slotsRequired: -1
 ```
 
-It is possible to execute a command list when a player clicks on the head. 
-You can also define a number of slots required to execute the command with `slotsRequired`,
-and you can randomize the commands executed.
+You can execute a list of commands when a player clicks on a head.
+Use `slotsRequired` to ensure the player has enough inventory space before executing commands,
+and enable `randomizeCommands` to execute commands in random order.
 
-?> Hex colors (format: {#ffffff}), placeholders, and centering (use: {center}) are supported
+?> Hex colors (format: {#ffffff}), placeholders, and text centering (use: {center}) are supported.
 
 #### Headclick - Pushback
 
@@ -425,7 +429,8 @@ headClick:
     power: 1
 ```
 
-Allows setting the pushback power on clicking the head when it has already been found.
+When enabled, pushes the player back when they click on a head they've already found. The `power` value controls the
+strength of the pushback.
 
 #### Holograms
 
@@ -448,22 +453,22 @@ holograms:
       - "%state% &7(%current%/%max%)"
 ```
 
-It is possible to add holograms over the head and show it if the player has found the head or not. Can be configurable by:
-- plugin: 
-  - **DEFAULT** : use Minecraft TextDisplay (simple text)
-  - **ADVANCED** : use for placeholders (require PacketEvents)
-- heightAboveHead: height from the top of head and bottom of the last line of the hologram (support decimals)
-- enabled: set enabled or disabled found or noFound hologram
-- lines: lines displayed in the hologram
-- advanced :
-  - You can define an internal placeholder for lines `%state%` that will
-    be converted automatically by the plugin to the value `foundPlaceholder` if the
-    head is found by the player, or to the value `notFoundPlaceholder` if player doesn't have found the head.
-  - Advanced mode natively allows the hologram to be hidden if it is not in the player's field of vision.
+You can display holograms above heads showing whether a player has found them or not. Configuration options:
 
-?> Hex colors (format: {#ffffff}) supported
+- plugin:
+  - **DEFAULT**: uses Minecraft TextDisplay (simple text, no placeholders)
+  - **ADVANCED**: supports placeholders (requires PacketEvents)
+- heightAboveHead: distance between top of head and bottom of hologram (supports decimals)
+- enabled: enable or disable hologram for found/not found heads
+- lines: text lines displayed in the hologram
+- advanced:
+  - Define an internal `%state%` placeholder that automatically converts to `foundPlaceholder` if the player has found
+    the head, or `notFoundPlaceholder` if they haven't.
+  - Advanced mode automatically hides holograms when not in the player's field of vision.
 
-?> Placeholders are supported
+?> Hex colors (format: {#ffffff}) are supported.
+
+?> Placeholders are supported.
 
 #### Spin mode
 ```
@@ -472,10 +477,12 @@ spin:
   speed: 20
   linked: true
 ````
-By activating spin mode, the heads turn on themselves.  
-If `linked` mode is enabled, heads will rotate identically,
-according to the delay configured in the section below `internalTask.delay`.  
-If `linked` mode is disabled, heads will rotate with a delay (five ticks between) at a configurable speed according to the value defined in `speed`.
+
+When enabled, heads will rotate continuously.
+
+- If `linked` mode is enabled: all heads rotate synchronously according to the `internalTask.delay` setting.
+- If `linked` mode is disabled: each head rotates independently with a 5-tick offset between heads, at the speed defined
+  in `speed`.
 
 #### Hint
 
@@ -489,11 +496,13 @@ hint:
   actionBarMessage: "%prefix% &aPssst, a head is near &7(%arrow%) !"
 ```
 
-Option to set a sound when a head is not found to give the player a hint.  
-To make a head emit a sound, it must be activated in the `/hb options`, Hint tab.  
-It is possible to change the `frequency` of the sound (the smaller the value,
-the more frequent the sound will be; the larger the value, the less frequent the sound will be).
-It is possible to increase the `volume` and `type of sound`.
+Configure audio and visual hints to help players locate unfound heads.
+To enable hints for a specific head, activate it in `/hb options`, Hint tab.
+
+- `distance`: how close a player must be to receive hints
+- `frequency`: how often hints appear in ticks (lower values = more frequent)
+- `sound`: sound settings including volume and sound type
+- `actionBarMessage`: message shown to nearby players (supports `%arrow%` placeholder for direction)
 
 #### Internal Task
 
@@ -503,24 +512,29 @@ internalTask:
   hologramParticlePlayerViewDistance: 16
 ```
 
-This section affects the internal timer of the plugin. You can modify these values to improve the performance, but it may affect the plugin's operation.
-- delay: in ticks when plugin will check for player around a head
-- hologramParticlePlayerViewDistance: view distance for hologram and particles displayed to the player
+This section controls the plugin's internal task scheduler. Modifying these values can improve performance but may
+affect plugin behavior.
+
+- delay: how often (in ticks) the plugin checks for nearby players around heads
+- hologramParticlePlayerViewDistance: maximum distance at which players can see holograms and particles
 
 #### Other configurations
 
-With the `/hb options` command, you can set additional parameters for the heads easily with a GUI. You have two choices:
-- **Order:**  
-  Order allows you to define an order in which the player will have to click on the heads to complete the event. In order to have clear instructions for your players, once the order is defined, you have to go in the configuration file `locations.yml` and name the heads. The name will appear in the chat when a player clicks on a head if the order is incorrect. It is also possible to put several heads at the same order level. **The order is defined as follows: the order in the GUI is authoritative, the smaller the value, the higher the priority.**
+Use the `/hb options` command to configure additional head parameters through an intuitive GUI:
 
+- **Order:**
+  Define a specific sequence in which players must click heads. For clear player instructions, name your heads in the
+  `locations.yml` file after defining the order. The name appears in chat when a player clicks heads out of order.
+  Multiple heads can share the same order position. **Lower order values have higher priority.**
 
-- **ClickCounter:**  
-  The clickCounter allows defining a maximum number of clicks on the head.
-  It is global.
-  If the number is reached, the head is no longer clickable and the rewards are not distributed.
-  If you increase the number, it will be possible for your players to click on it again.
+- **ClickCounter:**
+  Set a global maximum click limit for each head. Once the limit is reached, the head becomes unclickable and stops
+  distributing rewards. Increasing the limit allows players to click the head again.
 
+- **Hint:**
+  Enable proximity-based audio hints for specific heads. Players near an unfound head will hear a sound. Configure sound
+  settings in config.yml.
 
-- **Hint:**  
-  Head will produce a song when the player is near the head.
-  This is highly configurable in config.yml.
+- **Rewards:**
+  Configure per-head rewards including messages, commands, and broadcasts. Each head can have multiple rewards that
+  trigger when a player finds it.

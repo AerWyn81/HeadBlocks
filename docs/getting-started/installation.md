@@ -2,10 +2,11 @@
 
 ## Prerequisites
 
-HeadBlocks can be used on any Minecraft server that requires Spigot, Paper or any other type of Minecraft server except
-Vanilla/Folia start from version **1.20+**.
+HeadBlocks can be used on any Minecraft server running Spigot, Paper, or similar server software (excluding
+Vanilla/Folia) starting from version **1.20+**.
 
-If you want to use HeadBlocks in version **below 1.16.5**, you can use HeadBlocks versionUtils 1.6.x. Theses versions will not receive new features but will be updated to fix issues.
+If you want to use HeadBlocks on versions **below 1.16.5**, you can use HeadBlocks version 1.6.x. These versions will
+not receive new features but will continue to receive bug fixes.
 
 **HeadBlocks can be downloaded on [Spigot](https://www.spigotmc.org/resources/headblocks.97630/)**
 
@@ -15,17 +16,12 @@ If you want to use HeadBlocks in version **below 1.16.5**, you can use HeadBlock
 
 1. [**PlaceholderAPI**](https://www.spigotmc.org/resources/placeholderapi.6245/)
 2. [**HeadDatabase**](https://www.spigotmc.org/resources/head-database.14280)
-3. [**DecentHolograms
-   **](https://www.spigotmc.org/resources/decentholograms-1-8-1-19-3-papi-support-no-dependencies.96927/)
-4. [**Holographic-Displays**](https://dev.bukkit.org/projects/holographic-displays)
-5. [**CMI
-   **](https://www.spigotmc.org/resources/cmi-298-commands-insane-kits-portals-essentials-economy-mysql-sqlite-much-more.3742/)
+3. [**PacketEvents**](https://www.spigotmc.org/resources/packetevents-api.80279/)
 
-## Plugin Install
+## Plugin Installation
 
-1. Drag and drop the `HeadBlocks-<version>.jar` in your server `plugins` folder and any optional plugin into
-   your `plugins` folder.
+1. Place the `HeadBlocks-<version>.jar` file and any optional plugins into your server's `plugins` folder.
 2. Start your server.
-3. Check if the plugin is running with the command `/plugins`.
-4. If you need information with usage, click [here](usage)
-5. If you need information with configuration, you can click [here](../config/config.md)
+3. Verify the plugin is running using the `/plugins` command.
+4. For usage information, click [here](usage).
+5. For configuration information, click [here](../config/config.md).

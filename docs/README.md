@@ -1,36 +1,38 @@
-# Overview:
+# Overview
 
-HeadBlocks is a plugin that allows you to keep your players busy while having fun.
-The goal is straightforward, you hide a number
-of heads in your world, and your players have to find them to get many rewards.
+HeadBlocks is a plugin that keeps your players engaged and entertained.
+The concept is simple: hide heads throughout your world, and players must find them to earn rewards.
 
 ![Issue Github](https://img.shields.io/github/issues-raw/AerWyn81/HeadBlocks?color=%2370d121&style=for-the-badge)
 ![Discord](https://img.shields.io/discord/912462773995335701?label=DISCORD&logo=discord&logoColor=%238bc1f7&style=for-the-badge)
 ![Code Quality](https://img.shields.io/codefactor/grade/github/AerWyn81/HeadBlocks?logo=codefactor&style=for-the-badge)
 ___
 
-# Features:
+# Features
 
-- Straightforward to use
-- No head limit
-- Possibility to execute commands when clicking or according to levels
-- Possibility to customize the texture of the head
-- Possibility to customize sounds on click
-- Possibility to send a multi-line message on click
-- Possibility to customize a firework or an explosion at the head with any colors
-- Possibility to send a title customizable to the player
-- Possibility to add particles on head already found and not found
-- It Can be used on a lobby, on a single server or even on several servers simultaneously (with Redis)
-- Storage of player data in SQLite or MySQL
-- Everything is almost translatable
+- Easy to use
+- Unlimited heads
+- Execute commands on click or based on collection milestones
+- Customize head textures
+- Customize click sounds
+- Send multi-line messages on click
+- Customize fireworks or explosions with any colors
+- Display customizable titles to players
+- Add particles to found and unfound heads
+- Works in lobbies, single servers, or multi-server networks (with Redis)
+- Store player data in SQLite or MySQL
+- Fully translatable
 - API for developers
-- Contains several placeholders
+- Multiple placeholders available
 - Automatic configuration updates
-- Supports Minecraft 1.16+ colors
-- Show holograms on heads
-- Order or define max clicks on the heads
-- Head push back when already obtained
-- Head spin mode (head will rotate simultaneously or not)
+- Supports Minecraft 1.16+ color codes
+- Display holograms above heads
+- Set collection order or define maximum clicks per head
+- Push back heads when already collected
+- Head spin animation (synchronized or independent rotation)
+- Hint system (actionBar or Sound)
+- Per-head rewards (commands, broadcast, message)
+- Hide head when found (using PacketEvents)
 
 ___
 

@@ -1,10 +1,10 @@
-# How to use
+# How to Use
 
-The plugin is very easy to use, and you can configure it in 1 minute!
+The plugin is easy to use and can be configured in just 1 minute!
 
-1. First, make sure you are OP or have the `headblocks.admin` permission.
-2. Give yourself a HeadBlocks with the command `/hb give`.
-3. Now you just have to sneak and right-click in gamemode creative with the head in hand at the target location you want.
-4. If you need to destroy the head, simply sneak and left-click on the head to break it.
+1. Make sure you are OP or have the `headblocks.admin` permission.
+2. Give yourself a HeadBlock using the command `/hb give`.
+3. In Creative mode, sneak and right-click with the head in your hand at the desired location.
+4. To remove a head, sneak and left-click on it.
 
 !> Note: By default, any player can interact with heads. Negate the permission `headblocks.use` to prevent this.

@@ -1,58 +1,58 @@
-# Advanced usage
+# Advanced Usage
 
-### Important note
+### Important Note
 
-*Please follow this only if the developer asked you.*
+*Only follow these instructions if requested by the developer.*
 
-From the game, you can run the `/hb debug` command with two options:
+You can run the `/hb debug` command in-game with the following options:
 
 - texture
 - give
 - holograms
 
-The debug argument is not listed in the in-game help, nor in autocomplete.
+The debug argument is not listed in the in-game help or tab completion.
 
-!> Note: **Always back up your server AND HeadBlocks database tables before doing these commands.**
+!> Note: **Always back up your server AND HeadBlocks database tables before running these commands.**
 
 ### Texture
 
-If one of your heads loses its texture (steve's head), you can restore the texture by targeting the head and using the
-command: `/hb debug texture <base64Texture>`.  
-By default, texture is autocompleted to help you.
+If a head loses its texture (appears as Steve's head), you can restore it by targeting the head and using the command:
+`/hb debug texture <base64Texture>`.
+The texture parameter has tab completion to assist you.
 
 ### Give
 
-If you need to give heads to players manually, you can run the `/hb debug give` command.
+To manually give heads to players, use the `/hb debug give` command.
 
 Full command: `/hb debug give <all|player> <all|random|ordered> <numberOfHeads>`
 
-- `<all|player>`: You can give heads to all players or just one.
-- `<all|random|ordered>`: You can give all the heads, randomly or in order with a given amount.
+- `<all|player>`: Give heads to all players or a specific player.
+- `<all|random|ordered>`: Give all heads, random heads, or heads in order up to the specified amount.
 
-The algorithm reclaims the heads already owned by the player, so as not to give them back.
+The algorithm excludes heads the player already owns.
 
-?> In the server console, you can see in detail what's going on.
+?> Detailed progress information is displayed in the server console.
 
-Some examples:
-> I want to give all my players, all the heads
+Examples:
+> Give all heads to all players
 
 `/hb debug give all all`
 
-> I want to give a random head to a specific player
+> Give a random head to a specific player
 
 `/hb debug give <playerName> random 1`
 
-> I want to give the following three heads that a player hasn't got back
+> Give the next three uncollected heads to a player
 
 `/hb debug give <playerName> ordered 3`
 
-> I want to give all the players 30 random heads.
+> Give 30 random heads to all players
 
 `/hb debug give all random 30`
 
-!> **Very important! Rewards are not given.**  
-**Click order and hit count options are not taken into account, so this will force the insertion in the database!**
+!> **Very important! Rewards are not granted.**
+**Click order and hit count options are ignored, forcing insertion into the database!**
 
 ### Holograms
 
-This allows you to force holograms to reappear.
+Force holograms to reappear.
