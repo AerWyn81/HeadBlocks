@@ -37,3 +37,4 @@ If you find a bug or have a question, don't hesitate to :
 - **Dependency Removal**: Removed unnecessary dependencies to simplify plugin compilation.
 - **Dependency Management**: Centralized dependency versions using Gradle catalog (`libs.versions.toml`)
 - **Project Structure**: Simplified Gradle structure by removing unnecessary `core` module
+- **Console logging**: Improved logging in console using native server logger.
