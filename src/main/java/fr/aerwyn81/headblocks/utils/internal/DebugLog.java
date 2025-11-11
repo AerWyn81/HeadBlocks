@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.utils.internal;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +25,7 @@ public class DebugLog {
             ps = new PrintStream(logFile);
             canWrite = true;
         } catch (IOException e) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create a debuglog file: " + e.getMessage()));
+            LogUtil.error("Cannot create a debuglog file: {0}", e.getMessage());
             canWrite = false;
         }
     }

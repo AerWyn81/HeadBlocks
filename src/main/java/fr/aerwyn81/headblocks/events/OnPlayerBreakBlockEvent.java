@@ -11,7 +11,7 @@ import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -74,7 +74,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
             HeadService.removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to remove a head (" + headLocation.getNameOrUuid() + ") from the storage: " + ex.getMessage()));
+            LogUtil.error("Error while trying to remove a head \"{0}\" from the storage: {1}", headLocation.getNameOrUuid(), ex.getMessage());
         }
 
         // Send player success message

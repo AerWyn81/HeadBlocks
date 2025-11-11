@@ -1,8 +1,8 @@
 package fr.aerwyn81.headblocks.data;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -251,13 +251,13 @@ public class HeadLocation {
         if (section.contains("locations." + hUUID + ".rewards")) {
             var rewardsSection = section.get("locations." + hUUID + ".rewards");
             if (!(rewardsSection instanceof ArrayList<?>)) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cMalformed rewards for head: " + headUUID + ". Not a list of TYPE with VALUE."));
+                LogUtil.error("Malformed rewards for head: {0}. Not a list of TYPE with VALUE.", headUUID);
             } else {
                 for (var item : (ArrayList<?>) rewardsSection) {
                     var reward = Reward.deserialize(item);
 
                     if (reward.getValue().isEmpty())
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&eIgnored reward for head " + headUUID + " because value is empty."));
+                        LogUtil.warning("Ignored reward for head {0} because value is empty.", headUUID);
                     else
                         rewards.add(reward);
                 }

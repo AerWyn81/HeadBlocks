@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -84,7 +85,7 @@ public class LanguageService {
             try {
                 file.createNewFile();
             } catch (IOException e) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading translation file: " + e.getMessage()));
+                LogUtil.error("Error loading translation file: {0}", e.getMessage());
             }
         }
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
@@ -123,13 +124,13 @@ public class LanguageService {
         try {
             cfg.save(file);
         } catch (IOException e) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading translation file: " + e.getMessage()));
+            LogUtil.error("Error loading translation file: {0}", e.getMessage());
         }
 
         try {
             ConfigUpdater.update(HeadBlocks.getInstance(), "language/messages_" + lang + ".yml", new File(HeadBlocks.getInstance().getDataFolder() + "/language/messages_" + lang + ".yml"), Collections.emptyList());
         } catch (IOException e) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading translation file: " + e.getMessage()));
+            LogUtil.error("Error loading translation file: {0}", e.getMessage());
         }
     }
 }

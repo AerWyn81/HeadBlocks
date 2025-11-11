@@ -13,10 +13,9 @@ import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.internal.Metrics;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.holoeasy.HoloEasy;
 
@@ -27,7 +26,6 @@ import java.util.Arrays;
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
 
-    public static ConsoleCommandSender log;
     private static HeadBlocks instance;
     public static boolean isPlaceholderApiActive;
     public static boolean isReloadInProgress;
@@ -42,7 +40,7 @@ public final class HeadBlocks extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        log = Bukkit.getConsoleSender();
+        LogUtil.initialize(getLogger());
 
         packetEventsHook = new PacketEventsHook();
         var isPacketEventsLoaded = packetEventsHook.load(this);
@@ -52,7 +50,7 @@ public final class HeadBlocks extends JavaPlugin {
         try {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads", "headsTheme"));
         } catch (IOException e) {
-            log.sendMessage(MessageUtils.colorize("&cError while loading config file: " + e.getMessage()));
+            LogUtil.error("Error while loading config file: {0}", e.getMessage());
             getPluginLoader().disablePlugin(this);
             return;
         }
@@ -65,7 +63,7 @@ public final class HeadBlocks extends JavaPlugin {
             if (isPacketEventsLoaded) {
                 holoEasyLib = new HoloEasy(this);
             } else {
-                log.sendMessage(MessageUtils.colorize("&cError while loading Holograms: PacketEvents is not loaded."));
+                LogUtil.error("Error while loading Holograms: PacketEvents is not loaded.");
             }
         }
     }
@@ -76,14 +74,14 @@ public final class HeadBlocks extends JavaPlugin {
 
         initializeExternals();
 
-        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &einitializing..."));
+        LogUtil.info("HeadBlocks initializing...");
 
         File locationFile = new File(getDataFolder(), "locations.yml");
 
         if (!VersionUtils.isAtLeastVersion(VersionUtils.v1_20_R1)) {
-            log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
-            log.sendMessage(MessageUtils.colorize("&cHeadBlocks does not support your Minecraft Server version: " + VersionUtils.getVersion()));
-            log.sendMessage(MessageUtils.colorize("&c***** --------------------------------------- *****"));
+            LogUtil.error("***** --------------------------------------- *****");
+            LogUtil.error("HeadBlocks does not support your Minecraft Server version: {0}", VersionUtils.getVersion());
+            LogUtil.error("***** --------------------------------------- *****");
             getPluginLoader().disablePlugin(this);
             return;
         }
@@ -150,7 +148,7 @@ public final class HeadBlocks extends JavaPlugin {
             m.addCustomChart(new Metrics.SimplePie("feat_hide_heads", () -> ConfigService.hideFoundHeads() ? "True" : "False"));
         }
 
-        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &asuccessfully loaded!"));
+        LogUtil.info("HeadBlocks successfully loaded!");
     }
 
     private void initializeExternals() {
@@ -180,7 +178,7 @@ public final class HeadBlocks extends JavaPlugin {
             holoEasyLib.destroyPools();
         }
 
-        log.sendMessage(MessageUtils.colorize("&6&lH&e&lead&6&lB&e&llocks &cdisabled!"));
+        LogUtil.info("HeadBlocks disabled!");
     }
 
     public void startInternalTaskTimer() {

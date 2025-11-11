@@ -11,7 +11,7 @@ import fr.aerwyn81.headblocks.storages.Storage;
 import fr.aerwyn81.headblocks.storages.types.Memory;
 import fr.aerwyn81.headblocks.storages.types.Redis;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.runnables.BukkitFutureResult;
 import fr.aerwyn81.headblocks.utils.runnables.CompletableBukkitFuture;
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -36,7 +36,7 @@ public class StorageService {
         storageError = false;
 
         if (ConfigService.isRedisEnabled() && !ConfigService.isDatabaseEnabled()) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError you can't use Redis without setting up an SQL database"));
+            LogUtil.error("Error you can't use Redis without setting up an SQL database");
             storageError = true;
             return;
         }
@@ -72,10 +72,10 @@ public class StorageService {
             storage.init();
 
             if (ConfigService.isRedisEnabled()) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&aRedis cache properly connected!"));
+                LogUtil.info("Redis cache properly connected!");
             }
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to initialize the storage: " + ex.getMessage()));
+            LogUtil.error("Error while trying to initialize the storage: {0}", ex.getMessage());
             storageError = true;
             return;
         }
@@ -89,15 +89,15 @@ public class StorageService {
 
             database.load();
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to connect to the " + ConfigService.getDatabaseType() + " database: " + ex.getMessage()));
+            LogUtil.error("Error while trying to connect to the {0} database: {1}", ConfigService.getDatabaseType(), ex.getMessage());
             storageError = true;
         }
 
         if (!storageError) {
             if (ConfigService.isDatabaseEnabled()) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&a" + ConfigService.getDatabaseType() + " storage properly connected!"));
+                LogUtil.info("{0} storage properly connected!", ConfigService.getDatabaseType());
             } else {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&aSQLite storage properly connected!"));
+                LogUtil.info("SQLite storage properly connected!");
             }
         }
     }
@@ -109,7 +109,7 @@ public class StorageService {
                 serverIdentifier = Files.readAllLines(file.toPath()).get(0);
             } catch (Exception ex) {
                 storageError = true;
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError reading server identifier file. Storage disabled. " + ex.getMessage()));
+                LogUtil.error("Error reading server identifier file. Storage disabled. {0}", ex.getMessage());
             }
 
             return;
@@ -122,7 +122,7 @@ public class StorageService {
             writer.close();
         } catch (Exception ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError generating server identifier file. Storage disabled. " + ex.getMessage()));
+            LogUtil.error("Error generating server identifier file. Storage disabled. {0}", ex.getMessage());
         }
     }
 
@@ -204,7 +204,7 @@ public class StorageService {
                 out.flush();
             }
         } catch (Exception e) {
-            HeadBlocks.log.sendMessage("&cError backuping database, aborting migration, storage error: " + e.getMessage());
+            LogUtil.error("Error backuping database, aborting migration, storage error: {0}", e.getMessage());
             return false;
         }
 
@@ -244,7 +244,7 @@ public class StorageService {
                     storage.setCachedPlayerHeads(pUuid, playerHeads);
                 } catch (InternalException ex) {
                     storageError = true;
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to load player " + playerName + " from SQL database: " + ex.getMessage()));
+                    LogUtil.error("Error while trying to load player {0} from SQL database: {1}", playerName, ex.getMessage());
                 }
             }
         });
@@ -278,7 +278,7 @@ public class StorageService {
             storage.removeCachedPlayerHeads(uuid);
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to clear player cache: " + ex.getMessage()));
+            LogUtil.error("Error while trying to clear player cache: {0}", ex.getMessage());
         }
 
         try {
@@ -289,7 +289,7 @@ public class StorageService {
             }
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to unload player " + playerName + " from SQL database: " + ex.getMessage()));
+            LogUtil.error("Error while trying to unload player {0} from SQL database: {1}", playerName, ex.getMessage());
         }
     }
 
@@ -300,7 +300,7 @@ public class StorageService {
             }
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to close the REDIS connection : " + ex.getMessage()));
+            LogUtil.error("Error while trying to close the REDIS connection : {0}", ex.getMessage());
         }
 
         try {
@@ -309,7 +309,7 @@ public class StorageService {
             }
         } catch (InternalException ex) {
             storageError = true;
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to close the SQL connection : " + ex.getMessage()));
+            LogUtil.error("Error while trying to close the SQL connection : {0}", ex.getMessage());
         }
     }
 
@@ -340,7 +340,7 @@ public class StorageService {
             if (cachedHeads != null)
                 return BukkitFutureResult.of(HeadBlocks.getInstance(), CompletableFuture.completedFuture(cachedHeads));
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to get cached heads for " + playerUuid + ": " + ex.getMessage()));
+            LogUtil.error("Error while trying to get cached heads for {0}: {1}", playerUuid, ex.getMessage());
         }
 
         return CompletableBukkitFuture.supplyAsync(HeadBlocks.getInstance(), () -> {
@@ -356,7 +356,7 @@ public class StorageService {
 
                 return playerHeads;
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to get heads for " + playerUuid + ": " + ex.getMessage()));
+                LogUtil.error("Error while trying to get heads for {0}: {1}", playerUuid, ex.getMessage());
                 return new HashSet<>();
             }
         });
@@ -379,7 +379,7 @@ public class StorageService {
 
             storage.clearCachedTopPlayers();
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while invalidating cache for player " + playerUuid + " and head " + headUuid + ": " + ex.getMessage()));
+            LogUtil.error("Error while invalidating cache for player {0} and head {1}: {2}", playerUuid, headUuid, ex.getMessage());
         }
 
         storage.resetPlayerHead(playerUuid, headUuid);
@@ -511,7 +511,7 @@ public class StorageService {
                 storage.setCachedPlayerHeads(playerUuid, cachedHeads);
             }
         } catch (InternalException ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while invalidating cache for player " + playerUuid + ": " + ex.getMessage()));
+            LogUtil.error("Error while invalidating cache for player {0}: {1}", playerUuid, ex.getMessage());
         }
     }
 

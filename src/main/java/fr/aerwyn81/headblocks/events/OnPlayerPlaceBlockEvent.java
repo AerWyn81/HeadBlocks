@@ -7,7 +7,7 @@ import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -72,7 +72,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         var headTexture = HeadUtils.getHeadTexture(e.getItemInHand());
         if (headTexture == null) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError, head texture not resolved when trying to save the head for player " + player.getName()));
+            LogUtil.error("Error, head texture not resolved when trying to save the head for player {0}", player.getName());
             return;
         }
 
@@ -81,7 +81,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             headUuid = HeadService.saveHeadLocation(headLocation, headTexture);
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create new HeadBlocks from the storage: " + ex.getMessage()));
+            LogUtil.error("Error while trying to create new HeadBlocks from the storage: {0}", ex.getMessage());
             return;
         }
 

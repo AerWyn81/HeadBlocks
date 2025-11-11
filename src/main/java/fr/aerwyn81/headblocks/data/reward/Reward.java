@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.data.reward;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -51,7 +51,7 @@ public class Reward {
 
             return new Reward(type, value);
         } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while deserializing reward: " + ex.getMessage()));
+            LogUtil.error("Error while deserializing reward: {0}", ex.getMessage());
             return new Reward(RewardType.UNKNOWN, "");
         }
     }
@@ -63,7 +63,7 @@ public class Reward {
         try {
             parsedValue = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, value);
         } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError executing head reward (" + value + "): " + ex.getMessage()));
+            LogUtil.error("Error executing head reward \"{0}\": {1}", value, ex.getMessage());
         }
 
         if (parsedValue.isEmpty())

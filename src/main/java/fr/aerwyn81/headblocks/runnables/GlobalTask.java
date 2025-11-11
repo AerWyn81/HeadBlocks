@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -62,8 +62,8 @@ public class GlobalTask extends BukkitRunnable {
         try {
             ParticlesUtils.spawn(location, particle, amount, colors, player);
         } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot spawn particle " + particle.name() + "... " + ex.getMessage()));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cTo prevent log spamming, particles is disabled until reload"));
+            LogUtil.error("Cannot spawn particle {0}... {1}", particle.name(), ex.getMessage());
+            LogUtil.error("To prevent log spamming, particles is disabled until reload");
             this.cancel();
         }
     }
@@ -137,7 +137,7 @@ public class GlobalTask extends BukkitRunnable {
                             }
                         }
                     } catch (InternalException ex) {
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to communicate with the storage : " + ex.getMessage()));
+                        LogUtil.error("Error while trying to communicate with the storage : {0}", ex.getMessage());
                         this.cancel();
                     }
                     continue;

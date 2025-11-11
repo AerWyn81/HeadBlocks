@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks.commands.list;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
@@ -9,7 +8,7 @@ import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -66,7 +65,7 @@ public class Remove implements Cmd {
             HeadService.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
         } catch (InternalException ex) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while removing the head (" + head.getNameOrUuid() + " at " + loc.toString() + ") from the storage: " + ex.getMessage()));
+            LogUtil.error("Error while removing the head \"{0}\" at {1} from storage: {2}", head.getNameOrUuid(), loc.toString(), ex.getMessage());
             return true;
         }
 

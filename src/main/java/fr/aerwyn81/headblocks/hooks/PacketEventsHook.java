@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.hooks;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class PacketEventsHook {
@@ -17,7 +16,7 @@ public class PacketEventsHook {
             isEnabled = packetEventsImpl.load(plugin);
 
             if (isEnabled) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("HeadBlocks &ePacketEvents &asuccessfully hooked!"));
+                LogUtil.info("HeadBlocks PacketEvents successfully hooked!");
             }
 
             return isEnabled;

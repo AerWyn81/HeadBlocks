@@ -1,11 +1,10 @@
 package fr.aerwyn81.headblocks.services;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.XSeries.XSound;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -117,8 +116,7 @@ public class ConfigService {
                 String[] s = color.split(",");
                 colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize(
-                        "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
+                LogUtil.error("Cannot parse RGB color of {0}. Format is : r,g,b", color);
             }
         });
 
@@ -137,8 +135,7 @@ public class ConfigService {
                 String[] s = color.split(",");
                 colors.add(Color.fromRGB(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer.parseInt(s[2])));
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize(
-                        "&cCannot parse RGB color of " + color + ". Format is : r,g,b"));
+                LogUtil.error("Cannot parse RGB color of {0}. Format is : r,g,b", color);
             }
         });
 
@@ -352,8 +349,7 @@ public class ConfigService {
                     tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages, slotsRequired, isRandom));
                 }
             } catch (Exception ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize(
-                        "&cCannot read tiered rewards of \"" + level + "\". Error message :" + ex.getMessage()));
+                LogUtil.error("Cannot read tiered rewards of \"{0}\". Error message :{1}", level, ex.getMessage());
             }
         }
 
@@ -493,7 +489,7 @@ public class ConfigService {
         if (optSound.isPresent()) {
             sound = optSound.get();
         } else {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError, cannot parse sound of \"" + soundInConfig + "\"."));
+            LogUtil.error("Error, cannot parse sound of \"{0}\".", soundInConfig);
         }
 
         return sound;

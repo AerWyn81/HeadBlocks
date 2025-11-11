@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.holograms.types;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.holograms.IHologram;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
@@ -34,7 +35,7 @@ public class BasicHologram implements IHologram {
     public IHologram create(String name, Location location, List<String> lines) {
         var world = location.getWorld();
         if (world == null) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError creating internal hologram, world is null!"));
+            LogUtil.error("Error creating internal hologram, world is null!");
             return this;
         }
 

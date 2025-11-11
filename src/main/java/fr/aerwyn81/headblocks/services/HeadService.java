@@ -14,7 +14,7 @@ import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Skull;
@@ -75,7 +75,7 @@ public class HeadService {
         try {
             config.save(configFile);
         } catch (IOException e) {
-            HeadBlocks.log.sendMessage("&cCannot save the config file to {0}", configFile.getName());
+            LogUtil.error("Cannot save the config file to {0}", configFile.getName());
         }
     }
 
@@ -90,7 +90,7 @@ public class HeadService {
         }
 
         if (StorageService.hasStorageError()) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot load locations from storage, theres an issue with the database."));
+            LogUtil.error("Cannot load locations from storage, theres an issue with the database.");
             return;
         }
 
@@ -113,7 +113,7 @@ public class HeadService {
                             StorageService.createOrUpdateHead(headUuid, headTexture);
                         }
                     } catch (Exception ex) {
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while trying to create a head (" + headUuid + ") in the storage: " + ex.getMessage()));
+                        LogUtil.error("Error while trying to create a head ({0}) in the storage: {1}", headUuid, ex.getMessage());
                         continue;
                     }
 
@@ -121,7 +121,7 @@ public class HeadService {
 
                     headLocations.add(headLoc);
                 } catch (Exception e) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot deserialize location of head &e" + uuid + "&c. Cause: &e" + e.getMessage()));
+                    LogUtil.error("Cannot deserialize location of head {0}. Cause: {1}", uuid, e.getMessage());
                 }
             }
         }
@@ -138,22 +138,23 @@ public class HeadService {
                     heads.removeAll(getHeadLocations().stream().map(HeadLocation::getUuid).toList());
 
                     if (!heads.isEmpty()) {
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cFound &e" + heads.size() + " &cheads &7(" +
-                                String.join(", ", heads.stream().map(UUID::toString).toList()) + ") &cout of sync with the server, deleting..."));
+                        LogUtil.error("Found {0} heads ({1}) out of sync with the server, deleting...",
+                                heads.size(),
+                                String.join(", ", heads.stream().map(UUID::toString).toList()));
 
                         for (var head : heads) {
                             StorageService.removeHead(head, true);
                         }
 
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&aHeadblocks heads table cleaned!"));
+                        LogUtil.info("Headblocks heads table cleaned!");
                     }
                 }
             } catch (Exception e) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError when purging heads out of sync in the database: " + e.getMessage()));
+                LogUtil.error("Error when purging heads out of sync in the database: {0}", e.getMessage());
             }
         }
 
-        HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded &e" + headLocations.size() + " locations!"));
+        LogUtil.info("Loaded {0} locations!", headLocations.size());
     }
 
     private static void addHeadToSpin(HeadLocation headLoc, int offset) {
@@ -247,7 +248,7 @@ public class HeadService {
             var themeHeads = ConfigService.getHeadsTheme().get(selectedTheme);
 
             if (selectedTheme.isEmpty() || themeHeads == null) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError when trying to use heads theme, selected theme is empty or don't match any theme."));
+                LogUtil.error("Error when trying to use heads theme, selected theme is empty or don't match any theme.");
                 return;
             }
 
@@ -261,12 +262,12 @@ public class HeadService {
             String[] parts = configHead.split(":");
 
             if (parts.length != 2) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cInvalid format for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
+                LogUtil.error("Invalid format for {0} in HBHeads configuration section (l.{1})", configHead, (i + 1));
                 continue;
             }
 
             if (parts[1].trim().isEmpty()) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cValue cannot be empty for " + configHead + " in HBHeads configuration section (l." + i + 1 + ")"));
+                LogUtil.error("Value cannot be empty for {0} in HBHeads configuration section (l.{1})", configHead, (i + 1));
                 continue;
             }
 
@@ -274,7 +275,7 @@ public class HeadService {
 
             ItemMeta headMeta = head.getItemMeta();
             if (headMeta == null) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError trying to get meta of the head " + head + ". Is your server version supported?"));
+                LogUtil.error("Error trying to get meta of the head {0}. Is your server version supported?", head);
                 continue;
             }
 
@@ -289,7 +290,7 @@ public class HeadService {
                     try {
                         p = Bukkit.getOfflinePlayer(parts[1]);
                     } catch (Exception ex) {
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot parse the player UUID " + configHead + ". Please provide a correct UUID"));
+                        LogUtil.error("Cannot parse the player UUID {0}. Please provide a correct UUID", configHead);
                         continue;
                     }
 
@@ -305,7 +306,7 @@ public class HeadService {
                     break;
                 case "hdb":
                     if (!HeadBlocks.isHeadDatabaseActive) {
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot load hdb head " + configHead + " without HeadDatabase installed"));
+                        LogUtil.error("Cannot load hdb head {0} without HeadDatabase installed", configHead);
                         continue;
                     }
 
@@ -313,14 +314,14 @@ public class HeadService {
                     heads.add(new HBHeadHDB(head, parts[1]));
                     break;
                 default:
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cThe " + parts[0] + " type is not yet supported!"));
+                    LogUtil.error("The {0} type is not yet supported!", parts[0]);
             }
         }
 
         var headsHdb = heads.stream()
                 .filter(HBHeadHDB.class::isInstance).count();
 
-        HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded &e" + (Math.abs(heads.size() - headsHdb)) + " &8&o(+" + headsHdb + " HeadDatabase heads) &aconfiguration heads!"));
+        LogUtil.info("Loaded {0} (+{1} HeadDatabase heads) configuration heads!", Math.abs(heads.size() - headsHdb), headsHdb);
     }
 
     public static ArrayList<HBHead> getHeads() {

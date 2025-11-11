@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -55,7 +55,7 @@ public class ResetAll extends ResetBase {
             playersWithHead = StorageService.getPlayers(headUuid);
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving players from the storage: " + ex.getMessage()));
+            LogUtil.error("Error while retrieving players from the storage: {0}", ex.getMessage());
             return;
         }
 
@@ -80,7 +80,7 @@ public class ResetAll extends ResetBase {
                     }
                 } catch (InternalException ex) {
                     player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + playerUuid.toString() + " from the storage: " + ex.getMessage()));
+                    LogUtil.error("Error while resetting the player UUID \"{0}\" from the storage: {1}", playerUuid.toString(), ex.getMessage());
                     return;
                 }
             }
@@ -103,7 +103,7 @@ public class ResetAll extends ResetBase {
             allPlayers = StorageService.getAllPlayers();
         } catch (InternalException ex) {
             player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while retrieving all players from the storage: " + ex.getMessage()));
+            LogUtil.error("Error while retrieving all players from the storage: {0}", ex.getMessage());
             return;
         }
 
@@ -126,7 +126,7 @@ public class ResetAll extends ResetBase {
                     }
                 } catch (InternalException ex) {
                     player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError while resetting the player UUID " + uuid.toString() + " from the storage: " + ex.getMessage()));
+                    LogUtil.error("Error while resetting the player UUID \"{0}\" from the storage: {1}", uuid.toString(), ex.getMessage());
                     return;
                 }
             }

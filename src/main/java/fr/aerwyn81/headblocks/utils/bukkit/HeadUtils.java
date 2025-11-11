@@ -7,7 +7,7 @@ import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -100,7 +100,7 @@ public class HeadUtils {
                     var jsonObject = JsonParser.parseString(new String(decoded)).getAsJsonObject();
                     url = new URI(jsonObject.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString()).toURL();
                 } catch (Exception ex) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError when trying to decode texture: " + ex.getMessage()));
+                    LogUtil.error("Error when trying to decode texture: {0}", ex.getMessage());
                     isApplied.set(false);
                     return;
                 }

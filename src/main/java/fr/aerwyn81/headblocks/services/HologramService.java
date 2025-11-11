@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.holograms.InternalHologram;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -42,13 +43,10 @@ public class HologramService {
         if (enumTypeHologram == null) {
             if (HeadBlocks.isPacketEventsActive) {
                 enumTypeHologram = EnumTypeHologram.ADVANCED;
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&6" + ConfigService.getHologramPlugin() + " plugin support removed. " +
-                        "PacketEvents detected, switching to internal advanced hologram type."));
+                LogUtil.warning("{0} plugin support removed. PacketEvents detected, switching to internal advanced hologram type.", ConfigService.getHologramPlugin());
             } else {
                 enumTypeHologram = EnumTypeHologram.DEFAULT;
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&6" + ConfigService.getHologramPlugin() + " plugin support removed. " +
-                        "Switching to default hologram type. " +
-                        "For placeholder support, install PacketEvents plugin and set hologram type to ADVANCED in config."));
+                LogUtil.warning("{0} plugin support removed. Switching to default hologram type. For placeholder support, install PacketEvents plugin and set hologram type to ADVANCED in config.", ConfigService.getHologramPlugin());
             }
         }
 
@@ -58,8 +56,7 @@ public class HologramService {
         }
 
         if (enumTypeHologram == EnumTypeHologram.ADVANCED && !HeadBlocks.isPacketEventsActive) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot use ADVANCED hologram type without PacketEvents plugin. " +
-                    "Please install PacketEvents plugin or change hologram type to DEFAULT in config.yml"));
+            LogUtil.error("Cannot use ADVANCED hologram type without PacketEvents plugin. Please install PacketEvents plugin or change hologram type to DEFAULT in config.yml");
             enable = false;
             return;
         }
@@ -83,7 +80,7 @@ public class HologramService {
                 suffix = "Is " + EnumTypeHologram.getPluginName(enumTypeHologram) + " plugin enabled?";
             }
 
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cCannot create an hologram above the head at " + location.toString() + ". " + suffix));
+            LogUtil.error("Cannot create an hologram above the head at {0}", location.toString(), suffix);
             return;
         }
 

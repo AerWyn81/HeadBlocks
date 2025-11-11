@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import fr.aerwyn81.headblocks.utils.runnables.CompletableBukkitFuture;
 import org.bukkit.Bukkit;
@@ -63,7 +64,7 @@ public class Debug implements Cmd {
                     try {
                         StorageService.createOrUpdateHead(headLoc.getUuid(), args[2]);
                     } catch (InternalException e) {
-                        HeadBlocks.log.sendMessage("&cError with storage, head new texture not saved: " + e.getMessage());
+                        LogUtil.error("Error with storage, head new texture not saved: {0}", e.getMessage());
                         applied = false;
                     }
                 }
@@ -189,39 +190,39 @@ public class Debug implements Cmd {
                                 }
                             }
                         } else {
-                            HeadBlocks.log.sendMessage(MessageUtils.colorize(" &cType &e" + type + " &cis not supported! &7&o(all/ordered/random)"));
+                            LogUtil.error(" Type {0}{1}", type, " &cis not supported! &7&o(all/ordered/random)");
                             return;
                         }
 
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize(""));
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&6> Using debug give commands..."));
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&6> Param type: &7" + type));
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&6> Param player(s): &7" + pName));
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&6> Real players: &7" + String.join(",", debugPlayers.stream().map(p -> p.uuid().toString()).toList())));
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&6> Start processing..."));
+                        LogUtil.info("");
+                        LogUtil.info("> Using debug give commands...");
+                        LogUtil.info("> Param type: {0}", type);
+                        LogUtil.info("> Param player(s): {0}", pName);
+                        LogUtil.info("> Real players: {0}", String.join(",", debugPlayers.stream().map(p -> p.uuid().toString()).toList()));
+                        LogUtil.info("> Start processing...");
 
                         var count = 0;
 
                         for (var playerEntry : headsToGive.entrySet()) {
-                            HeadBlocks.log.sendMessage(MessageUtils.colorize(""));
-                            HeadBlocks.log.sendMessage(MessageUtils.colorize("&6> Processing &e" + playerEntry.getKey() + "&6... Giving &e" + playerEntry.getValue().size() + " &6heads..."));
+                            LogUtil.info("");
+                            LogUtil.info("> Processing {0}: Giving {1} head(s)...", playerEntry.getKey(), playerEntry.getValue().size());
 
                             try {
                                 for (var entryHead : playerEntry.getValue()) {
                                     StorageService.addHead(playerEntry.getKey(), entryHead);
                                 }
 
-                                HeadBlocks.log.sendMessage(MessageUtils.colorize("&a> Gived!"));
+                                LogUtil.info("> Gived!");
                             } catch (Exception ex) {
-                                HeadBlocks.log.sendMessage(MessageUtils.colorize("&c> Error saving player found head in storage: " + ex.getMessage()));
+                                LogUtil.error("> Error saving player found head in storage: {0}", ex.getMessage());
                                 continue;
                             }
 
                             count++;
                         }
 
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize(""));
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&6> Finish!"));
+                        LogUtil.info("");
+                        LogUtil.info("> Finish!");
 
                         var stopTime = System.currentTimeMillis();
 

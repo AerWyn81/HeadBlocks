@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.utils.bukkit;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
 
 import java.util.Arrays;
@@ -46,7 +45,7 @@ public enum VersionUtils {
         try {
             version = extractFromString(Bukkit.getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
         } catch (Exception e) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError extracting server version" + e.getMessage() + ". Using " + v1_21_R10.name()));
+            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), v1_21_R10.name());
             version = v1_21_R10;
         }
 
@@ -58,7 +57,7 @@ public enum VersionUtils {
             if (Arrays.stream(version.versionId).anyMatch(v -> ver.equals(String.valueOf(v))))
                 return version;
 
-        throw new RuntimeException("Unknown version " + ver + ". Please report to developer. HeadBlocks will use latest.");
+        throw new RuntimeException("Unknown version: " + ver + ". Please report to developer. HeadBlocks will use latest.");
     }
 
     public static boolean isAtLeastVersion(VersionUtils version) {

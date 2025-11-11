@@ -10,7 +10,7 @@ import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.XSeries.XSound;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -103,7 +103,7 @@ public class OnPlayerInteractEvent implements Listener {
                         XSound.play(ConfigService.getHeadClickAlreadyOwnSound(), s -> s.forPlayers(player));
                     } catch (Exception ex) {
                         player.sendMessage(LanguageService.getMessage("Messages.ErrorCannotPlaySound"));
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click: " + ex.getMessage()));
+                        LogUtil.error("Error cannot play sound on head click: {0}", ex.getMessage());
                     }
                 }
 
@@ -116,7 +116,7 @@ public class OnPlayerInteractEvent implements Listener {
                     try {
                         ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
                     } catch (Exception ex) {
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError particle name " + particleName + " cannot be parsed!"));
+                        LogUtil.error("Error particle name {0} cannot be parsed!", particleName);
                     }
                 }
 
@@ -148,7 +148,7 @@ public class OnPlayerInteractEvent implements Listener {
                         return;
                     }
                 } catch (InternalException ex) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError retrieving players from storage when calculating hit count: " + ex.getMessage()));
+                    LogUtil.error("Error retrieving players from storage when calculating hit count: {0}", ex.getMessage());
                     return;
                 }
             }
@@ -168,7 +168,7 @@ public class OnPlayerInteractEvent implements Listener {
             try {
                 StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
             } catch (InternalException ex) {
-                HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError saving player found head in storage: " + ex.getMessage()));
+                LogUtil.error("Error saving player found head in storage: {0}", ex.getMessage());
                 return;
             }
 
@@ -192,7 +192,7 @@ public class OnPlayerInteractEvent implements Listener {
                 try {
                     XSound.play(songName, s -> s.forPlayers(player));
                 } catch (Exception ex) {
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError cannot play sound on head click! Cannot parse provided name..."));
+                    LogUtil.error("Error cannot play sound on head click! Cannot parse provided name...");
                 }
             }
 

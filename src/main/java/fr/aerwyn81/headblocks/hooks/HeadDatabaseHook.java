@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.arcaniax.hdb.enums.CategoryEnum;
 import me.arcaniax.hdb.object.head.Head;
@@ -22,7 +22,7 @@ public class HeadDatabaseHook {
         try {
             headDatabaseAPI = new HeadDatabaseAPI();
         } catch (NoClassDefFoundError ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading HeadDatabaseAPI support:" + ex.getMessage() + ". Please try to update HeadDatabase plugin or report the error on HeadBlocks discord."));
+            LogUtil.error("Error loading HeadDatabaseAPI support: {0}. Please try to update HeadDatabase plugin or report the error on HeadBlocks discord.", ex.getMessage());
             return false;
         }
 
@@ -32,7 +32,7 @@ public class HeadDatabaseHook {
                 throw new RuntimeException("Too old version, API not compatible.");
             }
         } catch (Exception ex) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError loading HeadDatabaseAPI support:" + ex.getMessage() + ". Please try to update HeadDatabase plugin or report the error on HeadBlocks discord."));
+            LogUtil.error("Error loading HeadDatabaseAPI support: {0}. Please try to update HeadDatabase plugin or report the error on HeadBlocks discord.", ex.getMessage());
             return false;
         }
 
@@ -49,7 +49,7 @@ public class HeadDatabaseHook {
         } catch (Exception ignored) {
         }
 
-        HeadBlocks.log.sendMessage(MessageUtils.colorize("&eHeadDatabase &asuccessfully hooked!"));
+        LogUtil.info("HeadDatabase successfully hooked!");
         return true;
     }
 
@@ -61,13 +61,13 @@ public class HeadDatabaseHook {
                 .forEach(h -> {
                     var texture = headDatabaseAPI.getBase64(h.getId());
                     if (texture == null || texture.isEmpty()) {
-                        HeadBlocks.log.sendMessage(MessageUtils.colorize("&cHeadDatabase head id &e" + h.getId() + " is not found. Please check if the head id exists."));
+                        LogUtil.error("HeadDatabase head id {0} is not found. Please check if the head id exists.", h.getId());
                         return;
                     }
 
                     HeadUtils.createHead(h, texture);
                     h.setLoaded(true);
-                    HeadBlocks.log.sendMessage(MessageUtils.colorize("&aLoaded HeadDatabase head id &e" + h.getId() + "."));
+                    LogUtil.info("Loaded HeadDatabase head id {0}.", h.getId());
                 });
     }
 }

@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
@@ -68,7 +69,7 @@ public class PlaceholdersService {
                 message = message.replaceAll("%left%", String.valueOf(total - current));
             }
         } catch (Exception ignored) {
-            HeadBlocks.log.sendMessage(MessageUtils.colorize("&cError retrieving heads from storage, cannot parse all HeadBlocks placeholders"));
+            LogUtil.error("Error retrieving heads from storage, cannot parse all HeadBlocks placeholders");
         }
 
         if (message.contains("%headName%")) {
