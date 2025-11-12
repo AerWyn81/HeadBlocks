@@ -223,14 +223,18 @@ It is not recommended to disable this setting as unused data will accumulate in 
 hideFoundHeads: false
 ```
 
+!> **Known Limitation**: Since this feature only hides the block visually on the client side, the server still maintains
+the physical block. This means players will encounter an **invisible collision box** (forcefield effect) where hidden
+heads are located. This is a technical limitation that cannot be avoided with the current approach, as block collision
+is calculated server-side and cannot be disabled for specific players.
+
 When enabled, heads that a player has already found will be hidden from their view using PacketEvents.
 This feature requires the [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/) plugin to be
 installed.
 Once a player finds a head, it will disappear from their view, allowing them to focus only on heads they haven't found
 yet.
 
-!> Note: The hitbox may still be present even though the head is invisible; this is a known limitation.
-Also, remember to disable the 'Found' hologram or leave the placeholder empty in advanced hologram mode to prevent
+!> Note: Remember to disable the 'Found' hologram or leave the placeholder empty in advanced hologram mode to prevent
 holograms from appearing above hidden heads.
 
 !> This feature requires PacketEvents to be installed and a server restart to apply changes.

@@ -217,6 +217,10 @@ shouldResetPlayerData: true
 # If true, heads that the player has already found will be hidden
 # This requires PacketEvents to be installed
 # Require a server restart to apply
+# /!\ WARNING: Since this feature only hides the block visually on the client side,
+#     the server still maintains the physical block. Players will encounter an invisible
+#     collision box (forcefield effect) where hidden heads are located. This is a
+#     technical limitation that cannot be avoided. /!\
 hideFoundHeads: false
 
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
