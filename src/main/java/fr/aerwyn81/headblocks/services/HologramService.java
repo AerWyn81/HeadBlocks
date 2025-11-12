@@ -126,7 +126,7 @@ public class HologramService {
 
         var holoFound = getHologramByLocation(foundHolograms, location);
         if (holoFound != null) {
-            if (!holoFound.isHologramVisible(player)) {
+            if (!holoFound.isHologramVisible(player) && !ConfigService.hideFoundHeads()) {
                 holoFound.show(player);
             }
         }
@@ -157,7 +157,7 @@ public class HologramService {
 
         var holoNotFound = getHologramByLocation(notFoundHolograms, location);
         if (holoNotFound != null) {
-            if (!holoNotFound.isHologramVisible(player)) {
+            if (!holoNotFound.isHologramVisible(player) && !ConfigService.hideFoundHeads()) {
                 holoNotFound.show(player);
             }
         }

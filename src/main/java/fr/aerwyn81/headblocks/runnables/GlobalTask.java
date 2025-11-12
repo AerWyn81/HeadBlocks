@@ -47,6 +47,9 @@ public class GlobalTask extends BukkitRunnable {
     }
 
     private void spawnParticles(Location location, boolean isFound, Player player) {
+        if (isFound && ConfigService.hideFoundHeads())
+            return;
+
         if (isFound ? !ConfigService.isParticlesFoundEnabled() : !ConfigService.isParticlesNotFoundEnabled())
             return;
 
