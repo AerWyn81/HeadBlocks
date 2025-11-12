@@ -32,6 +32,10 @@ public class HeadHidingPacketListener implements PacketListener {
         }
 
         Player player = event.getPlayer();
+        //noinspection ConstantValue
+        if (player == null) {
+            return;
+        }
 
         var foundHeads = playerFoundHeadsCache.get(player.getUniqueId());
         if (foundHeads == null) {
