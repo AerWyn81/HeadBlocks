@@ -133,8 +133,43 @@ public class HeadHidingPacketListener implements PacketListener {
 
         var headLocation = HeadService.getHeadByUUID(headUuid);
         if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
-            var block = headLocation.getLocation().getBlock();
-            player.sendBlockChange(headLocation.getLocation(), block.getBlockData());
+            var location = headLocation.getLocation();
+
+            Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+                player.sendBlockChange(location, location.getBlock().getBlockData());
+                var world = location.getWorld();
+                if (world != null) {
+                    var blockState = location.getBlock().getState();
+                    blockState.update(true, false);
+                }
+            }, 1L);
+        }
+    }
+
+    public void showAllPreviousHeads(Player player) {
+        if (!ConfigService.hideFoundHeads()) {
+            return;
+        }
+
+        var previouslyHiddenHeads = playerFoundHeadsCache.get(player.getUniqueId());
+
+        playerFoundHeadsCache.remove(player.getUniqueId());
+
+        if (previouslyHiddenHeads != null && !previouslyHiddenHeads.isEmpty()) {
+            Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+                for (var headUuid : previouslyHiddenHeads) {
+                    var headLocation = HeadService.getHeadByUUID(headUuid);
+                    if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
+                        var location = headLocation.getLocation();
+                        player.sendBlockChange(location, location.getBlock().getBlockData());
+                        var world = location.getWorld();
+                        if (world != null) {
+                            var blockState = location.getBlock().getState();
+                            blockState.update(true, false);
+                        }
+                    }
+                }
+            }, 1L);
         }
     }
 
