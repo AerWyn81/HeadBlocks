@@ -13,28 +13,16 @@ If you find a bug or have a question, don't hesitate to :
 
 ### ✨ New Features
 
-- **Hide Found Heads**: Added an option to visually hide heads already discovered by players (requires PacketEvents)
-- **Rewards Interface**: New GUI to manage and view configured rewards for each head
-- **Per-Head Reset**: Ability to reset a player's progress for a specific head via `/reset` and `/resetall` commands
+-
 
 ### 🚀 Improvements
 
-- **Cache Optimization**: Complete overhaul of the caching system for Redis and Memory, including player, leaderboard,
-  and
-  heads caches
-- **Redis Performance**: Replaced lists with sets for storing player heads, simplifying operations and improving
-  performance
-- **Hologram Management**: Overhauled hologram system with placeholder support. Removed support for
-  CMI/FancyHolograms & DecentHolograms, replaced by "Advanced hologram" type
-- **Asynchronous Particles**: Optimized particle spawning using Bukkit scheduler to reduce server load
+-
 
 ### 🐛 Bug Fixes
 
-- **Error Handling**: Fixed error spam on startup when there's an issue loading the database.
+-
 
 ### 🔧 Technical
 
-- **Dependency Removal**: Removed unnecessary dependencies to simplify plugin compilation.
-- **Dependency Management**: Centralized dependency versions using Gradle catalog (`libs.versions.toml`)
-- **Project Structure**: Simplified Gradle structure by removing unnecessary `core` module
-- **Console logging**: Improved logging in console using native server logger.
+- 
