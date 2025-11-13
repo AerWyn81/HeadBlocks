@@ -195,7 +195,7 @@ jobs:
       - name: Extract changelog sections
         id: changelog
         run: |
-          CHANGES=$(sed -n '/^## What/,/^---/p' Changelog.md | sed '1d;$d' | sed 's/^### /• /' | sed 's/^- /  ◦ /' | sed 's/\*\*\(.*\)\*\*/\1/g')
+          CHANGES=$(sed -n '/^## What/,/^---/p' Changelog.md | sed '1d;$d' | sed 's/^### /• /' | sed 's/^- /  ◦ /' | sed 's/\*\*\(.*\)\*\*/\1/g' | sed 's/`//g')
           echo "CHANGES<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
