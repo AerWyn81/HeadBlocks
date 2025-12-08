@@ -28,10 +28,10 @@ public class RewardService {
                     p.sendMessage(PlaceholdersService.parse(p, headLocation, messages));
                 }
 
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                plugin.getFoliaLib().getScheduler().runLater(task -> {
                     if (tieredReward.isRandom()) {
                         String randomCommand = tieredReward.getCommands().get(new Random().nextInt(tieredReward.getCommands().size()));
-                        Bukkit.getScheduler().runTaskLater(plugin, () ->
+                        plugin.getFoliaLib().getScheduler().runLater(task2 ->
                                 plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand)), 1L);
                     } else {
                         List<String> commands = tieredReward.getCommands();
@@ -68,10 +68,10 @@ public class RewardService {
 
         if (isRandomCommand) {
             String randomCommand = ConfigService.getHeadClickCommands().get(new Random().nextInt(ConfigService.getHeadClickCommands().size()));
-            Bukkit.getScheduler().runTaskLater(plugin, () ->
+            plugin.getFoliaLib().getScheduler().runLater(task ->
                     plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand)), 1L);
         } else {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
+            plugin.getFoliaLib().getScheduler().runLater(task -> ConfigService.getHeadClickCommands().forEach(reward ->
                     plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward))), 1L);
         }
     }

@@ -17,6 +17,10 @@ repositories {
     maven("https://repo.codemc.org/repository/maven-public")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://jitpack.io")
+    maven {
+        name = "tcoded-releases"
+        url = uri("https://repo.tcoded.com/releases")
+    }
 }
 
 dependencies {
@@ -31,6 +35,7 @@ dependencies {
     implementation(libs.commons.lang3)
     implementation(libs.nbt.api)
     implementation(libs.holoeasy)
+    implementation("com.tcoded:FoliaLib:0.5.1")
 }
 
 tasks {
@@ -60,6 +65,7 @@ tasks {
         relocate("org.holoeasy", "fr.aerwyn81.libs.holoEasy")
         relocate("org.json", "fr.aerwyn81.libs.json")
         relocate("org.slf4j", "fr.aerwyn81.libs.slf4j")
+        relocate("com.tcoded.folialib", "fr.aerwyn81.headblocks.lib.folialib")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")

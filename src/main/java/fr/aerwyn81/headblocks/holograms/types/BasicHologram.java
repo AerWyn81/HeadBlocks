@@ -39,11 +39,14 @@ public class BasicHologram implements IHologram {
             return this;
         }
 
-        hologram = world.spawn(location, TextDisplay.class, entity -> {
-            lines.forEach(l -> entity.setText(MessageUtils.colorize(l)));
-            entity.setVisibleByDefault(false);
-            entity.setPersistent(false);
-            entity.setBillboard(Display.Billboard.CENTER);
+        // Entity spawning must be location-aware
+        HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(location, task -> {
+            hologram = world.spawn(location, TextDisplay.class, entity -> {
+                lines.forEach(l -> entity.setText(MessageUtils.colorize(l)));
+                entity.setVisibleByDefault(false);
+                entity.setPersistent(false);
+                entity.setBillboard(Display.Billboard.CENTER);
+            });
         });
 
         return this;

@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.utils.bukkit;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -11,6 +10,17 @@ import java.util.ArrayList;
 
 public class ParticlesUtils {
 
+    /**
+     * Spawn particles at a location for a player.
+     * IMPORTANT: This method must be called from a region-aware context (e.g., from runAtLocation).
+     * Particles must be spawned on the region thread, not asynchronously.
+     * 
+     * @param loc Location to spawn particles at
+     * @param particle Particle type
+     * @param amount Amount of particles
+     * @param colors Colors for REDSTONE particles (can be null)
+     * @param player Player to show particles to
+     */
     public static void spawn(Location loc, Particle particle, int amount, ArrayList<String> colors, Player player) {
         double size = amount == 1 ? 0 : .25f;
         Location location = loc.clone().add(0, .75f, 0);
@@ -33,17 +43,13 @@ public class ParticlesUtils {
             }
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
-            if (!dustOptions.isEmpty()) {
-                Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
-                    dustOptions.forEach(dustOpt ->
-                            player.spawnParticle(particle, location, amount, size, size, size, dustOpt));
-                });
-
-                return;
-            }
-
+        // Particles must be spawned on the region thread (not async)
+        // Caller should ensure this is called from runAtLocation context
+        if (!dustOptions.isEmpty()) {
+            dustOptions.forEach(dustOpt ->
+                    player.spawnParticle(particle, location, amount, size, size, size, dustOpt));
+        } else {
             player.spawnParticle(particle, location, amount, size, size, size, 0);
-        });
+        }
     }
 }

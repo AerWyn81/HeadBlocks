@@ -54,8 +54,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        Location headLocation = headBlock.getLocation();
-        headLocation = headLocation.clone().add(0.5, 0, 0.5);
+        final Location headLocation = headBlock.getLocation().clone().add(0.5, 0, 0.5);
 
         if (HeadService.getHeadAt(headLocation) != null) {
             e.setCancelled(true);
@@ -86,11 +85,14 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            ParticlesUtils.spawn(headLocation, Particle.valueOf("HAPPY_VILLAGER"), 10, null, player);
-        } else {
-            ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
-        }
+        // Particles need location-aware scheduling
+        HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(headLocation, task -> {
+            if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+                ParticlesUtils.spawn(headLocation, Particle.valueOf("HAPPY_VILLAGER"), 10, null, player);
+            } else {
+                ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
+            }
+        });
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headLocation));
 

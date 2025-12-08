@@ -38,16 +38,20 @@ public class Export implements Cmd {
 
         sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportInProgress")));
 
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getInstance().getFoliaLib().getScheduler().runAsync(task -> {
             try {
                 ExportSQLHelper.generateFile(typeDatabase, fileName);
                 Thread.sleep(10000);
             } catch (Exception ex) {
-                sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportError") + ex.getMessage()));
+                HeadBlocks.getInstance().getFoliaLib().getScheduler().runNextTick(t -> {
+                    sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportError") + ex.getMessage()));
+                });
             }
 
-            sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportSuccess"))
-                    .replaceAll("%fileName%", fileName));
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runNextTick(t -> {
+                sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportSuccess"))
+                        .replaceAll("%fileName%", fileName));
+            });
         });
 
         return true;

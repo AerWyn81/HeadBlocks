@@ -58,22 +58,28 @@ public class Debug implements Cmd {
                     return true;
                 }
 
-                var applied = HeadUtils.applyTextureToBlock(blockLocation.getBlock(), args[2]);
-
-                if (applied) {
-                    try {
-                        StorageService.createOrUpdateHead(headLoc.getUuid(), args[2]);
-                    } catch (InternalException e) {
-                        LogUtil.error("Error with storage, head new texture not saved: {0}", e.getMessage());
-                        applied = false;
+                // Block operations need location-aware scheduling
+                // Note: On Folia, this will be async, so the result check happens after scheduling
+                var applied = new boolean[]{false};
+                HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(blockLocation, task -> {
+                    applied[0] = HeadUtils.applyTextureToBlock(blockLocation.getBlock(), args[2]);
+                    
+                    // Send result message from the region thread
+                    if (applied[0]) {
+                        try {
+                            StorageService.createOrUpdateHead(headLoc.getUuid(), args[2]);
+                            sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &aTexture applied!"));
+                        } catch (InternalException e) {
+                            LogUtil.error("Error with storage, head new texture not saved: {0}", e.getMessage());
+                            sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError trying to apply the texture, check logs."));
+                        }
+                    } else {
+                        sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError trying to apply the texture, check logs."));
                     }
-                }
-
-                if (applied) {
-                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &aTexture applied!"));
-                } else {
-                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError trying to apply the texture, check logs."));
-                }
+                });
+                
+                // On Paper/Spigot, operation happens immediately, so we can return
+                // On Folia, operation is scheduled and message is sent from within the callback above
                 return true;
             }
             case "give" -> {

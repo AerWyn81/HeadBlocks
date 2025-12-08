@@ -12,12 +12,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Collections;
 import java.util.Random;
 
-public class GlobalTask extends BukkitRunnable {
+public class GlobalTask {
 
     private static final int CHUNK_SIZE = 16;
     private static int VIEW_RADIUS_CHUNKS = 1;
@@ -28,25 +27,25 @@ public class GlobalTask extends BukkitRunnable {
         VIEW_RADIUS_CHUNKS = (int) Math.ceil(ConfigService.getHologramParticlePlayerViewDistance() / (double) CHUNK_SIZE);
     }
 
-    @Override
-    public void run() {
+    /**
+     * Handle a single head location - called from region-aware context
+     */
+    public static void handleHeadLocation(HeadLocation headLocation) {
         if (HeadBlocks.isReloadInProgress)
             return;
 
-        HeadService.getChargedHeadLocations().forEach(headLocation -> {
-            var location = headLocation.getLocation();
-            if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
-                return;
+        var location = headLocation.getLocation();
+        if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
+            return;
 
-            if (ConfigService.isSpinEnabled() && ConfigService.isSpinLinked()) {
-                HeadService.rotateHead(headLocation);
-            }
+        if (ConfigService.isSpinEnabled() && ConfigService.isSpinLinked()) {
+            HeadService.rotateHead(headLocation);
+        }
 
-            handleHologramAndParticles(headLocation);
-        });
+        handleHologramAndParticles(headLocation);
     }
 
-    private void spawnParticles(Location location, boolean isFound, Player player) {
+    private static void spawnParticles(Location location, boolean isFound, Player player) {
         if (isFound && ConfigService.hideFoundHeads())
             return;
 
@@ -67,11 +66,11 @@ public class GlobalTask extends BukkitRunnable {
         } catch (Exception ex) {
             LogUtil.error("Cannot spawn particle {0}... {1}", particle.name(), ex.getMessage());
             LogUtil.error("To prevent log spamming, particles is disabled until reload");
-            this.cancel();
+            // Note: Task cancellation is now handled by HeadBlocks.startInternalTaskTimer()
         }
     }
 
-    private void handleHologramAndParticles(HeadLocation headLocation) {
+    private static void handleHologramAndParticles(HeadLocation headLocation) {
         int rangeParticles = ConfigService.getHologramParticlePlayerViewDistance();
         int rangeHint = ConfigService.getHintDistanceBlocks();
 
@@ -141,7 +140,7 @@ public class GlobalTask extends BukkitRunnable {
                         }
                     } catch (InternalException ex) {
                         LogUtil.error("Error while trying to communicate with the storage : {0}", ex.getMessage());
-                        this.cancel();
+                        // Note: Task cancellation is now handled by HeadBlocks.startInternalTaskTimer()
                     }
                     continue;
                 }
@@ -151,7 +150,7 @@ public class GlobalTask extends BukkitRunnable {
         }
     }
 
-    private String getHintDirectionArrow(Location playerLoc, Location targetLoc) {
+    private static String getHintDirectionArrow(Location playerLoc, Location targetLoc) {
         if (playerLoc.distance(targetLoc) < 1.5) {
             return "●";
         }

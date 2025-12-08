@@ -25,7 +25,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -33,7 +32,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class HeadService {
@@ -44,7 +45,9 @@ public class HeadService {
     private static HashMap<UUID, HeadMove> headMoves;
     private static ArrayList<HeadLocation> headLocations;
 
-    private static HashMap<UUID, BukkitTask> tasksHeadSpin;
+    // Track which heads should be spinning (Set-based for FoliaLib compatibility)
+    // Tasks check this set before executing - if head is removed, task becomes no-op
+    private static Set<UUID> activeSpinningHeads;
 
     public static String HB_KEY = "HB_HEAD";
 
@@ -54,7 +57,7 @@ public class HeadService {
         heads = new ArrayList<>();
         headLocations = new ArrayList<>();
         headMoves = new HashMap<>();
-        tasksHeadSpin = new HashMap<>();
+        activeSpinningHeads = ConcurrentHashMap.newKeySet();
 
         load();
     }
@@ -65,7 +68,8 @@ public class HeadService {
         heads.clear();
         headLocations.clear();
         headMoves.clear();
-        tasksHeadSpin.values().forEach(BukkitTask::cancel);
+        activeSpinningHeads.clear();
+        // Cancel all tasks (including spinning tasks) - handled by HeadBlocks.onDisable()
 
         loadHeads();
         loadLocations();
@@ -162,9 +166,24 @@ public class HeadService {
             return;
         }
 
-        var task = Bukkit.getScheduler().runTaskTimer(HeadBlocks.getInstance(),
-                () -> rotateHead(headLoc), 5L * offset, ConfigService.getSpinSpeed());
-        tasksHeadSpin.put(headLoc.getUuid(), task);
+        // Track this head as actively spinning
+        activeSpinningHeads.add(headLoc.getUuid());
+
+        // Schedule spinning task with FoliaLib
+        // On Folia: runs on the region thread for that location
+        // On Paper/Spigot: runs on main thread
+        Location loc = headLoc.getLocation();
+        HeadBlocks.getInstance().getFoliaLib().getScheduler().runTimer(() -> {
+            // Check if this head should still spin (very fast O(1) lookup)
+            if (!activeSpinningHeads.contains(headLoc.getUuid())) {
+                return; // Task keeps running but does nothing (minimal overhead)
+            }
+
+            // Only execute if head is still active - schedule on region thread
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(loc, task -> {
+                rotateHead(headLoc);
+            });
+        }, 5L * offset, ConfigService.getSpinSpeed());
     }
 
     public static UUID saveHeadLocation(Location location, String texture) throws InternalException {
@@ -202,7 +221,14 @@ public class HeadService {
         if (headLocation != null) {
             StorageService.removeHead(headLocation.getUuid(), withDelete);
 
-            headLocation.getLocation().getBlock().setType(Material.AIR);
+            // Remove from spinning set - task will naturally stop executing
+            activeSpinningHeads.remove(headLocation.getUuid());
+
+            // Block operations must be region-aware
+            Location loc = headLocation.getLocation();
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(loc, task -> {
+                loc.getBlock().setType(Material.AIR);
+            });
 
             if (ConfigService.isHologramsEnabled()) {
                 HologramService.removeHolograms(headLocation.getLocation());
@@ -214,11 +240,6 @@ public class HeadService {
             saveConfig();
 
             headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-            var spinTask = tasksHeadSpin.get(headLocation.getUuid());
-            if (spinTask != null) {
-                spinTask.cancel();
-                tasksHeadSpin.remove(headLocation.getUuid());
-            }
         }
     }
 
@@ -362,42 +383,57 @@ public class HeadService {
     }
 
     public static void changeHeadLocation(UUID hUuid, @NotNull Block oldBlock, Block newBlock) {
+        // Capture block states before scheduling (must be done on current thread)
         Skull oldSkull = (Skull) oldBlock.getState();
         Rotatable skullRotation = (Rotatable) oldSkull.getBlockData();
+        var oldOwnerProfile = oldSkull.getOwnerProfile();
+        var oldNbtTileEntity = new NBTTileEntity(oldSkull);
 
-        newBlock.setType(Material.PLAYER_HEAD);
+        Location newLoc = newBlock.getLocation();
+        Location oldLoc = oldBlock.getLocation();
+        HeadBlocks plugin = HeadBlocks.getInstance();
 
-        Skull newSkull = (Skull) newBlock.getState();
+        // All block operations must be region-aware
+        // Schedule new block operations first
+        plugin.getFoliaLib().getScheduler().runAtLocation(newLoc, task -> {
+            newBlock.setType(Material.PLAYER_HEAD);
 
-        Rotatable rotatable = (Rotatable) newSkull.getBlockData();
-        rotatable.setRotation(skullRotation.getRotation());
-        newSkull.setBlockData(rotatable);
+            Skull newSkull = (Skull) newBlock.getState();
 
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            NBT.modify(newSkull, nbt -> {
-                nbt.mergeCompound(new NBTTileEntity(oldSkull));
-            });
-        } else {
-            new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
-        }
-        newSkull.setOwnerProfile(oldSkull.getOwnerProfile());
+            Rotatable rotatable = (Rotatable) newSkull.getBlockData();
+            rotatable.setRotation(skullRotation.getRotation());
+            newSkull.setBlockData(rotatable);
 
-        newSkull.update(true);
+            if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+                NBT.modify(newSkull, nbt -> {
+                    nbt.mergeCompound(oldNbtTileEntity);
+                });
+            } else {
+                new NBTTileEntity(newSkull).mergeCompound(oldNbtTileEntity);
+            }
+            newSkull.setOwnerProfile(oldOwnerProfile);
 
-        oldBlock.setType(Material.AIR);
+            newSkull.update(true);
 
-        var headLocation = getHeadByUUID(hUuid);
-        var indexOfOld = headLocations.indexOf(headLocation);
+            // Update head location data (non-block operations, safe to do here)
+            var headLocation = getHeadByUUID(hUuid);
+            var indexOfOld = headLocations.indexOf(headLocation);
 
-        headLocation.setLocation(newBlock.getLocation());
-        saveHeadInConfig(headLocation);
+            headLocation.setLocation(newBlock.getLocation());
+            saveHeadInConfig(headLocation);
 
-        headLocations.set(indexOfOld, headLocation);
+            headLocations.set(indexOfOld, headLocation);
 
-        HologramService.removeHolograms(oldBlock.getLocation());
-        HologramService.createHolograms(newBlock.getLocation());
+            HologramService.removeHolograms(oldBlock.getLocation());
+            HologramService.createHolograms(newBlock.getLocation());
 
-        addHeadToSpin(headLocation, 1);
+            addHeadToSpin(headLocation, 1);
+        });
+
+        // Then schedule old block removal on its region
+        plugin.getFoliaLib().getScheduler().runAtLocation(oldLoc, task -> {
+            oldBlock.setType(Material.AIR);
+        });
     }
 
     public static void rotateHead(HeadLocation headLocation) {
