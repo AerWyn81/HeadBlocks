@@ -87,6 +87,7 @@ bukkit {
     softDepend = listOf("PlaceholderAPI", "HeadDatabase", "packetevents")
     version = project.version.toString()
     website = "https://just2craft.fr"
+    foliaSupported = true
 
     commands {
         register("headblocks") {
