@@ -74,7 +74,23 @@ tasks {
 
         destinationDirectory.set(file(System.getenv("outputDir") ?: "$rootDir/build/"))
 
-        minimize()
+        // Temporarily disable minimization to ensure FoliaLib and NBT API are included
+        // TODO: Re-enable minimization with proper exclusions once Shadow plugin syntax is confirmed
+        // minimize {
+        //     exclude(dependency("com.tcoded:folialib:.*"))
+        //     exclude(dependency("de.tr7zw:item-nbt-api:.*"))
+        // }
+    }
+
+    register<Copy>("copyJarToTarget") {
+        dependsOn("shadowJar")
+        // Copy the shadowJar output (with all dependencies) from build/ to target folder
+        from(shadowJar.get().archiveFile)
+        into(file("$rootDir/target"))
+    }
+
+    build {
+        dependsOn("copyJarToTarget")
     }
 }
 
