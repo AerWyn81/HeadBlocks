@@ -18,16 +18,25 @@ public class BasicHologram implements IHologram {
 
     @Override
     public void show(Player player) {
+        if (hologram == null || !hologram.isValid()) {
+            return;
+        }
         player.showEntity(plugin, hologram);
     }
 
     @Override
     public void hide(Player player) {
+        if (hologram == null || !hologram.isValid()) {
+            return;
+        }
         player.hideEntity(plugin, hologram);
     }
 
     @Override
     public void delete() {
+        if (hologram == null || !hologram.isValid()) {
+            return;
+        }
         hologram.remove();
     }
 
@@ -54,6 +63,9 @@ public class BasicHologram implements IHologram {
 
     @Override
     public boolean isVisible(Player player) {
+        if (hologram == null || !hologram.isValid()) {
+            return false;
+        }
         return player.canSee(hologram);
     }
 
