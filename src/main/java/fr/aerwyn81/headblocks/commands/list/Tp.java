@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import org.bukkit.Bukkit;
@@ -25,7 +26,16 @@ public class Tp implements Cmd {
                     Float.parseFloat(args[5]),
                     Float.parseFloat(args[6]));
 
-            player.teleport(loc);
+            // Use FoliaLib's async teleport for cross-platform compatibility
+            // On Folia: teleports asynchronously
+            // On Paper: teleports asynchronously (if supported)
+            // On Spigot: falls back to next tick teleport
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().teleportAsync(player, loc, null)
+                    .thenAccept(success -> {
+                        if (!success) {
+                            player.sendMessage("Teleportation failed!");
+                        }
+                    });
         } catch (Exception ignored) {
         }
 

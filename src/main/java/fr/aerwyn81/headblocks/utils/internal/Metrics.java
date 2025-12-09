@@ -103,9 +103,15 @@ public class Metrics {
                         enabled,
                         this::appendPlatformData,
                         this::appendServiceData,
-                        isFolia
-                                ? null
-                                : submitDataTask -> Bukkit.getScheduler().runTask(plugin, submitDataTask),
+                        // Use FoliaLib scheduler for cross-platform compatibility
+                        submitDataTask -> {
+                            if (plugin instanceof fr.aerwyn81.headblocks.HeadBlocks headBlocks) {
+                                headBlocks.getFoliaLib().getScheduler().runNextTick(task -> submitDataTask.run());
+                            } else {
+                                // Fallback for non-HeadBlocks plugins (shouldn't happen)
+                                Bukkit.getScheduler().runTask(plugin, submitDataTask);
+                            }
+                        },
                         plugin::isEnabled,
                         (message, error) -> this.plugin.getLogger().log(Level.WARNING, message, error),
                         (message) -> this.plugin.getLogger().log(Level.INFO, message),

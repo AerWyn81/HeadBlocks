@@ -92,14 +92,20 @@ public class HeadHidingPacketListener implements PacketListener {
             if (foundHeads != null) {
                 playerFoundHeadsCache.put(player.getUniqueId(), foundHeads);
 
-                Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-                    for (var headUuid : foundHeads) {
-                        var headLocation = HeadService.getHeadByUUID(headUuid);
-                        if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
-                            player.sendBlockChange(headLocation.getLocation(),
-                                    org.bukkit.Material.STRUCTURE_VOID.createBlockData());
+                // Use entity-aware scheduling for player operations
+                HeadBlocks.getInstance().getFoliaLib().getScheduler().runLater(task -> {
+                    HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtEntity(player, task2 -> {
+                        for (var headUuid : foundHeads) {
+                            var headLocation = HeadService.getHeadByUUID(headUuid);
+                            if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
+                                // Block change operations need location-aware scheduling
+                                var loc = headLocation.getLocation();
+                                HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(loc, task3 -> {
+                                    player.sendBlockChange(loc, org.bukkit.Material.STRUCTURE_VOID.createBlockData());
+                                });
+                            }
                         }
-                    }
+                    });
                 }, 20L);
             }
         });
@@ -120,8 +126,13 @@ public class HeadHidingPacketListener implements PacketListener {
 
         var headLocation = HeadService.getHeadByUUID(headUuid);
         if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
-            player.sendBlockChange(headLocation.getLocation(),
-                    org.bukkit.Material.STRUCTURE_VOID.createBlockData());
+            // Use entity + location-aware scheduling
+            var loc = headLocation.getLocation();
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtEntity(player, task -> {
+                HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(loc, task2 -> {
+                    player.sendBlockChange(loc, org.bukkit.Material.STRUCTURE_VOID.createBlockData());
+                });
+            });
         }
     }
 
@@ -135,13 +146,18 @@ public class HeadHidingPacketListener implements PacketListener {
         if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
             var location = headLocation.getLocation();
 
-            Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-                player.sendBlockChange(location, location.getBlock().getBlockData());
-                var world = location.getWorld();
-                if (world != null) {
-                    var blockState = location.getBlock().getState();
-                    blockState.update(true, false);
-                }
+            // Use entity + location-aware scheduling
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runLater(task -> {
+                HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtEntity(player, task2 -> {
+                    HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(location, task3 -> {
+                        player.sendBlockChange(location, location.getBlock().getBlockData());
+                        var world = location.getWorld();
+                        if (world != null) {
+                            var blockState = location.getBlock().getState();
+                            blockState.update(true, false);
+                        }
+                    });
+                });
             }, 1L);
         }
     }
@@ -156,19 +172,24 @@ public class HeadHidingPacketListener implements PacketListener {
         playerFoundHeadsCache.remove(player.getUniqueId());
 
         if (previouslyHiddenHeads != null && !previouslyHiddenHeads.isEmpty()) {
-            Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-                for (var headUuid : previouslyHiddenHeads) {
-                    var headLocation = HeadService.getHeadByUUID(headUuid);
-                    if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
-                        var location = headLocation.getLocation();
-                        player.sendBlockChange(location, location.getBlock().getBlockData());
-                        var world = location.getWorld();
-                        if (world != null) {
-                            var blockState = location.getBlock().getState();
-                            blockState.update(true, false);
+            // Use entity + location-aware scheduling
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runLater(task -> {
+                HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtEntity(player, task2 -> {
+                    for (var headUuid : previouslyHiddenHeads) {
+                        var headLocation = HeadService.getHeadByUUID(headUuid);
+                        if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
+                            var location = headLocation.getLocation();
+                            HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(location, task3 -> {
+                                player.sendBlockChange(location, location.getBlock().getBlockData());
+                                var world = location.getWorld();
+                                if (world != null) {
+                                    var blockState = location.getBlock().getState();
+                                    blockState.update(true, false);
+                                }
+                            });
                         }
                     }
-                }
+                });
             }, 1L);
         }
     }

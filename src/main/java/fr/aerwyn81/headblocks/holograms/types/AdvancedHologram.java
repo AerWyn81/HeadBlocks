@@ -30,19 +30,27 @@ public class AdvancedHologram implements IHologram {
 
     @Override
     public void delete() {
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
-            var pool = getPool();
-            if (pool != null) {
-                hologram.hide(getPool());
-            }
-        });
+        // Holograms are location-based, use location-aware scheduling
+        // Note: HoloEasy operations may need to be on region thread
+        // TODO: Verify HoloEasy Folia compatibility - if issues occur, may need adjustments
+        var location = hologram != null ? hologram.getLocation() : null;
+        if (location != null) {
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(location, task -> {
+                var pool = getPool();
+                if (pool != null) {
+                    hologram.hide(getPool());
+                }
+            });
+        }
     }
 
     @Override
     public IHologram create(String name, Location location, List<String> lines) {
         hologram = new Hologram(HeadBlocks.getInstance().getHoloEasyLib(), location);
 
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        // Holograms are location-based, use location-aware scheduling
+        // TODO: Verify HoloEasy Folia compatibility - if issues occur, may need adjustments
+        HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(location, task -> {
             ConfigService.getHologramsAdvancedLines().forEach(l -> hologram.getLines().add(
                     new DisplayTextLine(hologram, player ->
                     {
@@ -81,11 +89,15 @@ public class AdvancedHologram implements IHologram {
     }
 
     public void refresh(Player player) {
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
-            for (Line<?> line : hologram.getLines()) {
-                line.update(player);
-            }
-        });
+        // Holograms are location-based, use location-aware scheduling
+        var location = hologram != null ? hologram.getLocation() : null;
+        if (location != null) {
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtLocation(location, task -> {
+                for (Line<?> line : hologram.getLines()) {
+                    line.update(player);
+                }
+            });
+        }
     }
 
     private IHologramPool<Hologram> getPool() {

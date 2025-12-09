@@ -15,6 +15,7 @@ import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.internal.Metrics;
+import com.tcoded.folialib.FoliaLib;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.holoeasy.HoloEasy;
@@ -37,6 +38,7 @@ public final class HeadBlocks extends JavaPlugin {
     private PacketEventsHook packetEventsHook;
 
     private HoloEasy holoEasyLib;
+    private FoliaLib foliaLib;
 
     @Override
     public void onLoad() {
@@ -72,6 +74,17 @@ public final class HeadBlocks extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
+        // Initialize FoliaLib - required for Folia support
+        // FoliaLib automatically detects platform (Folia/Paper/Spigot) and uses appropriate scheduler
+        try {
+            foliaLib = new FoliaLib(this);
+        } catch (Exception e) {
+            LogUtil.error("CRITICAL: Failed to initialize FoliaLib: {0}", e.getMessage());
+            LogUtil.error("Plugin cannot function without FoliaLib. Disabling...");
+            getPluginLoader().disablePlugin(this);
+            return;
+        }
+
         initializeExternals();
 
         LogUtil.info("HeadBlocks initializing...");
@@ -94,6 +107,19 @@ public final class HeadBlocks extends JavaPlugin {
         }
 
         isPacketEventsActive = Bukkit.getPluginManager().isPluginEnabled("packetevents");
+
+        // Compatibility warnings for external dependencies on Folia
+        if (isPacketEventsActive && foliaLib.isFolia()) {
+            // TODO: Verify PacketEvents Folia compatibility
+            // If issues occur, may need to disable head hiding feature on Folia
+            LogUtil.warning("PacketEvents detected on Folia - head hiding feature may have compatibility issues");
+        }
+
+        if (holoEasyLib != null && foliaLib.isFolia()) {
+            // TODO: Verify HoloEasy Folia compatibility
+            // If issues occur, may need to fallback to DEFAULT hologram type
+            LogUtil.warning("HoloEasy detected on Folia - advanced holograms may have compatibility issues");
+        }
 
         LanguageService.initialize(ConfigService.getLanguage());
         LanguageService.pushMessages();
@@ -170,7 +196,11 @@ public final class HeadBlocks extends JavaPlugin {
         HeadService.clearHeadMoves();
         GuiService.clearCache();
 
-        Bukkit.getScheduler().cancelTasks(this);
+        if (foliaLib != null) {
+            foliaLib.getScheduler().cancelAllTasks();
+        } else {
+            Bukkit.getScheduler().cancelTasks(this);
+        }
 
         packetEventsHook.unload();
 
@@ -182,14 +212,9 @@ public final class HeadBlocks extends JavaPlugin {
     }
 
     public void startInternalTaskTimer() {
-        if (this.globalTask != null) {
-            try {
-                this.globalTask.cancel();
-            } catch (IllegalStateException ignored) {
-            } // Not scheduled yet
-            finally {
-                this.globalTask = null;
-            }
+        // Cancel all existing tasks (including previous global task iterations)
+        if (foliaLib != null) {
+            foliaLib.getScheduler().cancelAllTasks();
         }
 
         this.globalTask = new GlobalTask();
@@ -198,7 +223,27 @@ public final class HeadBlocks extends JavaPlugin {
             return;
         }
 
-        globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
+        // Use FoliaLib timer for global iteration, then schedule per-location tasks
+        // This ensures each head's operations run on the correct region thread in Folia
+        foliaLib.getScheduler().runTimer(() -> {
+            if (HeadBlocks.isReloadInProgress)
+                return;
+
+            HeadService.getChargedHeadLocations().forEach(headLocation -> {
+                var location = headLocation.getLocation();
+                if (location.getWorld() == null || 
+                    !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
+                    return;
+                }
+
+                // Schedule region-aware task for each location
+                // On Folia: runs on the region thread for that location
+                // On Paper/Spigot: runs on main thread (same behavior as before)
+                foliaLib.getScheduler().runAtLocation(location, task -> {
+                    GlobalTask.handleHeadLocation(headLocation);
+                });
+            });
+        }, 0, ConfigService.getDelayGlobalTask());
     }
 
     public static HeadBlocks getInstance() {
@@ -219,5 +264,9 @@ public final class HeadBlocks extends JavaPlugin {
 
     public PacketEventsHook getPacketEventsHook() {
         return packetEventsHook;
+    }
+
+    public FoliaLib getFoliaLib() {
+        return foliaLib;
     }
 }

@@ -17,9 +17,10 @@ public class OnPlayerChatEvent implements Listener {
         if (GuiService.getRewardsManager().hasPendingRewardInput(player)) {
             event.setCancelled(true);
 
-            player.getServer().getScheduler().runTask(HeadBlocks.getInstance(),
-                    () -> GuiService.getRewardsManager().processPendingRewardInput(player, event.getMessage())
-            );
+            // Use entity-aware scheduling for player operations
+            HeadBlocks.getInstance().getFoliaLib().getScheduler().runAtEntity(player, task -> {
+                GuiService.getRewardsManager().processPendingRewardInput(player, event.getMessage());
+            });
         }
     }
 }

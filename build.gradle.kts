@@ -17,6 +17,10 @@ repositories {
     maven("https://repo.codemc.org/repository/maven-public")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://jitpack.io")
+    maven {
+        name = "tcoded-releases"
+        url = uri("https://repo.tcoded.com/releases")
+    }
 }
 
 dependencies {
@@ -31,6 +35,7 @@ dependencies {
     implementation(libs.commons.lang3)
     implementation(libs.nbt.api)
     implementation(libs.holoeasy)
+    implementation("com.tcoded:FoliaLib:0.5.1")
 }
 
 tasks {
@@ -60,6 +65,7 @@ tasks {
         relocate("org.holoeasy", "fr.aerwyn81.libs.holoEasy")
         relocate("org.json", "fr.aerwyn81.libs.json")
         relocate("org.slf4j", "fr.aerwyn81.libs.slf4j")
+        relocate("com.tcoded.folialib", "fr.aerwyn81.headblocks.lib.folialib")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")
@@ -68,7 +74,23 @@ tasks {
 
         destinationDirectory.set(file(System.getenv("outputDir") ?: "$rootDir/build/"))
 
-        minimize()
+        // Temporarily disable minimization to ensure FoliaLib and NBT API are included
+        // TODO: Re-enable minimization with proper exclusions once Shadow plugin syntax is confirmed
+        // minimize {
+        //     exclude(dependency("com.tcoded:folialib:.*"))
+        //     exclude(dependency("de.tr7zw:item-nbt-api:.*"))
+        // }
+    }
+
+    register<Copy>("copyJarToTarget") {
+        dependsOn("shadowJar")
+        // Copy the shadowJar output (with all dependencies) from build/ to target folder
+        from(shadowJar.get().archiveFile)
+        into(file("$rootDir/target"))
+    }
+
+    build {
+        dependsOn("copyJarToTarget")
     }
 }
 
@@ -81,6 +103,7 @@ bukkit {
     softDepend = listOf("PlaceholderAPI", "HeadDatabase", "packetevents")
     version = project.version.toString()
     website = "https://just2craft.fr"
+    foliaSupported = true
 
     commands {
         register("headblocks") {
