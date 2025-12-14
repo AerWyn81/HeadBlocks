@@ -122,7 +122,7 @@ public class ResetAll extends ResetBase {
                     if (onlinePlayer != null) {
                         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
                         if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
-                            packetEventsHook.getHeadHidingListener().showAllPreviousHeads(onlinePlayer);
+                            packetEventsHook.getHeadHidingListener().invalidatePlayerCache(uuid);
                         }
                     }
                 } catch (InternalException ex) {

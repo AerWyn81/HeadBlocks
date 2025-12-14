@@ -6,7 +6,6 @@ import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.services.ConfigService;
@@ -25,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HeadHidingPacketListener implements PacketListener {
 
     private final ConcurrentHashMap<UUID, Set<UUID>> playerFoundHeadsCache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, ConcurrentHashMap<Long, Set<UUID>>> playerChunkHeadsCache = new ConcurrentHashMap<>();
 
     @Override
     public void onPacketSend(@NotNull PacketSendEvent event) {
@@ -48,8 +46,6 @@ public class HeadHidingPacketListener implements PacketListener {
             handleBlockChange(event, player, foundHeads);
         } else if (event.getPacketType() == PacketType.Play.Server.MULTI_BLOCK_CHANGE) {
             handleMultiBlockChange(event, player, foundHeads);
-        } else if (event.getPacketType() == PacketType.Play.Server.CHUNK_DATA) {
-            handleChunkData(event, player);
         }
     }
 
@@ -87,39 +83,6 @@ public class HeadHidingPacketListener implements PacketListener {
         packet.setBlocks(blocks);
     }
 
-    private void handleChunkData(PacketSendEvent event, Player player) {
-        var packet = new WrapperPlayServerChunkData(event);
-
-        var chunkX = packet.getColumn().getX();
-        var chunkZ = packet.getColumn().getZ();
-        long chunkKey = getChunkKey(chunkX, chunkZ);
-
-        var chunkHeadsMap = playerChunkHeadsCache.get(player.getUniqueId());
-        if (chunkHeadsMap == null) {
-            return;
-        }
-
-        var headsInChunk = chunkHeadsMap.get(chunkKey);
-        if (headsInChunk == null || headsInChunk.isEmpty()) {
-            return;
-        }
-
-        // Schedule a task to send block changes after the chunk is loaded on the client side
-        Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-            for (var headUuid : headsInChunk) {
-                var headLocation = HeadService.getHeadByUUID(headUuid);
-                if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
-                    player.sendBlockChange(headLocation.getLocation(),
-                            org.bukkit.Material.STRUCTURE_VOID.createBlockData());
-                }
-            }
-        }, 1L);
-    }
-
-    private long getChunkKey(int x, int z) {
-        return ((long) x << 32) | (z & 0xFFFFFFFFL);
-    }
-
     public void onPlayerJoin(Player player) {
         if (!ConfigService.hideFoundHeads()) {
             return;
@@ -128,20 +91,6 @@ public class HeadHidingPacketListener implements PacketListener {
         StorageService.getHeadsPlayer(player.getUniqueId()).whenComplete(foundHeads -> {
             if (foundHeads != null) {
                 playerFoundHeadsCache.put(player.getUniqueId(), foundHeads);
-
-                var chunkHeadsMap = new ConcurrentHashMap<Long, Set<UUID>>();
-                for (var headUuid : foundHeads) {
-                    var headLocation = HeadService.getHeadByUUID(headUuid);
-                    if (headLocation != null) {
-                        var loc = headLocation.getLocation();
-                        int chunkX = loc.getBlockX() >> 4;
-                        int chunkZ = loc.getBlockZ() >> 4;
-                        long chunkKey = getChunkKey(chunkX, chunkZ);
-
-                        chunkHeadsMap.computeIfAbsent(chunkKey, k -> ConcurrentHashMap.newKeySet()).add(headUuid);
-                    }
-                }
-                playerChunkHeadsCache.put(player.getUniqueId(), chunkHeadsMap);
 
                 Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
                     for (var headUuid : foundHeads) {
@@ -159,7 +108,6 @@ public class HeadHidingPacketListener implements PacketListener {
 
     public void invalidatePlayerCache(UUID playerUuid) {
         playerFoundHeadsCache.remove(playerUuid);
-        playerChunkHeadsCache.remove(playerUuid);
     }
 
     public void addFoundHead(Player player, UUID headUuid) {
@@ -171,18 +119,9 @@ public class HeadHidingPacketListener implements PacketListener {
         foundHeads.add(headUuid);
 
         var headLocation = HeadService.getHeadByUUID(headUuid);
-        if (headLocation != null) {
-            var loc = headLocation.getLocation();
-            int chunkX = loc.getBlockX() >> 4;
-            int chunkZ = loc.getBlockZ() >> 4;
-            long chunkKey = getChunkKey(chunkX, chunkZ);
-
-            var chunkHeadsMap = playerChunkHeadsCache.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>());
-            chunkHeadsMap.computeIfAbsent(chunkKey, k -> ConcurrentHashMap.newKeySet()).add(headUuid);
-
-            if (player.getWorld().equals(loc.getWorld())) {
-                player.sendBlockChange(loc, org.bukkit.Material.STRUCTURE_VOID.createBlockData());
-            }
+        if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
+            player.sendBlockChange(headLocation.getLocation(),
+                    org.bukkit.Material.STRUCTURE_VOID.createBlockData());
         }
     }
 
@@ -193,33 +132,17 @@ public class HeadHidingPacketListener implements PacketListener {
         }
 
         var headLocation = HeadService.getHeadByUUID(headUuid);
-        if (headLocation != null) {
-            var loc = headLocation.getLocation();
-            int chunkX = loc.getBlockX() >> 4;
-            int chunkZ = loc.getBlockZ() >> 4;
-            long chunkKey = getChunkKey(chunkX, chunkZ);
+        if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
+            var location = headLocation.getLocation();
 
-            var chunkHeadsMap = playerChunkHeadsCache.get(player.getUniqueId());
-            if (chunkHeadsMap != null) {
-                var headsInChunk = chunkHeadsMap.get(chunkKey);
-                if (headsInChunk != null) {
-                    headsInChunk.remove(headUuid);
-                    if (headsInChunk.isEmpty()) {
-                        chunkHeadsMap.remove(chunkKey);
-                    }
+            Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+                player.sendBlockChange(location, location.getBlock().getBlockData());
+                var world = location.getWorld();
+                if (world != null) {
+                    var blockState = location.getBlock().getState();
+                    blockState.update(true, false);
                 }
-            }
-
-            if (player.getWorld().equals(loc.getWorld())) {
-                Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-                    player.sendBlockChange(loc, loc.getBlock().getBlockData());
-                    var world = loc.getWorld();
-                    if (world != null) {
-                        var blockState = loc.getBlock().getState();
-                        blockState.update(true, false);
-                    }
-                }, 1L);
-            }
+            }, 1L);
         }
     }
 
@@ -231,7 +154,6 @@ public class HeadHidingPacketListener implements PacketListener {
         var previouslyHiddenHeads = playerFoundHeadsCache.get(player.getUniqueId());
 
         playerFoundHeadsCache.remove(player.getUniqueId());
-        playerChunkHeadsCache.remove(player.getUniqueId());
 
         if (previouslyHiddenHeads != null && !previouslyHiddenHeads.isEmpty()) {
             Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
@@ -253,6 +175,5 @@ public class HeadHidingPacketListener implements PacketListener {
 
     public void clearCache() {
         playerFoundHeadsCache.clear();
-        playerChunkHeadsCache.clear();
     }
 }
