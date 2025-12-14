@@ -1,22 +1,18 @@
-# HeadBlocks v2.8.3
+# HeadBlocks v2.8.5
 
 ## What's New
 
 ### ✨ New Features
 
--
+- Added `/hb debug resync` commands for database/locations synchronization
 
 ### 🚀 Improvements
 
--
+- Enhanced head visibility handling logic and optimized caching by introducing chunk-based tracking
 
 ### 🐛 Bug Fixes
 
--
-
-### 🔧 Technical
-
-- 
+- Fixed command parsing in RewardService to skip blank commands and added safety checks for empty command lists
 
 Thank you for using HeadBlocks ❤️
 

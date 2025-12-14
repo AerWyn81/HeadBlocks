@@ -110,8 +110,8 @@ def markdown_to_bbcode(markdown_text):
 
 
 def main():
-    input_file = 'Changelog.md'
-    output_file = 'Changelog.bbcode'
+    input_file = 'changelog.md'
+    output_file = 'changelog.bbcode'
 
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
