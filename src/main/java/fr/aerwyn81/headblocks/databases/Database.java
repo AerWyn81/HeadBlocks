@@ -72,4 +72,6 @@ public interface Database {
     ArrayList<UUID> getHeads(String serverId) throws InternalException;
 
     void addColumnServerIdentifier() throws InternalException;
+
+    ArrayList<String> getDistinctServerIds() throws InternalException;
 }

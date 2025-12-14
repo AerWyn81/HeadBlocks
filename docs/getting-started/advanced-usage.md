@@ -9,6 +9,7 @@ You can run the `/hb debug` command in-game with the following options:
 - texture
 - give
 - holograms
+- resync
 
 The debug argument is not listed in the in-game help or tab completion.
 
@@ -56,3 +57,42 @@ Examples:
 ### Holograms
 
 Force holograms to reappear.
+
+### Resync
+
+Synchronize the database with the `locations.yml` file.  
+Useful when heads are out of sync (e.g., heads exist in the database but not in the world).
+
+Full command: `/hb debug resync <database|locations> [--force]`
+
+#### resync database
+
+Removes head entries from the database that no longer exist in `locations.yml`.
+
+- **SQLite**: Automatically creates a backup before making changes (`headblocks.db.save-resync-<date>`)
+- **MySQL**: Requires `--force` flag. You must backup your database manually before running this command.
+
+?> If multiple server IDs are detected (multi-server setup), the operation will be canceled unless `--force` is used.
+
+Examples:
+> Clean orphaned database entries (SQLite)
+
+`/hb debug resync database`
+
+> Clean orphaned database entries (MySQL - after manual backup)
+
+`/hb debug resync database --force`
+
+#### resync locations
+
+Restores head blocks in the world based on `locations.yml`. For each location:
+
+- If the block is already a head → applies the texture from the database
+- If the block is not a head → creates the head block and applies the texture
+
+This is useful when heads have been broken or lost their texture.
+
+Example:
+> Restore all heads from locations.yml
+
+`/hb debug resync locations`

@@ -822,4 +822,25 @@ public final class MySQL implements Database {
             return !rs.next() || rs.getInt(1) != 0;
         }
     }
+
+    @Override
+    public ArrayList<String> getDistinctServerIds() throws InternalException {
+        var serverIds = new ArrayList<String>();
+
+        if (notAlive()) {
+            open();
+        }
+
+        try (var ps = connection.prepareStatement(Requests.getDistinctServerIds())) {
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    serverIds.add(rs.getString("serverId"));
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return serverIds;
+    }
 }

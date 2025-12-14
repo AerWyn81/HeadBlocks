@@ -19,7 +19,8 @@ import org.bukkit.entity.Player;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -149,7 +150,7 @@ public class StorageService {
         }
 
         if (database instanceof SQLite) {
-            var backup = backupDatabase();
+            var backup = backupDatabase("save-") != null;
             if (!backup) {
                 storageError = true;
             }
@@ -185,15 +186,16 @@ public class StorageService {
         }
     }
 
-    private static boolean backupDatabase() {
-        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + File.separator + "headblocks.db";
+    public static String backupDatabase(String suffix) {
+        var pathToDatabase = HeadBlocks.getInstance().getDataFolder() + File.separator + "headblocks.db";
         var databaseFile = new File(pathToDatabase);
 
         if (!databaseFile.exists()) {
-            return true;
+            return null;
         }
 
-        File copied = new File(pathToDatabase + ".save-" + LocalDate.now());
+        var backupFileName = "headblocks.db." + suffix + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"));
+        var copied = new File(HeadBlocks.getInstance().getDataFolder() + File.separator + backupFileName);
         try (var in = new BufferedInputStream(new FileInputStream(databaseFile));
              var out = new BufferedOutputStream(new FileOutputStream(copied))) {
 
@@ -204,11 +206,11 @@ public class StorageService {
                 out.flush();
             }
         } catch (Exception e) {
-            LogUtil.error("Error backuping database, aborting migration, storage error: {0}", e.getMessage());
-            return false;
+            LogUtil.error("Error backuping database: {0}", e.getMessage());
+            return null;
         }
 
-        return true;
+        return backupFileName;
     }
 
     public static void loadPlayers(Player... players) {
@@ -529,5 +531,13 @@ public class StorageService {
 
     public static ArrayList<UUID> getHeadsByServerId() throws InternalException {
         return database.getHeads(serverIdentifier);
+    }
+
+    public static ArrayList<String> getDistinctServerIds() throws InternalException {
+        return database.getDistinctServerIds();
+    }
+
+    public static String getServerIdentifier() {
+        return serverIdentifier;
     }
 }

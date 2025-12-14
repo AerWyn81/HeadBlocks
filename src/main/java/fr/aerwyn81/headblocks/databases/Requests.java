@@ -257,4 +257,8 @@ public class Requests {
     public static String addColumnPlayerDisplayNameMySQL() {
         return String.format("ALTER TABLE %s ADD COLUMN pDisplayName VARCHAR(255) DEFAULT ''", getTablePlayers());
     }
+
+    public static String getDistinctServerIds() {
+        return String.format("SELECT DISTINCT serverId FROM %s WHERE serverId IS NOT NULL AND serverId != ''", getTableHeads());
+    }
 }

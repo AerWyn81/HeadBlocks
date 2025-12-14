@@ -89,28 +89,25 @@ public class HeadUtils {
         var skull = (Skull) block.getState();
 
         if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            NBT.modify(skull, nbt -> {
-                var playerProfile = Bukkit.createPlayerProfile(UUID.randomUUID());
-                var textures = playerProfile.getTextures();
+            var playerProfile = Bukkit.createPlayerProfile(UUID.randomUUID());
+            var textures = playerProfile.getTextures();
 
-                // Dirty, use it only for debug command
-                URL url;
-                try {
-                    var decoded = Base64.getDecoder().decode(texture);
-                    var jsonObject = JsonParser.parseString(new String(decoded)).getAsJsonObject();
-                    url = new URI(jsonObject.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString()).toURL();
-                } catch (Exception ex) {
-                    LogUtil.error("Error when trying to decode texture: {0}", ex.getMessage());
-                    isApplied.set(false);
-                    return;
-                }
+            URL url;
+            try {
+                var decoded = Base64.getDecoder().decode(texture);
+                var jsonObject = JsonParser.parseString(new String(decoded)).getAsJsonObject();
+                url = new URI(jsonObject.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString()).toURL();
+            } catch (Exception ex) {
+                LogUtil.error("Error when trying to decode texture: {0}", ex.getMessage());
+                isApplied.set(false);
+                return isApplied.get();
+            }
 
-                textures.setSkin(url);
-                playerProfile.setTextures(textures);
+            textures.setSkin(url);
+            playerProfile.setTextures(textures);
 
-                skull.setOwnerProfile(playerProfile);
-                skull.update();
-            });
+            skull.setOwnerProfile(playerProfile);
+            skull.update(true, false);
         } else {
             NBT.modify(skull, nbt -> {
                 ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound("SkullOwner");
@@ -122,7 +119,7 @@ public class HeadUtils {
                         .addCompound()
                         .setString("Value", texture);
 
-                skull.update();
+                skull.update(true, false);
             });
         }
 

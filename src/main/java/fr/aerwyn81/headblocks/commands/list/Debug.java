@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
@@ -11,6 +12,7 @@ import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import fr.aerwyn81.headblocks.utils.runnables.CompletableBukkitFuture;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -241,10 +243,191 @@ public class Debug implements Cmd {
                 sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &aHolograms reloaded!"));
                 return true;
             }
+            case "resync" -> {
+                if (args.length < 3) {
+                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncUsage"));
+                    return true;
+                }
+
+                var force = args.length >= 4 && args[3].equalsIgnoreCase("--force");
+
+                switch (args[2]) {
+                    case "database" -> {
+                        return handleResyncDatabase(sender, force);
+                    }
+                    case "locations" -> {
+                        handleResyncLocations(sender);
+                        return true;
+                    }
+                    default -> {
+                        sender.sendMessage(LanguageService.getMessage("Messages.ResyncUnknownType"));
+                        return true;
+                    }
+                }
+            }
         }
 
         sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cUnknown debug command!"));
         return true;
+    }
+
+    private boolean handleResyncDatabase(CommandSender sender, boolean force) {
+        CompletableBukkitFuture.runAsync(HeadBlocks.getInstance(), () -> {
+            try {
+                if (StorageService.hasStorageError()) {
+                    sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+                    return;
+                }
+
+                // MySQL requires --force (user must backup manually)
+                if (ConfigService.isDatabaseEnabled() && !force) {
+                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncMySQLRequiresForce"));
+                    return;
+                }
+
+                // Check for multi-server setup
+                var distinctServerIds = StorageService.getDistinctServerIds();
+
+                if (distinctServerIds.size() > 1 && !force) {
+                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncMultiServerDetected"));
+                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncMultiServerCount")
+                            .replaceAll("%count%", String.valueOf(distinctServerIds.size()))
+                            .replaceAll("%serverIds%", String.join(", ", distinctServerIds)));
+                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncMultiServerWarningDb"));
+                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncOperationCancelled"));
+                    return;
+                }
+
+                var currentServerId = StorageService.getServerIdentifier();
+                if (!currentServerId.isEmpty()) {
+                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncCurrentServerId")
+                            .replaceAll("%serverId%", currentServerId));
+                }
+
+                // Get heads from database for current server
+                var dbHeads = StorageService.getHeadsByServerId();
+                var locationHeadUuids = HeadService.getHeadLocations().stream()
+                        .map(HeadLocation::getUuid)
+                        .collect(Collectors.toSet());
+
+                // Find heads in DB that are not in locations.yml
+                var headsToRemove = dbHeads.stream()
+                        .filter(uuid -> !locationHeadUuids.contains(uuid))
+                        .toList();
+
+                if (headsToRemove.isEmpty()) {
+                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseAlreadyInSync"));
+                    return;
+                }
+
+                sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseFoundHeads")
+                        .replaceAll("%count%", String.valueOf(headsToRemove.size())));
+
+                // Backup database before making changes (SQLite only, MySQL users already backed up manually)
+                if (!ConfigService.isDatabaseEnabled()) {
+                    var backupResult = StorageService.backupDatabase("save-resync-");
+                    if (backupResult != null) {
+                        sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseBackupSuccess")
+                                .replaceAll("%fileName%", backupResult));
+                    } else {
+                        sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseBackupError"));
+                        return;
+                    }
+                }
+
+                int removed = 0;
+                for (var headUuid : headsToRemove) {
+                    try {
+                        StorageService.removeHead(headUuid, true);
+                        removed++;
+                        LogUtil.info("Resync: Removed head {0} from database", headUuid);
+                    } catch (InternalException e) {
+                        LogUtil.error("Resync: Failed to remove head {0}: {1}", headUuid, e.getMessage());
+                    }
+                }
+
+                sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseSuccess")
+                        .replaceAll("%count%", String.valueOf(removed)));
+
+            } catch (InternalException e) {
+                sender.sendMessage(LanguageService.getMessage("Messages.ResyncError")
+                        .replaceAll("%error%", e.getMessage()));
+                LogUtil.error("Resync database error: {0}", e.getMessage());
+            }
+        });
+
+        return true;
+    }
+
+    private void handleResyncLocations(CommandSender sender) {
+        var headLocations = HeadService.getHeadLocations();
+
+        if (headLocations.isEmpty()) {
+            sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
+            return;
+        }
+
+        sender.sendMessage(LanguageService.getMessage("Messages.ResyncLocationsStarting")
+                .replaceAll("%count%", String.valueOf(headLocations.size())));
+
+        // Run on main thread since we're modifying blocks
+        Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> {
+            int restored = 0;
+            int textureApplied = 0;
+            int skipped = 0;
+            int failed = 0;
+
+            for (var headLocation : headLocations) {
+                var location = headLocation.getLocation();
+                if (location == null || location.getWorld() == null) {
+                    failed++;
+                    continue;
+                }
+
+                try {
+                    var texture = StorageService.getHeadTexture(headLocation.getUuid());
+                    if (texture == null || texture.isEmpty()) {
+                        LogUtil.warning("Resync locations: No texture found for head {0}", headLocation.getUuid());
+                        failed++;
+                        continue;
+                    }
+
+                    var block = location.getBlock();
+
+                    if (HeadUtils.isPlayerHead(block)) {
+                        // Block is already a head, check if texture matches
+                        var currentTexture = HeadUtils.getHeadTexture(block);
+                        if (texture.equals(currentTexture)) {
+                            skipped++;
+                            continue;
+                        }
+
+                        if (HeadUtils.applyTextureToBlock(block, texture)) {
+                            textureApplied++;
+                        } else {
+                            failed++;
+                        }
+                    } else {
+                        // Block is not a head, create it
+                        block.setType(Material.PLAYER_HEAD);
+                        if (HeadUtils.applyTextureToBlock(block, texture)) {
+                            restored++;
+                        } else {
+                            failed++;
+                        }
+                    }
+                } catch (InternalException e) {
+                    LogUtil.error("Resync locations: Error processing head {0}: {1}", headLocation.getUuid(), e.getMessage());
+                    failed++;
+                }
+            }
+
+            sender.sendMessage(LanguageService.getMessage("Messages.ResyncLocationsSuccess")
+                    .replaceAll("%restored%", String.valueOf(restored))
+                    .replaceAll("%textureApplied%", String.valueOf(textureApplied))
+                    .replaceAll("%skipped%", String.valueOf(skipped))
+                    .replaceAll("%failed%", String.valueOf(failed)));
+        });
     }
 
     public static List<UUID> pickRandomUUIDs(List<UUID> uuidList, int numberOfElements) {
@@ -264,18 +447,21 @@ public class Debug implements Cmd {
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
         return switch (args.length) {
-            case 2 -> new ArrayList<>(Stream.of("texture", "give", "holograms")
+            case 2 -> new ArrayList<>(Stream.of("texture", "give", "holograms", "resync")
                     .filter(s -> s.startsWith(args[1])).collect(Collectors.toList()));
             case 3 -> {
                 var completion = new ArrayList<String>();
 
-                if (args[1].equals("texture")) {
-                    completion.addAll(ConfigService.getHeads().stream()
+                switch (args[1]) {
+                    case "texture" -> completion.addAll(ConfigService.getHeads().stream()
                             .filter(s -> s.startsWith("default"))
                             .map(s -> s.replace("default:", "")).toList());
-                } else if (args[1].equals("give")) {
-                    completion.add("all");
-                    completion.addAll(Bukkit.getOnlinePlayers().stream().map(Player::getName).toList());
+                    case "give" -> {
+                        completion.add("all");
+                        completion.addAll(Bukkit.getOnlinePlayers().stream().map(Player::getName).toList());
+                    }
+                    case "resync" -> completion.addAll(Stream.of("database", "locations")
+                            .filter(s -> s.startsWith(args[2])).toList());
                 }
 
                 yield completion;
@@ -283,9 +469,11 @@ public class Debug implements Cmd {
             case 4 -> {
                 var completion = new ArrayList<String>();
 
-                if (!args[2].isEmpty()) {
+                if (args[1].equals("give") && !args[2].isEmpty()) {
                     completion.addAll(Stream.of("all", "ordered", "random")
-                            .filter(s -> s.startsWith(args[2])).toList());
+                            .filter(s -> s.startsWith(args[3])).toList());
+                } else if (args[1].equals("resync") && args[2].equals("database")) {
+                    completion.add("--force");
                 }
 
                 yield completion;

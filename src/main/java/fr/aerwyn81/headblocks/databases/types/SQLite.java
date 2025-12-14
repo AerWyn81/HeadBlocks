@@ -662,4 +662,21 @@ public class SQLite implements Database {
             return false;
         }
     }
+
+    @Override
+    public ArrayList<String> getDistinctServerIds() throws InternalException {
+        var serverIds = new ArrayList<String>();
+
+        try (var ps = connection.prepareStatement(Requests.getDistinctServerIds())) {
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    serverIds.add(rs.getString("serverId"));
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return serverIds;
+    }
 }
