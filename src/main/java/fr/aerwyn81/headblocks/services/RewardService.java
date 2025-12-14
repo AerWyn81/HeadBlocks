@@ -29,14 +29,24 @@ public class RewardService {
                 }
 
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (tieredReward.isRandom()) {
-                        String randomCommand = tieredReward.getCommands().get(new Random().nextInt(tieredReward.getCommands().size()));
-                        Bukkit.getScheduler().runTaskLater(plugin, () ->
-                                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand)), 1L);
-                    } else {
-                        List<String> commands = tieredReward.getCommands();
-                        commands.forEach(command ->
-                                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, command)));
+                    List<String> tieredCommands = tieredReward.getCommands();
+                    if (!tieredCommands.isEmpty()) {
+                        if (tieredReward.isRandom()) {
+                            String randomCommand = tieredCommands.get(new Random().nextInt(tieredCommands.size()));
+                            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
+                                if (!parsedCommand.isBlank()) {
+                                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);
+                                }
+                            }, 1L);
+                        } else {
+                            tieredCommands.forEach(command -> {
+                                String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, command);
+                                if (!parsedCommand.isBlank()) {
+                                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);
+                                }
+                            });
+                        }
                     }
 
                     List<String> broadcastMessages = tieredReward.getBroadcastMessages();
@@ -65,14 +75,27 @@ public class RewardService {
         }
 
         var isRandomCommand = ConfigService.isHeadClickCommandsRandomized();
+        var headClickCommands = ConfigService.getHeadClickCommands();
+
+        if (headClickCommands.isEmpty()) {
+            return;
+        }
 
         if (isRandomCommand) {
-            String randomCommand = ConfigService.getHeadClickCommands().get(new Random().nextInt(ConfigService.getHeadClickCommands().size()));
-            Bukkit.getScheduler().runTaskLater(plugin, () ->
-                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand)), 1L);
+            String randomCommand = headClickCommands.get(new Random().nextInt(headClickCommands.size()));
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
+                if (!parsedCommand.isBlank()) {
+                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);
+                }
+            }, 1L);
         } else {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> ConfigService.getHeadClickCommands().forEach(reward ->
-                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward))), 1L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> headClickCommands.forEach(reward -> {
+                String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward);
+                if (!parsedCommand.isBlank()) {
+                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);
+                }
+            }), 1L);
         }
     }
 
