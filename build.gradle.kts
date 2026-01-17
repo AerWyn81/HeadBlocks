@@ -24,9 +24,9 @@ dependencies {
     compileOnly(libs.placeholderapi)
     compileOnly(libs.headdatabase.api)
     compileOnly(libs.packetevents)
+    compileOnly(libs.hikaricp)
 
     implementation(libs.jedis)
-    implementation(libs.hikaricp)
     implementation(libs.gson)
     implementation(libs.commons.lang3)
     implementation(libs.nbt.api)
@@ -75,12 +75,16 @@ tasks {
 bukkit {
     name = "HeadBlocks"
     main = "fr.aerwyn81.headblocks.HeadBlocks"
-    authors = listOf("AerWyn81")
+    authors = listOf("AerWyn81", "hyperion")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
     softDepend = listOf("PlaceholderAPI", "HeadDatabase", "packetevents")
     version = project.version.toString()
     website = "https://just2craft.fr"
+    libraries = listOf(
+        "com.zaxxer:HikariCP:6.3.0",
+        "org.mariadb.jdbc:mariadb-java-client:3.5.3"
+    )
 
     commands {
         register("headblocks") {
