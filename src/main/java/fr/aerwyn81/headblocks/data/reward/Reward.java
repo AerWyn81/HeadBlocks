@@ -72,7 +72,7 @@ public class Reward {
         var value = parsedValue;
         switch (type) {
             case MESSAGE -> player.sendMessage(parsedValue);
-            case COMMAND -> Bukkit.getScheduler().runTaskLater(plugin, () ->
+            case COMMAND -> HeadBlocks.getScheduler().runLater(() ->
                     plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), value), 1L);
             case BROADCAST -> plugin.getServer().broadcastMessage(parsedValue);
         }

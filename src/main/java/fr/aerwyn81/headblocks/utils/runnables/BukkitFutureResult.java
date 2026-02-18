@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.utils.runnables;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public class BukkitFutureResult<T> {
     }
 
     public void whenComplete(@NotNull Plugin plugin, @NotNull Consumer<? super T> callback, Consumer<Throwable> throwableConsumer) {
-        var executor = (Executor) r -> plugin.getServer().getScheduler().runTask(plugin, r);
+        var executor = (Executor) r -> HeadBlocks.getScheduler().runNextTick(t -> r.run());
         this.future.thenAcceptAsync(callback, executor).exceptionally(throwable -> {
             throwableConsumer.accept(throwable);
             return null;

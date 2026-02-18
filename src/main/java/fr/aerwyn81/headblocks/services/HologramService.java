@@ -62,9 +62,12 @@ public class HologramService {
         }
 
         for (HeadLocation loc : HeadService.getHeadLocations()) {
-            if (loc.isCharged()) {
-                createHolograms(loc.getLocation());
-            }
+            Location location = loc.getLocation();
+            HeadBlocks.getScheduler().runAtLocation(location, (task) -> {
+                if (loc.isCharged()) {
+                    createHolograms(location);
+                }
+            });
         }
     }
 

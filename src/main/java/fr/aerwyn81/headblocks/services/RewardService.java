@@ -4,7 +4,6 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -28,24 +27,26 @@ public class RewardService {
                     p.sendMessage(PlaceholdersService.parse(p, headLocation, messages));
                 }
 
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                HeadBlocks.getScheduler().runAtEntityLater(p, () -> {
                     List<String> tieredCommands = tieredReward.getCommands();
                     if (!tieredCommands.isEmpty()) {
                         if (tieredReward.isRandom()) {
                             String randomCommand = tieredCommands.get(new Random().nextInt(tieredCommands.size()));
-                            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                            HeadBlocks.getScheduler().runLater(() -> {
                                 String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
                                 if (!parsedCommand.isBlank()) {
                                     plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);
                                 }
                             }, 1L);
                         } else {
-                            tieredCommands.forEach(command -> {
-                                String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, command);
-                                if (!parsedCommand.isBlank()) {
-                                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);
-                                }
-                            });
+                            HeadBlocks.getScheduler().runLater(() -> {
+                                tieredCommands.forEach(command -> {
+                                    String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, command);
+                                    if (!parsedCommand.isBlank()) {
+                                        plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);
+                                    }
+                                });
+                            }, 1L);
                         }
                     }
 
@@ -83,14 +84,14 @@ public class RewardService {
 
         if (isRandomCommand) {
             String randomCommand = headClickCommands.get(new Random().nextInt(headClickCommands.size()));
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            HeadBlocks.getScheduler().runLater(() -> {
                 String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
                 if (!parsedCommand.isBlank()) {
                     plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);
                 }
             }, 1L);
         } else {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> headClickCommands.forEach(reward -> {
+            HeadBlocks.getScheduler().runLater(() -> headClickCommands.forEach(reward -> {
                 String parsedCommand = PlaceholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward);
                 if (!parsedCommand.isBlank()) {
                     plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), parsedCommand);

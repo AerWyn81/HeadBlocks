@@ -1,5 +1,8 @@
 package fr.aerwyn81.headblocks;
 
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.impl.PlatformScheduler;
+import com.tcoded.folialib.util.FoliaLibOptions;
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
@@ -14,7 +17,9 @@ import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
-import fr.aerwyn81.headblocks.utils.internal.Metrics;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
+import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.holoeasy.HoloEasy;
@@ -27,6 +32,7 @@ import java.util.Arrays;
 public final class HeadBlocks extends JavaPlugin {
 
     private static HeadBlocks instance;
+    private static FoliaLib foliaLib;
     public static boolean isPlaceholderApiActive;
     public static boolean isReloadInProgress;
     public static boolean isHeadDatabaseActive;
@@ -71,7 +77,9 @@ public final class HeadBlocks extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-
+        FoliaLibOptions options = new FoliaLibOptions();
+        options.disableNotifications();
+        foliaLib = new FoliaLib(this, options);
         initializeExternals();
 
         LogUtil.info("HeadBlocks initializing...");
@@ -122,30 +130,30 @@ public final class HeadBlocks extends JavaPlugin {
 
         if (ConfigService.isMetricsEnabled()) {
             var m = new Metrics(this, 15495);
-            m.addCustomChart(new Metrics.SimplePie("database_type", StorageService::selectedStorageType));
-            m.addCustomChart(new Metrics.SingleLineChart("heads", () -> HeadService.getChargedHeadLocations().size()));
-            m.addCustomChart(new Metrics.SimplePie("lang", LanguageService::getLanguage));
-            m.addCustomChart(new Metrics.SimplePie("feat_order", () -> {
+            m.addCustomChart(new SimplePie("database_type", StorageService::selectedStorageType));
+            m.addCustomChart(new SingleLineChart("heads", () -> HeadService.getChargedHeadLocations().size()));
+            m.addCustomChart(new SimplePie("lang", LanguageService::getLanguage));
+            m.addCustomChart(new SimplePie("feat_order", () -> {
                 var anyOrder = HeadService.getChargedHeadLocations().stream().anyMatch(h -> h.getOrderIndex() != -1);
                 return anyOrder ? "True" : "False";
             }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hit", () -> {
+            m.addCustomChart(new SimplePie("feat_hit", () -> {
                 var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(h -> h.getHitCount() != -1);
                 return anyHit ? "True" : "False";
             }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hint_sound", () -> {
+            m.addCustomChart(new SimplePie("feat_hint_sound", () -> {
                 var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintSoundEnabled);
                 return anyHit ? "True" : "False";
             }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hint_actionBarMessage", () -> {
+            m.addCustomChart(new SimplePie("feat_hint_actionBarMessage", () -> {
                 var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintActionBarEnabled);
                 return anyHit ? "True" : "False";
             }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hint_rewards", () -> {
+            m.addCustomChart(new SimplePie("feat_hint_rewards", () -> {
                 var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(h -> !h.getRewards().isEmpty());
                 return anyHit ? "True" : "False";
             }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hide_heads", () -> ConfigService.hideFoundHeads() ? "True" : "False"));
+            m.addCustomChart(new SimplePie("feat_hide_heads", () -> ConfigService.hideFoundHeads() ? "True" : "False"));
         }
 
         LogUtil.info("HeadBlocks successfully loaded!");
@@ -170,7 +178,7 @@ public final class HeadBlocks extends JavaPlugin {
         HeadService.clearHeadMoves();
         GuiService.clearCache();
 
-        Bukkit.getScheduler().cancelTasks(this);
+        foliaLib.getScheduler().cancelAllTasks();
 
         packetEventsHook.unload();
 
@@ -198,11 +206,15 @@ public final class HeadBlocks extends JavaPlugin {
             return;
         }
 
-        globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
+        globalTask.runAsyncRepeating(0, ConfigService.getDelayGlobalTask());
     }
 
     public static HeadBlocks getInstance() {
         return instance;
+    }
+
+    public static PlatformScheduler getScheduler() {
+        return foliaLib.getScheduler();
     }
 
     public HeadDatabaseHook getHeadDatabaseHook() {

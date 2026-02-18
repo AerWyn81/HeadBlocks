@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.services;
 
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.NBTTileEntity;
 import fr.aerwyn81.headblocks.HeadBlocks;
@@ -25,7 +26,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -44,7 +44,7 @@ public class HeadService {
     private static HashMap<UUID, HeadMove> headMoves;
     private static ArrayList<HeadLocation> headLocations;
 
-    private static HashMap<UUID, BukkitTask> tasksHeadSpin;
+    private static HashMap<UUID, WrappedTask> tasksHeadSpin;
 
     public static String HB_KEY = "HB_HEAD";
 
@@ -65,7 +65,7 @@ public class HeadService {
         heads.clear();
         headLocations.clear();
         headMoves.clear();
-        tasksHeadSpin.values().forEach(BukkitTask::cancel);
+        tasksHeadSpin.values().forEach(WrappedTask::cancel);
 
         loadHeads();
         loadLocations();
@@ -162,7 +162,7 @@ public class HeadService {
             return;
         }
 
-        var task = Bukkit.getScheduler().runTaskTimer(HeadBlocks.getInstance(),
+        var task = HeadBlocks.getScheduler().runAtLocationTimer(headLoc.getLocation(),
                 () -> rotateHead(headLoc), 5L * offset, ConfigService.getSpinSpeed());
         tasksHeadSpin.put(headLoc.getUuid(), task);
     }

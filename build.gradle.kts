@@ -17,6 +17,7 @@ repositories {
     maven("https://repo.codemc.org/repository/maven-public")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://jitpack.io")
+    maven("https://repo.tcoded.com/releases")
 }
 
 dependencies {
@@ -31,6 +32,8 @@ dependencies {
     implementation(libs.commons.lang3)
     implementation(libs.nbt.api)
     implementation(libs.holoeasy)
+    implementation(libs.folialib)
+    implementation(libs.bstats)
 }
 
 tasks {
@@ -60,6 +63,8 @@ tasks {
         relocate("org.holoeasy", "fr.aerwyn81.libs.holoEasy")
         relocate("org.json", "fr.aerwyn81.libs.json")
         relocate("org.slf4j", "fr.aerwyn81.libs.slf4j")
+        relocate("com.tcoded.folialib", "fr.aerwyn81.libs.foliaLib")
+        relocate("org.bstats", "fr.aerwyn81.libs.bstats")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")
@@ -68,7 +73,7 @@ tasks {
 
         destinationDirectory.set(file(System.getenv("outputDir") ?: "$rootDir/build/"))
 
-        minimize()
+        //minimize()
     }
 }
 
@@ -81,6 +86,7 @@ bukkit {
     softDepend = listOf("PlaceholderAPI", "HeadDatabase", "packetevents")
     version = project.version.toString()
     website = "https://just2craft.fr"
+    foliaSupported = true
 
     commands {
         register("headblocks") {

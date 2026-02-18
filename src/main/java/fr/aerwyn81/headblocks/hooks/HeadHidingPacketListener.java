@@ -105,7 +105,7 @@ public class HeadHidingPacketListener implements PacketListener {
         }
 
         // Schedule a task to send block changes after the chunk is loaded on the client side
-        Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getScheduler().runAtEntityLater(player, () -> {
             for (var headUuid : headsInChunk) {
                 var headLocation = HeadService.getHeadByUUID(headUuid);
                 if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
@@ -143,7 +143,7 @@ public class HeadHidingPacketListener implements PacketListener {
                 }
                 playerChunkHeadsCache.put(player.getUniqueId(), chunkHeadsMap);
 
-                Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+                HeadBlocks.getScheduler().runAtEntityLater(player, (task) -> {
                     for (var headUuid : foundHeads) {
                         var headLocation = HeadService.getHeadByUUID(headUuid);
                         if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
@@ -211,7 +211,7 @@ public class HeadHidingPacketListener implements PacketListener {
             }
 
             if (player.getWorld().equals(loc.getWorld())) {
-                Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+                HeadBlocks.getScheduler().runAtLocationLater(loc, () -> {
                     player.sendBlockChange(loc, loc.getBlock().getBlockData());
                     var world = loc.getWorld();
                     if (world != null) {
@@ -234,20 +234,20 @@ public class HeadHidingPacketListener implements PacketListener {
         playerChunkHeadsCache.remove(player.getUniqueId());
 
         if (previouslyHiddenHeads != null && !previouslyHiddenHeads.isEmpty()) {
-            Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-                for (var headUuid : previouslyHiddenHeads) {
-                    var headLocation = HeadService.getHeadByUUID(headUuid);
-                    if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
-                        var location = headLocation.getLocation();
+            for (var headUuid : previouslyHiddenHeads) {
+                var headLocation = HeadService.getHeadByUUID(headUuid);
+                if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
+                    var location = headLocation.getLocation();
+                    HeadBlocks.getScheduler().runAtLocationLater(location, () -> {
                         player.sendBlockChange(location, location.getBlock().getBlockData());
                         var world = location.getWorld();
                         if (world != null) {
                             var blockState = location.getBlock().getState();
                             blockState.update(true, false);
                         }
-                    }
+                    }, 1L);
                 }
-            }, 1L);
+            }
         }
     }
 

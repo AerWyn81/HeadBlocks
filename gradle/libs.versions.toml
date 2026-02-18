@@ -12,6 +12,8 @@ gson = "2.11.0"
 commons-lang3 = "3.12.0"
 nbt-api = "2.15.3"
 holoeasy = "master-SNAPSHOT"
+folialib = "0.5.1"
+bstats = "3.1.0"
 
 # Build Plugins
 shadow = "8.3.5"
@@ -32,6 +34,8 @@ gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 nbt-api = { module = "de.tr7zw:item-nbt-api", version.ref = "nbt-api" }
 holoeasy = { module = "com.github.AerWyn81.holoeasy:holoeasy-core", version.ref = "holoeasy" }
+folialib = { module = "com.tcoded:FoliaLib", version.ref = "folialib" }
+bstats = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

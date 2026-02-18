@@ -12,12 +12,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Collections;
 import java.util.Random;
 
-public class GlobalTask extends BukkitRunnable {
+public class GlobalTask extends HeadBlocksRunnable {
 
     private static final int CHUNK_SIZE = 16;
     private static int VIEW_RADIUS_CHUNKS = 1;
@@ -35,14 +34,16 @@ public class GlobalTask extends BukkitRunnable {
 
         HeadService.getChargedHeadLocations().forEach(headLocation -> {
             var location = headLocation.getLocation();
-            if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
-                return;
+            HeadBlocks.getScheduler().runAtLocation(location, (task) -> {
+                if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
+                    return;
 
-            if (ConfigService.isSpinEnabled() && ConfigService.isSpinLinked()) {
-                HeadService.rotateHead(headLocation);
-            }
+                if (ConfigService.isSpinEnabled() && ConfigService.isSpinLinked()) {
+                    HeadService.rotateHead(headLocation);
+                }
 
-            handleHologramAndParticles(headLocation);
+                handleHologramAndParticles(headLocation);
+            });
         });
     }
 

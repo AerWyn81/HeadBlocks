@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -371,25 +372,25 @@ public class Debug implements Cmd {
                 .replaceAll("%count%", String.valueOf(headLocations.size())));
 
         // Run on main thread since we're modifying blocks
-        Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> {
-            int restored = 0;
-            int textureApplied = 0;
-            int skipped = 0;
-            int failed = 0;
+        AtomicInteger restored = new AtomicInteger();
+        AtomicInteger textureApplied = new AtomicInteger();
+        AtomicInteger skipped = new AtomicInteger();
+        AtomicInteger failed = new AtomicInteger();
 
-            for (var headLocation : headLocations) {
-                var location = headLocation.getLocation();
+        for (var headLocation : headLocations) {
+            var location = headLocation.getLocation();
+            HeadBlocks.getScheduler().runAtLocation(location, (task) -> {
                 if (location == null || location.getWorld() == null) {
-                    failed++;
-                    continue;
+                    failed.getAndIncrement();
+                    return;
                 }
 
                 try {
                     var texture = StorageService.getHeadTexture(headLocation.getUuid());
                     if (texture == null || texture.isEmpty()) {
                         LogUtil.warning("Resync locations: No texture found for head {0}", headLocation.getUuid());
-                        failed++;
-                        continue;
+                        failed.getAndIncrement();
+                        return;
                     }
 
                     var block = location.getBlock();
@@ -398,36 +399,37 @@ public class Debug implements Cmd {
                         // Block is already a head, check if texture matches
                         var currentTexture = HeadUtils.getHeadTexture(block);
                         if (texture.equals(currentTexture)) {
-                            skipped++;
-                            continue;
+                            skipped.getAndIncrement();
+                            return;
                         }
 
                         if (HeadUtils.applyTextureToBlock(block, texture)) {
-                            textureApplied++;
+                            textureApplied.getAndIncrement();
                         } else {
-                            failed++;
+                            failed.getAndIncrement();
                         }
                     } else {
                         // Block is not a head, create it
                         block.setType(Material.PLAYER_HEAD);
                         if (HeadUtils.applyTextureToBlock(block, texture)) {
-                            restored++;
+                            restored.getAndIncrement();
                         } else {
-                            failed++;
+                            failed.getAndIncrement();
                         }
                     }
                 } catch (InternalException e) {
                     LogUtil.error("Resync locations: Error processing head {0}: {1}", headLocation.getUuid(), e.getMessage());
-                    failed++;
+                    failed.getAndIncrement();
                 }
-            }
 
-            sender.sendMessage(LanguageService.getMessage("Messages.ResyncLocationsSuccess")
-                    .replaceAll("%restored%", String.valueOf(restored))
-                    .replaceAll("%textureApplied%", String.valueOf(textureApplied))
-                    .replaceAll("%skipped%", String.valueOf(skipped))
-                    .replaceAll("%failed%", String.valueOf(failed)));
-        });
+                sender.sendMessage(LanguageService.getMessage("Messages.ResyncLocationsSuccess")
+                        .replaceAll("%restored%", String.valueOf(restored.get()))
+                        .replaceAll("%textureApplied%", String.valueOf(textureApplied.get()))
+                        .replaceAll("%skipped%", String.valueOf(skipped.get()))
+                        .replaceAll("%failed%", String.valueOf(failed.get())));
+            });
+        }
+
     }
 
     public static List<UUID> pickRandomUUIDs(List<UUID> uuidList, int numberOfElements) {

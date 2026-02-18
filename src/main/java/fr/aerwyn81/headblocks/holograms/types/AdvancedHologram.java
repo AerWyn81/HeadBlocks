@@ -30,7 +30,7 @@ public class AdvancedHologram implements IHologram {
 
     @Override
     public void delete() {
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getScheduler().runAsync((task) -> {
             var pool = getPool();
             if (pool != null) {
                 hologram.hide(getPool());
@@ -42,7 +42,7 @@ public class AdvancedHologram implements IHologram {
     public IHologram create(String name, Location location, List<String> lines) {
         hologram = new Hologram(HeadBlocks.getInstance().getHoloEasyLib(), location);
 
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getScheduler().runAsync((task) -> {
             ConfigService.getHologramsAdvancedLines().forEach(l -> hologram.getLines().add(
                     new DisplayTextLine(hologram, player ->
                     {
@@ -81,7 +81,7 @@ public class AdvancedHologram implements IHologram {
     }
 
     public void refresh(Player player) {
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getScheduler().runAsync((task) -> {
             for (Line<?> line : hologram.getLines()) {
                 line.update(player);
             }
