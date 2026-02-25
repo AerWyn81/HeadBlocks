@@ -157,11 +157,6 @@ public final class HeadBlocks extends JavaPlugin {
         NBT.preloadApi();
 
         MinecraftVersion.disableBStats();
-
-        try {
-            Class.forName("org.sqlite.JDBC").getDeclaredConstructor().newInstance();
-        } catch (Exception | NoClassDefFoundError ignored) {
-        }
     }
 
     @Override

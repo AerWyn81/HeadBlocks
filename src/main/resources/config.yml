@@ -63,6 +63,15 @@ database:
     port: 3306
     ssl: false
     prefix: ''
+    # Advanced connection pool settings (only for MySQL/MariaDB)
+    # Most users should not need to change these
+    pool:
+      maxConnections: 10
+      minIdleConnections: 2
+      # Timeouts in seconds
+      connectionTimeout: 5
+      idleTimeout: 300
+      maxLifetime: 1800
 
 # Multi-server support with Redis
 redis:

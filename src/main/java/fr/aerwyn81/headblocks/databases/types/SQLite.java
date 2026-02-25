@@ -1,5 +1,7 @@
 package fr.aerwyn81.headblocks.databases.types;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.Requests;
@@ -7,8 +9,6 @@ import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -19,50 +19,44 @@ import java.util.UUID;
 public class SQLite implements Database {
 
     private final String pathToDatabase;
-    private Connection connection;
+    private HikariDataSource dataSource;
 
     public SQLite(String pathToDatabase) {
         this.pathToDatabase = pathToDatabase;
     }
 
     /**
-     * Open the SQLite connection
+     * Open the SQLite connection pool
      *
      * @throws InternalException SQL exception
      */
-    @SuppressWarnings("SqlNoDataSourceInspection")
     @Override
     public void open() throws InternalException {
-        if (connection != null)
-            return;
-
         try {
-            synchronized (this) {
-                connection = DriverManager.getConnection("jdbc:sqlite:" + pathToDatabase);
-                try (var stmt = connection.createStatement()) {
-                    stmt.execute("PRAGMA foreign_keys = ON;");
-                }
-            }
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl("jdbc:sqlite:" + pathToDatabase);
+            config.setMaximumPoolSize(1);
+            config.setMinimumIdle(1);
+            config.setConnectionTimeout(5000);
+            config.setIdleTimeout(0);
+            config.setMaxLifetime(0);
+            config.setPoolName("HeadBlocks-SQLite");
+            config.setConnectionInitSql("PRAGMA foreign_keys = ON");
+            dataSource = new HikariDataSource(config);
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
     }
 
-
     /**
-     * Close the SQLite connection
+     * Close the SQLite connection pool
      *
      * @throws InternalException SQL exception
      */
     @Override
     public void close() throws InternalException {
-        if (connection == null)
-            return;
-
-        try {
-            connection.close();
-        } catch (SQLException ex) {
-            throw new InternalException(ex);
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
         }
     }
 
@@ -73,24 +67,11 @@ public class SQLite implements Database {
      */
     @Override
     public void load() throws InternalException {
-        try {
-            // Players
-            try (var statement = connection.prepareStatement(Requests.createTablePlayers())) {
-                statement.execute();
-            }
+        try (var conn = dataSource.getConnection()) {
+            createTables(conn);
 
-            // Heads
-            try (var statement = connection.prepareStatement(Requests.createTableHeads())) {
-                statement.execute();
-            }
-
-            // Junction table (n-n)
-            try (var statement = connection.prepareStatement(Requests.createTablePlayerHeads())) {
-                statement.execute();
-            }
-
-            if (checkVersion() == 0) {
-                insertVersion();
+            if (checkVersion(conn) == 0) {
+                insertVersion(conn);
             }
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -104,32 +85,23 @@ public class SQLite implements Database {
      */
     @Override
     public int checkVersion() {
-        try (var statement = connection.prepareStatement(Requests.getContainsTableHeads())) {
-            statement.executeQuery();
+        try (var conn = dataSource.getConnection()) {
+            return checkVersion(conn);
         } catch (Exception ex) {
             return -1;
-        }
-
-        try (var statement = connection.prepareStatement(Requests.getTableVersionData())) {
-            try (var rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("current");
-                } else
-                    return 0;
-            }
-        } catch (Exception ex) {
-            return 0;
         }
     }
 
     /**
      * Create or update a player
      *
-     * @param profile@throws InternalException SQL Exception
+     * @param profile player profile
+     * @throws InternalException SQL Exception
      */
     @Override
     public void updatePlayerInfo(PlayerProfileLight profile) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.updatePlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.updatePlayer())) {
             ps.setString(1, profile.uuid().toString());
             ps.setString(2, profile.name());
             ps.setString(3, profile.customDisplay());
@@ -150,7 +122,8 @@ public class SQLite implements Database {
      */
     @Override
     public void createNewHead(UUID hUUID, String texture, String serverId) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.updateHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.updateHead())) {
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
             ps.setString(3, serverId);
@@ -170,7 +143,8 @@ public class SQLite implements Database {
      */
     @Override
     public boolean containsPlayer(UUID pUUID) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.getContainsPlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getContainsPlayer())) {
             ps.setString(1, pUUID.toString());
 
             try (var rs = ps.executeQuery()) {
@@ -193,7 +167,8 @@ public class SQLite implements Database {
     public ArrayList<UUID> getHeadsPlayer(UUID pUUID) throws InternalException {
         ArrayList<UUID> heads = new ArrayList<>();
 
-        try (var ps = connection.prepareStatement(Requests.getPlayerHeads())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getPlayerHeads())) {
             ps.setString(1, pUUID.toString());
 
             try (var rs = ps.executeQuery()) {
@@ -217,7 +192,8 @@ public class SQLite implements Database {
      */
     @Override
     public void addHead(UUID pUUID, UUID hUUID) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.savePlayerHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.savePlayerHead())) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, hUUID.toString());
 
@@ -235,7 +211,8 @@ public class SQLite implements Database {
      */
     @Override
     public void resetPlayer(UUID pUUID) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.resetPlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.resetPlayer())) {
             ps.setString(1, pUUID.toString());
 
             ps.executeUpdate();
@@ -253,7 +230,8 @@ public class SQLite implements Database {
      */
     @Override
     public void resetPlayerHead(UUID pUUID, UUID hUUID) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.resetPlayerHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.resetPlayerHead())) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, hUUID.toString());
 
@@ -272,7 +250,8 @@ public class SQLite implements Database {
      */
     @Override
     public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
-        try (var ps = connection.prepareStatement(withDelete ? Requests.deleteHead() : Requests.removeHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(withDelete ? Requests.deleteHead() : Requests.removeHead())) {
             ps.setString(1, hUUID.toString());
 
             ps.executeUpdate();
@@ -291,7 +270,8 @@ public class SQLite implements Database {
     public ArrayList<UUID> getAllPlayers() throws InternalException {
         ArrayList<UUID> players = new ArrayList<>();
 
-        try (var ps = connection.prepareStatement(Requests.getAllPlayers())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getAllPlayers())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     players.add(UUID.fromString(rs.getString("pUUID")));
@@ -314,7 +294,8 @@ public class SQLite implements Database {
     public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
 
-        try (var ps = connection.prepareStatement(Requests.getTopPlayers())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTopPlayers())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     top.put(new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), rs.getString("pName"), rs.getString("pDisplayName")), rs.getInt("hCount"));
@@ -336,7 +317,8 @@ public class SQLite implements Database {
      */
     @Override
     public boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.getCheckPlayerName())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getCheckPlayerName())) {
             ps.setString(1, profile.uuid().toString());
             try (var rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -360,7 +342,8 @@ public class SQLite implements Database {
      */
     @Override
     public boolean isHeadExist(UUID hUUID) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.getHeadExist())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeadExist())) {
             ps.setString(1, hUUID.toString());
             try (var rs = ps.executeQuery()) {
                 return rs.next();
@@ -378,29 +361,33 @@ public class SQLite implements Database {
      */
     @Override
     public void migrate() throws InternalException {
-        try {
+        try (var conn = dataSource.getConnection()) {
             // Create of the archive table
-            try (var ps = connection.prepareStatement(Requests.migArchiveTable())) {
+            try (var ps = conn.prepareStatement(Requests.migArchiveTable())) {
                 ps.executeUpdate();
             }
 
             // Copy old data into the archive table
-            try (var ps = connection.prepareStatement(Requests.migCopyOldToArchive())) {
+            try (var ps = conn.prepareStatement(Requests.migCopyOldToArchive())) {
                 ps.executeUpdate();
             }
 
             // Delete old table
-            try (var ps = connection.prepareStatement(Requests.migDeleteOld())) {
+            try (var ps = conn.prepareStatement(Requests.migDeleteOld())) {
                 ps.executeUpdate();
             }
 
             // Creation of new v2 tables
-            load();
+            createTables(conn);
+
+            if (checkVersion(conn) == 0) {
+                insertVersion(conn);
+            }
 
             // Import old users
-            try (var psSelect = connection.prepareStatement(Requests.migImportOldUsers());
+            try (var psSelect = conn.prepareStatement(Requests.migImportOldUsers());
                  var rs = psSelect.executeQuery();
-                 var psInsert = connection.prepareStatement(Requests.migInsertPlayer())) {
+                 var psInsert = conn.prepareStatement(Requests.migInsertPlayer())) {
 
                 int batchSize = 0;
 
@@ -426,17 +413,17 @@ public class SQLite implements Database {
             }
 
             // Import old heads
-            try (var ps = connection.prepareStatement(Requests.migImportOldHeads())) {
+            try (var ps = conn.prepareStatement(Requests.migImportOldHeads())) {
                 ps.executeUpdate();
             }
 
             // Remap
-            try (var ps = connection.prepareStatement(Requests.migRemap())) {
+            try (var ps = conn.prepareStatement(Requests.migRemap())) {
                 ps.executeUpdate();
             }
 
             // Delete archive table
-            try (var ps = connection.prepareStatement(Requests.migDelArchive())) {
+            try (var ps = conn.prepareStatement(Requests.migDelArchive())) {
                 ps.executeUpdate();
             }
 
@@ -446,13 +433,8 @@ public class SQLite implements Database {
     }
 
     public void insertVersion() throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.createTableVersion())) {
-            ps.execute();
-
-            try (var ps1 = connection.prepareStatement(Requests.insertVersion())) {
-                ps1.setInt(1, version);
-                ps1.executeUpdate();
-            }
+        try (var conn = dataSource.getConnection()) {
+            insertVersion(conn);
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -460,7 +442,8 @@ public class SQLite implements Database {
 
     @Override
     public void addColumnDisplayName() throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.addColumnPlayerDisplayNameSQLite())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.addColumnPlayerDisplayNameSQLite())) {
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -471,7 +454,8 @@ public class SQLite implements Database {
     public ArrayList<UUID> getHeads() throws InternalException {
         var heads = new ArrayList<UUID>();
 
-        try (var ps = connection.prepareStatement(Requests.getHeads())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeads())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     heads.add(UUID.fromString(rs.getString("hUUID")));
@@ -488,7 +472,8 @@ public class SQLite implements Database {
     public ArrayList<UUID> getHeads(String serverId) throws InternalException {
         var heads = new ArrayList<UUID>();
 
-        try (PreparedStatement ps = connection.prepareStatement(Requests.getHeadsByServerId())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeadsByServerId())) {
             ps.setString(1, serverId);
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -504,7 +489,8 @@ public class SQLite implements Database {
 
     @Override
     public void addColumnServerIdentifier() throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.addColumnServerIdentifierSQLite())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.addColumnServerIdentifierSQLite())) {
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -518,12 +504,14 @@ public class SQLite implements Database {
      */
     @Override
     public void upsertTableVersion(int oldVersion) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.createTableVersion())) {
-            ps.execute();
-            try (var ps1 = connection.prepareStatement(Requests.upsertVersion())) {
-                ps1.setInt(1, version);
-                ps1.setInt(2, oldVersion);
-                ps1.executeUpdate();
+        try (var conn = dataSource.getConnection()) {
+            try (var ps = conn.prepareStatement(Requests.createTableVersion())) {
+                ps.execute();
+            }
+            try (var ps = conn.prepareStatement(Requests.upsertVersion())) {
+                ps.setInt(1, version);
+                ps.setInt(2, oldVersion);
+                ps.executeUpdate();
             }
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -534,7 +522,8 @@ public class SQLite implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = new ArrayList<>();
 
-        try (var ps = connection.prepareStatement(Requests.getTableHeadsData())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTableHeadsData())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     heads.add(new AbstractMap.SimpleEntry<>(rs.getString("hUUID"), rs.getBoolean("hExist")));
@@ -551,7 +540,8 @@ public class SQLite implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayerHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
-        try (var ps = connection.prepareStatement(Requests.getTablePlayerHeadsData())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTablePlayerHeadsData())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     playerHeads.add(new AbstractMap.SimpleEntry<>(rs.getString("pUUID"), rs.getString("hUUID")));
@@ -568,7 +558,8 @@ public class SQLite implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayers() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
-        try (var ps = connection.prepareStatement(Requests.getTablePlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTablePlayer())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     playerHeads.add(new AbstractMap.SimpleEntry<>(rs.getString("pUUID"), rs.getString("pName")));
@@ -583,7 +574,8 @@ public class SQLite implements Database {
 
     @Override
     public void addColumnHeadTexture() throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.getTableHeadsColumnsSQLite())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTableHeadsColumnsSQLite())) {
             try (var rs = ps.executeQuery()) {
                 int colCount = 0;
                 if (rs.next()) {
@@ -591,7 +583,7 @@ public class SQLite implements Database {
                 }
 
                 if (colCount == 3) {
-                    try (var ps1 = connection.prepareStatement(Requests.addColumnHeadTextureSQLite())) {
+                    try (var ps1 = conn.prepareStatement(Requests.addColumnHeadTextureSQLite())) {
                         ps1.executeUpdate();
                     }
                 }
@@ -603,7 +595,8 @@ public class SQLite implements Database {
 
     @Override
     public String getHeadTexture(UUID headUuid) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.getHeadTexture())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeadTexture())) {
             ps.setString(1, headUuid.toString());
             try (var rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -621,7 +614,8 @@ public class SQLite implements Database {
     public ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
         var players = new ArrayList<UUID>();
 
-        try (var ps = connection.prepareStatement(Requests.getPlayersByHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getPlayersByHead())) {
             ps.setString(1, headUuid.toString());
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -638,7 +632,8 @@ public class SQLite implements Database {
 
     @Override
     public PlayerProfileLight getPlayerByName(String pName) throws InternalException {
-        try (var ps = connection.prepareStatement(Requests.getPlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getPlayer())) {
             ps.setString(1, pName);
 
             try (var rs = ps.executeQuery()) {
@@ -655,7 +650,8 @@ public class SQLite implements Database {
 
     @Override
     public boolean isDefaultTablesExist() {
-        try (var ps = connection.prepareStatement(Requests.getIsTablePlayersExistSQLite())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getIsTablePlayersExistSQLite())) {
             ps.executeQuery();
             return true;
         } catch (Exception ex) {
@@ -667,7 +663,8 @@ public class SQLite implements Database {
     public ArrayList<String> getDistinctServerIds() throws InternalException {
         var serverIds = new ArrayList<String>();
 
-        try (var ps = connection.prepareStatement(Requests.getDistinctServerIds())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getDistinctServerIds())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     serverIds.add(rs.getString("serverId"));
@@ -678,5 +675,55 @@ public class SQLite implements Database {
         }
 
         return serverIds;
+    }
+
+    // --- Internal helpers ---
+
+    private void createTables(Connection conn) throws SQLException {
+        try (var statement = conn.prepareStatement(Requests.createTablePlayers())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTableHeads())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTablePlayerHeads())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTableVersion())) {
+            statement.execute();
+        }
+    }
+
+    private int checkVersion(Connection conn) {
+        try (var statement = conn.prepareStatement(Requests.getContainsTableHeads())) {
+            statement.executeQuery();
+        } catch (Exception ex) {
+            return -1;
+        }
+
+        try (var statement = conn.prepareStatement(Requests.getTableVersionData())) {
+            try (var rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("current");
+                } else
+                    return 0;
+            }
+        } catch (Exception ex) {
+            return 0;
+        }
+    }
+
+    private void insertVersion(Connection conn) throws SQLException {
+        try (var ps = conn.prepareStatement(Requests.createTableVersion())) {
+            ps.execute();
+        }
+
+        try (var ps = conn.prepareStatement(Requests.insertVersion())) {
+            ps.setInt(1, version);
+            ps.executeUpdate();
+        }
     }
 }

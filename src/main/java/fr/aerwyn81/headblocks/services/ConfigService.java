@@ -262,6 +262,26 @@ public class ConfigService {
         return config.getString("database.settings.prefix", "");
     }
 
+    public static int getDatabaseMaxConnections() {
+        return config.getInt("database.settings.pool.maxConnections", 10);
+    }
+
+    public static int getDatabaseMinIdleConnections() {
+        return config.getInt("database.settings.pool.minIdleConnections", 2);
+    }
+
+    public static long getDatabaseConnectionTimeout() {
+        return config.getLong("database.settings.pool.connectionTimeout", 5) * 1000;
+    }
+
+    public static long getDatabaseIdleTimeout() {
+        return config.getLong("database.settings.pool.idleTimeout", 300) * 1000;
+    }
+
+    public static long getDatabaseMaxLifetime() {
+        return config.getLong("database.settings.pool.maxLifetime", 1800) * 1000;
+    }
+
     public static boolean isPreventCommandsOnTieredRewardsLevel() {
         return config.getBoolean("preventCommandsOnTieredRewardsLevel", false);
     }

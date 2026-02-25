@@ -27,6 +27,7 @@ dependencies {
 
     implementation(libs.jedis)
     implementation(libs.hikaricp)
+    implementation(libs.slf4j.jdk14)
     implementation(libs.gson)
     implementation(libs.commons.lang3)
     implementation(libs.nbt.api)
@@ -52,6 +53,8 @@ tasks {
     }
 
     shadowJar {
+        mergeServiceFiles()
+
         relocate("com.google.gson", "fr.aerwyn81.libs.gson")
         relocate("com.jetbrains.annotations", "fr.headblocks.libs.gson")
         relocate("redis.clients.jedis", "fr.aerwyn81.libs.jedis")
@@ -60,6 +63,7 @@ tasks {
         relocate("org.holoeasy", "fr.aerwyn81.libs.holoEasy")
         relocate("org.json", "fr.aerwyn81.libs.json")
         relocate("org.slf4j", "fr.aerwyn81.libs.slf4j")
+        relocate("com.zaxxer.hikari", "fr.aerwyn81.libs.hikari")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")
@@ -68,7 +72,10 @@ tasks {
 
         destinationDirectory.set(file(System.getenv("outputDir") ?: "$rootDir/build/"))
 
-        minimize()
+        minimize {
+            exclude(dependency("com.zaxxer:HikariCP:.*"))
+            exclude(dependency("org.slf4j:slf4j-jdk14:.*"))
+        }
     }
 }
 

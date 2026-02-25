@@ -137,6 +137,12 @@ database:
     port: 3306
     ssl: false
     prefix: ''
+    pool:
+      maxConnections: 10
+      minIdleConnections: 2
+      connectionTimeout: 5
+      idleTimeout: 300
+      maxLifetime: 1800
 ```
 
 By default, all data is stored locally in SQLite in the file `plugins/HeadBlocks/headblocks.db` but you can use a remote database. First enable this configuration and specify a database type, currently supported: `MySQL` or `MariaDB`.
@@ -149,6 +155,12 @@ Now you can configure all the required parameter below to connect.
 - port: 3306 port used for connection (_default is 3306_)
 - ssl: enable ssl requests
 - prefix: prefix for HeadBlocks tables (example: srv1_) (advice: use underscore to separate the prefix)
+- pool: advanced connection pool settings (only for MySQL/MariaDB, most users should not need to change these)
+    - maxConnections: maximum number of connections in the pool (_default is 10_)
+    - minIdleConnections: minimum number of idle connections maintained in the pool (_default is 2_)
+    - connectionTimeout: maximum time in seconds to wait for a connection from the pool (_default is 5_)
+    - idleTimeout: time in seconds before an idle connection is closed (_default is 300 = 5 min_)
+    - maxLifetime: maximum lifetime in seconds of a connection in the pool (_default is 1800 = 30 min_)
 
 !> By switching SQLite to MySQL, the data is not migrated.
 

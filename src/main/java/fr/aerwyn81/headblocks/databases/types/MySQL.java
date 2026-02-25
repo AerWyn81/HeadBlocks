@@ -1,15 +1,20 @@
 package fr.aerwyn81.headblocks.databases.types;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.Requests;
+import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.UUID;
 
 @SuppressWarnings("DuplicatedCode")
 public final class MySQL implements Database {
@@ -20,7 +25,7 @@ public final class MySQL implements Database {
     private final String databaseName;
     private final boolean isSsl;
 
-    private Connection connection;
+    private HikariDataSource dataSource;
 
     public MySQL(String user, String password, String hostname, int port, String databaseName, boolean isSsl) {
         this.user = user;
@@ -32,37 +37,38 @@ public final class MySQL implements Database {
     }
 
     /**
-     * Open the MySQL connection
+     * Open the MySQL connection pool
      */
     @Override
     public void open() throws InternalException {
-        Properties properties = new Properties();
-        properties.setProperty("user", user);
-        properties.setProperty("password", password);
-        if (!isSsl) {
-            properties.setProperty("verifyServerCertificate", "false");
-            properties.setProperty("useSSL", "false");
-        }
-
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://" + hostname + ":" + port + "/" + databaseName, properties);
-        } catch (SQLException ex) {
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl("jdbc:mysql://" + hostname + ":" + port + "/" + databaseName);
+            config.setUsername(user);
+            config.setPassword(password);
+            config.setMaximumPoolSize(ConfigService.getDatabaseMaxConnections());
+            config.setMinimumIdle(ConfigService.getDatabaseMinIdleConnections());
+            config.setConnectionTimeout(ConfigService.getDatabaseConnectionTimeout());
+            config.setIdleTimeout(ConfigService.getDatabaseIdleTimeout());
+            config.setMaxLifetime(ConfigService.getDatabaseMaxLifetime());
+            config.setPoolName("HeadBlocks-MySQL");
+            if (!isSsl) {
+                config.addDataSourceProperty("useSSL", "false");
+                config.addDataSourceProperty("verifyServerCertificate", "false");
+            }
+            dataSource = new HikariDataSource(config);
+        } catch (Exception ex) {
             throw new InternalException(ex);
         }
     }
 
     /**
-     * Close the MySQL connection
+     * Close the MySQL connection pool
      */
     @Override
     public void close() throws InternalException {
-        if (connection == null)
-            return;
-
-        try {
-            connection.close();
-        } catch (SQLException ex) {
-            throw new InternalException(ex);
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
         }
     }
 
@@ -71,29 +77,11 @@ public final class MySQL implements Database {
      */
     @Override
     public void load() throws InternalException {
-        if (notAlive()) {
-            open();
-        }
+        try (var conn = dataSource.getConnection()) {
+            createTables(conn);
 
-        try {
-            try (var statement = connection.prepareStatement(Requests.createTablePlayersMySQL())) {
-                statement.execute();
-            }
-
-            try (var statement = connection.prepareStatement(Requests.createTableHeadsMySQL())) {
-                statement.execute();
-            }
-
-            try (var statement = connection.prepareStatement(Requests.createTablePlayerHeadsMySQL())) {
-                statement.execute();
-            }
-
-            try (var statement = connection.prepareStatement(Requests.createTableVersion())) {
-                statement.execute();
-            }
-
-            if (checkVersion() == 0) {
-                insertVersion();
+            if (checkVersion(conn) == 0) {
+                insertVersion(conn);
             }
         } catch (SQLException ex) {
             throw new InternalException(ex);
@@ -107,13 +95,8 @@ public final class MySQL implements Database {
      */
     @Override
     public int checkVersion() {
-        try (var statement = connection.prepareStatement(Requests.getTableVersionData())) {
-            try (var rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("current");
-                } else
-                    return 0;
-            }
+        try (var conn = dataSource.getConnection()) {
+            return checkVersion(conn);
         } catch (Exception ex) {
             return -1;
         }
@@ -122,15 +105,13 @@ public final class MySQL implements Database {
     /**
      * Create or update a player
      *
-     * @param profile@throws InternalException SQL Exception
+     * @param profile player profile
+     * @throws InternalException SQL Exception
      */
     @Override
     public void updatePlayerInfo(PlayerProfileLight profile) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.updatePlayerMySQL())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.updatePlayerMySQL())) {
             ps.setString(1, profile.uuid().toString());
             ps.setString(2, profile.name());
             ps.setString(3, profile.customDisplay());
@@ -150,11 +131,8 @@ public final class MySQL implements Database {
      */
     @Override
     public void createNewHead(UUID hUUID, String texture, String serverId) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.updateHeadMySQL())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.updateHeadMySQL())) {
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
             ps.setString(3, serverId);
@@ -173,11 +151,8 @@ public final class MySQL implements Database {
      */
     @Override
     public boolean containsPlayer(UUID pUUID) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getContainsPlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getContainsPlayer())) {
             ps.setString(1, pUUID.toString());
             try (var rs = ps.executeQuery()) {
                 return rs.next();
@@ -198,11 +173,8 @@ public final class MySQL implements Database {
     public ArrayList<UUID> getHeadsPlayer(UUID pUUID) throws InternalException {
         ArrayList<UUID> heads = new ArrayList<>();
 
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getPlayerHeads())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getPlayerHeads())) {
             ps.setString(1, pUUID.toString());
 
             try (var rs = ps.executeQuery()) {
@@ -226,11 +198,8 @@ public final class MySQL implements Database {
      */
     @Override
     public void addHead(UUID pUUID, UUID hUUID) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.savePlayerHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.savePlayerHead())) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, hUUID.toString());
             ps.executeUpdate();
@@ -247,11 +216,8 @@ public final class MySQL implements Database {
      */
     @Override
     public void resetPlayer(UUID pUUID) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.resetPlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.resetPlayer())) {
             ps.setString(1, pUUID.toString());
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -268,11 +234,8 @@ public final class MySQL implements Database {
      */
     @Override
     public void resetPlayerHead(UUID pUUID, UUID hUUID) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.resetPlayerHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.resetPlayerHead())) {
             ps.setString(1, pUUID.toString());
             ps.setString(2, hUUID.toString());
             ps.executeUpdate();
@@ -290,11 +253,8 @@ public final class MySQL implements Database {
      */
     @Override
     public void removeHead(UUID hUUID, boolean withDelete) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(withDelete ? Requests.deleteHead() : Requests.removeHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(withDelete ? Requests.deleteHead() : Requests.removeHead())) {
             ps.setString(1, hUUID.toString());
             ps.executeUpdate();
         } catch (Exception ex) {
@@ -312,11 +272,8 @@ public final class MySQL implements Database {
     public ArrayList<UUID> getAllPlayers() throws InternalException {
         ArrayList<UUID> players = new ArrayList<>();
 
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getAllPlayers())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getAllPlayers())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     players.add(UUID.fromString(rs.getString("pUUID")));
@@ -339,11 +296,8 @@ public final class MySQL implements Database {
     public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
 
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getTopPlayers())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTopPlayers())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     top.put(new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), rs.getString("pName"), rs.getString("pDisplayName")), rs.getInt("hCount"));
@@ -365,11 +319,8 @@ public final class MySQL implements Database {
      */
     @Override
     public boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getCheckPlayerName())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getCheckPlayerName())) {
             ps.setString(1, profile.uuid().toString());
 
             try (var rs = ps.executeQuery()) {
@@ -377,7 +328,6 @@ public final class MySQL implements Database {
                     return !profile.name().equals(rs.getString("pName")) || !profile.customDisplay().equals(rs.getString("pDisplayName"));
                 }
             }
-
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -394,16 +344,12 @@ public final class MySQL implements Database {
      */
     @Override
     public boolean isHeadExist(UUID hUUID) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getHeadExist())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeadExist())) {
             ps.setString(1, hUUID.toString());
             try (var rs = ps.executeQuery()) {
                 return rs.next();
             }
-
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -416,70 +362,76 @@ public final class MySQL implements Database {
      */
     @Override
     public void migrate() throws InternalException {
-        try {
-            if (notAlive()) {
-                open();
-            }
+        try (var conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                // Create of the archive table
+                try (var ps = conn.prepareStatement(Requests.migArchiveTable())) {
+                    ps.executeUpdate();
+                }
 
-            // Create of the archive table
-            try (var ps = connection.prepareStatement(Requests.migArchiveTable())) {
-                ps.executeUpdate();
-            }
+                // Copy old data into the archive table
+                try (var ps = conn.prepareStatement(Requests.migCopyOldToArchive())) {
+                    ps.executeUpdate();
+                }
 
-            // Copy old data into the archive table
-            try (var ps = connection.prepareStatement(Requests.migCopyOldToArchive())) {
-                ps.executeUpdate();
-            }
+                // Delete old table
+                try (var ps = conn.prepareStatement(Requests.migDeleteOld())) {
+                    ps.executeUpdate();
+                }
 
-            // Delete old table
-            try (var ps = connection.prepareStatement(Requests.migDeleteOld())) {
-                ps.executeUpdate();
-            }
+                // Creation of new v2 tables
+                createTables(conn);
 
-            // Creation of new v2 tables
-            load();
+                if (checkVersion(conn) == 0) {
+                    insertVersion(conn);
+                }
 
-            // Import old users
-            try (var psSelect = connection.prepareStatement(Requests.migImportOldUsers());
-                 var rs = psSelect.executeQuery();
-                 var psInsert = connection.prepareStatement(Requests.migInsertPlayer())) {
+                // Import old users
+                try (var psSelect = conn.prepareStatement(Requests.migImportOldUsers());
+                     var rs = psSelect.executeQuery();
+                     var psInsert = conn.prepareStatement(Requests.migInsertPlayer())) {
 
-                int batchSize = 0;
+                    int batchSize = 0;
 
-                while (rs.next()) {
-                    String pUUID = rs.getString("pUUID");
-                    String pName = PlayerUtils.getPseudoFromSession(pUUID);
+                    while (rs.next()) {
+                        String pUUID = rs.getString("pUUID");
+                        String pName = PlayerUtils.getPseudoFromSession(pUUID);
 
-                    psInsert.setString(1, pUUID);
-                    psInsert.setString(2, pName);
-                    psInsert.addBatch();
+                        psInsert.setString(1, pUUID);
+                        psInsert.setString(2, pName);
+                        psInsert.addBatch();
 
-                    if (++batchSize % 500 == 0) {
+                        if (++batchSize % 500 == 0) {
+                            psInsert.executeBatch();
+                            batchSize = 0;
+                        }
+                    }
+
+                    if (batchSize > 0) {
                         psInsert.executeBatch();
-                        batchSize = 0;
                     }
                 }
 
-                if (batchSize > 0) {
-                    psInsert.executeBatch();
+                // Import old heads
+                try (var ps = conn.prepareStatement(Requests.migImportOldHeads())) {
+                    ps.executeUpdate();
                 }
-            } catch (SQLException e) {
-                throw new InternalException(e);
-            }
 
-            // Import old heads
-            try (var ps = connection.prepareStatement(Requests.migImportOldHeads())) {
-                ps.executeUpdate();
-            }
+                // Remap
+                try (var ps = conn.prepareStatement(Requests.migRemap())) {
+                    ps.executeUpdate();
+                }
 
-            // Remap
-            try (var ps = connection.prepareStatement(Requests.migRemap())) {
-                ps.executeUpdate();
-            }
+                // Delete archive table
+                try (var ps = conn.prepareStatement(Requests.migDelArchive())) {
+                    ps.executeUpdate();
+                }
 
-            // Delete archive table
-            try (var ps = connection.prepareStatement(Requests.migDelArchive())) {
-                ps.executeUpdate();
+                conn.commit();
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
             }
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -487,17 +439,8 @@ public final class MySQL implements Database {
     }
 
     public void insertVersion() throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.createTableVersion())) {
-            ps.execute();
-
-            try (var ps1 = connection.prepareStatement(Requests.insertVersion())) {
-                ps1.setInt(1, version);
-                ps1.executeUpdate();
-            }
+        try (var conn = dataSource.getConnection()) {
+            insertVersion(conn);
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
@@ -505,20 +448,17 @@ public final class MySQL implements Database {
 
     @Override
     public void addColumnDisplayName() throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.addColumnPlayerDisplayNameMariaDb())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.addColumnPlayerDisplayNameMariaDb())) {
             ps.executeUpdate();
         } catch (Exception ex) {
-            try {
+            try (var conn = dataSource.getConnection()) {
                 // MySQL doesn't support add column if not exists
-                if (isColumnExist(Requests.getTablePlayers(), "pDisplayName")) {
+                if (isColumnExist(conn, Requests.getTablePlayers(), "pDisplayName")) {
                     return;
                 }
 
-                try (var alterStmt = connection.createStatement()) {
+                try (var alterStmt = conn.createStatement()) {
                     alterStmt.executeUpdate(Requests.addColumnPlayerDisplayNameMySQL());
                 }
             } catch (Exception exe) {
@@ -529,13 +469,10 @@ public final class MySQL implements Database {
 
     @Override
     public ArrayList<UUID> getHeads() throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
         var heads = new ArrayList<UUID>();
 
-        try (var ps = connection.prepareStatement(Requests.getHeadsMySQL())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeadsMySQL())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     heads.add(UUID.fromString(rs.getString("hUUID")));
@@ -550,13 +487,10 @@ public final class MySQL implements Database {
 
     @Override
     public ArrayList<UUID> getHeads(String serverId) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
         var heads = new ArrayList<UUID>();
 
-        try (var ps = connection.prepareStatement(Requests.getHeadsByServerId())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeadsByServerId())) {
             ps.setString(1, serverId);
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -572,20 +506,17 @@ public final class MySQL implements Database {
 
     @Override
     public void addColumnServerIdentifier() throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.addColumnServerIdentifierMariaDb())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.addColumnServerIdentifierMariaDb())) {
             ps.executeUpdate();
         } catch (Exception ex) {
-            try {
+            try (var conn = dataSource.getConnection()) {
                 // MySQL doesn't support add column if not exists
-                if (isColumnExist(Requests.getTableHeads(), "serverId")) {
+                if (isColumnExist(conn, Requests.getTableHeads(), "serverId")) {
                     return;
                 }
 
-                try (var alterStmt = connection.createStatement()) {
+                try (var alterStmt = conn.createStatement()) {
                     alterStmt.executeUpdate(Requests.addColumnServerIdentifierMySQL());
                 }
             } catch (Exception exe) {
@@ -601,17 +532,15 @@ public final class MySQL implements Database {
      */
     @Override
     public void upsertTableVersion(int oldVersion) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
+        try (var conn = dataSource.getConnection()) {
+            try (var ps = conn.prepareStatement(Requests.createTableVersion())) {
+                ps.execute();
+            }
 
-        try (var ps = connection.prepareStatement(Requests.createTableVersion())) {
-            ps.execute();
-
-            try (var ps1 = connection.prepareStatement(Requests.upsertVersion())) {
-                ps1.setInt(1, version);
-                ps1.setInt(2, oldVersion);
-                ps1.executeUpdate();
+            try (var ps = conn.prepareStatement(Requests.upsertVersion())) {
+                ps.setInt(1, version);
+                ps.setInt(2, oldVersion);
+                ps.executeUpdate();
             }
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -622,11 +551,8 @@ public final class MySQL implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = new ArrayList<>();
 
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getTableHeadsData())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTableHeadsData())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     heads.add(new AbstractMap.SimpleEntry<>(rs.getString("hUUID"), rs.getBoolean("hExist")));
@@ -643,11 +569,8 @@ public final class MySQL implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayerHeads() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getTablePlayerHeadsData())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTablePlayerHeadsData())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     playerHeads.add(new AbstractMap.SimpleEntry<>(rs.getString("pUUID"), rs.getString("hUUID")));
@@ -664,11 +587,8 @@ public final class MySQL implements Database {
     public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayers() throws InternalException {
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
 
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getTablePlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTablePlayer())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     playerHeads.add(new AbstractMap.SimpleEntry<>(rs.getString("pUUID"), rs.getString("pName")));
@@ -683,11 +603,8 @@ public final class MySQL implements Database {
 
     @Override
     public void addColumnHeadTexture() throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getTableHeadsColumnsMySQL())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTableHeadsColumnsMySQL())) {
             try (var rs = ps.executeQuery()) {
                 int colCount = 0;
                 if (rs.next()) {
@@ -696,17 +613,17 @@ public final class MySQL implements Database {
 
                 try {
                     if (colCount == 3) {
-                        try (var ps1 = connection.prepareStatement(Requests.addColumnHeadTextureMariaDb())) {
+                        try (var ps1 = conn.prepareStatement(Requests.addColumnHeadTextureMariaDb())) {
                             ps1.executeUpdate();
                         }
                     }
                 } catch (Exception ex) {
                     // MySQL doesn't support add column if not exists
-                    if (isColumnExist(Requests.getTableHeads(), "hTexture")) {
+                    if (isColumnExist(conn, Requests.getTableHeads(), "hTexture")) {
                         return;
                     }
 
-                    try (var alterStmt = connection.createStatement()) {
+                    try (var alterStmt = conn.createStatement()) {
                         alterStmt.executeUpdate(Requests.addColumnHeadTextureMySQL());
                     }
                 }
@@ -718,11 +635,8 @@ public final class MySQL implements Database {
 
     @Override
     public String getHeadTexture(UUID headUuid) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getHeadTexture())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeadTexture())) {
             ps.setString(1, headUuid.toString());
 
             try (var rs = ps.executeQuery()) {
@@ -741,11 +655,8 @@ public final class MySQL implements Database {
     public ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
         var players = new ArrayList<UUID>();
 
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getPlayersByHead())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getPlayersByHead())) {
             ps.setString(1, headUuid.toString());
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -761,11 +672,8 @@ public final class MySQL implements Database {
 
     @Override
     public PlayerProfileLight getPlayerByName(String pName) throws InternalException {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getPlayer())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getPlayer())) {
             ps.setString(1, pName);
 
             try (var rs = ps.executeQuery()) {
@@ -782,44 +690,13 @@ public final class MySQL implements Database {
 
     @Override
     public boolean isDefaultTablesExist() {
-        try {
-            if (notAlive()) {
-                open();
-            }
-
-            try (var ps = connection.prepareStatement(Requests.getIsTablePlayersExistMySQL())) {
-                try (var rs = ps.executeQuery()) {
-                    return rs.next();
-                }
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getIsTablePlayersExistMySQL())) {
+            try (var rs = ps.executeQuery()) {
+                return rs.next();
             }
         } catch (Exception ex) {
             return false;
-        }
-    }
-
-    private boolean notAlive() {
-        if (connection == null) {
-            return true;
-        }
-
-        try {
-            return !connection.isValid(1);
-        } catch (SQLException e) {
-            return true;
-        }
-    }
-
-    private boolean isColumnExist(String tableName, String columnName) throws Exception {
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.isColumnExist())) {
-            ps.setString(1, tableName);
-            ps.setString(2, columnName);
-
-            var rs = ps.executeQuery();
-            return !rs.next() || rs.getInt(1) != 0;
         }
     }
 
@@ -827,11 +704,8 @@ public final class MySQL implements Database {
     public ArrayList<String> getDistinctServerIds() throws InternalException {
         var serverIds = new ArrayList<String>();
 
-        if (notAlive()) {
-            open();
-        }
-
-        try (var ps = connection.prepareStatement(Requests.getDistinctServerIds())) {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getDistinctServerIds())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     serverIds.add(rs.getString("serverId"));
@@ -842,5 +716,60 @@ public final class MySQL implements Database {
         }
 
         return serverIds;
+    }
+
+    // --- Internal helpers ---
+
+    private void createTables(Connection conn) throws SQLException {
+        try (var statement = conn.prepareStatement(Requests.createTablePlayersMySQL())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTableHeadsMySQL())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTablePlayerHeadsMySQL())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTableVersion())) {
+            statement.execute();
+        }
+    }
+
+    private int checkVersion(Connection conn) {
+        try (var statement = conn.prepareStatement(Requests.getTableVersionData())) {
+            try (var rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("current");
+                } else
+                    return 0;
+            }
+        } catch (Exception ex) {
+            return -1;
+        }
+    }
+
+    private void insertVersion(Connection conn) throws SQLException {
+        try (var ps = conn.prepareStatement(Requests.createTableVersion())) {
+            ps.execute();
+        }
+
+        try (var ps = conn.prepareStatement(Requests.insertVersion())) {
+            ps.setInt(1, version);
+            ps.executeUpdate();
+        }
+    }
+
+    private boolean isColumnExist(Connection conn, String tableName, String columnName) throws Exception {
+        try (var ps = conn.prepareStatement(Requests.isColumnExist())) {
+            ps.setString(1, tableName);
+            ps.setString(2, columnName);
+
+            try (var rs = ps.executeQuery()) {
+                return !rs.next() || rs.getInt(1) != 0;
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ packetevents = "2.11.2"
 # Libraries
 jedis = "5.2.0"
 hikaricp = "7.0.2"
+slf4j-jdk14 = "2.0.17"
 gson = "2.13.2"
 commons-lang3 = "3.20.0"
 nbt-api = "2.15.5"
@@ -28,6 +29,7 @@ packetevents = { module = "com.github.retrooper:packetevents-spigot", version.re
 # Implementation Dependencies
 jedis = { module = "redis.clients:jedis", version.ref = "jedis" }
 hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+slf4j-jdk14 = { module = "org.slf4j:slf4j-jdk14", version.ref = "slf4j-jdk14" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 nbt-api = { module = "de.tr7zw:item-nbt-api", version.ref = "nbt-api" }
