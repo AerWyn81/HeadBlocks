@@ -83,6 +83,7 @@ jobs:
             delimiter="$(openssl rand -hex 16)"
             echo "CHANGELOG<<${delimiter}" >> $GITHUB_OUTPUT
             cat changelog.md >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
             echo "${delimiter}" >> $GITHUB_OUTPUT
           else
             echo "CHANGELOG=No changelog provided." >> $GITHUB_OUTPUT
@@ -196,17 +197,10 @@ jobs:
       - name: Extract changelog sections
         id: changelog
         run: |
-          CHANGES=$(sed -n '/^## What/,/^---/p' changelog.md | \
-            sed '1d;$d' | \
-            sed ':a;N;$!ba;s/\n  / /g' | \
-            sed 's/^### \(✨\|🚀\|🐛\|🔧\)/\n\1/' | \
-            sed 's/^### /• /' | \
-            sed 's/^- /  ◦ /' | \
-            sed 's/\*\*\(.*\)\*\*/\1/g' | \
-            sed 's/`//g')
           delimiter="$(openssl rand -hex 16)"
           echo "CHANGES<<${delimiter}" >> $GITHUB_OUTPUT
-          echo "$CHANGES" >> $GITHUB_OUTPUT
+          sed -n '/^## What/,/^---/{/^## What/d;/^---/d;p}' changelog.md >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
 
       - name: Send Discord notification
@@ -217,7 +211,7 @@ jobs:
           SPIGOT_LINK="https://www.spigotmc.org/resources/headblocks.97630/updates"
 
           # Format du message Discord
-          MESSAGE=":exclamation~1: __New update for HeadBlocks **${VERSION}** is out__ <@&1289687740484685938> :exclamation~1:
+          MESSAGE="❗ __New update for HeadBlocks **${VERSION}** is out__ <@&1289687740484685938> ❗
 
           In this update:
           ${{ steps.changelog.outputs.CHANGES }}
