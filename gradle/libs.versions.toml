@@ -1,6 +1,6 @@
 [versions]
 # Minecraft & Plugins
-spigot-api = "1.21.11-R0.1-SNAPSHOT"
+spigot-api = "1.20.1-R0.1-SNAPSHOT"
 placeholderapi = "2.11.7"
 headdatabase-api = "1.3.2"
 packetevents = "2.11.2"

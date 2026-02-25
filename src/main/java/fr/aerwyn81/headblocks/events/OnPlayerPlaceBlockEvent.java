@@ -87,9 +87,9 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         }
 
         if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            ParticlesUtils.spawn(headLocation, Particle.HAPPY_VILLAGER, 10, null, player);
+            ParticlesUtils.spawn(headLocation, Particle.valueOf("HAPPY_VILLAGER"), 10, null, player);
         } else {
-            ParticlesUtils.spawn(headLocation, Particle.valueOf("VILLAGER_HAPPY"), 10, null, player);
+            ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
         }
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headLocation));
