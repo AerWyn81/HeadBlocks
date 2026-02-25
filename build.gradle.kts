@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.run.paper)
 }
 
-version = "2.8.5"
+version = "2.8.6"
 
 repositories {
     mavenCentral()
