@@ -7,6 +7,10 @@ on:
       - '[0-9]+\.[0-9]+\.[0-9]+\-[a-z]+'
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Version (e.g. 2.8.5)'
+        required: true
+        type: string
       jobs:
         description: 'Jobs to run'
         required: true
@@ -85,9 +89,9 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew shadowJar --no-daemon
 
-      - name: Get version from tag
+      - name: Get version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${{ inputs.version || github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Get changelog from changelog.md
         id: changelog
@@ -187,9 +191,9 @@ jobs:
       - name: Convert Changelog to BBCode
         run: python convert-to-bbcode.py
 
-      - name: Get version from tag
+      - name: Get version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${{ inputs.version || github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Upload BBCode as artifact
         uses: actions/upload-artifact@v4
@@ -205,16 +209,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get version from tag
+      - name: Get version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${{ inputs.version || github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Extract changelog sections
         id: changelog
         run: |
           delimiter="$(openssl rand -hex 16)"
           echo "CHANGES<<${delimiter}" >> $GITHUB_OUTPUT
-          sed -n '/^## What/,/^---/{/^## What/d;/^---/d;p}' changelog.md >> $GITHUB_OUTPUT
+          sed -n '/^## What/,/^---/{/^## What/d;/^---/d;p}' changelog.md | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
 
