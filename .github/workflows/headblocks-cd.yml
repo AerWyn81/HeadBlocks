@@ -5,9 +5,21 @@ on:
     tags:
       - '[0-9]+\.[0-9]+\.[0-9]+'
       - '[0-9]+\.[0-9]+\.[0-9]+\-[a-z]+'
+  workflow_dispatch:
+    inputs:
+      jobs:
+        description: 'Jobs to run'
+        required: true
+        type: choice
+        options:
+          - all
+          - discord
+          - modrinth
+          - bbcode
 
 jobs:
   release:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +52,7 @@ jobs:
 
       - name: Get the tag version
         id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
       - name: Upload Release Jar
         id: upload-release-jar
@@ -55,6 +67,7 @@ jobs:
 
   publish-modrinth:
     needs: release
+    if: always() && (needs.release.result == 'success' || inputs.jobs == 'all' || inputs.jobs == 'modrinth')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -161,6 +174,7 @@ jobs:
 
   generate-bbcode:
     needs: release
+    if: always() && (needs.release.result == 'success' || inputs.jobs == 'all' || inputs.jobs == 'bbcode')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -186,6 +200,7 @@ jobs:
 
   publish-discord:
     needs: release
+    if: always() && (needs.release.result == 'success' || inputs.jobs == 'all' || inputs.jobs == 'discord')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -206,6 +221,7 @@ jobs:
       - name: Send Discord notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          CHANGES: ${{ steps.changelog.outputs.CHANGES }}
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
           SPIGOT_LINK="https://www.spigotmc.org/resources/headblocks.97630/updates"
@@ -214,7 +230,7 @@ jobs:
           MESSAGE="❗ __New update for HeadBlocks **${VERSION}** is out__ <@&1289687740484685938> ❗
 
           In this update:
-          ${{ steps.changelog.outputs.CHANGES }}
+          ${CHANGES}
 
           If you find a bug, let me know in <#912465021836083261> channel!
 
