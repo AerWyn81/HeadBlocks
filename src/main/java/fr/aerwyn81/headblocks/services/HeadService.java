@@ -222,6 +222,49 @@ public class HeadService {
         }
     }
 
+    public static void removeAllHeadLocationsAsync(ArrayList<HeadLocation> headsToRemove, boolean withDelete,
+                                                   java.util.function.Consumer<Integer> onComplete) {
+        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+            int removed = 0;
+
+            for (HeadLocation headLocation : headsToRemove) {
+                if (headLocation == null) continue;
+
+                try {
+                    StorageService.removeHead(headLocation.getUuid(), withDelete);
+                } catch (InternalException ex) {
+                    LogUtil.error("Error removing head {0} from storage: {1}", headLocation.getNameOrUuid(), ex.getMessage());
+                    continue;
+                }
+
+                Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> {
+                    headLocation.getLocation().getBlock().setType(Material.AIR);
+
+                    if (ConfigService.isHologramsEnabled()) {
+                        HologramService.removeHolograms(headLocation.getLocation());
+                    }
+                });
+
+                headLocations.remove(headLocation);
+                headLocation.removeFromConfig(config);
+
+                headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
+                var spinTask = tasksHeadSpin.get(headLocation.getUuid());
+                if (spinTask != null) {
+                    spinTask.cancel();
+                    tasksHeadSpin.remove(headLocation.getUuid());
+                }
+
+                removed++;
+            }
+
+            saveConfig();
+
+            final int finalRemoved = removed;
+            Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> onComplete.accept(finalRemoved));
+        });
+    }
+
     public static HeadLocation getHeadByUUID(UUID headUuid) {
         return headLocations.stream().filter(h -> h.getUuid().equals(headUuid))
                 .findFirst()

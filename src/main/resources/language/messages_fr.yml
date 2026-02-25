@@ -31,6 +31,7 @@ Messages:
   HeadPlaced: "%prefix% &2&l+ &aHeadBlock placé &7(%world%, %x%, %y%, %z%)&a."
   HeadRemoved: "%prefix% &2&c- &eHeadBlock supprimé &7(%world%, %x%, %y%, %z%)&c."
   RemoveAllConfirm: "%prefix% &cAttention, cette commande va supprimer &7%headCount% &ctête(s). Ajoutez &7--confirm &cà la commande pour confirmer."
+  RemoveAllInProgress: "%prefix% &7&oSuppression de &e&7%headCount% &7&otête(s) en cours, veuillez patienter..."
   RemoveAllSuccess: "%prefix% &e%headCount% &atête(s) ont correctement été supprimées."
   RemoveAllError: "%prefix% &cAucune tête n'a été supprimée."
   AlreadyClaimHead: "%prefix% &cVous avez déjà cliqué sur cette tête."

@@ -20,9 +20,9 @@ public class ParticlesUtils {
         Particle redstoneParticle;
 
         if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            redstoneParticle = Particle.valueOf("DUST");
+            redstoneParticle = Particle.DUST;
         } else {
-            redstoneParticle = Particle.REDSTONE;
+            redstoneParticle = Particle.valueOf("REDSTONE");
         }
 
         if (colors != null && particle == redstoneParticle && !colors.isEmpty()) {

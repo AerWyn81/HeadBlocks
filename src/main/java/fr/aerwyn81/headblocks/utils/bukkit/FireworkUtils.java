@@ -19,9 +19,9 @@ public class FireworkUtils {
 
         EntityType entityType;
         if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            entityType = EntityType.valueOf("FIREWORK_ROCKET");
+            entityType = EntityType.FIREWORK_ROCKET;
         } else {
-            entityType = EntityType.FIREWORK;
+            entityType = EntityType.valueOf("FIREWORK");
         }
 
         Firework firework = (Firework) loc.getWorld().spawnEntity(loc.add(0.5, isWalled ? 0.5 : 0, 0.5), entityType);

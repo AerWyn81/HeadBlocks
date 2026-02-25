@@ -6,8 +6,6 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
@@ -26,28 +24,22 @@ public class RemoveAll implements Cmd {
             return true;
         }
 
-        int headRemoved = 0;
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
-
-            for (HeadLocation head : new ArrayList<>(headLocations)) {
-                try {
-                    HeadService.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
-                    headRemoved++;
-                } catch (InternalException ex) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
-                    LogUtil.error("Error while removing the head \"{0}\" at {1} from the storage: {2}", head.getNameOrUuid(), head.getLocation().toString(), ex.getMessage());
-                }
-            }
-
-            if (headRemoved == 0) {
-                sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllError")
-                        .replaceAll("%headCount%", String.valueOf(headCount)));
-                return true;
-            }
-
-            sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllSuccess")
+            sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllInProgress")
                     .replaceAll("%headCount%", String.valueOf(headCount)));
+
+            HeadService.removeAllHeadLocationsAsync(headLocations, ConfigService.shouldResetPlayerData(), (headRemoved) -> {
+                if (headRemoved == 0) {
+                    sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllError")
+                            .replaceAll("%headCount%", String.valueOf(headCount)));
+                    return;
+                }
+
+                sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllSuccess")
+                        .replaceAll("%headCount%", String.valueOf(headRemoved)));
+            });
+
             return true;
         }
 

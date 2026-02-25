@@ -21,7 +21,8 @@ public enum VersionUtils {
     v1_21_R7(1217, 127),
     v1_21_R8(1218, 128),
     v1_21_R9(1219, 129),
-    v1_21_R10(12110, 1210);
+    v1_21_R10(12110, 1210),
+    v1_21_R11(12111, 12111);
 
     private static VersionUtils version;
     private final int[] versionId;
@@ -45,8 +46,8 @@ public enum VersionUtils {
         try {
             version = extractFromString(Bukkit.getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
         } catch (Exception e) {
-            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), v1_21_R10.name());
-            version = v1_21_R10;
+            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), v1_21_R11.name());
+            version = v1_21_R11;
         }
 
         return version;

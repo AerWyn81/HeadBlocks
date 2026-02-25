@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.run.paper)
 }
 
-version = "2.8.4"
+version = "2.8.5"
 
 repositories {
     mavenCentral()
@@ -35,7 +35,7 @@ dependencies {
 
 tasks {
     runServer {
-        minecraftVersion("1.21.8")
+        minecraftVersion("1.21.11")
 
         systemProperty("com.mojang.eula.agree", "true")
         systemProperty("terminal.ansi", true)
