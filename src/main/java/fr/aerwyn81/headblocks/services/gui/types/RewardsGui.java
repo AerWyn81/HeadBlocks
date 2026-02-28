@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 
 public class RewardsGui extends GuiBase {
 
-    private final String CANCEL_CONST = "cancel";
-
     private static final ConcurrentHashMap<UUID, PendingRewardInput> pendingRewardInputs = new ConcurrentHashMap<>();
 
     private record PendingRewardInput(HeadLocation headLocation, boolean isEdit, int rewardIndex,
@@ -84,7 +82,7 @@ public class RewardsGui extends GuiBase {
             final int rewardIndex = i;
             Reward reward = rewards.get(i);
 
-            var rewardMaterial = switch (reward.getType()) {
+            var rewardMaterial = switch (reward.type()) {
                 case MESSAGE -> Material.PAPER;
                 case COMMAND -> Material.COMMAND_BLOCK;
                 case BROADCAST -> Material.BEACON;
@@ -93,15 +91,15 @@ public class RewardsGui extends GuiBase {
 
             List<String> lore = new ArrayList<>();
             lore.add(LanguageService.getMessage("Gui.RewardType")
-                    .replaceAll("%type%", reward.getType().name()));
+                    .replaceAll("%type%", reward.type().name()));
 
-            var valueLabel = switch (reward.getType()) {
+            var valueLabel = switch (reward.type()) {
                 case MESSAGE, BROADCAST -> LanguageService.getMessage("Gui.RewardMessage");
                 default -> LanguageService.getMessage("Gui.RewardCommand");
             };
 
-            var displayValue = reward.getValue();
-            if (reward.getType() == RewardType.MESSAGE || reward.getType() == RewardType.BROADCAST) {
+            var displayValue = reward.value();
+            if (reward.type() == RewardType.MESSAGE || reward.type() == RewardType.BROADCAST) {
                 displayValue = MessageUtils.colorize(displayValue);
             }
 
@@ -118,7 +116,7 @@ public class RewardsGui extends GuiBase {
                     .toItemStack(), true)
                     .addOnClickEvent(event -> {
                         if (event.getClick() == ClickType.LEFT) {
-                            setPendingRewardInput(player, headLocation, true, rewardIndex, reward.getType());
+                            setPendingRewardInput(player, headLocation, true, rewardIndex, reward.type());
                         } else if (event.getClick() == ClickType.SHIFT_LEFT) {
                             headLocation.getRewards().remove(rewardIndex);
                             HeadService.saveHeadInConfig(headLocation);
@@ -199,7 +197,6 @@ public class RewardsGui extends GuiBase {
 
         var messageKey = switch (rewardType) {
             case MESSAGE -> "Messages.EnterRewardMessage";
-            case COMMAND -> "Messages.EnterRewardCommand";
             case BROADCAST -> "Messages.EnterRewardBroadcast";
             default -> "Messages.EnterRewardCommand";
         };
@@ -215,6 +212,7 @@ public class RewardsGui extends GuiBase {
         var pending = pendingRewardInputs.remove(player.getUniqueId());
         if (pending == null) return;
 
+        String CANCEL_CONST = "cancel";
         if (value.contains(CANCEL_CONST)) {
             openRewardsGui(player, pending.headLocation);
             return;

@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.UUID;
 
 public interface Database {
-    int version = 4;
+    int version = 5;
 
     void close() throws InternalException;
 
@@ -74,4 +74,50 @@ public interface Database {
     void addColumnServerIdentifier() throws InternalException;
 
     ArrayList<String> getDistinctServerIds() throws InternalException;
+
+    // --- Hunt CRUD (v5) ---
+
+    void createHunt(String huntId, String name, String state) throws InternalException;
+
+    void updateHuntState(String huntId, String state) throws InternalException;
+
+    void updateHuntName(String huntId, String name) throws InternalException;
+
+    void deleteHunt(String huntId) throws InternalException;
+
+    ArrayList<String[]> getHunts() throws InternalException;
+
+    String[] getHuntById(String huntId) throws InternalException;
+
+    // --- Head-Hunt linking (v5) ---
+
+    void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException;
+
+    void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException;
+
+    void unlinkAllHeadsFromHunt(String huntId) throws InternalException;
+
+    ArrayList<String> getHuntsForHead(UUID headUUID) throws InternalException;
+
+    ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException;
+
+    // --- Hunt-aware player progression (v5) ---
+
+    void addHeadForHunt(UUID pUUID, UUID hUUID, String huntId) throws InternalException;
+
+    ArrayList<UUID> getHeadsPlayerForHunt(UUID pUUID, String huntId) throws InternalException;
+
+    void resetPlayerHunt(UUID pUUID, String huntId) throws InternalException;
+
+    void resetPlayerHeadHunt(UUID pUUID, UUID hUUID, String huntId) throws InternalException;
+
+    LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException;
+
+    int getPlayerCountForHeadInHunt(UUID hUUID, String huntId) throws InternalException;
+
+    // --- Migration v5 ---
+
+    void addColumnHuntId() throws InternalException;
+
+    void migrateToV5() throws InternalException;
 }

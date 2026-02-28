@@ -80,6 +80,11 @@ public class AdvancedHologram implements IHologram {
         return false;
     }
 
+    @Override
+    public boolean isAlive() {
+        return hologram != null;
+    }
+
     public void refresh(Player player) {
         Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
             for (Line<?> line : hologram.getLines()) {

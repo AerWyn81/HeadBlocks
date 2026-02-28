@@ -35,10 +35,8 @@ public class ParticlesUtils {
 
         Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
             if (!dustOptions.isEmpty()) {
-                Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
-                    dustOptions.forEach(dustOpt ->
-                            player.spawnParticle(particle, location, amount, size, size, size, dustOpt));
-                });
+                Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> dustOptions.forEach(dustOpt ->
+                        player.spawnParticle(particle, location, amount, size, size, size, dustOpt)));
 
                 return;
             }

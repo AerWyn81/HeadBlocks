@@ -20,3 +20,24 @@
 | **/hb export**    |     e     |    Any     | `<database> <MySQL or SQLite>`     | headblocks.admin                                                      | Export database to SQL file with player data                |
 | **/hb rename**    |     r     |   Player   | `(name)`                           | headblocks.admin                                                      | Rename targeted head                                        |
 | **/hb options**   |     o     |   Player   | `counter / hint / order / rewards` | headblocks.admin                                                      | Configure head mechanics                                    |
+
+## Hunt Commands
+
+All hunt commands require the `headblocks.admin` permission.
+
+| **Command**           | **Sender** | **Arguments**              | **Details**                                                               |
+|-----------------------|:----------:|----------------------------|---------------------------------------------------------------------------|
+| **/hb hunt create**   |    Any     | `<name>`                   | Create a new hunt (alphanumeric + hyphens only)                           |
+| **/hb hunt delete**   |    Any     | `<name> (--confirm)`       | Delete a hunt (cannot delete "default"). Orphaned heads return to default |
+| **/hb hunt enable**   |    Any     | `<name>`                   | Set a hunt state to ACTIVE                                                |
+| **/hb hunt disable**  |    Any     | `<name>`                   | Set a hunt state to INACTIVE                                              |
+| **/hb hunt list**     |    Any     |                            | List all hunts with state and head count                                  |
+| **/hb hunt info**     |    Any     | `<name>`                   | Show detailed hunt info (state, priority, behaviors, heads, players)      |
+| **/hb hunt select**   |   Player   | `(name)`                   | Set the active hunt for head placement. No argument resets to "default"   |
+| **/hb hunt active**   |   Player   |                            | Display your currently selected hunt                                      |
+| **/hb hunt set**      |   Player   | `<name>`                   | Reassign the targeted head to the specified hunt                          |
+| **/hb hunt assign**   |    Any     | `<name> <all\|radius> (N)` | Mass-assign heads to a hunt (all from default, or within radius N blocks) |
+| **/hb hunt transfer** |    Any     | `<uuid> <name>`            | Transfer a specific head (by UUID) to a different hunt                    |
+| **/hb hunt progress** |    Any     | `<name> (player)`          | Show progression for a specific hunt (optionally for another player)      |
+| **/hb hunt top**      |    Any     | `<name> (limit)`           | Show leaderboard for a specific hunt                                      |
+| **/hb hunt reset**    |    Any     | `<name> <player>`          | Reset a player's progress in a specific hunt                              |

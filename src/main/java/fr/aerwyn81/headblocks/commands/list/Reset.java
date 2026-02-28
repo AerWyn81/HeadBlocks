@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HuntService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -21,6 +22,12 @@ public class Reset extends ResetBase {
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         var player = (Player) sender;
+
+        // In multi-hunt mode, require /hb hunt <name> reset <player> instead
+        if (HuntService.isMultiHunt()) {
+            sender.sendMessage(LanguageService.getMessage("Messages.HuntResetRequireHunt"));
+            return true;
+        }
 
         PlayerProfileLight profile;
 

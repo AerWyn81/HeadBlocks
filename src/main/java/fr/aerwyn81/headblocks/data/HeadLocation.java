@@ -31,7 +31,7 @@ public class HeadLocation {
     private final ArrayList<Reward> rewards;
 
     public HeadLocation(String name, UUID headUUID, Location location) {
-        this(name, headUUID, location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), -1, -1, false, false, new ArrayList<>());
+        this(name, headUUID, location.getWorld() == null ? "" : location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), -1, -1, false, false, new ArrayList<>());
 
         this.location = location;
         this.isCharged = true;
@@ -182,11 +182,13 @@ public class HeadLocation {
     public void saveInConfig(YamlConfiguration section) {
         var hUUID = headUUID.toString();
 
+        var world = location.getWorld();
+
         section.set("locations." + hUUID + ".name", name);
         section.set("locations." + hUUID + ".location.x", location.getX());
         section.set("locations." + hUUID + ".location.y", location.getY());
         section.set("locations." + hUUID + ".location.z", location.getZ());
-        section.set("locations." + hUUID + ".location.world", location.getWorld().getName());
+        section.set("locations." + hUUID + ".location.world", world == null ? "" : world.getName());
 
         section.set("locations." + hUUID + ".hitCount", hitCount == -1 ? null : hitCount);
         section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
@@ -264,7 +266,7 @@ public class HeadLocation {
                 for (var item : (ArrayList<?>) rewardsSection) {
                     var reward = Reward.deserialize(item);
 
-                    if (reward.getValue().isEmpty())
+                    if (reward.value().isEmpty())
                         LogUtil.warning("Ignored reward for head {0} because value is empty.", headUUID);
                     else
                         rewards.add(reward);

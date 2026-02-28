@@ -30,6 +30,7 @@ public class Redis implements Storage {
     private static final String KEY_PLAYER_HEADS = "headblocks:playerheads:";
     private static final String KEY_CACHE_TOP_PLAYERS = "headblocks:cache:topplayers";
     private static final String KEY_CACHE_HEADS = "headblocks:cache:heads";
+    private static final String KEY_HUNT_VERSION = "headblocks:hunts:version";
 
     public Redis(String hostname, String password, int port, int redisDatabase) {
         this.hostname = hostname;
@@ -231,6 +232,25 @@ public class Redis implements Storage {
             keys.forEach(key -> redis.srem(key, headUuid.toString()));
 
             redis.del(KEY_CACHE_TOP_PLAYERS);
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public long getHuntVersion() throws InternalException {
+        try (Jedis redis = pool.getResource()) {
+            String val = redis.get(KEY_HUNT_VERSION);
+            return val != null ? Long.parseLong(val) : 0;
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void incrementHuntVersion() throws InternalException {
+        try (Jedis redis = pool.getResource()) {
+            redis.incr(KEY_HUNT_VERSION);
         } catch (Exception ex) {
             throw new InternalException(ex);
         }

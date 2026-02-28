@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.services;
 
 import de.tr7zw.changeme.nbtapi.NBT;
-import de.tr7zw.changeme.nbtapi.NBTTileEntity;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
@@ -9,9 +8,9 @@ import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -208,6 +207,12 @@ public class HeadService {
                 HologramService.removeHolograms(headLocation.getLocation());
             }
 
+            // Clean up hunt mappings in memory
+            for (Hunt hunt : HuntService.getAllHunts()) {
+                hunt.removeHead(headLocation.getUuid());
+            }
+            HuntService.rebuildHeadToHuntsCache();
+
             headLocations.remove(headLocation);
 
             headLocation.removeFromConfig(config);
@@ -331,7 +336,7 @@ public class HeadService {
                     OfflinePlayer p;
 
                     try {
-                        p = Bukkit.getOfflinePlayer(parts[1]);
+                        p = Bukkit.getOfflinePlayer(UUID.fromString(parts[1]));
                     } catch (Exception ex) {
                         LogUtil.error("Cannot parse the player UUID {0}. Please provide a correct UUID", configHead);
                         continue;
@@ -416,13 +421,19 @@ public class HeadService {
         rotatable.setRotation(skullRotation.getRotation());
         newSkull.setBlockData(rotatable);
 
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            NBT.modify(newSkull, nbt -> {
-                nbt.mergeCompound(new NBTTileEntity(oldSkull));
+        NBT.modify(newSkull, nbt -> {
+            NBT.get(oldSkull, oldNbt -> {
+                nbt.mergeCompound(oldNbt);
+                return oldNbt;
             });
-        } else {
-            new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
-        }
+        });
+        // if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+        //     NBT.modify(newSkull, nbt -> {
+        //         nbt.mergeCompound(new NBTTileEntity(oldSkull));
+        //     });
+        // } else {
+        //     new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
+        // }
         newSkull.setOwnerProfile(oldSkull.getOwnerProfile());
 
         newSkull.update(true);

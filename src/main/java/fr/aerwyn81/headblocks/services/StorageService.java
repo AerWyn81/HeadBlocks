@@ -149,6 +149,8 @@ public class StorageService {
             return;
         }
 
+        int initialVersion = dbVersion;
+
         if (database instanceof SQLite) {
             var backup = backupDatabase("save-") != null;
             if (!backup) {
@@ -171,18 +173,34 @@ public class StorageService {
 
         if (dbVersion == 1) {
             database.addColumnHeadTexture();
+            dbVersion = 2;
         }
 
         if (dbVersion == 2) {
             database.addColumnDisplayName();
+            dbVersion = 3;
         }
 
         if (dbVersion == 3) {
             database.addColumnServerIdentifier();
+            dbVersion = 4;
         }
 
-        if (dbVersion != Database.version) {
-            database.upsertTableVersion(dbVersion);
+        if (dbVersion == 4) {
+            LogUtil.info("Migrating database from v4 to v5 (multi-hunt support)...");
+            try {
+                database.migrateToV5();
+            } catch (InternalException ex) {
+                LogUtil.error("CRITICAL: Database migration from v4 to v5 FAILED: {0}", ex.getMessage());
+                LogUtil.error("The plugin storage is disabled to prevent data corruption. Please restore from backup and try again.");
+                throw ex;
+            }
+            dbVersion = Database.version;
+            LogUtil.info("Database migration to v5 completed successfully.");
+        }
+
+        if (dbVersion != initialVersion) {
+            database.upsertTableVersion(initialVersion);
         }
     }
 
@@ -265,7 +283,7 @@ public class StorageService {
         }
 
         var suffix = ConfigService.getPlaceholdersLeaderboardSuffix();
-        if (!prefix.isEmpty()) {
+        if (!suffix.isEmpty()) {
             customName = customName + PlaceholderAPI.setPlaceholders(player, suffix);
         }
 
@@ -537,7 +555,101 @@ public class StorageService {
         return database.getDistinctServerIds();
     }
 
+    // --- Hunt-aware player progression ---
+
+    public static void addHeadForHunt(UUID playerUuid, UUID headUuid, String huntId) throws InternalException {
+        storage.addHead(playerUuid, headUuid);
+        database.addHeadForHunt(playerUuid, headUuid, huntId);
+
+        storage.addCachedPlayerHead(playerUuid, headUuid);
+        storage.clearCachedTopPlayers();
+    }
+
+    public static ArrayList<UUID> getHeadsPlayerForHunt(UUID playerUuid, String huntId) throws InternalException {
+        return database.getHeadsPlayerForHunt(playerUuid, huntId);
+    }
+
+    public static int getPlayerCountForHeadInHunt(UUID headUuid, String huntId) throws InternalException {
+        return database.getPlayerCountForHeadInHunt(headUuid, huntId);
+    }
+
+    public static LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException {
+        return database.getTopPlayersForHunt(huntId);
+    }
+
+    public static void resetPlayerHunt(UUID playerUuid, String huntId) throws InternalException {
+        database.resetPlayerHunt(playerUuid, huntId);
+        invalidateCachePlayer(playerUuid);
+    }
+
+    public static void resetPlayerHeadHunt(UUID playerUuid, UUID headUuid, String huntId) throws InternalException {
+        database.resetPlayerHeadHunt(playerUuid, headUuid, huntId);
+        invalidateCachePlayer(playerUuid);
+    }
+
+    // --- Hunt DB access ---
+
+    public static ArrayList<String[]> getHuntsFromDb() throws InternalException {
+        return database.getHunts();
+    }
+
+    public static void createHuntInDb(String huntId, String name, String state) throws InternalException {
+        database.createHunt(huntId, name, state);
+    }
+
+    public static ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException {
+        return database.getHeadsForHunt(huntId);
+    }
+
+    public static void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException {
+        database.linkHeadToHunt(headUUID, huntId);
+    }
+
+    public static void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException {
+        database.unlinkHeadFromHunt(headUUID, huntId);
+    }
+
+    public static void updateHuntStateInDb(String huntId, String state) throws InternalException {
+        database.updateHuntState(huntId, state);
+    }
+
+    public static void updateHuntNameInDb(String huntId, String name) throws InternalException {
+        database.updateHuntName(huntId, name);
+    }
+
+    public static void deleteHuntFromDb(String huntId) throws InternalException {
+        database.deleteHunt(huntId);
+    }
+
+    public static void unlinkAllHeadsFromHuntInDb(String huntId) throws InternalException {
+        database.unlinkAllHeadsFromHunt(huntId);
+    }
+
+    public static void resetAllPlayersForHunt(String huntId) throws InternalException {
+        for (UUID playerUuid : database.getAllPlayers()) {
+            database.resetPlayerHunt(playerUuid, huntId);
+        }
+    }
+
     public static String getServerIdentifier() {
         return serverIdentifier;
+    }
+
+    // --- Hunt sync version (cross-server via Redis) ---
+
+    public static long getHuntVersion() {
+        try {
+            return storage.getHuntVersion();
+        } catch (InternalException e) {
+            return 0;
+        }
+    }
+
+    public static void incrementHuntVersion() {
+        try {
+            storage.incrementHuntVersion();
+        } catch (InternalException e) {
+            LogUtil.error("Failed to increment hunt version: {0}", e.getMessage());
+        }
     }
 }

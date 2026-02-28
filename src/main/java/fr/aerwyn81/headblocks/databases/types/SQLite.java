@@ -56,6 +56,7 @@ public class SQLite implements Database {
     @Override
     public void close() throws InternalException {
         if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.getHikariPoolMXBean().softEvictConnections();
             dataSource.close();
         }
     }
@@ -677,6 +678,323 @@ public class SQLite implements Database {
         return serverIds;
     }
 
+    // --- Hunt CRUD (v5) ---
+
+    @Override
+    public void createHunt(String huntId, String name, String state) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.insertHunt())) {
+            ps.setString(1, huntId);
+            ps.setString(2, name);
+            ps.setString(3, state);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void updateHuntState(String huntId, String state) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.updateHuntState())) {
+            ps.setString(1, state);
+            ps.setString(2, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void updateHuntName(String huntId, String name) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.updateHuntName())) {
+            ps.setString(1, name);
+            ps.setString(2, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void deleteHunt(String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.deleteHuntById())) {
+            ps.setString(1, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public ArrayList<String[]> getHunts() throws InternalException {
+        var hunts = new ArrayList<String[]>();
+
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHuntsAll())) {
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    hunts.add(new String[]{rs.getString("hId"), rs.getString("hName"), rs.getString("hState")});
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return hunts;
+    }
+
+    @Override
+    public String[] getHuntById(String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHuntById())) {
+            ps.setString(1, huntId);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new String[]{rs.getString("hId"), rs.getString("hName"), rs.getString("hState")};
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return null;
+    }
+
+    // --- Head-Hunt linking (v5) ---
+
+    @Override
+    public void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.linkHeadToHunt())) {
+            ps.setString(1, headUUID.toString());
+            ps.setString(2, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.unlinkHeadFromHunt())) {
+            ps.setString(1, headUUID.toString());
+            ps.setString(2, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void unlinkAllHeadsFromHunt(String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.unlinkAllHeadsFromHunt())) {
+            ps.setString(1, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public ArrayList<String> getHuntsForHead(UUID headUUID) throws InternalException {
+        var huntIds = new ArrayList<String>();
+
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHuntsForHead())) {
+            ps.setString(1, headUUID.toString());
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    huntIds.add(rs.getString("huntId"));
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return huntIds;
+    }
+
+    @Override
+    public ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException {
+        var heads = new ArrayList<UUID>();
+
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getHeadsForHunt())) {
+            ps.setString(1, huntId);
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    heads.add(UUID.fromString(rs.getString("headUUID")));
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return heads;
+    }
+
+    // --- Hunt-aware player progression (v5) ---
+
+    @Override
+    public void addHeadForHunt(UUID pUUID, UUID hUUID, String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.savePlayerHeadHunt())) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, hUUID.toString());
+            ps.setString(3, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public ArrayList<UUID> getHeadsPlayerForHunt(UUID pUUID, String huntId) throws InternalException {
+        var heads = new ArrayList<UUID>();
+
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getPlayerHeadsForHunt())) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, huntId);
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    heads.add(UUID.fromString(rs.getString("hUUID")));
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return heads;
+    }
+
+    @Override
+    public void resetPlayerHunt(UUID pUUID, String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.resetPlayerHunt())) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void resetPlayerHeadHunt(UUID pUUID, UUID hUUID, String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.resetPlayerHeadHunt())) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, hUUID.toString());
+            ps.setString(3, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException {
+        var top = new LinkedHashMap<PlayerProfileLight, Integer>();
+
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTopPlayersForHunt())) {
+            ps.setString(1, huntId);
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    top.put(new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), rs.getString("pName"), rs.getString("pDisplayName")), rs.getInt("hCount"));
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return top;
+    }
+
+    @Override
+    public int getPlayerCountForHeadInHunt(UUID hUUID, String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getPlayerCountForHeadInHunt())) {
+            ps.setString(1, hUUID.toString());
+            ps.setString(2, huntId);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("cnt");
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+        return 0;
+    }
+
+    // --- Migration v5 ---
+
+    @Override
+    public void addColumnHuntId() throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.addColumnHuntIdSQLite())) {
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void migrateToV5() throws InternalException {
+        try (var conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                // 1. Create hunt tables
+                try (var ps = conn.prepareStatement(Requests.createTableHunts())) {
+                    ps.execute();
+                }
+                try (var ps = conn.prepareStatement(Requests.createTableHeadHunts())) {
+                    ps.execute();
+                }
+
+                // 2. Insert "default" hunt
+                try (var ps = conn.prepareStatement(Requests.migV5InsertDefaultHunt())) {
+                    ps.executeUpdate();
+                }
+
+                // 3. Link all existing heads to "default"
+                try (var ps = conn.prepareStatement(Requests.migV5LinkAllHeadsToDefault())) {
+                    ps.executeUpdate();
+                }
+
+                // 4. Recreate hb_playerHeads with huntId in PK
+                //    SQLite doesn't support ALTER TABLE to change PK,
+                //    so we create temp → copy → drop → rename
+                try (var ps = conn.prepareStatement(Requests.migV5CreateTempPlayerHeadsSQLite())) {
+                    ps.execute();
+                }
+                try (var ps = conn.prepareStatement(Requests.migV5CopyPlayerHeadsToTempSQLite())) {
+                    ps.executeUpdate();
+                }
+                try (var ps = conn.prepareStatement(Requests.migV5DropOldPlayerHeadsSQLite())) {
+                    ps.executeUpdate();
+                }
+                try (var ps = conn.prepareStatement(Requests.migV5RenameTempPlayerHeadsSQLite())) {
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
     // --- Internal helpers ---
 
     private void createTables(Connection conn) throws SQLException {
@@ -693,6 +1011,14 @@ public class SQLite implements Database {
         }
 
         try (var statement = conn.prepareStatement(Requests.createTableVersion())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTableHunts())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTableHeadHunts())) {
             statement.execute();
         }
     }

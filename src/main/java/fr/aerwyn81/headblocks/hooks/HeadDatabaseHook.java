@@ -55,8 +55,8 @@ public class HeadDatabaseHook {
 
     public void loadHeadsHDB() {
         HeadService.getHeads().stream()
-                .filter(h -> h instanceof HBHeadHDB)
-                .map(h -> (HBHeadHDB) h)
+                .filter(HBHeadHDB.class::isInstance)
+                .map(HBHeadHDB.class::cast)
                 .filter(h -> !h.isLoaded())
                 .forEach(h -> {
                     var texture = headDatabaseAPI.getBase64(h.getId());

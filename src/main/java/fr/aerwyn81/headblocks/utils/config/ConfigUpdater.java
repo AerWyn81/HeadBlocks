@@ -21,6 +21,7 @@ import java.util.*;
  *
  * @author tchristofferson, edited by AerWyn81
  */
+@SuppressWarnings("unused")
 public class ConfigUpdater {
 
     //Used for separating keys in the keyBuilder inside parseComments method
@@ -33,7 +34,12 @@ public class ConfigUpdater {
     public static void update(Plugin plugin, String resourceName, File toUpdate, List<String> ignoredSections) throws IOException {
         Preconditions.checkArgument(toUpdate.exists(), "The toUpdate file doesn't exist!");
 
-        FileConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(plugin.getResource(resourceName), StandardCharsets.UTF_8));
+        var resource = plugin.getResource(resourceName);
+
+        if (resource == null)
+            return;
+
+        FileConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(resource, StandardCharsets.UTF_8));
         FileConfiguration currentConfig = YamlConfiguration.loadConfiguration(toUpdate);
         Map<String, String> comments = parseComments(plugin, resourceName, defaultConfig);
         Map<String, String> ignoredSectionsValues = parseIgnoredSections(toUpdate, currentConfig, comments, ignoredSections == null ? Collections.emptyList() : ignoredSections);
@@ -45,7 +51,7 @@ public class ConfigUpdater {
 
         Path toUpdatePath = toUpdate.toPath();
         if (!value.equals(Files.readString(toUpdatePath))) { // if updated contents are not the same as current file contents, update
-            Files.write(toUpdatePath, value.getBytes(StandardCharsets.UTF_8));
+            Files.writeString(toUpdatePath, value);
         }
     }
 
@@ -109,10 +115,16 @@ public class ConfigUpdater {
 
     //Returns a map of key comment pairs. If a key doesn't have any comments it won't be included in the map.
     private static Map<String, String> parseComments(Plugin plugin, String resourceName, FileConfiguration defaultConfig) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(plugin.getResource(resourceName)));
         Map<String, String> comments = new LinkedHashMap<>();
         StringBuilder commentBuilder = new StringBuilder();
         KeyBuilder keyBuilder = new KeyBuilder(defaultConfig, SEPARATOR);
+
+        var resource = plugin.getResource(resourceName);
+
+        if (resource == null)
+            return comments;
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(resource));
 
         String line;
         while ((line = reader.readLine()) != null) {
@@ -130,7 +142,7 @@ public class ConfigUpdater {
                 String key = keyBuilder.toString();
 
                 //If there is a comment associated with the key it is added to comments map and the commentBuilder is reset
-                if (commentBuilder.length() > 0) {
+                if (!commentBuilder.isEmpty()) {
                     comments.put(key, commentBuilder.toString());
                     commentBuilder.setLength(0);
                 }
@@ -144,7 +156,7 @@ public class ConfigUpdater {
 
         reader.close();
 
-        if (commentBuilder.length() > 0)
+        if (!commentBuilder.isEmpty())
             comments.put(null, commentBuilder.toString());
 
         return comments;
@@ -191,7 +203,7 @@ public class ConfigUpdater {
                 boolean isIgnoredParent = ignoredSection.equals(fullKey);
 
                 if (isIgnoredParent || keyBuilder.isSubKeyOf(ignoredSection)) {
-                    if (valueBuilder.length() > 0)
+                    if (!valueBuilder.isEmpty())
                         valueBuilder.append("\n");
 
                     String comment = comments.get(fullKey);
@@ -216,7 +228,7 @@ public class ConfigUpdater {
 
         reader.close();
 
-        if (valueBuilder.length() > 0)
+        if (!valueBuilder.isEmpty())
             ignoredSectionsValues.put(currentIgnoredSection, valueBuilder.toString());
 
         return ignoredSectionsValues;
@@ -233,19 +245,18 @@ public class ConfigUpdater {
 
     //Input: 'key1.key2' Result: 'key1'
     private static void removeLastKey(StringBuilder keyBuilder) {
-        if (keyBuilder.length() == 0)
+        if (keyBuilder.isEmpty())
             return;
 
-        String keyString = keyBuilder.toString();
         //Must be enclosed in brackets in case a regex special character is the separator
-        String[] split = keyString.split("[" + SEPARATOR + "]");
+        String[] split = keyBuilder.toString().split("[" + SEPARATOR + "]");
         //Makes sure begin index isn't < 0 (error). Occurs when there is only one key in the path
         int minIndex = Math.max(0, keyBuilder.length() - split[split.length - 1].length() - 1);
         keyBuilder.replace(minIndex, keyBuilder.length(), "");
     }
 
     private static void appendNewLine(StringBuilder builder) {
-        if (builder.length() > 0)
+        if (!builder.isEmpty())
             builder.append("\n");
     }
 

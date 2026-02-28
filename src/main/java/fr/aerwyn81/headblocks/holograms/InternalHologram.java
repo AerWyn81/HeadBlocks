@@ -56,6 +56,10 @@ public class InternalHologram {
         return hologram.isVisible(player);
     }
 
+    public boolean isAlive() {
+        return hologram.isAlive();
+    }
+
     public void refresh(Player player) {
         hologram.refresh(player);
     }

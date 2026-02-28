@@ -19,6 +19,14 @@ public class Requests {
         return addPrefix() + "hb_version";
     }
 
+    public static String getTableHunts() {
+        return addPrefix() + "hb_hunts";
+    }
+
+    public static String getTableHeadHunts() {
+        return addPrefix() + "hb_head_hunts";
+    }
+
     private static String addPrefix() {
         var prefix = "";
 
@@ -74,11 +82,11 @@ public class Requests {
     }
 
     public static String createTablePlayerHeads() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES %s(hUUID) ON DELETE CASCADE, PRIMARY KEY(pUUID, hUUID))", getTablePlayerHeads(), getTableHeads());
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES %s(hUUID) ON DELETE CASCADE, `huntId` VARCHAR(64) NOT NULL DEFAULT 'default', PRIMARY KEY(pUUID, hUUID, huntId))", getTablePlayerHeads(), getTableHeads());
     }
 
     public static String createTablePlayerHeadsMySQL() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36), FOREIGN KEY (`hUUID`) REFERENCES %s (`hUUID`) ON DELETE CASCADE)", getTablePlayerHeads(), getTableHeads());
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36), `huntId` VARCHAR(64) NOT NULL DEFAULT 'default', PRIMARY KEY(pUUID, hUUID, huntId), FOREIGN KEY (`hUUID`) REFERENCES %s (`hUUID`) ON DELETE CASCADE)", getTablePlayerHeads(), getTableHeads());
     }
 
     public static String getTablePlayerHeadsData() {
@@ -199,7 +207,7 @@ public class Requests {
     }
 
     public static String migRemap() {
-        return String.format("INSERT INTO %s SELECT * FROM %s", getTablePlayerHeads(), "hb_players_old");
+        return String.format("INSERT INTO %s (pUUID, hUUID) SELECT pUUID, hUUID FROM %s", getTablePlayerHeads(), "hb_players_old");
     }
 
     public static String migDelArchive() {
@@ -260,5 +268,131 @@ public class Requests {
 
     public static String getDistinctServerIds() {
         return String.format("SELECT DISTINCT serverId FROM %s WHERE serverId IS NOT NULL AND serverId != ''", getTableHeads());
+    }
+
+    // --- Hunt tables (v5) ---
+
+    public static String createTableHunts() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` VARCHAR(64) PRIMARY KEY, `hName` VARCHAR(128) NOT NULL, `hState` VARCHAR(16) NOT NULL DEFAULT 'ACTIVE')", getTableHunts());
+    }
+
+    public static String createTableHeadHunts() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`headUUID` VARCHAR(36) NOT NULL, `huntId` VARCHAR(64) NOT NULL, PRIMARY KEY (`headUUID`, `huntId`))", getTableHeadHunts());
+    }
+
+    // --- Hunt CRUD ---
+
+    public static String insertHunt() {
+        return String.format("INSERT INTO %s (hId, hName, hState) VALUES (?, ?, ?)", getTableHunts());
+    }
+
+    public static String updateHuntState() {
+        return String.format("UPDATE %s SET hState = ? WHERE hId = ?", getTableHunts());
+    }
+
+    public static String updateHuntName() {
+        return String.format("UPDATE %s SET hName = ? WHERE hId = ?", getTableHunts());
+    }
+
+    public static String deleteHuntById() {
+        return String.format("DELETE FROM %s WHERE hId = ?", getTableHunts());
+    }
+
+    public static String getHuntsAll() {
+        return String.format("SELECT hId, hName, hState FROM %s", getTableHunts());
+    }
+
+    public static String getHuntById() {
+        return String.format("SELECT hId, hName, hState FROM %s WHERE hId = ?", getTableHunts());
+    }
+
+    // --- Head-Hunt linking ---
+
+    public static String linkHeadToHunt() {
+        return String.format("INSERT INTO %s (headUUID, huntId) VALUES (?, ?)", getTableHeadHunts());
+    }
+
+    public static String linkHeadToHuntMySQL() {
+        return String.format("REPLACE INTO %s (headUUID, huntId) VALUES (?, ?)", getTableHeadHunts());
+    }
+
+    public static String unlinkHeadFromHunt() {
+        return String.format("DELETE FROM %s WHERE headUUID = ? AND huntId = ?", getTableHeadHunts());
+    }
+
+    public static String unlinkAllHeadsFromHunt() {
+        return String.format("DELETE FROM %s WHERE huntId = ?", getTableHeadHunts());
+    }
+
+    public static String getHuntsForHead() {
+        return String.format("SELECT huntId FROM %s WHERE headUUID = ?", getTableHeadHunts());
+    }
+
+    public static String getHeadsForHunt() {
+        return String.format("SELECT headUUID FROM %s hh INNER JOIN %s h ON hh.headUUID = h.hUUID WHERE hh.huntId = ? AND h.hExist = True", getTableHeadHunts(), getTableHeads());
+    }
+
+    // --- Hunt-aware player progression ---
+
+    public static String savePlayerHeadHunt() {
+        return String.format("INSERT INTO %s (pUUID, hUUID, huntId) VALUES (?, ?, ?)", getTablePlayerHeads());
+    }
+
+    public static String getPlayerHeadsForHunt() {
+        return String.format("SELECT hbph.hUUID FROM %s hbph INNER JOIN %s hbh ON hbph.hUUID = hbh.hUUID WHERE hbph.pUUID = ? AND hbph.huntId = ? AND hbh.hExist = True", getTablePlayerHeads(), getTableHeads());
+    }
+
+    public static String resetPlayerHunt() {
+        return String.format("DELETE FROM %s WHERE pUUID = ? AND huntId = ?", getTablePlayerHeads());
+    }
+
+    public static String resetPlayerHeadHunt() {
+        return String.format("DELETE FROM %s WHERE pUUID = ? AND hUUID = ? AND huntId = ?", getTablePlayerHeads());
+    }
+
+    public static String getTopPlayersForHunt() {
+        return String.format("SELECT hbp.pUUID, pName, pDisplayName, COUNT(*) as hCount FROM %s hbph INNER JOIN %s hbp ON hbph.pUUID = hbp.pUUID INNER JOIN %s hbh ON hbph.hUUID = hbh.hUUID WHERE hbh.hExist = True AND hbph.huntId = ? GROUP BY pName ORDER BY hCount DESC", getTablePlayerHeads(), getTablePlayers(), getTableHeads());
+    }
+
+    public static String getPlayerCountForHeadInHunt() {
+        return String.format("SELECT COUNT(DISTINCT pUUID) AS cnt FROM %s WHERE hUUID = ? AND huntId = ?", getTablePlayerHeads());
+    }
+
+    // --- Migration v5 ---
+
+    public static String addColumnHuntIdSQLite() {
+        return String.format("ALTER TABLE %s ADD COLUMN huntId VARCHAR(64) NOT NULL DEFAULT 'default'", getTablePlayerHeads());
+    }
+
+    public static String addColumnHuntIdMariaDb() {
+        return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS huntId VARCHAR(64) NOT NULL DEFAULT 'default'", getTablePlayerHeads());
+    }
+
+    public static String addColumnHuntIdMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN huntId VARCHAR(64) NOT NULL DEFAULT 'default'", getTablePlayerHeads());
+    }
+
+    public static String migV5InsertDefaultHunt() {
+        return String.format("INSERT INTO %s (hId, hName, hState) VALUES ('default', 'Default', 'ACTIVE')", getTableHunts());
+    }
+
+    public static String migV5LinkAllHeadsToDefault() {
+        return String.format("INSERT INTO %s (headUUID, huntId) SELECT hUUID, 'default' FROM %s WHERE hExist = True", getTableHeadHunts(), getTableHeads());
+    }
+
+    public static String migV5CreateTempPlayerHeadsSQLite() {
+        return String.format("CREATE TABLE %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES %s(hUUID) ON DELETE CASCADE, `huntId` VARCHAR(64) NOT NULL DEFAULT 'default', PRIMARY KEY(pUUID, hUUID, huntId))", getTablePlayerHeads() + "_v5tmp", getTableHeads());
+    }
+
+    public static String migV5CopyPlayerHeadsToTempSQLite() {
+        return String.format("INSERT INTO %s (pUUID, hUUID, huntId) SELECT pUUID, hUUID, 'default' FROM %s", getTablePlayerHeads() + "_v5tmp", getTablePlayerHeads());
+    }
+
+    public static String migV5DropOldPlayerHeadsSQLite() {
+        return String.format("DROP TABLE %s", getTablePlayerHeads());
+    }
+
+    public static String migV5RenameTempPlayerHeadsSQLite() {
+        return String.format("ALTER TABLE %s RENAME TO %s", getTablePlayerHeads() + "_v5tmp", getTablePlayerHeads());
     }
 }

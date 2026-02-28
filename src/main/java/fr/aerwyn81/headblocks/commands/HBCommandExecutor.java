@@ -42,6 +42,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         this.register(new Export());
         this.register(new Info());
         this.register(new RenameHead());
+        this.register(new Hunt());
         this.register(new Debug());
     }
 
@@ -96,7 +97,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public ArrayList<String> onTabComplete(CommandSender sender, Command c, String s, String[] args) {
+    public ArrayList<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command c, @NotNull String s, String[] args) {
         var input = args[0].toLowerCase();
 
         if (args.length == 1) {

@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.run.paper)
 }
 
-version = "2.8.6"
+version = "3.0.0"
 
 repositories {
     mavenCentral()
@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.commons.lang3)
     implementation(libs.nbt.api)
     implementation(libs.holoeasy)
+    implementation(libs.bstats)
 }
 
 tasks {
@@ -64,6 +65,7 @@ tasks {
         relocate("org.json", "fr.aerwyn81.libs.json")
         relocate("org.slf4j", "fr.aerwyn81.libs.slf4j")
         relocate("com.zaxxer.hikari", "fr.aerwyn81.libs.hikari")
+        relocate("org.bstats", "fr.aerwyn81.libs.bstats")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")

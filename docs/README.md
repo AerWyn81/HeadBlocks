@@ -33,6 +33,10 @@ ___
 - Hint system (actionBar or Sound)
 - Per-head rewards (commands, broadcast, message)
 - Hide head when found (using PacketEvents)
+- **Multi-Hunt system**: create independent hunts with their own heads, progression, rewards, and behaviors
+- Per-hunt configuration overrides (holograms, particles, sounds, tiered rewards, etc.)
+- Hunt behaviors: free, scheduled (date-based auto-activation)
+- Full hunt management commands (create, delete, enable, disable, assign, transfer)
 
 ___
 

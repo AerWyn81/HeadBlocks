@@ -3,6 +3,8 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.FireworkUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
@@ -22,6 +24,8 @@ import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class OnPlayerInteractEvent implements Listener {
 
@@ -77,151 +81,205 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
-        // Check if the player has already clicked on the head
-        StorageService.getHeadsPlayer(player.getUniqueId()).whenComplete(p -> {
-            var playerHeads = new ArrayList<>(p);
+        // Get hunts for this head
+        List<Hunt> allHunts = HuntService.getHuntsForHead(headLocation.getUuid());
+        List<Hunt> activeHunts = allHunts.stream()
+                .filter(Hunt::isActive)
+                .collect(Collectors.toList());
 
-            if (playerHeads.contains(headLocation.getUuid())) {
-                String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, LanguageService.getMessage("Messages.AlreadyClaimHead"));
+        if (activeHunts.isEmpty()) {
+            if (!allHunts.isEmpty()) {
+                // Head has hunts but all are inactive
+                String msg = LanguageService.getMessage("Messages.HuntHeadInactive");
+                if (!msg.trim().isEmpty()) {
+                    player.sendMessage(msg);
+                }
+                return;
+            }
 
-                if (!message.trim().isEmpty()) {
-                    player.sendMessage(message);
+            // No hunts assigned — data inconsistency (migration should have assigned all heads to default)
+            LogUtil.warning("Head {0} at {1} has no hunt assigned. Ignoring click.",
+                    headLocation.getUuid(), headLocation.getLocation());
+            return;
+        }
+
+        // Multi-hunt aware click handling
+        handleHuntClick(player, headLocation, clickedLocation, block, activeHunts);
+    }
+
+    private void handleHuntClick(Player player, HeadLocation headLocation, Location clickedLocation,
+                                 Block block, List<Hunt> activeHunts) {
+        Hunt primaryHunt = activeHunts.get(0); // highest priority (list is sorted)
+        HuntConfig primaryConfig = primaryHunt.getConfig();
+
+        StorageService.getHeadsPlayer(player.getUniqueId()).whenComplete(allPlayerHeads -> {
+            var playerHeads = new ArrayList<>(allPlayerHeads);
+            boolean globallyFound = playerHeads.contains(headLocation.getUuid());
+            boolean anyNewFind = false;
+            List<String> foundHuntIds = new ArrayList<>();
+
+            for (Hunt hunt : activeHunts) {
+                try {
+                    ArrayList<UUID> huntPlayerHeads = StorageService.getHeadsPlayerForHunt(
+                            player.getUniqueId(), hunt.getId());
+
+                    if (huntPlayerHeads.contains(headLocation.getUuid())) {
+                        continue; // Already found in this hunt
+                    }
+
+                    // Check behaviors
+                    var behaviorResult = hunt.evaluateBehaviors(player, headLocation);
+                    if (!behaviorResult.allowed()) {
+                        if (behaviorResult.denyMessage() != null && !behaviorResult.denyMessage().isEmpty()) {
+                            player.sendMessage(behaviorResult.denyMessage());
+                        }
+                        continue;
+                    }
+
+                    // Check hit count per hunt
+                    if (headLocation.getHitCount() != -1) {
+                        int count = StorageService.getPlayerCountForHeadInHunt(
+                                headLocation.getUuid(), hunt.getId());
+                        if (count >= headLocation.getHitCount()) {
+                            player.sendMessage(LanguageService.getMessage("Messages.HitClickMax")
+                                    .replaceAll("%count%", headLocation.getDisplayedHitCount()));
+                            continue;
+                        }
+                    }
+
+                    // Prepare updated hunt heads for reward calculation
+                    huntPlayerHeads.add(headLocation.getUuid());
+
+                    // Check inventory slots
+                    if (!RewardService.hasPlayerSlotsRequired(player, huntPlayerHeads, hunt.getConfig())) {
+                        var message = LanguageService.getMessage("Messages.InventoryFullReward");
+                        if (!message.trim().isEmpty()) {
+                            player.sendMessage(message);
+                        }
+                        continue;
+                    }
+
+                    // Register find for this hunt (also updates storage cache globally)
+                    StorageService.addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
+
+                    // Update local tracking for subsequent iterations
+                    if (!globallyFound) {
+                        playerHeads.add(headLocation.getUuid());
+                        globallyFound = true;
+                    }
+
+                    // Notify behaviors
+                    hunt.notifyHeadFound(player, headLocation);
+
+                    // Give hunt-specific rewards
+                    RewardService.giveReward(player, huntPlayerHeads, headLocation, hunt.getConfig());
+
+                    // Give special head rewards only on first new find
+                    if (!anyNewFind) {
+                        for (var reward : headLocation.getRewards()) {
+                            reward.execute(player, headLocation);
+                        }
+                    }
+
+                    foundHuntIds.add(hunt.getId());
+                    anyNewFind = true;
+                } catch (InternalException ex) {
+                    LogUtil.error("Error processing hunt {0} click for player {1}: {2}",
+                            hunt.getId(), player.getName(), ex.getMessage());
+                }
+            }
+
+            if (anyNewFind) {
+                // Hide the head for this player if enabled
+                var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
+                if (packetEventsHook != null && packetEventsHook.isEnabled()
+                        && packetEventsHook.getHeadHidingListener() != null) {
+                    packetEventsHook.getHeadHidingListener().addFoundHead(player, headLocation.getUuid());
                 }
 
-                if (ConfigService.isHeadClickEjectEnabled()) {
-                    var power = ConfigService.getHeadClickEjectPower();
-
-                    var oppositeDir = player.getLocation().getDirection().multiply(-1).normalize();
-                    oppositeDir = oppositeDir.multiply(power).setY(0.3);
-                    player.setVelocity(oppositeDir);
-                }
-
-                // Already own song if not empty
-                String songName = ConfigService.getHeadClickAlreadyOwnSound();
+                // Success sound using primary hunt config
+                String songName = primaryConfig.getHeadClickSoundFound();
                 if (!songName.trim().isEmpty()) {
                     try {
-                        XSound.play(ConfigService.getHeadClickAlreadyOwnSound(), s -> s.forPlayers(player));
+                        XSound.play(songName, s -> s.forPlayers(player));
                     } catch (Exception ex) {
-                        player.sendMessage(LanguageService.getMessage("Messages.ErrorCannotPlaySound"));
-                        LogUtil.error("Error cannot play sound on head click: {0}", ex.getMessage());
+                        LogUtil.error("Error cannot play sound on head click! Cannot parse provided name...");
                     }
                 }
 
-                // Already own particles if enabled
-                if (ConfigService.isHeadClickParticlesEnabled()) {
-                    String particleName = ConfigService.getHeadClickParticlesAlreadyOwnType();
-                    int amount = ConfigService.getHeadClickParticlesAmount();
-                    ArrayList<String> colors = ConfigService.getHeadClickParticlesColors();
-
-                    try {
-                        ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
-                    } catch (Exception ex) {
-                        LogUtil.error("Error particle name {0} cannot be parsed!", particleName);
-                    }
+                // Title using primary hunt config
+                if (primaryConfig.isHeadClickTitleEnabled()) {
+                    String firstLine = PlaceholdersService.parse(player.getName(), player.getUniqueId(),
+                            headLocation, primaryConfig.getHeadClickTitleFirstLine());
+                    String subTitle = PlaceholdersService.parse(player.getName(), player.getUniqueId(),
+                            headLocation, primaryConfig.getHeadClickTitleSubTitle());
+                    int fadeIn = primaryConfig.getHeadClickTitleFadeIn();
+                    int stay = primaryConfig.getHeadClickTitleStay();
+                    int fadeOut = primaryConfig.getHeadClickTitleFadeOut();
+                    player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
                 }
 
-                // Trigger the event HeadClick with no success because the player already own the head
-                Bukkit.getPluginManager().callEvent(new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, false));
-                return;
-            }
+                // Firework using primary hunt config
+                if (primaryConfig.isFireworkEnabled()) {
+                    List<Color> colors = ConfigService.getHeadClickFireworkColors();
+                    List<Color> fadeColors = ConfigService.getHeadClickFireworkFadeColors();
+                    boolean isFlickering = ConfigService.isFireworkFlickerEnabled();
+                    int power = ConfigService.getHeadClickFireworkPower();
 
-            // Check head order
-            if (headLocation.getOrderIndex() != -1) {
-                if (HeadService.getChargedHeadLocations().stream()
-                        .filter(h -> h.getUuid() != headLocation.getUuid() && !playerHeads.contains(h.getUuid()))
-                        .anyMatch(h -> h.getOrderIndex() <= headLocation.getOrderIndex())) {
-                    player.sendMessage(PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation,
-                            LanguageService.getMessage("Messages.OrderClickError")
-                                    .replaceAll("%name%", headLocation.getNameOrUnnamed())));
-                    return;
-                }
-            }
-
-            // Check hit count
-            if (headLocation.getHitCount() != -1) {
-                try {
-                    var players = StorageService.getPlayers(headLocation.getUuid());
-
-                    if (players.size() == headLocation.getHitCount()) {
-                        player.sendMessage(LanguageService.getMessage("Messages.HitClickMax")
-                                .replaceAll("%count%", headLocation.getDisplayedHitCount()));
-                        return;
-                    }
-                } catch (InternalException ex) {
-                    LogUtil.error("Error retrieving players from storage when calculating hit count: {0}", ex.getMessage());
-                    return;
-                }
-            }
-
-            playerHeads.add(headLocation.getUuid());
-
-            if (!RewardService.hasPlayerSlotsRequired(player, playerHeads)) {
-                var message = LanguageService.getMessage("Messages.InventoryFullReward");
-                if (!message.trim().isEmpty()) {
-                    player.sendMessage(message);
+                    Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
+                    FireworkUtils.launchFirework(loc, isFlickering,
+                            colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors,
+                            power, block.getType() == Material.PLAYER_WALL_HEAD);
                 }
 
-                return;
+                Bukkit.getPluginManager().callEvent(
+                        new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true, foundHuntIds));
+            } else {
+                // All hunts already found — show "already claimed" with primary config
+                showAlreadyClaimed(player, headLocation, clickedLocation, primaryConfig);
+
+                var allHuntIds = activeHunts.stream().map(Hunt::getId).collect(java.util.stream.Collectors.toList());
+                Bukkit.getPluginManager().callEvent(
+                        new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, false, allHuntIds));
             }
-
-            // Save player click in storage
-            try {
-                StorageService.addHead(player.getUniqueId(), headLocation.getUuid());
-            } catch (InternalException ex) {
-                LogUtil.error("Error saving player found head in storage: {0}", ex.getMessage());
-                return;
-            }
-
-            // Hide the head for this player if enabled
-            var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
-            if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
-                packetEventsHook.getHeadHidingListener().addFoundHead(player, headLocation.getUuid());
-            }
-
-            // Give reward if triggerRewards is used
-            RewardService.giveReward(player, playerHeads, headLocation);
-
-            // Give special head rewards
-            for (var reward : headLocation.getRewards()) {
-                reward.execute(player, headLocation);
-            }
-
-            // Success song if not empty
-            String songName = ConfigService.getHeadClickNotOwnSound();
-            if (!songName.trim().isEmpty()) {
-                try {
-                    XSound.play(songName, s -> s.forPlayers(player));
-                } catch (Exception ex) {
-                    LogUtil.error("Error cannot play sound on head click! Cannot parse provided name...");
-                }
-            }
-
-            // Send title to the player if enabled
-            if (ConfigService.isHeadClickTitleEnabled()) {
-                String firstLine = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHeadClickTitleFirstLine());
-                String subTitle = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHeadClickTitleSubTitle());
-                int fadeIn = ConfigService.getHeadClickTitleFadeIn();
-                int stay = ConfigService.getHeadClickTitleStay();
-                int fadeOut = ConfigService.getHeadClickTitleFadeOut();
-
-                player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
-            }
-
-            // Fire firework if enabled
-            if (ConfigService.isFireworkEnabled()) {
-                List<Color> colors = ConfigService.getHeadClickFireworkColors();
-                List<Color> fadeColors = ConfigService.getHeadClickFireworkFadeColors();
-                boolean isFlickering = ConfigService.isFireworkFlickerEnabled();
-                int power = ConfigService.getHeadClickFireworkPower();
-
-                Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
-
-                FireworkUtils.launchFirework(loc, isFlickering,
-                        colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors, power, block.getType() == Material.PLAYER_WALL_HEAD);
-            }
-
-            // Trigger the event HeadClick with success
-            Bukkit.getPluginManager().callEvent(new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true));
         });
+    }
+
+    private void showAlreadyClaimed(Player player, HeadLocation headLocation,
+                                    Location clickedLocation, HuntConfig config) {
+        String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(),
+                headLocation, LanguageService.getMessage("Messages.AlreadyClaimHead"));
+        if (!message.trim().isEmpty()) {
+            player.sendMessage(message);
+        }
+
+        if (config.isHeadClickEjectEnabled()) {
+            var power = config.getHeadClickEjectPower();
+            var oppositeDir = player.getLocation().getDirection().multiply(-1).normalize();
+            oppositeDir = oppositeDir.multiply(power).setY(0.3);
+            player.setVelocity(oppositeDir);
+        }
+
+        String songName = config.getHeadClickSoundAlreadyOwn();
+        if (!songName.trim().isEmpty()) {
+            try {
+                XSound.play(songName, s -> s.forPlayers(player));
+            } catch (Exception ex) {
+                player.sendMessage(LanguageService.getMessage("Messages.ErrorCannotPlaySound"));
+                LogUtil.error("Error cannot play sound on head click: {0}", ex.getMessage());
+            }
+        }
+
+        if (ConfigService.isHeadClickParticlesEnabled()) {
+            String particleName = ConfigService.getHeadClickParticlesAlreadyOwnType();
+            int amount = ConfigService.getHeadClickParticlesAmount();
+            ArrayList<String> colors = ConfigService.getHeadClickParticlesColors();
+
+            try {
+                ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
+            } catch (Exception ex) {
+                LogUtil.error("Error particle name {0} cannot be parsed!", particleName);
+            }
+        }
     }
 }

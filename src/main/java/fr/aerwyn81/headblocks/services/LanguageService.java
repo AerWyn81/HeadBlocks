@@ -21,7 +21,10 @@ public class LanguageService {
     private static HashMap<String, Object> messages;
 
     public static void initialize(String lang) {
-        new File(HeadBlocks.getInstance().getDataFolder() + "/language").mkdirs();
+        var langDir = new File(HeadBlocks.getInstance().getDataFolder() + "/language");
+        if (!langDir.exists() && !langDir.mkdirs()) {
+            LogUtil.error("Failed to create language directory: {0}", langDir.getAbsolutePath());
+        }
 
         loadLanguage("en");
         loadLanguage("fr");
@@ -90,7 +93,15 @@ public class LanguageService {
         }
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
 
-        cfg.options().header("\nThis is the messsages file.\nYou can change any messages that are in this file\n\nIf you want to reset a message back to the default,\ndelete the entire line the message is on and restart the server.\n\t");
+        cfg.options().setHeader(List.of(
+                "",
+                "This is the messsages file.",
+                "You can change any messages that are in this file",
+                "",
+                "If you want to reset a message back to the default,",
+                "delete the entire line the message is on and restart the server.",
+                "\t"
+        ));
 
         Map<String, Object> msgDefaults = new LinkedHashMap<>();
 

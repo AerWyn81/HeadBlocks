@@ -2,6 +2,8 @@ package fr.aerwyn81.headblocks.runnables;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -23,6 +25,9 @@ public class GlobalTask extends BukkitRunnable {
     private static int VIEW_RADIUS_CHUNKS = 1;
 
     private static final Random random = new Random();
+    private static final int HUNT_SYNC_INTERVAL = 100; // ~5 seconds at 20 TPS
+    private boolean particlesDisabled = false;
+    private int tickCounter = 0;
 
     public GlobalTask() {
         VIEW_RADIUS_CHUNKS = (int) Math.ceil(ConfigService.getHologramParticlePlayerViewDistance() / (double) CHUNK_SIZE);
@@ -33,31 +38,47 @@ public class GlobalTask extends BukkitRunnable {
         if (HeadBlocks.isReloadInProgress)
             return;
 
+        // Periodic hunt sync check (cross-server via Redis version counter)
+        tickCounter++;
+        if (tickCounter >= HUNT_SYNC_INTERVAL) {
+            tickCounter = 0;
+            HuntService.checkRemoteChanges();
+        }
+
         HeadService.getChargedHeadLocations().forEach(headLocation -> {
             var location = headLocation.getLocation();
             if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
                 return;
 
-            if (ConfigService.isSpinEnabled() && ConfigService.isSpinLinked()) {
+            // Resolve primary display hunt for this head
+            Hunt primaryHunt = HuntService.getHighestPriorityHuntForHead(headLocation.getUuid());
+            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig();
+
+            if (huntConfig.isSpinEnabled() && huntConfig.isSpinLinked()) {
                 HeadService.rotateHead(headLocation);
             }
 
-            handleHologramAndParticles(headLocation);
+            HologramService.ensureHologramsCreated(location, huntConfig);
+
+            handleHologramAndParticles(headLocation, huntConfig);
         });
     }
 
-    private void spawnParticles(Location location, boolean isFound, Player player) {
+    private void spawnParticles(Location location, boolean isFound, Player player, HuntConfig huntConfig) {
+        if (particlesDisabled)
+            return;
+
         if (isFound && ConfigService.hideFoundHeads())
             return;
 
-        if (isFound ? !ConfigService.isParticlesFoundEnabled() : !ConfigService.isParticlesNotFoundEnabled())
+        if (isFound ? !huntConfig.isParticlesFoundEnabled() : !huntConfig.isParticlesNotFoundEnabled())
             return;
 
-        var particle = isFound ? Particle.valueOf(ConfigService.getParticlesFoundType())
-                : Particle.valueOf(ConfigService.getParticlesNotFoundType());
+        var particle = isFound ? Particle.valueOf(huntConfig.getParticlesFoundType())
+                : Particle.valueOf(huntConfig.getParticlesNotFoundType());
 
-        var amount = isFound ? ConfigService.getParticlesFoundAmount()
-                : ConfigService.getParticlesNotFoundAmount();
+        var amount = isFound ? huntConfig.getParticlesFoundAmount()
+                : huntConfig.getParticlesNotFoundAmount();
 
         var colors = isFound ? ConfigService.getParticlesFoundColors()
                 : ConfigService.getParticlesNotFoundColors();
@@ -66,14 +87,14 @@ public class GlobalTask extends BukkitRunnable {
             ParticlesUtils.spawn(location, particle, amount, colors, player);
         } catch (Exception ex) {
             LogUtil.error("Cannot spawn particle {0}... {1}", particle.name(), ex.getMessage());
-            LogUtil.error("To prevent log spamming, particles is disabled until reload");
-            this.cancel();
+            LogUtil.error("To prevent log spamming, particles are disabled until reload");
+            particlesDisabled = true;
         }
     }
 
-    private void handleHologramAndParticles(HeadLocation headLocation) {
+    private void handleHologramAndParticles(HeadLocation headLocation, HuntConfig huntConfig) {
         int rangeParticles = ConfigService.getHologramParticlePlayerViewDistance();
-        int rangeHint = ConfigService.getHintDistanceBlocks();
+        int rangeHint = huntConfig.getHintDistance();
 
         var location = headLocation.getLocation();
         if (location.getWorld() == null)
@@ -102,20 +123,41 @@ public class GlobalTask extends BukkitRunnable {
 
                         if (distance <= rangeParticles) {
                             if (hasHead) {
-                                spawnParticles(location, true, player);
-                                HologramService.showFoundTo(player, location);
+                                spawnParticles(location, true, player, huntConfig);
+                                HologramService.showFoundTo(player, location, huntConfig);
                             } else {
-                                spawnParticles(location, false, player);
-                                HologramService.showNotFoundTo(player, location);
+                                spawnParticles(location, false, player, huntConfig);
+                                HologramService.showNotFoundTo(player, location, huntConfig);
                             }
 
                             HologramService.refresh(player, location);
                         }
 
-                        if (distance <= rangeHint) {
-                            if (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled()) {
-                                var shouldTriggerHintSound = random.nextInt(ConfigService.getHintFrequency()) == 0;
-                                var shouldTriggerHintActionBar = random.nextInt(ConfigService.getHintFrequency()) == 0;
+                        if (distance <= rangeHint && (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled())) {
+                            // Resolve per-player hint config: use the highest-priority active hunt where the player hasn't found this head
+                            HuntConfig hintConfig = null;
+                            if (!hasHead) {
+                                // Fast path: player hasn't found it globally → primary hunt config
+                                hintConfig = huntConfig;
+                            } else {
+                                // Player found it globally — check per-hunt for one they haven't completed
+                                for (Hunt h : HuntService.getHuntsForHead(headLocation.getUuid())) {
+                                    if (!h.isActive()) continue;
+                                    try {
+                                        if (!StorageService.getHeadsPlayerForHunt(player.getUniqueId(), h.getId())
+                                                .contains(headLocation.getUuid())) {
+                                            hintConfig = h.getConfig();
+                                            break;
+                                        }
+                                    } catch (InternalException ignored) {
+                                    }
+                                }
+                            }
+
+                            if (hintConfig != null && hintConfig.isHintsEnabled()) {
+                                var hintFrequency = Math.max(1, hintConfig.getHintFrequency());
+                                var shouldTriggerHintSound = random.nextInt(hintFrequency) == 0;
+                                var shouldTriggerHintActionBar = random.nextInt(hintFrequency) == 0;
 
                                 if (headLocation.isHintSoundEnabled() && shouldTriggerHintSound) {
                                     ConfigService.getHintSoundType()
@@ -129,10 +171,11 @@ public class GlobalTask extends BukkitRunnable {
                                 }
 
                                 if (headLocation.isHintActionBarEnabled() && shouldTriggerHintActionBar) {
+                                    int hintRange = hintConfig.getHintDistance();
                                     var message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHintActionBarMessage());
                                     message = message
                                             .replaceAll("%distance%", String.valueOf(distance))
-                                            .replaceAll("%position%", String.valueOf(rangeHint - distance))
+                                            .replaceAll("%position%", String.valueOf(hintRange - distance))
                                             .replaceAll("%arrow%", getHintDirectionArrow(player.getLocation(), location));
 
                                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));

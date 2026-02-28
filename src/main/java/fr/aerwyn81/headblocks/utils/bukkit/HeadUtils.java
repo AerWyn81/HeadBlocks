@@ -2,7 +2,6 @@ package fr.aerwyn81.headblocks.utils.bukkit;
 
 import com.google.gson.JsonParser;
 import de.tr7zw.changeme.nbtapi.NBT;
-import de.tr7zw.changeme.nbtapi.NBTItem;
 import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
@@ -134,11 +133,25 @@ public class HeadUtils {
             return NBT.modifyComponents(head, nbt -> (String) nbt.resolveOrDefault("minecraft:profile.properties[0].value", ""));
         } else {
             try {
-                //noinspection deprecation, DataFlowIssue
-                return new NBTItem(head).getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value");
+                return NBT.get(head, nbt -> {
+                    var skullOwner = nbt.getCompound("SkullOwner");
+                    if (skullOwner == null)
+                        return "";
+
+                    var properties = skullOwner.getCompound("Properties");
+                    if (properties == null)
+                        return "";
+
+                    return properties.getCompoundList("textures").get(0).getString("Value");
+                });
             } catch (Exception ex) {
                 return "";
             }
+            // try {
+            //     return new NBTItem(head).getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value");
+            // } catch (Exception ex) {
+            //     return "";
+            // }
         }
     }
 

@@ -50,8 +50,11 @@ public final class MyPlugin extends JavaPlugin {
 
 #### Available Events
 
-| Events           | Description                                                  |
-|------------------|--------------------------------------------------------------|
-| HeadClickEvent   | _Triggered when a head is clicked (includes success status)_ |
-| HeadCreatedEvent | _Called when a head is created (includes the location)_      |
-| HeadDeletedEvent | _Triggered when a head is deleted_                           |
+| Events               | Cancellable | Description                                                                                |
+|----------------------|:-----------:|--------------------------------------------------------------------------------------------|
+| HeadClickEvent       |     No      | _Triggered when a head is clicked (includes success status)_                               |
+| HeadCreatedEvent     |     No      | _Called when a head is created (includes the location)_                                    |
+| HeadDeletedEvent     |     No      | _Triggered when a head is deleted_                                                         |
+| HuntCreateEvent      |     Yes     | _Fired before a new hunt is persisted. Cancel to prevent creation_                         |
+| HuntDeleteEvent      |     Yes     | _Fired before a hunt is deleted. Cancel to prevent deletion_                               |
+| HuntStateChangeEvent |     Yes     | _Fired before a hunt state changes (e.g., ACTIVE to INACTIVE). Provides old and new state_ |

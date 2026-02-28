@@ -13,7 +13,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 @HBAnnotations(command = "help", permission = "headblocks.use", alias = "h")
 public class Help implements Cmd {
@@ -25,7 +24,7 @@ public class Help implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        var commands = new ArrayList<>(registeredCommands).stream().filter(c -> PlayerUtils.hasPermission(sender, c.getPermission())).collect(Collectors.toList());
+        var commands = new ArrayList<>(registeredCommands).stream().filter(c -> PlayerUtils.hasPermission(sender, c.getPermission())).toList();
 
         ChatPageUtils cpu = new ChatPageUtils(sender)
                 .entriesCount(commands.size())

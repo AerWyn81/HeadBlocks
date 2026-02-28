@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -47,7 +48,14 @@ public class Info implements Cmd {
 
         TextComponent msgLoc = new TextComponent(LanguageService.getMessage("Chat.Info.Location") + LocationUtils.toFormattedString(headLocation.getLocation()));
         msgLoc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Info.HoverLocationTp"))));
-        msgLoc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + headLocation.getLocation().getWorld().getName() + " " + headLocation.getX() + " " + (headLocation.getLocation().getY() + 1) + " " + headLocation.getZ() + " 0.0 90.0"));
+
+        var world = headLocation.getLocation().getWorld();
+        if (world != null) {
+            msgLoc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + headLocation.getLocation().getWorld().getName() + " " + headLocation.getX() + " " + (headLocation.getLocation().getY() + 1) + " " + headLocation.getZ() + " 0.0 90.0"));
+        } else {
+            LogUtil.error("Error when attempting to teleport to the head; the name of the head world is empty.");
+        }
+
         player.spigot().sendMessage(msgLoc);
 
         player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.Loaded") + headLocation.isCharged()));
@@ -68,14 +76,14 @@ public class Info implements Cmd {
             for (int i = 0; i < rewards.size(); i++) {
                 var reward = rewards.get(i);
 
-                var typeColor = switch (reward.getType()) {
+                var typeColor = switch (reward.type()) {
                     case MESSAGE -> "&a";
                     case COMMAND -> "&6";
                     case BROADCAST -> "&b";
                     default -> "&7";
                 };
 
-                hoverText.append(MessageUtils.colorize(typeColor + reward.getType().name() + "&7: " + reward.getValue()));
+                hoverText.append(MessageUtils.colorize(typeColor + reward.type().name() + "&7: " + reward.value()));
                 if (i < rewards.size() - 1) {
                     hoverText.append("\n");
                 }

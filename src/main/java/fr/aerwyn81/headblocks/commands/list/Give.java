@@ -73,9 +73,7 @@ public class Give implements Cmd {
 
         int headGiven = 0;
         for (HBHead head : headsToGive) {
-            if (head instanceof HBHeadHDB) {
-                HBHeadHDB headHDB = (HBHeadHDB) head;
-
+            if (head instanceof HBHeadHDB headHDB) {
                 if (!headHDB.isLoaded()) {
                     player.sendMessage(LanguageService.getMessage("Messages.HeadNotYetLoaded")
                             .replaceAll("%id%", String.valueOf(headHDB.getId())));
@@ -114,7 +112,7 @@ public class Give implements Cmd {
                 items.addAll(IntStream.range(1, headCount + 1)
                         .boxed()
                         .map(Object::toString)
-                        .collect(Collectors.toList()));
+                        .toList());
             }
         }
 

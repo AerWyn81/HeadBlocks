@@ -3,13 +3,18 @@
 When HeadBlocks is loaded, you will find the following files inside the **HeadBlocks** folder:
 
 * [config.yml](config/config.md)
+* [hunts/](config/hunts.md)
 * [messages/](config/translations.md)
 * locations.yml
 * headblocks.db
 
 ## [config.yml](config/config.md)
 
-This file contains all the configuration options to customize the plugin to your needs.
+This file contains all the configuration options to customize the plugin to your needs. It also serves as the **default fallback** for per-hunt configuration — any setting not overridden in a hunt file inherits from `config.yml`.
+
+## [hunts/](config/hunts.md)
+
+This folder contains one YAML file per hunt. A `default.yml` is auto-generated on first start from your existing `config.yml`. See [Hunt files](config/hunts.md) for details.
 
 ## [Translations](config/translations.md)
 
@@ -28,7 +33,8 @@ The following are storage files used by the plugin. Do not modify them manually.
 ## Placeholders
 
 HeadBlocks supports placeholders through [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/).
-Available placeholders:
+
+### General Placeholders
 
 - `%headblocks_current%`: Current number of heads found by the player (_raw integer_)
 - `%headblocks_left%`: Number of heads remaining to be found (_raw integer_)
@@ -43,3 +49,16 @@ Available placeholders:
   applicable_)
 - `%headblocks_leaderboard_position%`: Player's position in the leaderboard
 - `%headblocks_leaderboard_<position>_<name|custom|value>%`: Used to build a leaderboard (custom => see config file)
+
+!> In multi-hunt mode (2+ hunts), `%headblocks_current%` and `%headblocks_left%` will return a message asking to use per-hunt placeholders instead.
+
+### Per-Hunt Placeholders
+
+These placeholders work with any hunt by replacing `<huntId>` with the hunt's ID (e.g., `christmas`, `default`).
+
+- `%headblocks_hunt_<huntId>_found%`: Number of heads found by the player in this hunt
+- `%headblocks_hunt_<huntId>_total%`: Total number of heads in this hunt
+- `%headblocks_hunt_<huntId>_left%`: Number of heads remaining in this hunt
+- `%headblocks_hunt_<huntId>_progress%`: Progress bar for this hunt
+- `%headblocks_hunt_<huntId>_name%`: Display name of the hunt
+- `%headblocks_hunt_<huntId>_state%`: Localized state of the hunt (Active, Inactive, Archived)

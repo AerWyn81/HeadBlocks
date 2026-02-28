@@ -10,22 +10,7 @@ import org.bukkit.entity.Player;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-public class Reward {
-    private final RewardType type;
-    private final String value;
-
-    public Reward(RewardType type, String value) {
-        this.type = type;
-        this.value = value;
-    }
-
-    public RewardType getType() {
-        return type;
-    }
-
-    public String getValue() {
-        return value;
-    }
+public record Reward(RewardType type, String value) {
 
     public HashMap<String, String> serialize() {
         var map = new HashMap<String, String>();

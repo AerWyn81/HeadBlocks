@@ -33,6 +33,8 @@ public class Reload implements Cmd {
         LanguageService.pushMessages();
 
         StorageService.initialize();
+        HuntConfigService.initialize();
+        HuntService.initialize();
         HeadService.load();
 
         if (HeadBlocks.isHeadDatabaseActive) {

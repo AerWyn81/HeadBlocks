@@ -1,9 +1,13 @@
 package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HuntService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -55,6 +59,10 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         // %headblocks_current% | %headblocks_left%
         if (identifier.equals("current") || identifier.equals("left")) {
+            if (HuntService.isMultiHunt()) {
+                return "Use %headblocks_hunt_<id>_found%";
+            }
+
             var future = StorageService.getHeadsPlayer(player.getUniqueId()).asFuture();
 
             try {
@@ -160,6 +168,61 @@ public class PlaceholderHook extends PlaceholderExpansion {
             }
         }
 
+        // %headblocks_hunt_<huntId>_found% | %headblocks_hunt_<huntId>_total% | %headblocks_hunt_<huntId>_progress% | %headblocks_hunt_<huntId>_left%
+        if (identifier.startsWith("hunt_")) {
+            var parts = identifier.split("_", 3); // hunt, <huntId>, <type>
+            if (parts.length < 3) return "";
+
+            String huntId = parts[1].toLowerCase();
+            String subType = parts[2];
+
+            Hunt hunt = HuntService.getHuntById(huntId);
+            if (hunt == null) return "";
+
+            switch (subType) {
+                case "found" -> {
+                    try {
+                        return String.valueOf(StorageService.getHeadsPlayerForHunt(player.getUniqueId(), huntId).size());
+                    } catch (InternalException e) {
+                        return "0";
+                    }
+                }
+                case "total" -> {
+                    return String.valueOf(hunt.getHeadCount());
+                }
+                case "left" -> {
+                    try {
+                        int found = StorageService.getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
+                        return String.valueOf(hunt.getHeadCount() - found);
+                    } catch (InternalException e) {
+                        return String.valueOf(hunt.getHeadCount());
+                    }
+                }
+                case "progress" -> {
+                    try {
+                        int found = StorageService.getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
+                        int total = hunt.getHeadCount();
+                        return MessageUtils.createProgressBar(found, total,
+                                ConfigService.getProgressBarBars(),
+                                ConfigService.getProgressBarSymbol(),
+                                ConfigService.getProgressBarCompletedColor(),
+                                ConfigService.getProgressBarNotCompletedColor());
+                    } catch (InternalException e) {
+                        return "";
+                    }
+                }
+                case "name" -> {
+                    return hunt.getDisplayName();
+                }
+                case "state" -> {
+                    return hunt.getState().getLocalizedName();
+                }
+                default -> {
+                    return "";
+                }
+            }
+        }
+
         // %headblocks_order_<previous|current|next>%
         if (identifier.contains("order")) {
             var str = identifier.split("_");
@@ -186,29 +249,30 @@ public class PlaceholderHook extends PlaceholderExpansion {
                         playerHeadLocations.add(headLocation);
                 }
 
-                if (subIdentifier.equals("current")) {
-                    if (playerHeadLocations.size() - 1 < 0) {
-                        return "-";
-                    }
+                switch (subIdentifier) {
+                    case "current" -> {
+                        if (playerHeadLocations.size() - 1 < 0) {
+                            return "-";
+                        }
 
-                    return playerHeadLocations.get(playerHeadLocations.size() - 1).getNameOrUuid();
+                        return playerHeadLocations.get(playerHeadLocations.size() - 1).getNameOrUuid();
+                    }
+                    case "previous" -> {
+                        if (playerHeadLocations.isEmpty() || playerHeadLocations.size() - 2 < 0) {
+                            return "-";
+                        }
+
+                        return playerHeadLocations.get(playerHeadLocations.size() - 2).getNameOrUuid();
+                    }
+                    case "next" -> {
+                        if (playerHeadLocations.size() >= heads.size()) {
+                            return "-";
+                        }
+
+                        return heads.get(playerHeadLocations.size()).getNameOrUuid();
+                    }
                 }
 
-                if (subIdentifier.equals("previous")) {
-                    if (playerHeadLocations.isEmpty() || playerHeadLocations.size() - 2 < 0) {
-                        return "-";
-                    }
-
-                    return playerHeadLocations.get(playerHeadLocations.size() - 2).getNameOrUuid();
-                }
-
-                if (subIdentifier.equals("next")) {
-                    if (playerHeadLocations.size() >= heads.size()) {
-                        return "-";
-                    }
-
-                    return heads.get(playerHeadLocations.size()).getNameOrUuid();
-                }
             } catch (Exception ex) {
                 return "Future error get heads";
             }

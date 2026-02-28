@@ -118,3 +118,9 @@ run/
 !gradle-wrapper.jar
 /Todo.md
 /.editorconfig
+/.serena/
+/.venv/
+/_bmad/
+/_bmad-output/
+/nul
+/.claude/settings.local.json

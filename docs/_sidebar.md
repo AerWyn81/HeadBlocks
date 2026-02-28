@@ -6,6 +6,7 @@
 - **Customization**
     - [Configuration](config/general.md)
         - [config.yml](config/config.md)
+      - [Hunt files](config/hunts.md)
         - [locations.yml](config/locations.md)
     - [Translations](config/translations.md)
 - **Reference**

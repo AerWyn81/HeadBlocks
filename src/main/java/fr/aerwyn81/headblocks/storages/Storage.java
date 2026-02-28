@@ -50,4 +50,9 @@ public interface Storage {
     void addCachedHead(UUID headUuid) throws InternalException;
 
     void removeCachedHead(UUID headUuid) throws InternalException;
+
+    // Hunt sync version (cross-server)
+    long getHuntVersion() throws InternalException;
+
+    void incrementHuntVersion() throws InternalException;
 }

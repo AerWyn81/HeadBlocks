@@ -14,7 +14,10 @@ import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
-import fr.aerwyn81.headblocks.utils.internal.Metrics;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.AdvancedBarChart;
+import org.bstats.charts.SimplePie;
+import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.holoeasy.HoloEasy;
@@ -22,6 +25,8 @@ import org.holoeasy.HoloEasy;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
@@ -99,6 +104,8 @@ public final class HeadBlocks extends JavaPlugin {
         LanguageService.pushMessages();
 
         StorageService.initialize();
+        HuntConfigService.initialize();
+        HuntService.initialize();
         HeadService.initialize(locationFile);
         HologramService.load();
 
@@ -122,30 +129,28 @@ public final class HeadBlocks extends JavaPlugin {
 
         if (ConfigService.isMetricsEnabled()) {
             var m = new Metrics(this, 15495);
-            m.addCustomChart(new Metrics.SimplePie("database_type", StorageService::selectedStorageType));
-            m.addCustomChart(new Metrics.SingleLineChart("heads", () -> HeadService.getChargedHeadLocations().size()));
-            m.addCustomChart(new Metrics.SimplePie("lang", LanguageService::getLanguage));
-            m.addCustomChart(new Metrics.SimplePie("feat_order", () -> {
-                var anyOrder = HeadService.getChargedHeadLocations().stream().anyMatch(h -> h.getOrderIndex() != -1);
-                return anyOrder ? "True" : "False";
+            m.addCustomChart(new SimplePie("database_type", StorageService::selectedStorageType));
+            m.addCustomChart(new SingleLineChart("heads", () -> HeadService.getChargedHeadLocations().size()));
+            m.addCustomChart(new SimplePie("lang", LanguageService::getLanguage));
+            m.addCustomChart(new AdvancedBarChart("features", () -> {
+                var heads = HeadService.getChargedHeadLocations();
+                Map<String, int[]> map = new HashMap<>();
+
+                if (heads.stream().anyMatch(h -> h.getOrderIndex() != -1))
+                    map.put("Order", new int[]{1});
+                if (heads.stream().anyMatch(h -> h.getHitCount() != -1))
+                    map.put("Hit count", new int[]{1});
+                if (heads.stream().anyMatch(HeadLocation::isHintSoundEnabled))
+                    map.put("Hint sound", new int[]{1});
+                if (heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled))
+                    map.put("Hint action bar", new int[]{1});
+                if (heads.stream().anyMatch(h -> !h.getRewards().isEmpty()))
+                    map.put("Hint rewards", new int[]{1});
+                if (ConfigService.hideFoundHeads())
+                    map.put("Hide heads", new int[]{1});
+
+                return map;
             }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hit", () -> {
-                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(h -> h.getHitCount() != -1);
-                return anyHit ? "True" : "False";
-            }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hint_sound", () -> {
-                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintSoundEnabled);
-                return anyHit ? "True" : "False";
-            }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hint_actionBarMessage", () -> {
-                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(HeadLocation::isHintActionBarEnabled);
-                return anyHit ? "True" : "False";
-            }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hint_rewards", () -> {
-                var anyHit = HeadService.getChargedHeadLocations().stream().anyMatch(h -> !h.getRewards().isEmpty());
-                return anyHit ? "True" : "False";
-            }));
-            m.addCustomChart(new Metrics.SimplePie("feat_hide_heads", () -> ConfigService.hideFoundHeads() ? "True" : "False"));
         }
 
         LogUtil.info("HeadBlocks successfully loaded!");
@@ -161,11 +166,12 @@ public final class HeadBlocks extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        Bukkit.getScheduler().cancelTasks(this);
+
+        HologramService.unload();
         StorageService.close();
         HeadService.clearHeadMoves();
         GuiService.clearCache();
-
-        Bukkit.getScheduler().cancelTasks(this);
 
         packetEventsHook.unload();
 

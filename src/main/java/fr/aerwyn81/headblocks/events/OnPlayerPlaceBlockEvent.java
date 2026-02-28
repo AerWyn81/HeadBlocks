@@ -3,11 +3,17 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HuntService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -94,7 +100,27 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headLocation));
 
-        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation));
+        // Auto-assign head to selected hunt
+        String selectedHuntId = HuntService.getSelectedHunt(player.getUniqueId());
+        try {
+            HuntService.assignHeadToHunt(headUuid, selectedHuntId);
+        } catch (Exception ex) {
+            LogUtil.error("Error assigning head to hunt {0}: {1}", selectedHuntId, ex.getMessage());
+        }
+
+        if ("default".equals(selectedHuntId)) {
+            TextComponent msg = new TextComponent(MessageUtils.colorize(
+                    LanguageService.getPrefix() + " &7Assigned to &edefault&7. "));
+            TextComponent clickable = new TextComponent(MessageUtils.colorize("&a&l[Reassign]"));
+            clickable.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    new Text(MessageUtils.colorize("&7Click to reassign this head"))));
+            clickable.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                    "/headblocks hunt transfer " + headUuid + " "));
+            msg.addExtra(clickable);
+            player.spigot().sendMessage(msg);
+        }
+
+        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation, selectedHuntId));
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {

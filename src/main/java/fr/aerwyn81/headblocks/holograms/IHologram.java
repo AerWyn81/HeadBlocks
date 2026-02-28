@@ -17,5 +17,7 @@ public interface IHologram {
 
     boolean isVisible(Player player);
 
+    boolean isAlive();
+
     void refresh(Player player);
 }

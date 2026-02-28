@@ -132,4 +132,14 @@ public class Memory implements Storage {
 
         clearCachedTopPlayers();
     }
+
+    @Override
+    public long getHuntVersion() {
+        return 0;
+    }
+
+    @Override
+    public void incrementHuntVersion() {
+        // No-op for single-server Memory storage
+    }
 }

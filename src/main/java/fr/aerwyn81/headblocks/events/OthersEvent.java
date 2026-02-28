@@ -2,6 +2,8 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -63,6 +65,7 @@ public class OthersEvent implements Listener {
     public void onQuit(PlayerQuitEvent e) {
         StorageService.unloadPlayer(e.getPlayer());
         HeadService.getHeadMoves().remove(e.getPlayer().getUniqueId());
+        HuntService.clearSelectedHunt(e.getPlayer().getUniqueId());
 
         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
         if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
@@ -81,7 +84,9 @@ public class OthersEvent implements Listener {
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));
             head.setCharged(true);
 
-            HologramService.createHolograms(head.getLocation());
+            Hunt primaryHunt = HuntService.getHighestPriorityHuntForHead(head.getUuid());
+            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig();
+            HologramService.createHolograms(head.getLocation(), huntConfig);
         }
     }
 

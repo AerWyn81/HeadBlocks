@@ -2,6 +2,8 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.holograms.InternalHologram;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -62,9 +64,20 @@ public class HologramService {
         }
 
         for (HeadLocation loc : HeadService.getHeadLocations()) {
-            if (loc.isCharged()) {
-                createHolograms(loc.getLocation());
-            }
+            if (!loc.isCharged())
+                continue;
+
+            var headLoc = loc.getLocation();
+            if (headLoc.getWorld() == null)
+                continue;
+
+            // Skip heads in unloaded chunks — they will be created lazily by GlobalTask
+            if (!headLoc.getWorld().isChunkLoaded(headLoc.getBlockX() >> 4, headLoc.getBlockZ() >> 4))
+                continue;
+
+            Hunt primaryHunt = HuntService.getHighestPriorityHuntForHead(loc.getUuid());
+            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig();
+            createHolograms(headLoc, huntConfig);
         }
     }
 
@@ -73,6 +86,10 @@ public class HologramService {
     }
 
     public static void createHolograms(Location location) {
+        createHolograms(location, new HuntConfig());
+    }
+
+    public static void createHolograms(Location location, HuntConfig huntConfig) {
         if (!enable) {
             var suffix = "";
 
@@ -85,13 +102,13 @@ public class HologramService {
         }
 
         if (enumTypeHologram == EnumTypeHologram.DEFAULT) {
-            if (ConfigService.isHologramsFoundEnabled()) {
-                var holoFound = internalCreateHologram(location, ConfigService.getHologramsFoundLines().stream().map(MessageUtils::colorize).collect(Collectors.toList()));
+            if (huntConfig.isHologramsFoundEnabled()) {
+                var holoFound = internalCreateHologram(location, huntConfig.getHologramsFoundLines().stream().map(MessageUtils::colorize).collect(Collectors.toList()));
                 foundHolograms.put(holoFound.getUuid(), holoFound);
             }
 
-            if (ConfigService.isHologramsNotFoundEnabled()) {
-                var holoNotFound = internalCreateHologram(location, ConfigService.getHologramsNotFoundLines().stream().map(MessageUtils::colorize).collect(Collectors.toList()));
+            if (huntConfig.isHologramsNotFoundEnabled()) {
+                var holoNotFound = internalCreateHologram(location, huntConfig.getHologramsNotFoundLines().stream().map(MessageUtils::colorize).collect(Collectors.toList()));
                 notFoundHolograms.put(holoNotFound.getUuid(), holoNotFound);
             }
             return;
@@ -101,6 +118,40 @@ public class HologramService {
             var holo = internalCreateHologram(location, Collections.emptyList());
             holograms.put(holo.getUuid(), holo);
         }
+    }
+
+    public static void ensureHologramsCreated(Location location, HuntConfig huntConfig) {
+        if (!enable)
+            return;
+
+        if (enumTypeHologram == EnumTypeHologram.DEFAULT) {
+            var existingFound = getHologramByLocation(foundHolograms, location);
+            var existingNotFound = getHologramByLocation(notFoundHolograms, location);
+
+            boolean hasAlive = (existingFound != null && existingFound.isAlive())
+                    || (existingNotFound != null && existingNotFound.isAlive());
+
+            if (hasAlive)
+                return;
+
+            // Clean up dead entries before recreating
+            if (existingFound != null) {
+                foundHolograms.remove(existingFound.getUuid());
+            }
+            if (existingNotFound != null) {
+                notFoundHolograms.remove(existingNotFound.getUuid());
+            }
+        } else if (enumTypeHologram == EnumTypeHologram.ADVANCED) {
+            var existing = getHologramByLocation(holograms, location);
+            if (existing != null && existing.isAlive())
+                return;
+
+            if (existing != null) {
+                holograms.remove(existing.getUuid());
+            }
+        }
+
+        createHolograms(location, huntConfig);
     }
 
     private static InternalHologram internalCreateHologram(Location location, List<String> lines) {
@@ -115,12 +166,13 @@ public class HologramService {
         return internalHologram;
     }
 
-    public static void showFoundTo(Player player, Location location) {
+    public static void showFoundTo(Player player, Location location, HuntConfig huntConfig) {
         if (!enable) {
             return;
         }
 
-        if (enumTypeHologram == EnumTypeHologram.ADVANCED || !ConfigService.isHologramsFoundEnabled()) {
+        boolean foundEnabled = huntConfig != null ? huntConfig.isHologramsFoundEnabled() : ConfigService.isHologramsFoundEnabled();
+        if (enumTypeHologram == EnumTypeHologram.ADVANCED || !foundEnabled) {
             return;
         }
 
@@ -139,12 +191,13 @@ public class HologramService {
         }
     }
 
-    public static void showNotFoundTo(Player player, Location location) {
+    public static void showNotFoundTo(Player player, Location location, HuntConfig huntConfig) {
         if (!enable) {
             return;
         }
 
-        if (enumTypeHologram == EnumTypeHologram.ADVANCED || !ConfigService.isHologramsNotFoundEnabled()) {
+        boolean notFoundEnabled = huntConfig != null ? huntConfig.isHologramsNotFoundEnabled() : ConfigService.isHologramsNotFoundEnabled();
+        if (enumTypeHologram == EnumTypeHologram.ADVANCED || !notFoundEnabled) {
             return;
         }
 
