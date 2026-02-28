@@ -5,14 +5,12 @@ import fr.aerwyn81.headblocks.api.events.HuntCreateEvent;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.*;
-import fr.aerwyn81.headblocks.services.HuntConfigService;
-import fr.aerwyn81.headblocks.services.HuntService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -29,6 +27,10 @@ public class BehaviorSelectionGui {
         pendingHuntNames.put(player.getUniqueId(), huntName);
         selectedBehaviors.put(player.getUniqueId(), new HashSet<>());
 
+        buildAndOpenGui(player);
+    }
+
+    public void reopen(Player player) {
         buildAndOpenGui(player);
     }
 
@@ -104,6 +106,17 @@ public class BehaviorSelectionGui {
     }
 
     private void handleValidate(Player player) {
+        Set<String> selected = selectedBehaviors.get(player.getUniqueId());
+
+        if (selected != null && selected.contains("timed")) {
+            GuiService.getTimedConfigManager().open(player);
+            return;
+        }
+
+        createHunt(player, null, true);
+    }
+
+    public void createHunt(Player player, Location plateLocation, boolean repeatable) {
         String huntName = pendingHuntNames.remove(player.getUniqueId());
         Set<String> selected = selectedBehaviors.remove(player.getUniqueId());
 
@@ -124,7 +137,7 @@ public class BehaviorSelectionGui {
                 switch (behaviorId) {
                     case "ordered" -> behaviors.add(new OrderedBehavior());
                     case "scheduled" -> behaviors.add(new ScheduledBehavior(null, null));
-                    case "timed" -> behaviors.add(new TimedBehavior());
+                    case "timed" -> behaviors.add(new TimedBehavior(plateLocation, repeatable));
                 }
             }
         }
@@ -159,6 +172,14 @@ public class BehaviorSelectionGui {
         HuntService.setSelectedHunt(player.getUniqueId(), hunt.getId());
         player.sendMessage(LanguageService.getMessage("Messages.HuntSelected")
                 .replaceAll("%hunt%", hunt.getId()));
+    }
+
+    public String getPendingHuntName(UUID playerUuid) {
+        return pendingHuntNames.get(playerUuid);
+    }
+
+    public Set<String> getSelectedBehaviors(UUID playerUuid) {
+        return selectedBehaviors.get(playerUuid);
     }
 
     public void clearState(UUID playerUuid) {

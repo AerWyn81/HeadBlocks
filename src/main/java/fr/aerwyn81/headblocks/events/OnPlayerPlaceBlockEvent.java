@@ -2,10 +2,7 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.HuntService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -32,6 +29,15 @@ public class OnPlayerPlaceBlockEvent implements Listener {
     public void onPlayerPlaceBlock(BlockPlaceEvent e) {
         Player player = e.getPlayer();
         Block headBlock = e.getBlockPlaced();
+
+        // Check for pending timed plate placement
+        if (GuiService.getTimedConfigManager().hasPendingPlatePlacement(player.getUniqueId())) {
+            if (headBlock.getType().name().contains("PRESSURE_PLATE")) {
+                Location plateLoc = headBlock.getLocation().clone().add(0.5, 0, 0.5);
+                GuiService.getTimedConfigManager().handlePlatePlaced(player, plateLoc);
+            }
+            return;
+        }
 
         if (!hasHeadBlocksItemInHand(player)) {
             return;

@@ -3,10 +3,7 @@ package fr.aerwyn81.headblocks.services;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
-import fr.aerwyn81.headblocks.services.gui.types.BehaviorSelectionGui;
-import fr.aerwyn81.headblocks.services.gui.types.HintGui;
-import fr.aerwyn81.headblocks.services.gui.types.OrderGui;
-import fr.aerwyn81.headblocks.services.gui.types.RewardsGui;
+import fr.aerwyn81.headblocks.services.gui.types.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
@@ -24,6 +21,7 @@ public class GuiService {
     private static final OrderGui orderManager = new OrderGui();
     private static final HintGui hintManager = new HintGui();
     private static final BehaviorSelectionGui behaviorSelectionManager = new BehaviorSelectionGui();
+    private static final TimedConfigGui timedConfigManager = new TimedConfigGui();
 
     public static void clearCache() {
         GuiBase.clearSharedCache();
@@ -46,6 +44,10 @@ public class GuiService {
 
     public static BehaviorSelectionGui getBehaviorSelectionManager() {
         return behaviorSelectionManager;
+    }
+
+    public static TimedConfigGui getTimedConfigManager() {
+        return timedConfigManager;
     }
 
     public static void openHuntSelectionOrDirect(Player player, BiConsumer<Player, Hunt> callback) {
