@@ -160,8 +160,6 @@ public class HuntConfig {
         this.headClickEjectPower = power;
     }
 
-    // --- Holograms getters with fallback ---
-
     public boolean isHologramsEnabled() {
         if (hologramsEnabled != null) {
             return hologramsEnabled;

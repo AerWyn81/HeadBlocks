@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -14,19 +15,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class TimedBehavior implements Behavior {
-
-    private Location startPlateLocation;
-    private boolean repeatable;
-
-    public TimedBehavior() {
-        this.repeatable = true;
-    }
-
-    public TimedBehavior(Location startPlateLocation, boolean repeatable) {
-        this.startPlateLocation = startPlateLocation;
-        this.repeatable = repeatable;
-    }
+public record TimedBehavior(Location startPlateLocation, boolean repeatable) implements Behavior {
 
     @Override
     public String getId() {
@@ -102,30 +91,18 @@ public class TimedBehavior implements Behavior {
         return LanguageService.getMessage("Hunt.Behavior.Timed");
     }
 
-    public Location getStartPlateLocation() {
-        return startPlateLocation;
-    }
-
-    public void setStartPlateLocation(Location startPlateLocation) {
-        this.startPlateLocation = startPlateLocation;
-    }
-
-    public boolean isRepeatable() {
-        return repeatable;
-    }
-
     public static TimedBehavior fromConfig(ConfigurationSection section) {
         Location loc = null;
         boolean repeatable = true;
 
         if (section != null) {
             if (section.contains("startPlate.world")) {
-                String worldName = section.getString("startPlate.world");
+                String worldName = section.getString("startPlate.world", "");
                 double x = section.getDouble("startPlate.x");
                 double y = section.getDouble("startPlate.y");
                 double z = section.getDouble("startPlate.z");
 
-                var world = org.bukkit.Bukkit.getWorld(worldName);
+                var world = Bukkit.getWorld(worldName);
                 if (world != null) {
                     loc = new Location(world, x, y, z);
                 }

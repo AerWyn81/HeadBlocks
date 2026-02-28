@@ -241,9 +241,9 @@ public class HuntConfigService {
             }
 
             if (behavior instanceof fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior tb) {
-                yaml.set(key + ".repeatable", tb.isRepeatable());
-                if (tb.getStartPlateLocation() != null) {
-                    var loc = tb.getStartPlateLocation();
+                yaml.set(key + ".repeatable", tb.repeatable());
+                if (tb.startPlateLocation() != null) {
+                    var loc = tb.startPlateLocation();
                     if (loc.getWorld() != null) {
                         yaml.set(key + ".startPlate.world", loc.getWorld().getName());
                         yaml.set(key + ".startPlate.x", loc.getBlockX());

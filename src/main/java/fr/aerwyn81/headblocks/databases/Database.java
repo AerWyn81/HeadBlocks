@@ -75,7 +75,7 @@ public interface Database {
 
     ArrayList<String> getDistinctServerIds() throws InternalException;
 
-    // --- Hunt CRUD (v5) ---
+    // --- Hunt CRUD ---
 
     void createHunt(String huntId, String name, String state) throws InternalException;
 
@@ -89,8 +89,6 @@ public interface Database {
 
     String[] getHuntById(String huntId) throws InternalException;
 
-    // --- Head-Hunt linking (v5) ---
-
     void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException;
 
     void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException;
@@ -100,8 +98,6 @@ public interface Database {
     ArrayList<String> getHuntsForHead(UUID headUUID) throws InternalException;
 
     ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException;
-
-    // --- Hunt-aware player progression (v5) ---
 
     void addHeadForHunt(UUID pUUID, UUID hUUID, String huntId) throws InternalException;
 
@@ -117,13 +113,9 @@ public interface Database {
 
     void deletePlayerProgressForHunt(String huntId) throws InternalException;
 
-    // --- Migration v5 ---
-
     void addColumnHuntId() throws InternalException;
 
     void migrateToV5() throws InternalException;
-
-    // --- Timed runs (v5) ---
 
     void saveTimedRun(UUID pUUID, String huntId, long timeMs) throws InternalException;
 

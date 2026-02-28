@@ -211,18 +211,16 @@ public class HuntService {
      *
      * @return true if a re-sync was triggered
      */
-    public static boolean checkRemoteChanges() {
+    public static void checkRemoteChanges() {
         try {
             long remoteVersion = StorageService.getHuntVersion();
             if (remoteVersion != knownHuntVersion) {
                 LogUtil.info("Hunt version changed ({0} -> {1}), re-syncing hunts...", knownHuntVersion, remoteVersion);
                 initialize();
-                return true;
             }
         } catch (Exception e) {
             LogUtil.error("Failed to check remote hunt version: {0}", e.getMessage());
         }
-        return false;
     }
 
     public static void assignHeadToHunt(UUID headUUID, String huntId) throws Exception {

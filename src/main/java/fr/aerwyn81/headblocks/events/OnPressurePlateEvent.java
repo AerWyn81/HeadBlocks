@@ -45,7 +45,7 @@ public class OnPressurePlateEvent implements Listener {
                     continue;
                 }
 
-                Location startPlate = tb.getStartPlateLocation();
+                Location startPlate = tb.startPlateLocation();
                 if (startPlate == null) {
                     continue;
                 }

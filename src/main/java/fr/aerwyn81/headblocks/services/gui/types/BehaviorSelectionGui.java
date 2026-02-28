@@ -30,10 +30,6 @@ public class BehaviorSelectionGui {
         buildAndOpenGui(player);
     }
 
-    public void reopen(Player player) {
-        buildAndOpenGui(player);
-    }
-
     private void buildAndOpenGui(Player player) {
         var menu = new HBMenu(HeadBlocks.getInstance(),
                 LanguageService.getMessage("Gui.BehaviorSelectionTitle"), false, 2);
@@ -51,19 +47,19 @@ public class BehaviorSelectionGui {
         menu.setItem(0, 11, createBehaviorItem("ordered",
                 LanguageService.getMessage("Gui.BehaviorOrderedName"),
                 LanguageService.getMessages("Gui.BehaviorOrderedLore"),
-                selected.contains("ordered"), player));
+                selected.contains("ordered")));
 
         // Slot 12: Scheduled
         menu.setItem(0, 12, createBehaviorItem("scheduled",
                 LanguageService.getMessage("Gui.BehaviorScheduledName"),
                 LanguageService.getMessages("Gui.BehaviorScheduledLore"),
-                selected.contains("scheduled"), player));
+                selected.contains("scheduled")));
 
         // Slot 13: Timed
         menu.setItem(0, 13, createBehaviorItem("timed",
                 LanguageService.getMessage("Gui.BehaviorTimedName"),
                 LanguageService.getMessages("Gui.BehaviorTimedLore"),
-                selected.contains("timed"), player));
+                selected.contains("timed")));
 
         // Slot 15: Validate button
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
@@ -75,7 +71,7 @@ public class BehaviorSelectionGui {
         player.openInventory(menu.getInventory());
     }
 
-    private ItemGUI createBehaviorItem(String behaviorId, String name, List<String> lore, boolean isSelected, Player player) {
+    private ItemGUI createBehaviorItem(String behaviorId, String name, List<String> lore, boolean isSelected) {
         Material material = isSelected ? Material.LIME_DYE : Material.GRAY_DYE;
         String statusLine = isSelected
                 ? LanguageService.getMessage("Gui.BehaviorEnabled")

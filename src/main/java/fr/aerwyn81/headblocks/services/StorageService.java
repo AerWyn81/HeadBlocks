@@ -578,11 +578,6 @@ public class StorageService {
         invalidateCachePlayer(playerUuid);
     }
 
-    public static void resetPlayerHeadHunt(UUID playerUuid, UUID headUuid, String huntId) throws InternalException {
-        database.resetPlayerHeadHunt(playerUuid, headUuid, huntId);
-        invalidateCachePlayer(playerUuid);
-    }
-
     // --- Hunt DB access ---
 
     public static ArrayList<String[]> getHuntsFromDb() throws InternalException {

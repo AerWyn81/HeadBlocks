@@ -842,7 +842,6 @@ public class Hunt implements Cmd {
         // Collect already-used flags
         Set<String> usedFlags = new HashSet<>();
         boolean hasKeepHeads = false;
-        boolean prevWasFallback = false;
 
         for (int i = 3; i < args.length - 1; i++) {
             String arg = args[i].toLowerCase();
@@ -871,6 +870,7 @@ public class Hunt implements Cmd {
         for (int i = 3; i < args.length; i++) {
             if (args[i].equalsIgnoreCase("--keepheads")) {
                 hasKeepHeads = true;
+                break;
             }
         }
 
