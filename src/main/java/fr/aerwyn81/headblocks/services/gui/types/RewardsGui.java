@@ -2,11 +2,10 @@ package fr.aerwyn81.headblocks.services.gui.types;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.data.reward.RewardType;
-import fr.aerwyn81.headblocks.services.ConfigService;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -42,10 +41,14 @@ public class RewardsGui extends GuiBase {
             return;
         }
 
+        GuiService.openHuntSelectionOrDirect(player, this::openRewardsSelectionGuiForHunt);
+    }
+
+    public void openRewardsSelectionGuiForHunt(Player player, Hunt hunt) {
         var rewardsSelectionMenu = new HBMenu(HeadBlocks.getInstance(),
                 LanguageService.getMessage("Gui.TitleRewardsSelection"), true, 5);
 
-        var headLocations = HeadService.getHeadLocations();
+        var headLocations = HeadService.getHeadLocationsForHunt(hunt);
 
         if (headLocations.isEmpty()) {
             rewardsSelectionMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
@@ -66,6 +69,20 @@ public class RewardsGui extends GuiBase {
 
                 rewardsSelectionMenu.addItem(i, rewardsItemGui);
             }
+        }
+
+        if (HuntService.isMultiHunt()) {
+            rewardsSelectionMenu.setPaginationButtonBuilder((type, inventory) -> {
+                if (type == HBPaginationButtonType.BACK_BUTTON) {
+                    return new ItemGUI(ConfigService.getGuiBackIcon()
+                            .setName(LanguageService.getMessage("Gui.Back"))
+                            .setLore(LanguageService.getMessages("Gui.BackLore"))
+                            .toItemStack())
+                            .addOnClickEvent(event -> openRewardsSelectionGui((Player) event.getWhoClicked(), null));
+                }
+
+                return null;
+            });
         }
 
         player.openInventory(rewardsSelectionMenu.getInventory());

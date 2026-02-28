@@ -61,7 +61,7 @@ public class HuntConfigService {
         String displayName = yaml.getString("displayName", id);
         HuntState state = HuntState.of(yaml.getString("state", "ACTIVE"));
         int priority = yaml.getInt("priority", 1);
-        String icon = yaml.getString("icon", "PLAYER_HEAD");
+        String icon = yaml.getString("icon", "CHEST_MINECART");
 
         Hunt hunt = new Hunt(id, displayName, state, priority, icon);
 
@@ -130,7 +130,7 @@ public class HuntConfigService {
         yaml.set("displayName", "Default");
         yaml.set("state", "ACTIVE");
         yaml.set("priority", 0);
-        yaml.set("icon", "PLAYER_HEAD");
+        yaml.set("icon", "CHEST_MINECART");
 
         // Behavior
         yaml.createSection("behaviors.free");

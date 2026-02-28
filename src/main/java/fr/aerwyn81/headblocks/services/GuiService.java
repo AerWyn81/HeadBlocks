@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
 import fr.aerwyn81.headblocks.services.gui.types.ClickCounterGui;
 import fr.aerwyn81.headblocks.services.gui.types.HintGui;
@@ -13,6 +14,7 @@ import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -44,6 +46,46 @@ public class GuiService {
 
     public static HintGui getHintManager() {
         return hintManager;
+    }
+
+    public static void openHuntSelectionOrDirect(Player player, BiConsumer<Player, Hunt> callback) {
+        var hunts = HuntService.getAllHunts();
+
+        if (!HuntService.isMultiHunt()) {
+            callback.accept(player, hunts.iterator().next());
+            return;
+        }
+
+        var huntSelectionMenu = new HBMenu(HeadBlocks.getInstance(),
+                LanguageService.getMessage("Gui.TitleHuntSelection"), true, 5);
+
+        int index = 0;
+        for (Hunt hunt : hunts) {
+            Material iconMaterial;
+            try {
+                iconMaterial = Material.valueOf(hunt.getIcon().toUpperCase());
+            } catch (Exception e) {
+                iconMaterial = Material.CHEST_MINECART;
+            }
+
+            var headCount = HeadService.getHeadLocationsForHunt(hunt).size();
+
+            var huntItemGui = new ItemGUI(new ItemBuilder(iconMaterial)
+                    .setName(LanguageService.getMessage("Gui.HuntSelectionItemName")
+                            .replaceAll("%huntName%", hunt.getDisplayName()))
+                    .setLore(LanguageService.getMessages("Gui.HuntSelectionItemLore").stream().map(s -> s
+                                    .replaceAll("%huntName%", hunt.getDisplayName())
+                                    .replaceAll("%headCount%", String.valueOf(headCount))
+                                    .replaceAll("%state%", hunt.getState().getLocalizedName()))
+                            .collect(Collectors.toList()))
+                    .toItemStack(), true)
+                    .addOnClickEvent(event -> callback.accept((Player) event.getWhoClicked(), hunt));
+
+            huntSelectionMenu.addItem(index, huntItemGui);
+            index++;
+        }
+
+        player.openInventory(huntSelectionMenu.getInventory());
     }
 
     public static void openOptionsGui(Player p) {

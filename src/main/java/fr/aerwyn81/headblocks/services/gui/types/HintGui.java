@@ -3,13 +3,14 @@ package fr.aerwyn81.headblocks.services.gui.types;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HintMode;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
+import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -28,9 +29,13 @@ public class HintGui extends GuiBase {
     }
 
     public void openHintGui(Player player) {
+        GuiService.openHuntSelectionOrDirect(player, this::openHintGuiForHunt);
+    }
+
+    public void openHintGuiForHunt(Player player, Hunt hunt) {
         HBMenu hintMenu = new HBMenu(HeadBlocks.getInstance(), LanguageService.getMessage("Gui.TitleHint"), true, 5);
 
-        List<HeadLocation> headLocations = HeadService.getHeadLocations();
+        List<HeadLocation> headLocations = HeadService.getHeadLocationsForHunt(hunt);
 
         if (!guiViewHint.containsKey(player.getUniqueId())) {
             guiViewHint.put(player.getUniqueId(), HintMode.SOUND);
@@ -78,7 +83,7 @@ public class HintGui extends GuiBase {
                                                 headLocation.setHintSound(true);
                                                 HeadService.saveHeadInConfig(headLocation);
                                             } else {
-                                                for (HeadLocation head : HeadService.getHeadLocations()) {
+                                                for (HeadLocation head : headLocations) {
                                                     head.setHintSound(true);
                                                 }
 
@@ -89,7 +94,7 @@ public class HintGui extends GuiBase {
                                                 headLocation.setHintSound(false);
                                                 HeadService.saveHeadInConfig(headLocation);
                                             } else {
-                                                for (HeadLocation head : HeadService.getHeadLocations()) {
+                                                for (HeadLocation head : headLocations) {
                                                     head.setHintSound(false);
                                                 }
 
@@ -105,7 +110,7 @@ public class HintGui extends GuiBase {
                                                 headLocation.setHintActionBar(true);
                                                 HeadService.saveHeadInConfig(headLocation);
                                             } else {
-                                                for (HeadLocation head : HeadService.getHeadLocations()) {
+                                                for (HeadLocation head : headLocations) {
                                                     head.setHintActionBar(true);
                                                 }
 
@@ -116,7 +121,7 @@ public class HintGui extends GuiBase {
                                                 headLocation.setHintActionBar(false);
                                                 HeadService.saveHeadInConfig(headLocation);
                                             } else {
-                                                for (HeadLocation head : HeadService.getHeadLocations()) {
+                                                for (HeadLocation head : headLocations) {
                                                     head.setHintActionBar(false);
                                                 }
 
@@ -127,11 +132,25 @@ public class HintGui extends GuiBase {
                                 }
                             }
 
-                            openHintGui((Player) event.getWhoClicked());
+                            openHintGuiForHunt((Player) event.getWhoClicked(), hunt);
                         });
 
                 hintMenu.addItem(i, orderItemGui);
             }
+        }
+
+        if (HuntService.isMultiHunt()) {
+            hintMenu.setPaginationButtonBuilder((type, inventory) -> {
+                if (type == HBPaginationButtonType.BACK_BUTTON) {
+                    return new ItemGUI(ConfigService.getGuiBackIcon()
+                            .setName(LanguageService.getMessage("Gui.Back"))
+                            .setLore(LanguageService.getMessages("Gui.BackLore"))
+                            .toItemStack())
+                            .addOnClickEvent(event -> openHintGui((Player) event.getWhoClicked()));
+                }
+
+                return null;
+            });
         }
 
         player.openInventory(hintMenu.getInventory());

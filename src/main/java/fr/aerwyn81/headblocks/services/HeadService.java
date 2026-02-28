@@ -384,6 +384,12 @@ public class HeadService {
         return headLocations;
     }
 
+    public static ArrayList<HeadLocation> getHeadLocationsForHunt(Hunt hunt) {
+        return headLocations.stream()
+                .filter(h -> hunt.containsHead(h.getUuid()))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
     public static ArrayList<String> getHeadRawNameOrUuid() {
         return headLocations.stream().map(HeadLocation::getRawNameOrUuid).collect(Collectors.toCollection(ArrayList::new));
     }

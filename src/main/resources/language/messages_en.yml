@@ -192,6 +192,14 @@ Other:
 
 Gui:
   TitleOptions: "&8HeadBlocks &7- &c&lOptions"
+  TitleHuntSelection: "&8HeadBlocks &7- &e&lSelect Hunt"
+  HuntSelectionItemName: "&6%huntName%"
+  HuntSelectionItemLore:
+    - ""
+    - "&7Heads: &e%headCount%"
+    - "&7State: %state%"
+    - ""
+    - "&a&lCLICK&8: &7Manage heads"
   TitleOrder: "&8HeadBlocks &7- &6&lOrder"
   TitleClickCounter: "&8HeadBlocks &7- &2&lClick counter"
   TitleHint: "&8HeadBlocks &7- &b&lHint"
