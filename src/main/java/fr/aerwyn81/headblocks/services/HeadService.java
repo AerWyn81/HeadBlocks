@@ -424,16 +424,10 @@ public class HeadService {
         NBT.modify(newSkull, nbt -> {
             NBT.get(oldSkull, oldNbt -> {
                 nbt.mergeCompound(oldNbt);
-                return oldNbt;
+                return null;
             });
         });
-        // if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-        //     NBT.modify(newSkull, nbt -> {
-        //         nbt.mergeCompound(new NBTTileEntity(oldSkull));
-        //     });
-        // } else {
-        //     new NBTTileEntity(newSkull).mergeCompound(new NBTTileEntity(oldSkull));
-        // }
+
         newSkull.setOwnerProfile(oldSkull.getOwnerProfile());
 
         newSkull.update(true);
@@ -443,13 +437,15 @@ public class HeadService {
         var headLocation = getHeadByUUID(hUuid);
         var indexOfOld = headLocations.indexOf(headLocation);
 
-        headLocation.setLocation(newBlock.getLocation());
+        var centeredLoc = newBlock.getLocation().clone().add(0.5, 0, 0.5);
+
+        headLocation.setLocation(centeredLoc);
         saveHeadInConfig(headLocation);
 
         headLocations.set(indexOfOld, headLocation);
 
         HologramService.removeHolograms(oldBlock.getLocation());
-        HologramService.createHolograms(newBlock.getLocation());
+        HologramService.createHolograms(centeredLoc);
 
         addHeadToSpin(headLocation, 1);
     }
