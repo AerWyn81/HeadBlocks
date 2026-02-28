@@ -65,7 +65,6 @@ public class Info implements Cmd {
         player.spigot().sendMessage(msgLoc);
 
         player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.Loaded") + headLocation.isCharged()));
-        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.HitCount") + headLocation.getDisplayedHitCount()));
         player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.OrderIndex") + headLocation.getDisplayedOrderIndex()));
 
         player.sendMessage("");

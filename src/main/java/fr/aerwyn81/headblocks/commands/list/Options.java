@@ -22,9 +22,6 @@ public class Options implements Cmd {
                 case "order":
                     GuiService.getOrderManager().openOrderGui((Player) sender);
                     return true;
-                case "counter":
-                    GuiService.getClickCounterManager().openClickCounterGui((Player) sender);
-                    return true;
                 case "hint":
                     GuiService.getHintManager().openHintGui((Player) sender);
                     return true;
@@ -53,7 +50,7 @@ public class Options implements Cmd {
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
         return switch (args.length) {
-            case 2 -> new ArrayList<>(Stream.of("counter", "hint", "order", "rewards")
+            case 2 -> new ArrayList<>(Stream.of("hint", "order", "rewards")
                     .filter(s -> s.startsWith(args[1])).toList());
             case 3 -> new ArrayList<>(HeadService.getHeadRawNameOrUuid()
                     .stream().filter(s -> s.startsWith(args[2])).toList());

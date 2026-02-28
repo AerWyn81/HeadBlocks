@@ -55,7 +55,9 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String identifier) {
-        if (player == null) return "";
+        if (player == null) {
+            return "";
+        }
 
         // %headblocks_current% | %headblocks_left%
         if (identifier.equals("current") || identifier.equals("left")) {
@@ -171,13 +173,17 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // %headblocks_hunt_<huntId>_found% | %headblocks_hunt_<huntId>_total% | %headblocks_hunt_<huntId>_progress% | %headblocks_hunt_<huntId>_left%
         if (identifier.startsWith("hunt_")) {
             var parts = identifier.split("_", 3); // hunt, <huntId>, <type>
-            if (parts.length < 3) return "";
+            if (parts.length < 3) {
+                return "";
+            }
 
             String huntId = parts[1].toLowerCase();
             String subType = parts[2];
 
             Hunt hunt = HuntService.getHuntById(huntId);
-            if (hunt == null) return "";
+            if (hunt == null) {
+                return "";
+            }
 
             switch (subType) {
                 case "found" -> {
@@ -220,7 +226,9 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 case "besttime" -> {
                     try {
                         Long best = StorageService.getBestTime(player.getUniqueId(), huntId);
-                        if (best == null) return "-";
+                        if (best == null) {
+                            return "-";
+                        }
                         return fr.aerwyn81.headblocks.services.TimedRunManager.formatTime(best);
                     } catch (InternalException e) {
                         return "-";
@@ -244,13 +252,17 @@ public class PlaceholderHook extends PlaceholderExpansion {
                     if (subType.startsWith("timetop_")) {
                         try {
                             String[] ttParts = subType.split("_"); // timetop, <pos>, <name|time>
-                            if (ttParts.length < 3) return "";
+                            if (ttParts.length < 3) {
+                                return "";
+                            }
 
                             int pos = Integer.parseInt(ttParts[1]);
                             String field = ttParts[2];
 
                             var leaderboard = new ArrayList<>(StorageService.getTimedLeaderboard(huntId, pos).entrySet());
-                            if (pos < 1 || pos > leaderboard.size()) return "-";
+                            if (pos < 1 || pos > leaderboard.size()) {
+                                return "-";
+                            }
 
                             var entry = leaderboard.get(pos - 1);
                             return switch (field) {

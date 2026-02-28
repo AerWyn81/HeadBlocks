@@ -918,23 +918,6 @@ public class SQLite implements Database {
     }
 
     @Override
-    public int getPlayerCountForHeadInHunt(UUID hUUID, String huntId) throws InternalException {
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.getPlayerCountForHeadInHunt())) {
-            ps.setString(1, hUUID.toString());
-            ps.setString(2, huntId);
-            try (var rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("cnt");
-                }
-            }
-        } catch (Exception ex) {
-            throw new InternalException(ex);
-        }
-        return 0;
-    }
-
-    @Override
     public void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException {
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
@@ -1083,7 +1066,9 @@ public class SQLite implements Database {
             try (var rs = ps.executeQuery()) {
                 if (rs.next()) {
                     long val = rs.getLong("bestTime");
-                    if (rs.wasNull()) return null;
+                    if (rs.wasNull()) {
+                        return null;
+                    }
                     return val;
                 }
             }

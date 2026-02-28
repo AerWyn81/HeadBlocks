@@ -86,7 +86,9 @@ public class Hunt implements Cmd {
 
         HuntCreateEvent createEvent = new HuntCreateEvent(hunt);
         Bukkit.getPluginManager().callEvent(createEvent);
-        if (createEvent.isCancelled()) return;
+        if (createEvent.isCancelled()) {
+            return;
+        }
 
         HuntConfigService.saveHunt(hunt);
 
@@ -177,7 +179,9 @@ public class Hunt implements Cmd {
 
         HuntDeleteEvent deleteEvent = new HuntDeleteEvent(huntId);
         Bukkit.getPluginManager().callEvent(deleteEvent);
-        if (deleteEvent.isCancelled()) return;
+        if (deleteEvent.isCancelled()) {
+            return;
+        }
 
         if (keepHeads) {
             // Mode B: keep heads, transfer to fallback
@@ -276,7 +280,9 @@ public class Hunt implements Cmd {
 
         HuntStateChangeEvent stateEvent = new HuntStateChangeEvent(hunt, hunt.getState(), HuntState.ACTIVE);
         Bukkit.getPluginManager().callEvent(stateEvent);
-        if (stateEvent.isCancelled()) return;
+        if (stateEvent.isCancelled()) {
+            return;
+        }
 
         hunt.setState(HuntState.ACTIVE);
         HuntConfigService.saveHunt(hunt);
@@ -317,7 +323,9 @@ public class Hunt implements Cmd {
 
         HuntStateChangeEvent stateEvent = new HuntStateChangeEvent(hunt, hunt.getState(), HuntState.INACTIVE);
         Bukkit.getPluginManager().callEvent(stateEvent);
-        if (stateEvent.isCancelled()) return;
+        if (stateEvent.isCancelled()) {
+            return;
+        }
 
         hunt.setState(HuntState.INACTIVE);
         HuntConfigService.saveHunt(hunt);

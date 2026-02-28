@@ -3,7 +3,10 @@ package fr.aerwyn81.headblocks.services;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
-import fr.aerwyn81.headblocks.services.gui.types.*;
+import fr.aerwyn81.headblocks.services.gui.types.BehaviorSelectionGui;
+import fr.aerwyn81.headblocks.services.gui.types.HintGui;
+import fr.aerwyn81.headblocks.services.gui.types.OrderGui;
+import fr.aerwyn81.headblocks.services.gui.types.RewardsGui;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
@@ -19,7 +22,6 @@ public class GuiService {
 
     private static final RewardsGui rewardsManager = new RewardsGui();
     private static final OrderGui orderManager = new OrderGui();
-    private static final ClickCounterGui clickCounterManager = new ClickCounterGui();
     private static final HintGui hintManager = new HintGui();
     private static final BehaviorSelectionGui behaviorSelectionManager = new BehaviorSelectionGui();
 
@@ -36,10 +38,6 @@ public class GuiService {
 
     public static OrderGui getOrderManager() {
         return orderManager;
-    }
-
-    public static ClickCounterGui getClickCounterManager() {
-        return clickCounterManager;
     }
 
     public static HintGui getHintManager() {
@@ -93,31 +91,19 @@ public class GuiService {
     public static void openOptionsGui(Player p) {
         var optionsMenu = new HBMenu(HeadBlocks.getInstance(), LanguageService.getMessage("Gui.TitleOptions"), false, 2);
 
-        optionsMenu.setItem(0, 11, new ItemGUI(new ItemBuilder(Material.HOPPER)
-                .setName(LanguageService.getMessage("Gui.OrderName"))
-                .setLore(LanguageService.getMessages("Gui.OrderLore"))
-                .toItemStack(), true)
-                .addOnClickEvent(e -> orderManager.openOrderGui((Player) e.getWhoClicked())));
-
-        optionsMenu.setItem(0, 12, new ItemGUI(new ItemBuilder(Material.CLOCK)
-                .setName(LanguageService.getMessage("Gui.ClickCounterName"))
-                .setLore(LanguageService.getMessages("Gui.ClickCounterLore"))
-                .toItemStack(), true)
-                .addOnClickEvent(e -> clickCounterManager.openClickCounterGui((Player) e.getWhoClicked())));
-
-        optionsMenu.setItem(0, 14, new ItemGUI(new ItemBuilder(Material.ENDER_EYE)
+        optionsMenu.setItem(0, 12, new ItemGUI(new ItemBuilder(Material.ENDER_EYE)
                 .setName(LanguageService.getMessage("Gui.HintName"))
                 .setLore(LanguageService.getMessages("Gui.HintLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> hintManager.openHintGui((Player) event.getWhoClicked())));
 
-        optionsMenu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
+        optionsMenu.setItem(0, 14, new ItemGUI(new ItemBuilder(Material.DIAMOND)
                 .setName(LanguageService.getMessage("Gui.RewardsName"))
                 .setLore(LanguageService.getMessages("Gui.RewardsLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> rewardsManager.openRewardsSelectionGui((Player) event.getWhoClicked(), null)));
 
-        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 16, 17};
+        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> optionsMenu.setItem(0, borders[index], new ItemGUI(ConfigService.getGuiBorderIcon().setName("§7").toItemStack()))
         );

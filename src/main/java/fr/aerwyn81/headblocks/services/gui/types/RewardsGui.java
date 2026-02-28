@@ -227,7 +227,9 @@ public class RewardsGui extends GuiBase {
 
     public void processPendingRewardInput(Player player, String value) {
         var pending = pendingRewardInputs.remove(player.getUniqueId());
-        if (pending == null) return;
+        if (pending == null) {
+            return;
+        }
 
         String CANCEL_CONST = "cancel";
         if (value.contains(CANCEL_CONST)) {

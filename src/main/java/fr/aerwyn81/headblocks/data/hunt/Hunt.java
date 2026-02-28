@@ -155,8 +155,12 @@ public class Hunt {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Hunt hunt = (Hunt) o;
         return id.equals(hunt.id);
     }

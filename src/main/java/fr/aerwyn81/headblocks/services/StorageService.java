@@ -569,10 +569,6 @@ public class StorageService {
         return database.getHeadsPlayerForHunt(playerUuid, huntId);
     }
 
-    public static int getPlayerCountForHeadInHunt(UUID headUuid, String huntId) throws InternalException {
-        return database.getPlayerCountForHeadInHunt(headUuid, huntId);
-    }
-
     public static LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException {
         return database.getTopPlayersForHunt(huntId);
     }

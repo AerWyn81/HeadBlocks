@@ -113,8 +113,6 @@ public interface Database {
 
     LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException;
 
-    int getPlayerCountForHeadInHunt(UUID hUUID, String huntId) throws InternalException;
-
     void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException;
 
     void deletePlayerProgressForHunt(String huntId) throws InternalException;

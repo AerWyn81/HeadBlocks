@@ -163,7 +163,9 @@ public class HuntConfig {
     // --- Holograms getters with fallback ---
 
     public boolean isHologramsEnabled() {
-        if (hologramsEnabled != null) return hologramsEnabled;
+        if (hologramsEnabled != null) {
+            return hologramsEnabled;
+        }
         return isHologramsFoundEnabled() || isHologramsNotFoundEnabled();
     }
 

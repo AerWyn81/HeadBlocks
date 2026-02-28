@@ -58,10 +58,13 @@ public class OnPlayerClickInventoryEvent implements Listener {
         if (event.getInventory().getHolder() != null && event.getInventory().getHolder() instanceof HBMenu) {
             var clickedGui = (HBMenu) event.getInventory().getHolder();
 
-            if (!clickedGui.getOwner().equals(HeadBlocks.getInstance())) return;
+            if (!clickedGui.getOwner().equals(HeadBlocks.getInstance())) {
+                return;
+            }
 
-            if (clickedGui.getOnClose() != null)
+            if (clickedGui.getOnClose() != null) {
                 clickedGui.getOnClose().accept(clickedGui);
+            }
         }
     }
 }

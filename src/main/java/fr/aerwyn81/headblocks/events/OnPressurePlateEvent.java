@@ -24,26 +24,45 @@ public class OnPressurePlateEvent implements Listener {
 
     @EventHandler
     public void onPressurePlate(PlayerInteractEvent event) {
-        if (event.getAction() != Action.PHYSICAL) return;
-        if (event.getClickedBlock() == null) return;
+        if (event.getAction() != Action.PHYSICAL) {
+            return;
+        }
+
+        if (event.getClickedBlock() == null) {
+            return;
+        }
 
         Player player = event.getPlayer();
         Location blockLoc = event.getClickedBlock().getLocation();
 
         for (Hunt hunt : HuntService.getAllHunts()) {
-            if (!hunt.isActive()) continue;
+            if (!hunt.isActive()) {
+                continue;
+            }
 
             for (Behavior behavior : hunt.getBehaviors()) {
-                if (!(behavior instanceof TimedBehavior tb)) continue;
+                if (!(behavior instanceof TimedBehavior tb)) {
+                    continue;
+                }
 
                 Location startPlate = tb.getStartPlateLocation();
-                if (startPlate == null) continue;
-                if (startPlate.getWorld() == null || blockLoc.getWorld() == null) continue;
+                if (startPlate == null) {
+                    continue;
+                }
 
-                if (!startPlate.getWorld().equals(blockLoc.getWorld())) continue;
+                if (startPlate.getWorld() == null || blockLoc.getWorld() == null) {
+                    continue;
+                }
+
+                if (!startPlate.getWorld().equals(blockLoc.getWorld())) {
+                    continue;
+                }
+
                 if (startPlate.getBlockX() != blockLoc.getBlockX()
                         || startPlate.getBlockY() != blockLoc.getBlockY()
-                        || startPlate.getBlockZ() != blockLoc.getBlockZ()) continue;
+                        || startPlate.getBlockZ() != blockLoc.getBlockZ()) {
+                    continue;
+                }
 
                 // Found matching start plate for this hunt
                 handleStartPlate(player, hunt);

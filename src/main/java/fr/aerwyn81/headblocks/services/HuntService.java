@@ -114,10 +114,14 @@ public class HuntService {
 
     public static Hunt getHighestPriorityHuntForHead(UUID headUUID) {
         List<Hunt> hunts = headToHunts.get(headUUID);
-        if (hunts == null || hunts.isEmpty()) return null;
+        if (hunts == null || hunts.isEmpty()) {
+            return null;
+        }
         // Return first active hunt (list sorted by priority desc)
         for (Hunt hunt : hunts) {
-            if (hunt.isActive()) return hunt;
+            if (hunt.isActive()) {
+                return hunt;
+            }
         }
         return null;
     }

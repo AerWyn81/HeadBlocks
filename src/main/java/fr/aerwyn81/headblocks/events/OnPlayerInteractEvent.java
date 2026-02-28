@@ -136,17 +136,6 @@ public class OnPlayerInteractEvent implements Listener {
                         continue;
                     }
 
-                    // Check hit count per hunt
-                    if (headLocation.getHitCount() != -1) {
-                        int count = StorageService.getPlayerCountForHeadInHunt(
-                                headLocation.getUuid(), hunt.getId());
-                        if (count >= headLocation.getHitCount()) {
-                            player.sendMessage(LanguageService.getMessage("Messages.HitClickMax")
-                                    .replaceAll("%count%", headLocation.getDisplayedHitCount()));
-                            continue;
-                        }
-                    }
-
                     // Prepare updated hunt heads for reward calculation
                     huntPlayerHeads.add(headLocation.getUuid());
 

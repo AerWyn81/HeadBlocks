@@ -16,7 +16,9 @@ public enum HuntState {
     }
 
     public static HuntState of(String value) {
-        if (value == null) return ACTIVE;
+        if (value == null) {
+            return ACTIVE;
+        }
         try {
             return valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {

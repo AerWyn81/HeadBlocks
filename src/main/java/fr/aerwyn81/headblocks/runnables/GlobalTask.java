@@ -142,7 +142,9 @@ public class GlobalTask extends BukkitRunnable {
                             } else {
                                 // Player found it globally — check per-hunt for one they haven't completed
                                 for (Hunt h : HuntService.getHuntsForHead(headLocation.getUuid())) {
-                                    if (!h.isActive()) continue;
+                                    if (!h.isActive()) {
+                                        continue;
+                                    }
                                     try {
                                         if (!StorageService.getHeadsPlayerForHunt(player.getUniqueId(), h.getId())
                                                 .contains(headLocation.getUuid())) {

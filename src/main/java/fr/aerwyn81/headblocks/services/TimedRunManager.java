@@ -31,7 +31,10 @@ public class TimedRunManager {
 
     public static long getElapsedMillis(UUID playerUuid) {
         TimedRunData data = activeRuns.get(playerUuid);
-        if (data == null) return 0;
+        if (data == null) {
+            return 0;
+        }
+
         return System.currentTimeMillis() - data.startTimeMillis();
     }
 

@@ -233,7 +233,9 @@ public class HeadService {
             int removed = 0;
 
             for (HeadLocation headLocation : headsToRemove) {
-                if (headLocation == null) continue;
+                if (headLocation == null) {
+                    continue;
+                }
 
                 try {
                     StorageService.removeHead(headLocation.getUuid(), withDelete);

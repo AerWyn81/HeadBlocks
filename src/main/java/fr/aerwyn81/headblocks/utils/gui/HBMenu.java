@@ -191,7 +191,9 @@ public class HBMenu implements InventoryHolder {
         Inventory inventory = Bukkit.createInventory(this, (needsPagination ? getPageSize() + 9 : getPageSize()), name);
 
         for (int key = currentPage * getPageSize(); key < (currentPage + 1) * getPageSize(); key++) {
-            if (key > getHighestFilledSlot()) break;
+            if (key > getHighestFilledSlot()) {
+                break;
+            }
 
             if (items.containsKey(key)) {
                 var item = items.get(key);

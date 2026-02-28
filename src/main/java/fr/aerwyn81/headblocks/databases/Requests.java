@@ -354,10 +354,6 @@ public class Requests {
         return String.format("SELECT hbp.pUUID, pName, pDisplayName, COUNT(*) as hCount FROM %s hbph INNER JOIN %s hbp ON hbph.pUUID = hbp.pUUID INNER JOIN %s hbh ON hbph.hUUID = hbh.hUUID WHERE hbh.hExist = True AND hbph.huntId = ? GROUP BY pName ORDER BY hCount DESC", getTablePlayerHeads(), getTablePlayers(), getTableHeads());
     }
 
-    public static String getPlayerCountForHeadInHunt() {
-        return String.format("SELECT COUNT(DISTINCT pUUID) AS cnt FROM %s WHERE hUUID = ? AND huntId = ?", getTablePlayerHeads());
-    }
-
     public static String transferPlayerProgressSQLite() {
         return String.format("INSERT OR IGNORE INTO %s (pUUID, hUUID, huntId) SELECT pUUID, hUUID, ? FROM %s WHERE huntId = ?", getTablePlayerHeads(), getTablePlayerHeads());
     }

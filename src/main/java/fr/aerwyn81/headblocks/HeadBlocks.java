@@ -136,14 +136,23 @@ public final class HeadBlocks extends JavaPlugin {
             m.addCustomChart(new SimplePie("database_type", StorageService::selectedStorageType));
             m.addCustomChart(new SingleLineChart("heads", () -> HeadService.getChargedHeadLocations().size()));
             m.addCustomChart(new SimplePie("lang", LanguageService::getLanguage));
+            m.addCustomChart(new SingleLineChart("hunts", () -> HuntService.getAllHunts().size()));
+            m.addCustomChart(new AdvancedBarChart("hunt_behaviors", () -> {
+                Map<String, int[]> map = new HashMap<>();
+                for (var hunt : HuntService.getAllHunts()) {
+                    for (var behavior : hunt.getBehaviors()) {
+                        String name = behavior.getClass().getSimpleName().replace("Behavior", "");
+                        map.merge(name, new int[]{1}, (a, b) -> new int[]{a[0] + b[0]});
+                    }
+                }
+                return map;
+            }));
             m.addCustomChart(new AdvancedBarChart("features", () -> {
                 var heads = HeadService.getChargedHeadLocations();
                 Map<String, int[]> map = new HashMap<>();
 
                 if (heads.stream().anyMatch(h -> h.getOrderIndex() != -1))
                     map.put("Order", new int[]{1});
-                if (heads.stream().anyMatch(h -> h.getHitCount() != -1))
-                    map.put("Hit count", new int[]{1});
                 if (heads.stream().anyMatch(HeadLocation::isHintSoundEnabled))
                     map.put("Hint sound", new int[]{1});
                 if (heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled))

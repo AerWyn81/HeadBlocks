@@ -25,7 +25,9 @@ public enum HBPaginationButtonType {
 
     public static HBPaginationButtonType forSlot(int slot) {
         for (HBPaginationButtonType buttonType : HBPaginationButtonType.values()) {
-            if (buttonType.slot == slot) return buttonType;
+            if (buttonType.slot == slot) {
+                return buttonType;
+            }
         }
 
         return HBPaginationButtonType.UNASSIGNED;

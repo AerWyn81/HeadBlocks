@@ -40,7 +40,7 @@ public class BehaviorSelectionGui {
         int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> menu.setItem(0, borders[index],
-                        new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setName("§7").toItemStack()))
+                        new ItemGUI(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setName("§7").toItemStack()))
         );
 
         Set<String> selected = selectedBehaviors.getOrDefault(player.getUniqueId(), new HashSet<>());
@@ -64,7 +64,7 @@ public class BehaviorSelectionGui {
                 selected.contains("timed"), player));
 
         // Slot 15: Validate button
-        menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.LIME_CONCRETE)
+        menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
                 .setName(LanguageService.getMessage("Gui.ValidateCreate"))
                 .setLore(LanguageService.getMessages("Gui.ValidateCreateLore"))
                 .toItemStack(), true)

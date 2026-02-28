@@ -25,7 +25,9 @@ public class TimedRunTask extends BukkitRunnable {
             TimedRunData data = entry.getValue();
 
             Player player = Bukkit.getPlayer(playerUuid);
-            if (player == null || !player.isOnline()) continue;
+            if (player == null || !player.isOnline()) {
+                continue;
+            }
 
             long elapsed = System.currentTimeMillis() - data.startTimeMillis();
             String time = TimedRunManager.formatTime(elapsed);

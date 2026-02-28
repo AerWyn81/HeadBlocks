@@ -33,7 +33,9 @@ public class HuntConfigService {
     public static List<Hunt> loadHunts() {
         List<Hunt> hunts = new ArrayList<>();
         File[] files = huntsDir.listFiles((dir, name) -> name.endsWith(".yml"));
-        if (files == null) return hunts;
+        if (files == null) {
+            return hunts;
+        }
 
         for (File file : files) {
             try {
@@ -216,7 +218,9 @@ public class HuntConfigService {
         List<Behavior> behaviors = new ArrayList<>();
 
         ConfigurationSection section = yaml.getConfigurationSection("behaviors");
-        if (section == null) return behaviors;
+        if (section == null) {
+            return behaviors;
+        }
 
         for (String type : section.getKeys(false)) {
             ConfigurationSection behaviorSection = section.getConfigurationSection(type);
@@ -334,7 +338,9 @@ public class HuntConfigService {
 
     private static void loadTieredRewards(YamlConfiguration yaml, HuntConfig hc, String prefix) {
         ConfigurationSection section = yaml.getConfigurationSection(prefix + "tieredRewards");
-        if (section == null) return;
+        if (section == null) {
+            return;
+        }
 
         List<TieredReward> rewards = new ArrayList<>();
         for (String level : section.getKeys(false)) {
