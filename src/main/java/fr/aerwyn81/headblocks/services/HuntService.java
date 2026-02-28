@@ -201,6 +201,7 @@ public class HuntService {
         StorageService.linkHeadToHunt(headUUID, toHuntId);
 
         rebuildHeadToHuntsCache();
+        StorageService.incrementHuntVersion();
     }
 
     /**
