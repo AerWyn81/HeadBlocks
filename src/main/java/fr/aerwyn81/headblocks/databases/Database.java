@@ -130,4 +130,6 @@ public interface Database {
     LinkedHashMap<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException;
 
     Long getBestTime(UUID pUUID, String huntId) throws InternalException;
+
+    int getTimedRunCount(UUID pUUID, String huntId) throws InternalException;
 }

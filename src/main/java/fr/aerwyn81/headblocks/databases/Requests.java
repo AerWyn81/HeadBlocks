@@ -429,4 +429,8 @@ public class Requests {
     public static String getBestTime() {
         return String.format("SELECT MIN(timeMs) as bestTime FROM %s WHERE pUUID = ? AND huntId = ?", getTableTimedRuns());
     }
+
+    public static String getTimedRunCount() {
+        return String.format("SELECT COUNT(*) as cnt FROM %s WHERE pUUID = ? AND huntId = ?", getTableTimedRuns());
+    }
 }

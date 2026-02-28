@@ -128,7 +128,7 @@ Messages:
   TimedNotStarted: "%prefix% &cYou must step on the start plate to begin the timed run."
   TimedStarted: "%prefix% &aTimer started for hunt &e%hunt%&a! Find all the heads as fast as you can!"
   TimedRestarted: "%prefix% &eTimer restarted for hunt &e%hunt%&e! Your progression has been reset."
-  TimedCompleted: "%prefix% &a&lRun complete! &aYour time: &e%time% &afor hunt &e%hunt%&a!"
+  TimedCompleted: "%prefix% &a&lRun complete! &aYour time: &e%time% &afor hunt &e%hunt%&a! &7(Completion #%count%)"
   TimedLeft: "%prefix% &eYou have left the timed run."
   TimedNoActiveRun: "%prefix% &cYou are not currently in a timed run."
   TimedAlreadyCompleted: "%prefix% &cYou have already completed all heads for this hunt."

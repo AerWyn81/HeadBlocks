@@ -649,6 +649,10 @@ public class StorageService {
         return database.getBestTime(playerUuid, huntId);
     }
 
+    public static int getTimedRunCount(UUID playerUuid, String huntId) throws InternalException {
+        return database.getTimedRunCount(playerUuid, huntId);
+    }
+
     public static String getServerIdentifier() {
         return serverIdentifier;
     }

@@ -17,12 +17,15 @@ import java.util.UUID;
 public class TimedBehavior implements Behavior {
 
     private Location startPlateLocation;
+    private boolean repeatable;
 
     public TimedBehavior() {
+        this.repeatable = true;
     }
 
-    public TimedBehavior(Location startPlateLocation) {
+    public TimedBehavior(Location startPlateLocation, boolean repeatable) {
         this.startPlateLocation = startPlateLocation;
+        this.repeatable = repeatable;
     }
 
     @Override
@@ -67,9 +70,26 @@ public class TimedBehavior implements Behavior {
                             player.getName(), hunt.getId(), e.getMessage());
                 }
 
+                int completionCount = 0;
+                try {
+                    completionCount = StorageService.getTimedRunCount(player.getUniqueId(), hunt.getId());
+                } catch (InternalException e) {
+                    LogUtil.error("Error getting timed run count for player {0} in hunt {1}: {2}",
+                            player.getName(), hunt.getId(), e.getMessage());
+                }
+
                 player.sendMessage(LanguageService.getMessage("Messages.TimedCompleted")
                         .replaceAll("%time%", TimedRunManager.formatTime(elapsed))
-                        .replaceAll("%hunt%", hunt.getDisplayName()));
+                        .replaceAll("%hunt%", hunt.getDisplayName())
+                        .replaceAll("%count%", String.valueOf(completionCount)));
+
+                if (repeatable) {
+                    try {
+                        StorageService.resetPlayerHunt(player.getUniqueId(), hunt.getId());
+                    } catch (InternalException e) {
+                        LogUtil.error("Error resetting player hunt for repeatable timed run: {0}", e.getMessage());
+                    }
+                }
             }
         } catch (InternalException e) {
             LogUtil.error("Error checking timed completion for player {0} in hunt {1}: {2}",
@@ -90,21 +110,30 @@ public class TimedBehavior implements Behavior {
         this.startPlateLocation = startPlateLocation;
     }
 
+    public boolean isRepeatable() {
+        return repeatable;
+    }
+
     public static TimedBehavior fromConfig(ConfigurationSection section) {
         Location loc = null;
+        boolean repeatable = true;
 
-        if (section != null && section.contains("startPlate.world")) {
-            String worldName = section.getString("startPlate.world");
-            double x = section.getDouble("startPlate.x");
-            double y = section.getDouble("startPlate.y");
-            double z = section.getDouble("startPlate.z");
+        if (section != null) {
+            if (section.contains("startPlate.world")) {
+                String worldName = section.getString("startPlate.world");
+                double x = section.getDouble("startPlate.x");
+                double y = section.getDouble("startPlate.y");
+                double z = section.getDouble("startPlate.z");
 
-            var world = org.bukkit.Bukkit.getWorld(worldName);
-            if (world != null) {
-                loc = new Location(world, x, y, z);
+                var world = org.bukkit.Bukkit.getWorld(worldName);
+                if (world != null) {
+                    loc = new Location(world, x, y, z);
+                }
             }
+
+            repeatable = section.getBoolean("repeatable", true);
         }
 
-        return new TimedBehavior(loc);
+        return new TimedBehavior(loc, repeatable);
     }
 }

@@ -124,7 +124,7 @@ Messages:
   TimedNotStarted: "%prefix% &cVous devez marcher sur la plaque de départ pour lancer le chrono."
   TimedStarted: "%prefix% &aChrono lancé pour la hunt &e%hunt%&a ! Trouvez toutes les têtes le plus vite possible !"
   TimedRestarted: "%prefix% &eChrono relancé pour la hunt &e%hunt%&e ! Votre progression a été réinitialisée."
-  TimedCompleted: "%prefix% &a&lRun terminé ! &aVotre temps : &e%time% &apour la hunt &e%hunt%&a !"
+  TimedCompleted: "%prefix% &a&lRun terminé ! &aVotre temps : &e%time% &apour la hunt &e%hunt%&a ! &7(Complétion #%count%)"
   TimedLeft: "%prefix% &eVous avez quitté le run chronométré."
   TimedNoActiveRun: "%prefix% &cVous n'êtes pas dans un run chronométré."
   TimedAlreadyCompleted: "%prefix% &cVous avez déjà trouvé toutes les têtes de cette hunt."

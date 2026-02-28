@@ -234,6 +234,13 @@ public class PlaceholderHook extends PlaceholderExpansion {
                         return "-";
                     }
                 }
+                case "timedcount" -> {
+                    try {
+                        return String.valueOf(StorageService.getTimedRunCount(player.getUniqueId(), huntId));
+                    } catch (InternalException e) {
+                        return "0";
+                    }
+                }
                 case "timeposition" -> {
                     try {
                         var leaderboard = new ArrayList<>(StorageService.getTimedLeaderboard(huntId, 50).entrySet());

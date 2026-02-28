@@ -1115,6 +1115,23 @@ public final class MySQL implements Database {
         return null;
     }
 
+    @Override
+    public int getTimedRunCount(UUID pUUID, String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTimedRunCount())) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, huntId);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("cnt");
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+        return 0;
+    }
+
     // --- Internal helpers ---
 
     private void createTables(Connection conn) throws SQLException {
