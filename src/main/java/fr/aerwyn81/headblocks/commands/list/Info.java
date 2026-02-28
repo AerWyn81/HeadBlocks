@@ -3,7 +3,9 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HuntService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -45,6 +47,10 @@ public class Info implements Cmd {
         msgUuid.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Info.HoverCopyUuid"))));
         msgUuid.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, headLocation.getUuid().toString()));
         player.spigot().sendMessage(msgUuid);
+
+        var hunts = HuntService.getHuntsForHead(headLocation.getUuid());
+        String huntNames = hunts.isEmpty() ? "none" : hunts.stream().map(Hunt::getId).collect(java.util.stream.Collectors.joining(", "));
+        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.Hunt") + huntNames));
 
         TextComponent msgLoc = new TextComponent(LanguageService.getMessage("Chat.Info.Location") + LocationUtils.toFormattedString(headLocation.getLocation()));
         msgLoc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Info.HoverLocationTp"))));

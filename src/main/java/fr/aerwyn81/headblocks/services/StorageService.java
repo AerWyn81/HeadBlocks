@@ -631,6 +631,14 @@ public class StorageService {
         }
     }
 
+    public static void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException {
+        database.transferPlayerProgress(fromHuntId, toHuntId);
+    }
+
+    public static void deletePlayerProgressForHunt(String huntId) throws InternalException {
+        database.deletePlayerProgressForHunt(huntId);
+    }
+
     public static String getServerIdentifier() {
         return serverIdentifier;
     }

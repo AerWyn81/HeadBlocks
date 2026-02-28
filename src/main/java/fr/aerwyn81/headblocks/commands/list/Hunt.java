@@ -18,10 +18,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -126,18 +123,54 @@ public class Hunt implements Cmd {
             return;
         }
 
+        // Parse flags from args[3..n] (order-independent)
         boolean hasConfirm = false;
+        boolean keepHeads = false;
+        String fallbackHuntId = null;
+
         for (int i = 3; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase("--confirm")) {
-                hasConfirm = true;
-                break;
+            String arg = args[i].toLowerCase();
+            switch (arg) {
+                case "--confirm" -> hasConfirm = true;
+                case "--keepheads" -> keepHeads = true;
+                case "--fallback" -> {
+                    if (i + 1 < args.length) {
+                        fallbackHuntId = args[++i].toLowerCase();
+                    }
+                }
             }
         }
 
+        // Validate: --fallback requires --keepHeads
+        if (fallbackHuntId != null && !keepHeads) {
+            sender.sendMessage(LanguageService.getMessage("Messages.HuntDeleteFallbackRequiresKeepHeads"));
+            return;
+        }
+
+        // Resolve fallback hunt
+        String resolvedFallback = keepHeads ? (fallbackHuntId != null ? fallbackHuntId : "default") : null;
+
+        if (keepHeads && fallbackHuntId != null) {
+            fr.aerwyn81.headblocks.data.hunt.Hunt fb = HuntService.getHuntById(fallbackHuntId);
+            if (fb == null) {
+                sender.sendMessage(LanguageService.getMessage("Messages.HuntDeleteFallbackNotFound")
+                        .replaceAll("%hunt%", fallbackHuntId));
+                return;
+            }
+        }
+
+        // Show confirmation message if --confirm not provided
         if (!hasConfirm) {
-            sender.sendMessage(LanguageService.getMessage("Messages.HuntDeleteConfirm")
-                    .replaceAll("%hunt%", huntId)
-                    .replaceAll("%headCount%", String.valueOf(hunt.getHeadCount())));
+            if (keepHeads) {
+                sender.sendMessage(LanguageService.getMessage("Messages.HuntDeleteKeepHeadsConfirm")
+                        .replaceAll("%hunt%", huntId)
+                        .replaceAll("%headCount%", String.valueOf(hunt.getHeadCount()))
+                        .replaceAll("%fallback%", resolvedFallback));
+            } else {
+                sender.sendMessage(LanguageService.getMessage("Messages.HuntDeleteConfirm")
+                        .replaceAll("%hunt%", huntId)
+                        .replaceAll("%headCount%", String.valueOf(hunt.getHeadCount())));
+            }
             return;
         }
 
@@ -145,21 +178,69 @@ public class Hunt implements Cmd {
         Bukkit.getPluginManager().callEvent(deleteEvent);
         if (deleteEvent.isCancelled()) return;
 
+        if (keepHeads) {
+            // Mode B: keep heads, transfer to fallback
+            handleDeleteKeepHeads(sender, hunt, huntId, resolvedFallback);
+        } else {
+            // Mode A: delete hunt + heads physically
+            handleDeleteWithHeads(sender, hunt, huntId);
+        }
+    }
+
+    private void handleDeleteWithHeads(CommandSender sender, fr.aerwyn81.headblocks.data.hunt.Hunt hunt, String huntId) {
+        sender.sendMessage(LanguageService.getMessage("Messages.HuntDeleteInProgress")
+                .replaceAll("%hunt%", huntId));
+
+        // Collect HeadLocation objects for this hunt
+        var headsToRemove = new ArrayList<HeadLocation>();
+        for (UUID headUUID : hunt.getHeadUUIDs()) {
+            HeadLocation hl = HeadService.getHeadByUUID(headUUID);
+            if (hl != null) {
+                headsToRemove.add(hl);
+            }
+        }
+
+        // Remove heads physically (world + DB + locations.yml) async
+        HeadService.removeAllHeadLocationsAsync(headsToRemove, true, (headRemoved) -> {
+            try {
+                StorageService.unlinkAllHeadsFromHuntInDb(huntId);
+                StorageService.deletePlayerProgressForHunt(huntId);
+                StorageService.deleteHuntFromDb(huntId);
+            } catch (Exception e) {
+                sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+                LogUtil.error("Error during hunt delete cleanup: {0}", e.getMessage());
+                return;
+            }
+
+            HuntConfigService.deleteHuntFile(huntId);
+            HuntService.unregisterHunt(huntId);
+            StorageService.incrementHuntVersion();
+
+            sender.sendMessage(LanguageService.getMessage("Messages.HuntDeleted")
+                    .replaceAll("%hunt%", huntId));
+        });
+    }
+
+    private void handleDeleteKeepHeads(CommandSender sender, fr.aerwyn81.headblocks.data.hunt.Hunt hunt, String huntId, String fallbackHuntId) {
         try {
-            // Reassign orphaned heads to default hunt before unlinking
-            fr.aerwyn81.headblocks.data.hunt.Hunt defaultHunt = HuntService.getDefaultHunt();
+            fr.aerwyn81.headblocks.data.hunt.Hunt fallbackHunt = HuntService.getHuntById(fallbackHuntId);
+
+            // Reassign heads to fallback hunt
             for (UUID headUUID : hunt.getHeadUUIDs()) {
-                if (defaultHunt != null && !defaultHunt.containsHead(headUUID)) {
-                    defaultHunt.addHead(headUUID);
-                    StorageService.linkHeadToHunt(headUUID, "default");
+                if (fallbackHunt != null && !fallbackHunt.containsHead(headUUID)) {
+                    fallbackHunt.addHead(headUUID);
+                    StorageService.linkHeadToHunt(headUUID, fallbackHuntId);
                 }
             }
 
+            // Transfer player progress to fallback
+            StorageService.transferPlayerProgress(huntId, fallbackHuntId);
+
             StorageService.unlinkAllHeadsFromHuntInDb(huntId);
-            StorageService.resetAllPlayersForHunt(huntId);
             StorageService.deleteHuntFromDb(huntId);
         } catch (Exception e) {
             sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            LogUtil.error("Error during hunt delete (keepHeads): {0}", e.getMessage());
             return;
         }
 
@@ -715,32 +796,85 @@ public class Hunt implements Cmd {
             }
         }
 
-        if (args.length == 4) {
+        if (args.length >= 4) {
             String sub = args[1].toLowerCase();
-            switch (sub) {
-                case "delete" -> {
-                    if (args[3].isEmpty() || "--confirm".startsWith(args[3].toLowerCase())) {
-                        return new ArrayList<>(Collections.singletonList("--confirm"));
+            if ("delete".equals(sub)) {
+                return getDeleteTabCompletions(args);
+            }
+
+            if (args.length == 4) {
+                switch (sub) {
+                    case "assign" -> {
+                        return Stream.of("all", "radius")
+                                .filter(s -> s.startsWith(args[3].toLowerCase())).collect(Collectors.toCollection(ArrayList::new));
                     }
-                }
-                case "assign" -> {
-                    return Stream.of("all", "radius")
-                            .filter(s -> s.startsWith(args[3].toLowerCase())).collect(Collectors.toCollection(ArrayList::new));
-                }
-                case "transfer" -> {
-                    return HuntService.getHuntNames().stream()
-                            .filter(n -> n.startsWith(args[3].toLowerCase()))
-                            .collect(Collectors.toCollection(ArrayList::new));
-                }
-                case "progress", "reset" -> {
-                    return Bukkit.getOnlinePlayers().stream()
-                            .map(Player::getName)
-                            .filter(n -> n.toLowerCase().startsWith(args[3].toLowerCase()))
-                            .collect(Collectors.toCollection(ArrayList::new));
+                    case "transfer" -> {
+                        return HuntService.getHuntNames().stream()
+                                .filter(n -> n.startsWith(args[3].toLowerCase()))
+                                .collect(Collectors.toCollection(ArrayList::new));
+                    }
+                    case "progress", "reset" -> {
+                        return Bukkit.getOnlinePlayers().stream()
+                                .map(Player::getName)
+                                .filter(n -> n.toLowerCase().startsWith(args[3].toLowerCase()))
+                                .collect(Collectors.toCollection(ArrayList::new));
+                    }
                 }
             }
         }
 
         return new ArrayList<>();
+    }
+
+    private ArrayList<String> getDeleteTabCompletions(String[] args) {
+        String huntId = args[2].toLowerCase();
+        String current = args[args.length - 1].toLowerCase();
+
+        // Collect already-used flags
+        Set<String> usedFlags = new HashSet<>();
+        boolean hasKeepHeads = false;
+        boolean prevWasFallback = false;
+
+        for (int i = 3; i < args.length - 1; i++) {
+            String arg = args[i].toLowerCase();
+            switch (arg) {
+                case "--confirm" -> usedFlags.add("--confirm");
+                case "--keepheads" -> {
+                    usedFlags.add("--keepheads");
+                    hasKeepHeads = true;
+                }
+                case "--fallback" -> {
+                    usedFlags.add("--fallback");
+                    i++;
+                } // skip value
+            }
+        }
+
+        // Check if the previous arg is --fallback (meaning current arg should be a hunt name)
+        if (args.length > 4 && args[args.length - 2].equalsIgnoreCase("--fallback")) {
+            return HuntService.getHuntNames().stream()
+                    .filter(n -> !n.equals(huntId))
+                    .filter(n -> n.startsWith(current))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        // Re-check hasKeepHeads including the last complete arg
+        for (int i = 3; i < args.length; i++) {
+            if (args[i].equalsIgnoreCase("--keepheads")) {
+                hasKeepHeads = true;
+            }
+        }
+
+        var suggestions = new ArrayList<String>();
+        if (!usedFlags.contains("--confirm") && "--confirm".startsWith(current)) {
+            suggestions.add("--confirm");
+        }
+        if (!usedFlags.contains("--keepheads") && "--keepHeads".toLowerCase().startsWith(current)) {
+            suggestions.add("--keepHeads");
+        }
+        if (hasKeepHeads && !usedFlags.contains("--fallback") && "--fallback".startsWith(current)) {
+            suggestions.add("--fallback");
+        }
+        return suggestions;
     }
 }

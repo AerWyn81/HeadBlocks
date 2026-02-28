@@ -274,7 +274,8 @@ The `default` hunt is special:
 - It is created automatically on first start
 - It cannot be deleted
 - Newly placed heads go into `default` unless another hunt is selected
-- When a hunt is deleted, its heads are reassigned to `default`
+- When a hunt is deleted with `--keepHeads`, its heads and player progress are reassigned to `default` (or to a specified `--fallback` hunt)
+- When a hunt is deleted without `--keepHeads` (default mode), its heads are physically removed from the world and player progress is reset
 
 ## Backward Compatibility
 

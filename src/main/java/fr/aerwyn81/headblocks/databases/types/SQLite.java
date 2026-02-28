@@ -934,6 +934,41 @@ public class SQLite implements Database {
         return 0;
     }
 
+    @Override
+    public void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException {
+        try (var conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (var ps = conn.prepareStatement(Requests.transferPlayerProgressSQLite())) {
+                    ps.setString(1, toHuntId);
+                    ps.setString(2, fromHuntId);
+                    ps.executeUpdate();
+                }
+                try (var ps = conn.prepareStatement(Requests.deletePlayerProgressForHunt())) {
+                    ps.setString(1, fromHuntId);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public void deletePlayerProgressForHunt(String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.deletePlayerProgressForHunt())) {
+            ps.setString(1, huntId);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
     // --- Migration v5 ---
 
     @Override

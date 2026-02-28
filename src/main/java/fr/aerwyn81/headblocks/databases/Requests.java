@@ -358,6 +358,18 @@ public class Requests {
         return String.format("SELECT COUNT(DISTINCT pUUID) AS cnt FROM %s WHERE hUUID = ? AND huntId = ?", getTablePlayerHeads());
     }
 
+    public static String transferPlayerProgressSQLite() {
+        return String.format("INSERT OR IGNORE INTO %s (pUUID, hUUID, huntId) SELECT pUUID, hUUID, ? FROM %s WHERE huntId = ?", getTablePlayerHeads(), getTablePlayerHeads());
+    }
+
+    public static String transferPlayerProgressMySQL() {
+        return String.format("INSERT IGNORE INTO %s (pUUID, hUUID, huntId) SELECT pUUID, hUUID, ? FROM %s WHERE huntId = ?", getTablePlayerHeads(), getTablePlayerHeads());
+    }
+
+    public static String deletePlayerProgressForHunt() {
+        return String.format("DELETE FROM %s WHERE huntId = ?", getTablePlayerHeads());
+    }
+
     // --- Migration v5 ---
 
     public static String addColumnHuntIdSQLite() {

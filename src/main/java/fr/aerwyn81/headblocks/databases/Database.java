@@ -115,6 +115,10 @@ public interface Database {
 
     int getPlayerCountForHeadInHunt(UUID hUUID, String huntId) throws InternalException;
 
+    void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException;
+
+    void deletePlayerProgressForHunt(String huntId) throws InternalException;
+
     // --- Migration v5 ---
 
     void addColumnHuntId() throws InternalException;

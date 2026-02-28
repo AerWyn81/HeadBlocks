@@ -91,7 +91,11 @@ Messages:
   HuntAlreadyExists: "%prefix% &cA hunt named &e%hunt% &calready exists."
   HuntInvalidName: "%prefix% &cInvalid hunt name. Only alphanumeric characters and hyphens are allowed."
   HuntNotFound: "%prefix% &cHunt &e%hunt% &cnot found. Use &7/hb hunt list &cto see available hunts."
-  HuntDeleteConfirm: "%prefix% &cWarning: This will delete hunt &7%hunt% &cand its &7%headCount% &chead(s). Add &7--confirm &cto confirm."
+  HuntDeleteConfirm: "%prefix% &cWarning: This will delete hunt &7%hunt%&c, remove its &7%headCount% &chead(s) from the world, and reset all player progress. Add &7--confirm &cto confirm."
+  HuntDeleteKeepHeadsConfirm: "%prefix% &cWarning: This will delete hunt &7%hunt%&c. Its &7%headCount% &chead(s) and player progress will be moved to &7%fallback%&c. Add &7--confirm &cto confirm."
+  HuntDeleteInProgress: "%prefix% &7&oDeleting hunt &e&o%hunt%&7&o, please wait..."
+  HuntDeleteFallbackNotFound: "%prefix% &cFallback hunt &e%hunt% &cnot found."
+  HuntDeleteFallbackRequiresKeepHeads: "%prefix% &c--fallback can only be used with --keepHeads."
   HuntDeleted: "%prefix% &aHunt &e%hunt% &ahas been deleted successfully."
   HuntCannotDeleteDefault: "%prefix% &cThe default hunt cannot be deleted."
   HuntEnabled: "%prefix% &aHunt &e%hunt% &ahas been enabled."
@@ -169,6 +173,7 @@ Chat:
     HintsTitle: "&e&lHints:"
     RewardsTitle: "&e&lRewards: &7"
     HoverForMore: "&8&oHover for details"
+    Hunt: "&aHunt(s): &7"
 
 Hunt:
   State:
