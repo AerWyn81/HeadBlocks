@@ -195,7 +195,7 @@ public class StorageService {
                 LogUtil.error("The plugin storage is disabled to prevent data corruption. Please restore from backup and try again.");
                 throw ex;
             }
-            dbVersion = Database.version;
+            dbVersion = 5;
             LogUtil.info("Database migration to v5 completed successfully.");
         }
 
@@ -637,6 +637,20 @@ public class StorageService {
 
     public static void deletePlayerProgressForHunt(String huntId) throws InternalException {
         database.deletePlayerProgressForHunt(huntId);
+    }
+
+    // --- Timed runs ---
+
+    public static void saveTimedRun(UUID playerUuid, String huntId, long timeMs) throws InternalException {
+        database.saveTimedRun(playerUuid, huntId, timeMs);
+    }
+
+    public static LinkedHashMap<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException {
+        return database.getTimedLeaderboard(huntId, limit);
+    }
+
+    public static Long getBestTime(UUID playerUuid, String huntId) throws InternalException {
+        return database.getBestTime(playerUuid, huntId);
     }
 
     public static String getServerIdentifier() {

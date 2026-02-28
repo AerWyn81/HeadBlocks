@@ -1057,6 +1057,11 @@ public final class MySQL implements Database {
                 // 4. Add huntId column to hb_playerHeads
                 addColumnHuntId();
 
+                // 5. Create timed runs table
+                try (var ps = conn.prepareStatement(Requests.createTableTimedRunsMySQL())) {
+                    ps.execute();
+                }
+
                 conn.commit();
             } catch (Exception ex) {
                 conn.rollback();
@@ -1065,6 +1070,64 @@ public final class MySQL implements Database {
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
+    }
+
+    // --- Timed runs (v5) ---
+
+    @Override
+    public void saveTimedRun(UUID pUUID, String huntId, long timeMs) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.insertTimedRun())) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, huntId);
+            ps.setLong(3, timeMs);
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
+    @Override
+    public LinkedHashMap<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException {
+        var top = new LinkedHashMap<PlayerProfileLight, Long>();
+
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTimedLeaderboard())) {
+            ps.setString(1, huntId);
+            ps.setInt(2, limit);
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    top.put(new PlayerProfileLight(
+                            UUID.fromString(rs.getString("pUUID")),
+                            rs.getString("pName"),
+                            rs.getString("pDisplayName")
+                    ), rs.getLong("bestTime"));
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return top;
+    }
+
+    @Override
+    public Long getBestTime(UUID pUUID, String huntId) throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getBestTime())) {
+            ps.setString(1, pUUID.toString());
+            ps.setString(2, huntId);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    long val = rs.getLong("bestTime");
+                    if (rs.wasNull()) return null;
+                    return val;
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+        return null;
     }
 
     // --- Internal helpers ---
@@ -1091,6 +1154,10 @@ public final class MySQL implements Database {
         }
 
         try (var statement = conn.prepareStatement(Requests.createTableHeadHunts())) {
+            statement.execute();
+        }
+
+        try (var statement = conn.prepareStatement(Requests.createTableTimedRunsMySQL())) {
             statement.execute();
         }
     }

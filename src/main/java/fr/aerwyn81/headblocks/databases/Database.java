@@ -124,4 +124,12 @@ public interface Database {
     void addColumnHuntId() throws InternalException;
 
     void migrateToV5() throws InternalException;
+
+    // --- Timed runs (v5) ---
+
+    void saveTimedRun(UUID pUUID, String huntId, long timeMs) throws InternalException;
+
+    LinkedHashMap<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException;
+
+    Long getBestTime(UUID pUUID, String huntId) throws InternalException;
 }

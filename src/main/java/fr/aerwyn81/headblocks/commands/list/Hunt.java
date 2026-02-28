@@ -74,6 +74,13 @@ public class Hunt implements Cmd {
             return;
         }
 
+        // If the sender is a player, open the behavior selection GUI
+        if (sender instanceof Player player) {
+            GuiService.getBehaviorSelectionManager().open(player, name);
+            return;
+        }
+
+        // Console: create directly with FreeBehavior
         String huntId = name.toLowerCase();
         fr.aerwyn81.headblocks.data.hunt.Hunt hunt = new fr.aerwyn81.headblocks.data.hunt.Hunt(huntId, name, HuntState.ACTIVE, 1, "PLAYER_HEAD");
 
@@ -95,12 +102,6 @@ public class Hunt implements Cmd {
 
         sender.sendMessage(LanguageService.getMessage("Messages.HuntCreated")
                 .replaceAll("%hunt%", hunt.getId()));
-
-        if (sender instanceof Player player) {
-            HuntService.setSelectedHunt(player.getUniqueId(), hunt.getId());
-            sender.sendMessage(LanguageService.getMessage("Messages.HuntSelected")
-                    .replaceAll("%hunt%", hunt.getId()));
-        }
     }
 
     private void handleDelete(CommandSender sender, String[] args) {

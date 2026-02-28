@@ -20,6 +20,7 @@ public interface Behavior {
         return switch (type.toLowerCase()) {
             case "ordered" -> OrderedBehavior.fromConfig(section);
             case "scheduled" -> ScheduledBehavior.fromConfig(section);
+            case "timed" -> TimedBehavior.fromConfig(section);
             default -> new FreeBehavior();
         };
     }

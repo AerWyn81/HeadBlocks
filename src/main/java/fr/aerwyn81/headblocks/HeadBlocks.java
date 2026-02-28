@@ -10,6 +10,7 @@ import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
 import fr.aerwyn81.headblocks.hooks.PacketEventsHook;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
+import fr.aerwyn81.headblocks.runnables.TimedRunTask;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
@@ -126,6 +127,9 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OthersEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(), this);
+
+        new TimedRunTask().runTaskTimer(this, 0, 2);
 
         if (ConfigService.isMetricsEnabled()) {
             var m = new Metrics(this, 15495);
@@ -172,6 +176,7 @@ public final class HeadBlocks extends JavaPlugin {
         StorageService.close();
         HeadService.clearHeadMoves();
         GuiService.clearCache();
+        TimedRunManager.clearAll();
 
         packetEventsHook.unload();
 

@@ -235,6 +235,18 @@ public class HuntConfigService {
                 if (sb.start() != null) yaml.set(key + ".start", sb.start().toString());
                 if (sb.end() != null) yaml.set(key + ".end", sb.end().toString());
             }
+
+            if (behavior instanceof fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior tb) {
+                if (tb.getStartPlateLocation() != null) {
+                    var loc = tb.getStartPlateLocation();
+                    if (loc.getWorld() != null) {
+                        yaml.set(key + ".startPlate.world", loc.getWorld().getName());
+                        yaml.set(key + ".startPlate.x", loc.getBlockX());
+                        yaml.set(key + ".startPlate.y", loc.getBlockY());
+                        yaml.set(key + ".startPlate.z", loc.getBlockZ());
+                    }
+                }
+            }
         }
     }
 

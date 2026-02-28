@@ -125,6 +125,13 @@ Messages:
   HuntPlayerReset: "%prefix% &aPlayer &e%player% &aprogress in hunt &e%hunt% &ahas been reset."
   HuntResetRequireHunt: "%prefix% &cMultiple hunts detected. Use &7/hb hunt <name> reset <player> &cto reset a specific hunt."
   HuntHeadInactive: "%prefix% &cThis head is part of an inactive hunt."
+  TimedNotStarted: "%prefix% &cYou must step on the start plate to begin the timed run."
+  TimedStarted: "%prefix% &aTimer started for hunt &e%hunt%&a! Find all the heads as fast as you can!"
+  TimedRestarted: "%prefix% &eTimer restarted for hunt &e%hunt%&e! Your progression has been reset."
+  TimedCompleted: "%prefix% &a&lRun complete! &aYour time: &e%time% &afor hunt &e%hunt%&a!"
+  TimedLeft: "%prefix% &eYou have left the timed run."
+  TimedNoActiveRun: "%prefix% &cYou are not currently in a timed run."
+  TimedAlreadyCompleted: "%prefix% &cYou have already completed all heads for this hunt."
   HuntInfoPlayers: " &aPlayers with progress: &e%playerCount%"
   ProgressCommand:
     - ""
@@ -182,6 +189,7 @@ Hunt:
     Archived: "&8Archived"
   Behavior:
     Ordered: "&6Ordered"
+    Timed: "&bTimed"
     ScheduledNotStarted: "%prefix% &cThis hunt has not started yet."
     ScheduledEnded: "%prefix% &cThis hunt has ended."
 
@@ -303,6 +311,30 @@ Gui:
     - "&7when a player finds this head"
     - ""
     - "&a&lCLICK&8: &7Select this type"
+  BehaviorSelectionTitle: "&8HeadBlocks &7- &a&lBehaviors"
+  BehaviorEnabled: "&aSelected"
+  BehaviorDisabled: "&7Not selected"
+  ValidateCreate: "&a&lValidate"
+  ValidateCreateLore:
+    - ""
+    - "&7Click to create the hunt"
+    - "&7with the selected behaviors"
+  BehaviorOrderedName: "&6Ordered"
+  BehaviorOrderedLore:
+    - ""
+    - "&7Players must find heads"
+    - "&7in a specific order"
+  BehaviorScheduledName: "&bScheduled"
+  BehaviorScheduledLore:
+    - ""
+    - "&7The hunt is only active"
+    - "&7during a specific date range"
+  BehaviorTimedName: "&eTimed"
+  BehaviorTimedLore:
+    - ""
+    - "&7Players race against the clock"
+    - "&7to find all heads"
+  TimedActionBar: "&e&l%time% &8| &7%hunt% &8| &e%found%&7/&e%total%"
   HintName: "&7Set up &8- &b&lHint"
   HintLore:
     - ""
@@ -342,3 +374,4 @@ Help:
   Export: "&6/hb export database&8: &7&oExport the database to an SQL file with player data"
   Rename: "&6/hb rename <name>&8: &7&oRename target head"
   Hunt: "&6/hb hunt <create|delete|enable|disable|list|info>&8: &7&oManage hunts"
+  Leave: "&6/hb leave&8: &7&oLeave the current timed run"

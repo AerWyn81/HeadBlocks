@@ -121,6 +121,13 @@ Messages:
   HuntPlayerReset: "%prefix% &aLa progression du joueur &e%player% &adans la hunt &e%hunt% &aa été réinitialisée."
   HuntResetRequireHunt: "%prefix% &cPlusieurs hunts détectées. Utilisez &7/hb hunt <nom> reset <joueur> &cpour réinitialiser une hunt spécifique."
   HuntHeadInactive: "%prefix% &cCette tête fait partie d'une chasse inactive."
+  TimedNotStarted: "%prefix% &cVous devez marcher sur la plaque de départ pour lancer le chrono."
+  TimedStarted: "%prefix% &aChrono lancé pour la hunt &e%hunt%&a ! Trouvez toutes les têtes le plus vite possible !"
+  TimedRestarted: "%prefix% &eChrono relancé pour la hunt &e%hunt%&e ! Votre progression a été réinitialisée."
+  TimedCompleted: "%prefix% &a&lRun terminé ! &aVotre temps : &e%time% &apour la hunt &e%hunt%&a !"
+  TimedLeft: "%prefix% &eVous avez quitté le run chronométré."
+  TimedNoActiveRun: "%prefix% &cVous n'êtes pas dans un run chronométré."
+  TimedAlreadyCompleted: "%prefix% &cVous avez déjà trouvé toutes les têtes de cette hunt."
   HuntInfoPlayers: " &aJoueurs avec progression : &e%playerCount%"
   ProgressCommand:
     - ""
@@ -177,6 +184,7 @@ Hunt:
     Archived: "&8Archivé"
   Behavior:
     Ordered: "&6Ordonné"
+    Timed: "&bChronométré"
     ScheduledNotStarted: "%prefix% &cCette hunt n'a pas encore commencé."
     ScheduledEnded: "%prefix% &cCette hunt est terminée."
 
@@ -298,6 +306,30 @@ Gui:
     - "&7quand un joueur trouve cette tête"
     - ""
     - "&a&lCLIC&8: &7Sélectionner ce type"
+  BehaviorSelectionTitle: "&8HeadBlocks &7- &a&lComportements"
+  BehaviorEnabled: "&aSélectionné"
+  BehaviorDisabled: "&7Non sélectionné"
+  ValidateCreate: "&a&lValider"
+  ValidateCreateLore:
+    - ""
+    - "&7Cliquez pour créer la hunt"
+    - "&7avec les comportements sélectionnés"
+  BehaviorOrderedName: "&6Ordonné"
+  BehaviorOrderedLore:
+    - ""
+    - "&7Les joueurs doivent trouver"
+    - "&7les têtes dans un ordre précis"
+  BehaviorScheduledName: "&bProgrammé"
+  BehaviorScheduledLore:
+    - ""
+    - "&7La hunt n'est active que"
+    - "&7pendant une période définie"
+  BehaviorTimedName: "&eChronométré"
+  BehaviorTimedLore:
+    - ""
+    - "&7Les joueurs font la course"
+    - "&7contre la montre pour trouver toutes les têtes"
+  TimedActionBar: "&e&l%time% &8| &7%hunt% &8| &e%found%&7/&e%total%"
   HintName: "&7Configurer &8- &b&lIndice"
   HintLore:
     - ""
@@ -337,3 +369,4 @@ Help:
   Export: "&6/hb export database &8: &7&oExporter la base de données vers un fichier SQL avec les données des joueurs"
   Rename: "&6/hb rename <nom>&8: &7&oRenommer la tête ciblée"
   Hunt: "&6/hb hunt <create|delete|enable|disable|list|info>&8: &7&oGérer les hunts"
+  Leave: "&6/hb leave&8: &7&oQuitter le run chronométré en cours"

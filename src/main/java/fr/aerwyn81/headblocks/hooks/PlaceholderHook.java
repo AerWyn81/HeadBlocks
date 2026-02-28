@@ -217,7 +217,52 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 case "state" -> {
                     return hunt.getState().getLocalizedName();
                 }
+                case "besttime" -> {
+                    try {
+                        Long best = StorageService.getBestTime(player.getUniqueId(), huntId);
+                        if (best == null) return "-";
+                        return fr.aerwyn81.headblocks.services.TimedRunManager.formatTime(best);
+                    } catch (InternalException e) {
+                        return "-";
+                    }
+                }
+                case "timeposition" -> {
+                    try {
+                        var leaderboard = new ArrayList<>(StorageService.getTimedLeaderboard(huntId, 50).entrySet());
+                        for (int i = 0; i < leaderboard.size(); i++) {
+                            if (leaderboard.get(i).getKey().uuid().equals(player.getUniqueId())) {
+                                return String.valueOf(i + 1);
+                            }
+                        }
+                        return "-";
+                    } catch (InternalException e) {
+                        return "-";
+                    }
+                }
                 default -> {
+                    // Handle timetop_<pos>_<name|time>
+                    if (subType.startsWith("timetop_")) {
+                        try {
+                            String[] ttParts = subType.split("_"); // timetop, <pos>, <name|time>
+                            if (ttParts.length < 3) return "";
+
+                            int pos = Integer.parseInt(ttParts[1]);
+                            String field = ttParts[2];
+
+                            var leaderboard = new ArrayList<>(StorageService.getTimedLeaderboard(huntId, pos).entrySet());
+                            if (pos < 1 || pos > leaderboard.size()) return "-";
+
+                            var entry = leaderboard.get(pos - 1);
+                            return switch (field) {
+                                case "name" -> entry.getKey().name();
+                                case "time" ->
+                                        fr.aerwyn81.headblocks.services.TimedRunManager.formatTime(entry.getValue());
+                                default -> "-";
+                            };
+                        } catch (Exception e) {
+                            return "-";
+                        }
+                    }
                     return "";
                 }
             }

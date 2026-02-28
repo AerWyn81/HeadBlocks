@@ -407,4 +407,30 @@ public class Requests {
     public static String migV5RenameTempPlayerHeadsSQLite() {
         return String.format("ALTER TABLE %s RENAME TO %s", getTablePlayerHeads() + "_v5tmp", getTablePlayerHeads());
     }
+
+    // --- Timed runs (v6) ---
+
+    public static String getTableTimedRuns() {
+        return addPrefix() + "hb_timed_runs";
+    }
+
+    public static String createTableTimedRuns() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36) NOT NULL, `huntId` VARCHAR(64) NOT NULL, `timeMs` BIGINT NOT NULL, `completedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (pUUID, huntId, completedAt))", getTableTimedRuns());
+    }
+
+    public static String createTableTimedRunsMySQL() {
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` VARCHAR(36) NOT NULL, `huntId` VARCHAR(64) NOT NULL, `timeMs` BIGINT NOT NULL, `completedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (pUUID, huntId, completedAt))", getTableTimedRuns());
+    }
+
+    public static String insertTimedRun() {
+        return String.format("INSERT INTO %s (pUUID, huntId, timeMs) VALUES (?, ?, ?)", getTableTimedRuns());
+    }
+
+    public static String getTimedLeaderboard() {
+        return String.format("SELECT tr.pUUID, p.pName, p.pDisplayName, MIN(tr.timeMs) as bestTime FROM %s tr INNER JOIN %s p ON tr.pUUID = p.pUUID WHERE tr.huntId = ? GROUP BY tr.pUUID ORDER BY bestTime ASC LIMIT ?", getTableTimedRuns(), getTablePlayers());
+    }
+
+    public static String getBestTime() {
+        return String.format("SELECT MIN(timeMs) as bestTime FROM %s WHERE pUUID = ? AND huntId = ?", getTableTimedRuns());
+    }
 }
