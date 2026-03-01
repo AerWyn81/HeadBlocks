@@ -302,6 +302,12 @@ public class StorageService {
         }
 
         try {
+            storage.clearAllCachedHuntDataForPlayer(uuid);
+        } catch (InternalException ex) {
+            LogUtil.error("Error while trying to clear hunt cache for player {0}: {1}", playerName, ex.getMessage());
+        }
+
+        try {
             boolean isExist = containsPlayer(uuid);
 
             if (isExist) {
@@ -563,19 +569,40 @@ public class StorageService {
 
         storage.addCachedPlayerHead(playerUuid, headUuid);
         storage.clearCachedTopPlayers();
+
+        storage.addCachedPlayerHeadForHunt(playerUuid, huntId, headUuid);
+        storage.clearCachedTopPlayersForHunt(huntId);
     }
 
     public static ArrayList<UUID> getHeadsPlayerForHunt(UUID playerUuid, String huntId) throws InternalException {
-        return database.getHeadsPlayerForHunt(playerUuid, huntId);
+        Set<UUID> cached = storage.getCachedPlayerHeadsForHunt(playerUuid, huntId);
+        if (cached != null) {
+            return new ArrayList<>(cached);
+        }
+
+        ArrayList<UUID> fromDb = database.getHeadsPlayerForHunt(playerUuid, huntId);
+        storage.setCachedPlayerHeadsForHunt(playerUuid, huntId, new HashSet<>(fromDb));
+        return fromDb;
     }
 
     public static LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException {
-        return database.getTopPlayersForHunt(huntId);
+        LinkedHashMap<PlayerProfileLight, Integer> cached = storage.getCachedTopPlayersForHunt(huntId);
+        if (cached != null) {
+            return cached.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+        }
+
+        LinkedHashMap<PlayerProfileLight, Integer> topPlayers = database.getTopPlayersForHunt(huntId);
+        storage.setCachedTopPlayersForHunt(huntId, topPlayers);
+        return topPlayers;
     }
 
     public static void resetPlayerHunt(UUID playerUuid, String huntId) throws InternalException {
         database.resetPlayerHunt(playerUuid, huntId);
         invalidateCachePlayer(playerUuid);
+
+        storage.removeCachedPlayerHeadsForHunt(playerUuid, huntId);
+        storage.clearCachedTopPlayersForHunt(huntId);
     }
 
     // --- Hunt DB access ---
@@ -620,32 +647,70 @@ public class StorageService {
         for (UUID playerUuid : database.getAllPlayers()) {
             database.resetPlayerHunt(playerUuid, huntId);
         }
+
+        storage.clearCachedPlayerHeadsForHunt(huntId);
+        storage.clearCachedTopPlayersForHunt(huntId);
     }
 
     public static void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException {
         database.transferPlayerProgress(fromHuntId, toHuntId);
+
+        storage.clearCachedPlayerHeadsForHunt(fromHuntId);
+        storage.clearCachedTopPlayersForHunt(fromHuntId);
+        storage.clearCachedPlayerHeadsForHunt(toHuntId);
+        storage.clearCachedTopPlayersForHunt(toHuntId);
     }
 
     public static void deletePlayerProgressForHunt(String huntId) throws InternalException {
         database.deletePlayerProgressForHunt(huntId);
+
+        storage.clearCachedPlayerHeadsForHunt(huntId);
+        storage.clearCachedTopPlayersForHunt(huntId);
     }
 
     // --- Timed runs ---
 
     public static void saveTimedRun(UUID playerUuid, String huntId, long timeMs) throws InternalException {
         database.saveTimedRun(playerUuid, huntId, timeMs);
+
+        storage.clearCachedTimedLeaderboard(huntId);
+        storage.clearCachedBestTime(playerUuid, huntId);
+        storage.clearCachedTimedRunCount(playerUuid, huntId);
     }
 
     public static LinkedHashMap<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException {
-        return database.getTimedLeaderboard(huntId, limit);
+        LinkedHashMap<PlayerProfileLight, Long> cached = storage.getCachedTimedLeaderboard(huntId);
+        if (cached != null) {
+            return cached.entrySet().stream()
+                    .limit(limit)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+        }
+
+        LinkedHashMap<PlayerProfileLight, Long> fromDb = database.getTimedLeaderboard(huntId, limit);
+        storage.setCachedTimedLeaderboard(huntId, fromDb);
+        return fromDb;
     }
 
     public static Long getBestTime(UUID playerUuid, String huntId) throws InternalException {
-        return database.getBestTime(playerUuid, huntId);
+        Long cached = storage.getCachedBestTime(playerUuid, huntId);
+        if (cached != null) {
+            return cached == -1L ? null : cached;
+        }
+
+        Long fromDb = database.getBestTime(playerUuid, huntId);
+        storage.setCachedBestTime(playerUuid, huntId, fromDb != null ? fromDb : -1L);
+        return fromDb;
     }
 
     public static int getTimedRunCount(UUID playerUuid, String huntId) throws InternalException {
-        return database.getTimedRunCount(playerUuid, huntId);
+        Integer cached = storage.getCachedTimedRunCount(playerUuid, huntId);
+        if (cached != null) {
+            return cached;
+        }
+
+        int fromDb = database.getTimedRunCount(playerUuid, huntId);
+        storage.setCachedTimedRunCount(playerUuid, huntId, fromDb);
+        return fromDb;
     }
 
     public static String getServerIdentifier() {

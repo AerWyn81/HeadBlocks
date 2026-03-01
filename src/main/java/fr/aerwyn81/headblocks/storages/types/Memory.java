@@ -14,6 +14,13 @@ public class Memory implements Storage {
     private LinkedHashMap<PlayerProfileLight, Integer> cacheTopPlayers;
     private Set<UUID> cacheHeads;
 
+    // Hunt-specific caches
+    private ConcurrentHashMap<String, ConcurrentHashMap<UUID, Set<UUID>>> cacheHuntPlayerHeads;
+    private ConcurrentHashMap<String, LinkedHashMap<PlayerProfileLight, Integer>> cacheHuntTopPlayers;
+    private ConcurrentHashMap<String, LinkedHashMap<PlayerProfileLight, Long>> cacheTimedLeaderboard;
+    private ConcurrentHashMap<String, Long> cacheBestTime;
+    private ConcurrentHashMap<String, Integer> cacheTimedRunCount;
+
     public Memory() {
     }
 
@@ -23,6 +30,12 @@ public class Memory implements Storage {
         cachePlayerHeads = new ConcurrentHashMap<>();
         cacheTopPlayers = new LinkedHashMap<>();
         cacheHeads = ConcurrentHashMap.newKeySet();
+
+        cacheHuntPlayerHeads = new ConcurrentHashMap<>();
+        cacheHuntTopPlayers = new ConcurrentHashMap<>();
+        cacheTimedLeaderboard = new ConcurrentHashMap<>();
+        cacheBestTime = new ConcurrentHashMap<>();
+        cacheTimedRunCount = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -31,6 +44,12 @@ public class Memory implements Storage {
         cachePlayerHeads.clear();
         cacheTopPlayers.clear();
         cacheHeads.clear();
+
+        cacheHuntPlayerHeads.clear();
+        cacheHuntTopPlayers.clear();
+        cacheTimedLeaderboard.clear();
+        cacheBestTime.clear();
+        cacheTimedRunCount.clear();
     }
 
     @Override
@@ -131,6 +150,121 @@ public class Memory implements Storage {
         cachePlayerHeads.values().forEach(playerHeads -> playerHeads.remove(headUuid));
 
         clearCachedTopPlayers();
+    }
+
+    // --- Hunt-specific cache: player heads per hunt ---
+
+    @Override
+    public Set<UUID> getCachedPlayerHeadsForHunt(UUID playerUuid, String huntId) {
+        var huntMap = cacheHuntPlayerHeads.get(huntId);
+        if (huntMap == null) {
+            return null;
+        }
+        return huntMap.get(playerUuid);
+    }
+
+    @Override
+    public void setCachedPlayerHeadsForHunt(UUID playerUuid, String huntId, Set<UUID> heads) {
+        cacheHuntPlayerHeads.computeIfAbsent(huntId, k -> new ConcurrentHashMap<>()).put(playerUuid, heads);
+    }
+
+    @Override
+    public void addCachedPlayerHeadForHunt(UUID playerUuid, String huntId, UUID headUuid) {
+        var huntMap = cacheHuntPlayerHeads.computeIfAbsent(huntId, k -> new ConcurrentHashMap<>());
+        huntMap.computeIfAbsent(playerUuid, k -> ConcurrentHashMap.newKeySet()).add(headUuid);
+    }
+
+    @Override
+    public void removeCachedPlayerHeadsForHunt(UUID playerUuid, String huntId) {
+        var huntMap = cacheHuntPlayerHeads.get(huntId);
+        if (huntMap != null) {
+            huntMap.remove(playerUuid);
+        }
+    }
+
+    @Override
+    public void clearCachedPlayerHeadsForHunt(String huntId) {
+        cacheHuntPlayerHeads.remove(huntId);
+    }
+
+    @Override
+    public void clearAllCachedHuntDataForPlayer(UUID playerUuid) {
+        cacheHuntPlayerHeads.values().forEach(huntMap -> huntMap.remove(playerUuid));
+        cacheBestTime.entrySet().removeIf(e -> e.getKey().endsWith(":" + playerUuid.toString()));
+        cacheTimedRunCount.entrySet().removeIf(e -> e.getKey().endsWith(":" + playerUuid.toString()));
+    }
+
+    // --- Hunt-specific cache: top players per hunt ---
+
+    @Override
+    public LinkedHashMap<PlayerProfileLight, Integer> getCachedTopPlayersForHunt(String huntId) {
+        return cacheHuntTopPlayers.get(huntId);
+    }
+
+    @Override
+    public void setCachedTopPlayersForHunt(String huntId, LinkedHashMap<PlayerProfileLight, Integer> topPlayers) {
+        cacheHuntTopPlayers.put(huntId, topPlayers);
+    }
+
+    @Override
+    public void clearCachedTopPlayersForHunt(String huntId) {
+        cacheHuntTopPlayers.remove(huntId);
+    }
+
+    @Override
+    public void clearAllCachedTopPlayersForHunt() {
+        cacheHuntTopPlayers.clear();
+    }
+
+    // --- Hunt-specific cache: timed leaderboard ---
+
+    @Override
+    public LinkedHashMap<PlayerProfileLight, Long> getCachedTimedLeaderboard(String huntId) {
+        return cacheTimedLeaderboard.get(huntId);
+    }
+
+    @Override
+    public void setCachedTimedLeaderboard(String huntId, LinkedHashMap<PlayerProfileLight, Long> lb) {
+        cacheTimedLeaderboard.put(huntId, lb);
+    }
+
+    @Override
+    public void clearCachedTimedLeaderboard(String huntId) {
+        cacheTimedLeaderboard.remove(huntId);
+    }
+
+    // --- Hunt-specific cache: best time ---
+
+    @Override
+    public Long getCachedBestTime(UUID playerUuid, String huntId) {
+        return cacheBestTime.get(huntId + ":" + playerUuid.toString());
+    }
+
+    @Override
+    public void setCachedBestTime(UUID playerUuid, String huntId, Long timeMs) {
+        cacheBestTime.put(huntId + ":" + playerUuid.toString(), timeMs);
+    }
+
+    @Override
+    public void clearCachedBestTime(UUID playerUuid, String huntId) {
+        cacheBestTime.remove(huntId + ":" + playerUuid.toString());
+    }
+
+    // --- Hunt-specific cache: run count ---
+
+    @Override
+    public Integer getCachedTimedRunCount(UUID playerUuid, String huntId) {
+        return cacheTimedRunCount.get(huntId + ":" + playerUuid.toString());
+    }
+
+    @Override
+    public void setCachedTimedRunCount(UUID playerUuid, String huntId, int count) {
+        cacheTimedRunCount.put(huntId + ":" + playerUuid.toString(), count);
+    }
+
+    @Override
+    public void clearCachedTimedRunCount(UUID playerUuid, String huntId) {
+        cacheTimedRunCount.remove(huntId + ":" + playerUuid.toString());
     }
 
     @Override

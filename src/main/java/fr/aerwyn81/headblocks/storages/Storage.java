@@ -51,6 +51,49 @@ public interface Storage {
 
     void removeCachedHead(UUID headUuid) throws InternalException;
 
+    // --- Hunt-specific cache: player heads per hunt ---
+    Set<UUID> getCachedPlayerHeadsForHunt(UUID playerUuid, String huntId) throws InternalException;
+
+    void setCachedPlayerHeadsForHunt(UUID playerUuid, String huntId, Set<UUID> heads) throws InternalException;
+
+    void addCachedPlayerHeadForHunt(UUID playerUuid, String huntId, UUID headUuid) throws InternalException;
+
+    void removeCachedPlayerHeadsForHunt(UUID playerUuid, String huntId) throws InternalException;
+
+    void clearCachedPlayerHeadsForHunt(String huntId) throws InternalException;
+
+    void clearAllCachedHuntDataForPlayer(UUID playerUuid) throws InternalException;
+
+    // --- Hunt-specific cache: top players per hunt ---
+    LinkedHashMap<PlayerProfileLight, Integer> getCachedTopPlayersForHunt(String huntId) throws InternalException;
+
+    void setCachedTopPlayersForHunt(String huntId, LinkedHashMap<PlayerProfileLight, Integer> topPlayers) throws InternalException;
+
+    void clearCachedTopPlayersForHunt(String huntId) throws InternalException;
+
+    void clearAllCachedTopPlayersForHunt() throws InternalException;
+
+    // --- Hunt-specific cache: timed leaderboard ---
+    LinkedHashMap<PlayerProfileLight, Long> getCachedTimedLeaderboard(String huntId) throws InternalException;
+
+    void setCachedTimedLeaderboard(String huntId, LinkedHashMap<PlayerProfileLight, Long> lb) throws InternalException;
+
+    void clearCachedTimedLeaderboard(String huntId) throws InternalException;
+
+    // --- Hunt-specific cache: best time (sentinel -1L = "no run, but cached") ---
+    Long getCachedBestTime(UUID playerUuid, String huntId) throws InternalException;
+
+    void setCachedBestTime(UUID playerUuid, String huntId, Long timeMs) throws InternalException;
+
+    void clearCachedBestTime(UUID playerUuid, String huntId) throws InternalException;
+
+    // --- Hunt-specific cache: run count ---
+    Integer getCachedTimedRunCount(UUID playerUuid, String huntId) throws InternalException;
+
+    void setCachedTimedRunCount(UUID playerUuid, String huntId, int count) throws InternalException;
+
+    void clearCachedTimedRunCount(UUID playerUuid, String huntId) throws InternalException;
+
     // Hunt sync version (cross-server)
     long getHuntVersion() throws InternalException;
 
