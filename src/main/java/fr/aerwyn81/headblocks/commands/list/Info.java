@@ -1,12 +1,10 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.HuntService;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -22,38 +20,44 @@ import java.util.ArrayList;
 
 @HBAnnotations(command = "info", permission = "headblocks.admin", isPlayerCommand = true, alias = "i")
 public class Info implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Info(ServiceRegistry registry) {
+        this.registry = registry;
+    }
+
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         var player = (Player) sender;
 
         Location targetLoc = player.getTargetBlock(null, 100).getLocation();
 
-        HeadLocation headLocation = HeadService.getHeadAt(targetLoc);
+        HeadLocation headLocation = registry.getHeadService().getHeadAt(targetLoc);
 
         if (headLocation == null) {
-            player.sendMessage(LanguageService.getMessage("Messages.NoTargetHeadBlock"));
+            player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
             return true;
         }
 
         player.sendMessage(MessageUtils.colorize("&7----------- [ &e&oTarget head information &7]-----------"));
         player.sendMessage("");
 
-        TextComponent msgName = new TextComponent(LanguageService.getMessage("Chat.Info.Name") + headLocation.getNameOrUnnamed());
-        msgName.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Info.HoverCopyName"))));
+        TextComponent msgName = new TextComponent(registry.getLanguageService().message("Chat.Info.Name") + headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed")));
+        msgName.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Info.HoverCopyName"))));
         msgName.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, headLocation.getName()));
         player.spigot().sendMessage(msgName);
 
-        TextComponent msgUuid = new TextComponent(LanguageService.getMessage("Chat.Info.Uuid") + headLocation.getUuid());
-        msgUuid.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Info.HoverCopyUuid"))));
+        TextComponent msgUuid = new TextComponent(registry.getLanguageService().message("Chat.Info.Uuid") + headLocation.getUuid());
+        msgUuid.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Info.HoverCopyUuid"))));
         msgUuid.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, headLocation.getUuid().toString()));
         player.spigot().sendMessage(msgUuid);
 
-        var hunts = HuntService.getHuntsForHead(headLocation.getUuid());
+        var hunts = registry.getHuntService().getHuntsForHead(headLocation.getUuid());
         String huntNames = hunts.isEmpty() ? "none" : hunts.stream().map(Hunt::getId).collect(java.util.stream.Collectors.joining(", "));
-        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.Hunt") + huntNames));
+        player.spigot().sendMessage(new TextComponent(registry.getLanguageService().message("Chat.Info.Hunt") + huntNames));
 
-        TextComponent msgLoc = new TextComponent(LanguageService.getMessage("Chat.Info.Location") + LocationUtils.toFormattedString(headLocation.getLocation()));
-        msgLoc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Info.HoverLocationTp"))));
+        TextComponent msgLoc = new TextComponent(registry.getLanguageService().message("Chat.Info.Location") + LocationUtils.toFormattedString(headLocation.getLocation()));
+        msgLoc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Info.HoverLocationTp"))));
 
         var world = headLocation.getLocation().getWorld();
         if (world != null) {
@@ -64,18 +68,18 @@ public class Info implements Cmd {
 
         player.spigot().sendMessage(msgLoc);
 
-        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.Loaded") + headLocation.isCharged()));
-        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.OrderIndex") + headLocation.getDisplayedOrderIndex()));
+        player.spigot().sendMessage(new TextComponent(registry.getLanguageService().message("Chat.Info.Loaded") + headLocation.isCharged()));
+        player.spigot().sendMessage(new TextComponent(registry.getLanguageService().message("Chat.Info.OrderIndex") + headLocation.getDisplayedOrderIndex(registry.getLanguageService().message("Gui.NoOrder"))));
 
         player.sendMessage("");
-        player.sendMessage(LanguageService.getMessage("Chat.Info.HintsTitle"));
-        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.HintSound") + headLocation.isHintSoundEnabled()));
-        player.spigot().sendMessage(new TextComponent(LanguageService.getMessage("Chat.Info.HintActionBar") + headLocation.isHintActionBarEnabled()));
+        player.sendMessage(registry.getLanguageService().message("Chat.Info.HintsTitle"));
+        player.spigot().sendMessage(new TextComponent(registry.getLanguageService().message("Chat.Info.HintSound") + headLocation.isHintSoundEnabled()));
+        player.spigot().sendMessage(new TextComponent(registry.getLanguageService().message("Chat.Info.HintActionBar") + headLocation.isHintActionBarEnabled()));
 
         var rewards = headLocation.getRewards();
         if (!rewards.isEmpty()) {
             player.sendMessage("");
-            var msgRewards = new TextComponent(LanguageService.getMessage("Chat.Info.RewardsTitle") + "(" + rewards.size() + ") " + LanguageService.getMessage("Chat.Info.HoverForMore"));
+            var msgRewards = new TextComponent(registry.getLanguageService().message("Chat.Info.RewardsTitle") + "(" + rewards.size() + ") " + registry.getLanguageService().message("Chat.Info.HoverForMore"));
 
             var hoverText = new StringBuilder();
             for (int i = 0; i < rewards.size(); i++) {

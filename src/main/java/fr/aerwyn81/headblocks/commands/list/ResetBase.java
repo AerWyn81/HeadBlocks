@@ -1,14 +1,18 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
 public abstract class ResetBase implements Cmd {
+    protected final ServiceRegistry registry;
+
+    protected ResetBase(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     protected UUID resolveHeadFromArgs(Player player, String[] args, int startIndex) {
         for (int i = startIndex; i < args.length; i++) {
@@ -16,9 +20,9 @@ public abstract class ResetBase implements Cmd {
                 if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
                     final var headIdentifier = args[i + 1];
 
-                    var head = HeadService.resolveHeadIdentifier(headIdentifier);
+                    var head = registry.getHeadService().resolveHeadIdentifier(headIdentifier);
                     if (head == null) {
-                        player.sendMessage(LanguageService.getMessage("Messages.HeadNameNotFound")
+                        player.sendMessage(registry.getLanguageService().message("Messages.HeadNameNotFound")
                                 .replaceAll("%headName%", headIdentifier));
                         return null;
                     }
@@ -44,10 +48,10 @@ public abstract class ResetBase implements Cmd {
 
     private UUID resolveTargetedHead(Player player) {
         var targetLoc = player.getTargetBlock(null, 100).getLocation();
-        var headLocation = HeadService.getHeadAt(targetLoc);
+        var headLocation = registry.getHeadService().getHeadAt(targetLoc);
 
         if (headLocation == null) {
-            player.sendMessage(LanguageService.getMessage("Messages.NoTargetHeadBlock"));
+            player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
             return null;
         }
 
@@ -55,7 +59,7 @@ public abstract class ResetBase implements Cmd {
     }
 
     protected String getHeadDisplayName(UUID headUuid) {
-        HeadLocation headLocation = HeadService.getHeadByUUID(headUuid);
-        return headLocation != null ? headLocation.getNameOrUnnamed() : headUuid.toString();
+        HeadLocation headLocation = registry.getHeadService().getHeadByUUID(headUuid);
+        return headLocation != null ? headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed")) : headUuid.toString();
     }
 }

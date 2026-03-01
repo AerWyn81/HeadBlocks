@@ -1,9 +1,9 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.commands.HBCommand;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -16,9 +16,11 @@ import java.util.ArrayList;
 
 @HBAnnotations(command = "help", permission = "headblocks.use", alias = "h")
 public class Help implements Cmd {
+    private final ServiceRegistry registry;
     private final ArrayList<HBCommand> registeredCommands;
 
-    public Help() {
+    public Help(ServiceRegistry registry) {
+        this.registry = registry;
         this.registeredCommands = new ArrayList<>();
     }
 
@@ -26,11 +28,11 @@ public class Help implements Cmd {
     public boolean perform(CommandSender sender, String[] args) {
         var commands = new ArrayList<>(registeredCommands).stream().filter(c -> PlayerUtils.hasPermission(sender, c.getPermission())).toList();
 
-        ChatPageUtils cpu = new ChatPageUtils(sender)
+        ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService())
                 .entriesCount(commands.size())
                 .currentPage(args);
 
-        String message = LanguageService.getMessage("Chat.LineTitle");
+        String message = registry.getLanguageService().message("Chat.LineTitle");
         if (sender instanceof Player) {
             TextComponent titleComponent = new TextComponent(message);
             cpu.addTitleLine(titleComponent);
@@ -42,10 +44,10 @@ public class Help implements Cmd {
             String command = StringUtils.capitalize(commands.get(i).getCommand())
                     .replaceAll("all", "All");
 
-            if (!LanguageService.hasMessage("Help." + command)) {
+            if (!registry.getLanguageService().containsMessage("Help." + command)) {
                 sender.sendMessage(MessageUtils.colorize("&6/headblocks " + commands.get(i).getCommand() + " &8: &c&oNo help message found. Please report to developer!"));
             } else {
-                message = LanguageService.getMessage("Help." + command);
+                message = registry.getLanguageService().message("Help." + command);
                 if (sender instanceof Player) {
                     cpu.addLine(new TextComponent(message));
                 } else {

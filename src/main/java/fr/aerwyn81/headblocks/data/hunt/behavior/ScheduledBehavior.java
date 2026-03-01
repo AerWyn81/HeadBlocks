@@ -1,8 +1,8 @@
 package fr.aerwyn81.headblocks.data.hunt.behavior;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
-public record ScheduledBehavior(LocalDate start, LocalDate end) implements Behavior {
+public record ScheduledBehavior(ServiceRegistry registry, LocalDate start, LocalDate end) implements Behavior {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
     @Override
@@ -24,11 +24,11 @@ public record ScheduledBehavior(LocalDate start, LocalDate end) implements Behav
         LocalDate now = LocalDate.now();
 
         if (start != null && now.isBefore(start)) {
-            return BehaviorResult.deny(LanguageService.getMessage("Hunt.Behavior.ScheduledNotStarted"));
+            return BehaviorResult.deny(registry.getLanguageService().message("Hunt.Behavior.ScheduledNotStarted"));
         }
 
         if (end != null && now.isAfter(end)) {
-            return BehaviorResult.deny(LanguageService.getMessage("Hunt.Behavior.ScheduledEnded"));
+            return BehaviorResult.deny(registry.getLanguageService().message("Hunt.Behavior.ScheduledEnded"));
         }
 
         return BehaviorResult.allow();
@@ -46,7 +46,7 @@ public record ScheduledBehavior(LocalDate start, LocalDate end) implements Behav
         return startStr + " → " + endStr;
     }
 
-    public static ScheduledBehavior fromConfig(ConfigurationSection section) {
+    public static ScheduledBehavior fromConfig(ServiceRegistry registry, ConfigurationSection section) {
         LocalDate start = null;
         LocalDate end = null;
 
@@ -71,6 +71,6 @@ public record ScheduledBehavior(LocalDate start, LocalDate end) implements Behav
             }
         }
 
-        return new ScheduledBehavior(start, end);
+        return new ScheduledBehavior(registry, start, end);
     }
 }

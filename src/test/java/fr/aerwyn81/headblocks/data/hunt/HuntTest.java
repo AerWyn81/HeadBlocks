@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.BehaviorResult;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.services.ConfigService;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,9 +28,12 @@ class HuntTest {
     @Mock
     HeadLocation headLocation;
 
+    @Mock
+    ConfigService configService;
+
     @Test
     void constructor_hasFreeBehaviorByDefault() {
-        Hunt hunt = new Hunt("test", "Test Hunt", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test Hunt", HuntState.ACTIVE, 1, "DIAMOND");
 
         assertThat(hunt.getBehaviors()).hasSize(1);
         assertThat(hunt.getBehaviors().get(0)).isInstanceOf(FreeBehavior.class);
@@ -37,7 +41,7 @@ class HuntTest {
 
     @Test
     void constructor_headsAreEmpty() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
 
         assertThat(hunt.getHeadCount()).isZero();
         assertThat(hunt.getHeadUUIDs()).isEmpty();
@@ -45,44 +49,44 @@ class HuntTest {
 
     @Test
     void constructor_stateIsCorrect() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.INACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.INACTIVE, 1, "DIAMOND");
 
         assertThat(hunt.getState()).isEqualTo(HuntState.INACTIVE);
     }
 
     @Test
     void isActive_trueForACTIVE() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         assertThat(hunt.isActive()).isTrue();
     }
 
     @Test
     void isActive_falseForINACTIVE() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.INACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.INACTIVE, 1, "DIAMOND");
         assertThat(hunt.isActive()).isFalse();
     }
 
     @Test
     void isActive_falseForARCHIVED() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ARCHIVED, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ARCHIVED, 1, "DIAMOND");
         assertThat(hunt.isActive()).isFalse();
     }
 
     @Test
     void isDefault_trueForDefaultId() {
-        Hunt hunt = new Hunt("default", "Default", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "default", "Default", HuntState.ACTIVE, 1, "DIAMOND");
         assertThat(hunt.isDefault()).isTrue();
     }
 
     @Test
     void isDefault_falseForOtherId() {
-        Hunt hunt = new Hunt("custom", "Custom", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "custom", "Custom", HuntState.ACTIVE, 1, "DIAMOND");
         assertThat(hunt.isDefault()).isFalse();
     }
 
     @Test
     void headManagement_addContainsRemoveClearCount() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         UUID h1 = UUID.randomUUID();
         UUID h2 = UUID.randomUUID();
 
@@ -102,7 +106,7 @@ class HuntTest {
 
     @Test
     void getHeadUUIDs_returnsUnmodifiableSet() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         hunt.addHead(UUID.randomUUID());
 
         assertThatThrownBy(() -> hunt.getHeadUUIDs().add(UUID.randomUUID()))
@@ -111,7 +115,7 @@ class HuntTest {
 
     @Test
     void setBehaviors_null_resetsToFreeBehavior() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         hunt.setBehaviors(null);
 
         assertThat(hunt.getBehaviors()).hasSize(1);
@@ -120,7 +124,7 @@ class HuntTest {
 
     @Test
     void setBehaviors_emptyList_resetsToFreeBehavior() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         hunt.setBehaviors(Collections.emptyList());
 
         assertThat(hunt.getBehaviors()).hasSize(1);
@@ -129,7 +133,7 @@ class HuntTest {
 
     @Test
     void evaluateBehaviors_allAllow_returnsAllow() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
 
         Behavior b1 = mock(Behavior.class);
         Behavior b2 = mock(Behavior.class);
@@ -144,7 +148,7 @@ class HuntTest {
 
     @Test
     void evaluateBehaviors_firstDeny_returnsDenyAndSkipsSecond() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
 
         Behavior b1 = mock(Behavior.class);
         Behavior b2 = mock(Behavior.class);
@@ -160,7 +164,7 @@ class HuntTest {
 
     @Test
     void evaluateBehaviors_firstAllowSecondDeny_returnsDeny() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
 
         Behavior b1 = mock(Behavior.class);
         Behavior b2 = mock(Behavior.class);
@@ -176,7 +180,7 @@ class HuntTest {
 
     @Test
     void notifyHeadFound_callsOnHeadFoundOnAllBehaviors() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
 
         Behavior b1 = mock(Behavior.class);
         Behavior b2 = mock(Behavior.class);
@@ -190,7 +194,7 @@ class HuntTest {
 
     @Test
     void setConfig_null_createsDefaultHuntConfig() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         hunt.setConfig(null);
 
         assertThat(hunt.getConfig()).isNotNull();
@@ -198,23 +202,23 @@ class HuntTest {
 
     @Test
     void equals_sameId_areEqual() {
-        Hunt h1 = new Hunt("abc", "Hunt A", HuntState.ACTIVE, 1, "D");
-        Hunt h2 = new Hunt("abc", "Hunt B", HuntState.INACTIVE, 2, "G");
+        Hunt h1 = new Hunt(configService, "abc", "Hunt A", HuntState.ACTIVE, 1, "D");
+        Hunt h2 = new Hunt(configService, "abc", "Hunt B", HuntState.INACTIVE, 2, "G");
 
         assertThat(h1).isEqualTo(h2);
     }
 
     @Test
     void equals_differentId_areNotEqual() {
-        Hunt h1 = new Hunt("abc", "Hunt", HuntState.ACTIVE, 1, "D");
-        Hunt h2 = new Hunt("xyz", "Hunt", HuntState.ACTIVE, 1, "D");
+        Hunt h1 = new Hunt(configService, "abc", "Hunt", HuntState.ACTIVE, 1, "D");
+        Hunt h2 = new Hunt(configService, "xyz", "Hunt", HuntState.ACTIVE, 1, "D");
 
         assertThat(h1).isNotEqualTo(h2);
     }
 
     @Test
     void addHead_duplicateUUID_isIdempotent() {
-        Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        Hunt hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         UUID head = UUID.randomUUID();
 
         hunt.addHead(head);
@@ -225,8 +229,8 @@ class HuntTest {
 
     @Test
     void hashCode_sameId_sameHash() {
-        Hunt h1 = new Hunt("abc", "A", HuntState.ACTIVE, 1, "D");
-        Hunt h2 = new Hunt("abc", "B", HuntState.INACTIVE, 2, "G");
+        Hunt h1 = new Hunt(configService, "abc", "A", HuntState.ACTIVE, 1, "D");
+        Hunt h2 = new Hunt(configService, "abc", "B", HuntState.INACTIVE, 2, "G");
 
         assertThat(h1.hashCode()).isEqualTo(h2.hashCode());
     }

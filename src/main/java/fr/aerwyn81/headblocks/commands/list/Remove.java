@@ -1,11 +1,9 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.services.ConfigService;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -19,11 +17,16 @@ import java.util.UUID;
 
 @HBAnnotations(command = "remove", permission = "headblocks.admin")
 public class Remove implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Remove(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         if (args.length > 2) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
             return true;
         }
 
@@ -31,29 +34,29 @@ public class Remove implements Cmd {
 
         if (args.length == 1) {
             if (sender instanceof ConsoleCommandSender) {
-                sender.sendMessage(LanguageService.getMessage("Messages.PlayerOnly"));
+                sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
                 return true;
             }
 
             Player player = (Player) sender;
 
-            var targetHead = HeadService.getHeadAt(player.getTargetBlock(null, 25).getLocation());
+            var targetHead = registry.getHeadService().getHeadAt(player.getTargetBlock(null, 25).getLocation());
 
             if (targetHead == null) {
-                player.sendMessage(LanguageService.getMessage("Messages.TargetBlockNotHead"));
+                player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockNotHead"));
                 return true;
             }
 
             head = targetHead;
         } else {
             try {
-                head = HeadService.getHeadByUUID(UUID.fromString(args[1]));
+                head = registry.getHeadService().getHeadByUUID(UUID.fromString(args[1]));
             } catch (Exception ex) {
-                head = HeadService.getHeadByName(args[1]);
+                head = registry.getHeadService().getHeadByName(args[1]);
             }
 
             if (head == null) {
-                sender.sendMessage(LanguageService.getMessage("Messages.RemoveLocationError"));
+                sender.sendMessage(registry.getLanguageService().message("Messages.RemoveLocationError"));
                 return true;
             }
         }
@@ -61,20 +64,20 @@ public class Remove implements Cmd {
         Location loc = head.getLocation();
 
         try {
-            HeadService.removeHeadLocation(head, ConfigService.shouldResetPlayerData());
+            registry.getHeadService().removeHeadLocation(head, registry.getConfigService().resetPlayerData());
         } catch (InternalException ex) {
-            sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while removing the head \"{0}\" at {1} from storage: {2}", head.getNameOrUuid(), loc.toString(), ex.getMessage());
             return true;
         }
 
-        sender.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadRemoved"), loc));
+        sender.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadRemoved"), loc));
         return true;
     }
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 ? new ArrayList<>(HeadService.getHeadRawNameOrUuid()
+        return args.length == 2 ? new ArrayList<>(registry.getHeadService().getHeadRawNameOrUuid()
                 .stream().filter(s -> s.startsWith(args[1])).toList()) : new ArrayList<>();
     }
 }

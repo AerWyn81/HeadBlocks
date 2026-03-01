@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.services.GuiService;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
@@ -11,6 +11,12 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 
 public class OnPlayerClickInventoryEvent implements Listener {
+
+    private final ServiceRegistry registry;
+
+    public OnPlayerClickInventoryEvent(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -35,7 +41,7 @@ public class OnPlayerClickInventoryEvent implements Listener {
             }
 
             if (paginationButton == null) {
-                paginationButton = GuiService.getDefaultPaginationButtonBuilder(buttonType, clickedGui);
+                paginationButton = registry.getGuiService().getDefaultPaginationButtonBuilder(buttonType, clickedGui);
             }
 
             if (paginationButton != null && paginationButton.getOnClickEvent() != null) {

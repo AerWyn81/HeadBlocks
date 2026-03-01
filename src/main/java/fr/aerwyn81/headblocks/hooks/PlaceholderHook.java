@@ -1,11 +1,8 @@
 package fr.aerwyn81.headblocks.hooks;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
-import fr.aerwyn81.headblocks.services.ConfigService;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.HuntService;
-import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -18,6 +15,12 @@ import java.util.Comparator;
 import java.util.UUID;
 
 public class PlaceholderHook extends PlaceholderExpansion {
+
+    private final ServiceRegistry registry;
+
+    public PlaceholderHook(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean canRegister() {
@@ -61,11 +64,11 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         // %headblocks_current% | %headblocks_left%
         if (identifier.equals("current") || identifier.equals("left")) {
-            if (HuntService.isMultiHunt()) {
+            if (registry.getHuntService().isMultiHunt()) {
                 return "Use %headblocks_hunt_<id>_found%";
             }
 
-            var future = StorageService.getHeadsPlayer(player.getUniqueId()).asFuture();
+            var future = registry.getStorageService().getHeadsPlayer(player.getUniqueId()).asFuture();
 
             try {
                 var current = future.get().size();
@@ -73,7 +76,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 if (identifier.equals("current")) {
                     return "" + current;
                 } else {
-                    return "" + (StorageService.getHeads().size() - current);
+                    return "" + (registry.getStorageService().getHeads().size() - current);
                 }
             } catch (Exception ex) {
                 return "Future error get heads";
@@ -85,7 +88,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         if (identifier.contains("leaderboard")) {
             var str = identifier.split("_");
             try {
-                var top = new ArrayList<>(StorageService.getTopPlayers().entrySet());
+                var top = new ArrayList<>(registry.getStorageService().getTopPlayers().entrySet());
 
                 var positionParam = str[str.length - (str.length == 2 ? 1 : 2)];
 
@@ -97,8 +100,9 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
                     var playerPosition = top.indexOf(findPlayerPos);
 
-                    if (playerPosition == -1)
+                    if (playerPosition == -1) {
                         return "-";
+                    }
 
                     return String.valueOf(playerPosition + 1);
                 }
@@ -139,7 +143,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // %headblocks_max%
         if (identifier.equals("max")) {
             try {
-                return "" + StorageService.getHeads().size();
+                return "" + registry.getStorageService().getHeads().size();
             } catch (InternalException e) {
                 return "";
             }
@@ -151,7 +155,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
             try {
                 var hUUID = UUID.fromString(str[str.length - 1]);
-                return String.valueOf(StorageService.hasHead(player.getUniqueId(), hUUID));
+                return String.valueOf(registry.getStorageService().hasHead(player.getUniqueId(), hUUID));
             } catch (Exception ignored) {
             }
 
@@ -159,13 +163,13 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 var name = identifier.replace("hasHead_", "");
                 name = name.replaceAll("_", " ").trim();
 
-                var head = HeadService.getHeadByName(name);
+                var head = registry.getHeadService().getHeadByName(name);
 
                 if (head == null) {
                     return "Unknown head " + name;
                 }
 
-                return String.valueOf(StorageService.hasHead(player.getUniqueId(), head.getUuid()));
+                return String.valueOf(registry.getStorageService().hasHead(player.getUniqueId(), head.getUuid()));
             } catch (Exception ignored) {
             }
         }
@@ -180,7 +184,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
             String huntId = parts[1].toLowerCase();
             String subType = parts[2];
 
-            Hunt hunt = HuntService.getHuntById(huntId);
+            Hunt hunt = registry.getHuntService().getHuntById(huntId);
             if (hunt == null) {
                 return "";
             }
@@ -188,7 +192,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
             switch (subType) {
                 case "found" -> {
                     try {
-                        return String.valueOf(StorageService.getHeadsPlayerForHunt(player.getUniqueId(), huntId).size());
+                        return String.valueOf(registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size());
                     } catch (InternalException e) {
                         return "0";
                     }
@@ -198,7 +202,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 }
                 case "left" -> {
                     try {
-                        int found = StorageService.getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
+                        int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
                         return String.valueOf(hunt.getHeadCount() - found);
                     } catch (InternalException e) {
                         return String.valueOf(hunt.getHeadCount());
@@ -206,13 +210,13 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 }
                 case "progress" -> {
                     try {
-                        int found = StorageService.getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
+                        int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
                         int total = hunt.getHeadCount();
                         return MessageUtils.createProgressBar(found, total,
-                                ConfigService.getProgressBarBars(),
-                                ConfigService.getProgressBarSymbol(),
-                                ConfigService.getProgressBarCompletedColor(),
-                                ConfigService.getProgressBarNotCompletedColor());
+                                registry.getConfigService().progressBarBars(),
+                                registry.getConfigService().progressBarSymbol(),
+                                registry.getConfigService().progressBarCompletedColor(),
+                                registry.getConfigService().progressBarNotCompletedColor());
                     } catch (InternalException e) {
                         return "";
                     }
@@ -221,11 +225,11 @@ public class PlaceholderHook extends PlaceholderExpansion {
                     return hunt.getDisplayName();
                 }
                 case "state" -> {
-                    return hunt.getState().getLocalizedName();
+                    return hunt.getState().getLocalizedName(registry.getLanguageService());
                 }
                 case "besttime" -> {
                     try {
-                        Long best = StorageService.getBestTime(player.getUniqueId(), huntId);
+                        Long best = registry.getStorageService().getBestTime(player.getUniqueId(), huntId);
                         if (best == null) {
                             return "-";
                         }
@@ -236,14 +240,14 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 }
                 case "timedcount" -> {
                     try {
-                        return String.valueOf(StorageService.getTimedRunCount(player.getUniqueId(), huntId));
+                        return String.valueOf(registry.getStorageService().getTimedRunCount(player.getUniqueId(), huntId));
                     } catch (InternalException e) {
                         return "0";
                     }
                 }
                 case "timeposition" -> {
                     try {
-                        var leaderboard = new ArrayList<>(StorageService.getTimedLeaderboard(huntId, 50).entrySet());
+                        var leaderboard = new ArrayList<>(registry.getStorageService().getTimedLeaderboard(huntId, 50).entrySet());
                         for (int i = 0; i < leaderboard.size(); i++) {
                             if (leaderboard.get(i).getKey().uuid().equals(player.getUniqueId())) {
                                 return String.valueOf(i + 1);
@@ -266,7 +270,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                             int pos = Integer.parseInt(ttParts[1]);
                             String field = ttParts[2];
 
-                            var leaderboard = new ArrayList<>(StorageService.getTimedLeaderboard(huntId, pos).entrySet());
+                            var leaderboard = new ArrayList<>(registry.getStorageService().getTimedLeaderboard(huntId, pos).entrySet());
                             if (pos < 1 || pos > leaderboard.size()) {
                                 return "-";
                             }
@@ -291,26 +295,28 @@ public class PlaceholderHook extends PlaceholderExpansion {
         if (identifier.contains("order")) {
             var str = identifier.split("_");
 
-            if (str.length != 2)
+            if (str.length != 2) {
                 return "Placeholder not found!";
+            }
 
             var subIdentifier = str[1];
 
-            var heads = new ArrayList<>(HeadService.getChargedHeadLocations());
+            var heads = new ArrayList<>(registry.getHeadService().getChargedHeadLocations());
             heads.sort(Comparator.comparingInt(HeadLocation::getOrderIndex));
 
             if (heads.isEmpty()) {
                 return "No loaded heads";
             }
 
-            var future = StorageService.getHeadsPlayer(player.getUniqueId()).asFuture();
+            var future = registry.getStorageService().getHeadsPlayer(player.getUniqueId()).asFuture();
 
             try {
                 var playerHeadLocations = new ArrayList<HeadLocation>();
                 for (var headLocation : heads) {
                     var optHead = future.get().stream().filter(uuid -> uuid.equals(headLocation.getUuid())).findFirst();
-                    if (optHead.isPresent())
+                    if (optHead.isPresent()) {
                         playerHeadLocations.add(headLocation);
+                    }
                 }
 
                 switch (subIdentifier) {

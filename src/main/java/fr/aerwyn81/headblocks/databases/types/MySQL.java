@@ -24,16 +24,18 @@ public final class MySQL implements Database {
     private final int port;
     private final String databaseName;
     private final boolean isSsl;
+    private final ConfigService configService;
 
     private HikariDataSource dataSource;
 
-    public MySQL(String user, String password, String hostname, int port, String databaseName, boolean isSsl) {
+    public MySQL(String user, String password, String hostname, int port, String databaseName, boolean isSsl, ConfigService configService) {
         this.user = user;
         this.password = password;
         this.hostname = hostname;
         this.port = port;
         this.databaseName = databaseName;
         this.isSsl = isSsl;
+        this.configService = configService;
     }
 
     /**
@@ -46,11 +48,11 @@ public final class MySQL implements Database {
             config.setJdbcUrl("jdbc:mysql://" + hostname + ":" + port + "/" + databaseName);
             config.setUsername(user);
             config.setPassword(password);
-            config.setMaximumPoolSize(ConfigService.getDatabaseMaxConnections());
-            config.setMinimumIdle(ConfigService.getDatabaseMinIdleConnections());
-            config.setConnectionTimeout(ConfigService.getDatabaseConnectionTimeout());
-            config.setIdleTimeout(ConfigService.getDatabaseIdleTimeout());
-            config.setMaxLifetime(ConfigService.getDatabaseMaxLifetime());
+            config.setMaximumPoolSize(configService.databaseMaxConnections());
+            config.setMinimumIdle(configService.databaseMinIdleConnections());
+            config.setConnectionTimeout(configService.databaseConnectionTimeout());
+            config.setIdleTimeout(configService.databaseIdleTimeout());
+            config.setMaxLifetime(configService.databaseMaxLifetime());
             config.setPoolName("HeadBlocks-MySQL");
             if (!isSsl) {
                 config.addDataSourceProperty("useSSL", "false");

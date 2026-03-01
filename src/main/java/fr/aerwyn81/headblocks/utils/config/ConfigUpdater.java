@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.utils.config;
 
 import com.google.common.base.Preconditions;
+import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -11,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * A class to update/add new sections/keys to your config while keeping your current values and keeping your comments
@@ -32,16 +34,24 @@ public class ConfigUpdater {
     }
 
     public static void update(Plugin plugin, String resourceName, File toUpdate, List<String> ignoredSections) throws IOException {
+        update(plugin::getResource, resourceName, toUpdate, ignoredSections);
+    }
+
+    public static void update(PluginProvider provider, String resourceName, File toUpdate, List<String> ignoredSections) throws IOException {
+        update(provider::getResource, resourceName, toUpdate, ignoredSections);
+    }
+
+    private static void update(Function<String, InputStream> resourceLoader, String resourceName, File toUpdate, List<String> ignoredSections) throws IOException {
         Preconditions.checkArgument(toUpdate.exists(), "The toUpdate file doesn't exist!");
 
-        var resource = plugin.getResource(resourceName);
+        var resource = resourceLoader.apply(resourceName);
 
         if (resource == null)
             return;
 
         FileConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(resource, StandardCharsets.UTF_8));
         FileConfiguration currentConfig = YamlConfiguration.loadConfiguration(toUpdate);
-        Map<String, String> comments = parseComments(plugin, resourceName, defaultConfig);
+        Map<String, String> comments = parseComments(resourceLoader, resourceName, defaultConfig);
         Map<String, String> ignoredSectionsValues = parseIgnoredSections(toUpdate, currentConfig, comments, ignoredSections == null ? Collections.emptyList() : ignoredSections);
 
         // will write updated config file "contents" to a string
@@ -115,11 +125,15 @@ public class ConfigUpdater {
 
     //Returns a map of key comment pairs. If a key doesn't have any comments it won't be included in the map.
     private static Map<String, String> parseComments(Plugin plugin, String resourceName, FileConfiguration defaultConfig) throws IOException {
+        return parseComments(plugin::getResource, resourceName, defaultConfig);
+    }
+
+    private static Map<String, String> parseComments(Function<String, InputStream> resourceLoader, String resourceName, FileConfiguration defaultConfig) throws IOException {
         Map<String, String> comments = new LinkedHashMap<>();
         StringBuilder commentBuilder = new StringBuilder();
         KeyBuilder keyBuilder = new KeyBuilder(defaultConfig, SEPARATOR);
 
-        var resource = plugin.getResource(resourceName);
+        var resource = resourceLoader.apply(resourceName);
 
         if (resource == null)
             return comments;

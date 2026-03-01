@@ -1,10 +1,8 @@
 package fr.aerwyn81.headblocks.data.reward;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
@@ -27,11 +25,13 @@ public record Reward(RewardType type, String value) {
 
             var map = (LinkedHashMap<?, ?>) object;
             for (var entry : map.entrySet()) {
-                if (entry.getKey().equals("type"))
+                if (entry.getKey().equals("type")) {
                     type = RewardType.valueOf(entry.getValue().toString().toUpperCase());
+                }
 
-                if (entry.getKey().equals("value"))
+                if (entry.getKey().equals("value")) {
                     value = entry.getValue().toString();
+                }
             }
 
             return new Reward(type, value);
@@ -41,25 +41,24 @@ public record Reward(RewardType type, String value) {
         }
     }
 
-    public void execute(Player player, HeadLocation headLocation) {
-        var plugin = HeadBlocks.getInstance();
-
+    public void execute(Player player, HeadLocation headLocation, ServiceRegistry registry) {
         var parsedValue = "";
         try {
-            parsedValue = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, value);
+            parsedValue = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), headLocation, value);
         } catch (Exception ex) {
             LogUtil.error("Error executing head reward \"{0}\": {1}", value, ex.getMessage());
         }
 
-        if (parsedValue.isEmpty())
+        if (parsedValue.isEmpty()) {
             return;
+        }
 
-        var value = parsedValue;
+        var val = parsedValue;
         switch (type) {
             case MESSAGE -> player.sendMessage(parsedValue);
-            case COMMAND -> Bukkit.getScheduler().runTaskLater(plugin, () ->
-                    plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), value), 1L);
-            case BROADCAST -> plugin.getServer().broadcastMessage(parsedValue);
+            case COMMAND -> registry.getScheduler().runTaskLater(() ->
+                    registry.getCommandDispatcher().dispatchConsoleCommand(val), 1L);
+            case BROADCAST -> registry.getPluginProvider().getJavaPlugin().getServer().broadcastMessage(parsedValue);
         }
     }
 }

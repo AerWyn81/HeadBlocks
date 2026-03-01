@@ -1,10 +1,10 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.internal.ExportSQLHelper;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
@@ -19,34 +19,39 @@ import java.util.stream.Stream;
 
 @HBAnnotations(command = "export", permission = "headblocks.admin", args = {"database"}, alias = "e")
 public class Export implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Export(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
             return true;
         }
 
         EnumTypeDatabase typeDatabase = EnumTypeDatabase.of(args[2]);
 
         if (typeDatabase == null) {
-            sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cThe SQL type &e" + args[2] + " &cis not supported!"));
+            sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cThe SQL type &e" + args[2] + " &cis not supported!"));
             return true;
         }
 
         String fileName = "export-" + new SimpleDateFormat("yyyyMMdd").format(new Date()) + ".sql";
 
-        sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportInProgress")));
+        sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportInProgress")));
 
         Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
             try {
-                ExportSQLHelper.generateFile(typeDatabase, fileName);
+                ExportSQLHelper.generateFile(registry, typeDatabase, fileName);
                 Thread.sleep(10000);
             } catch (Exception ex) {
-                sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportError") + ex.getMessage()));
+                sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportError") + ex.getMessage()));
             }
 
-            sender.sendMessage(MessageUtils.colorize(LanguageService.getMessage("Messages.ExportSuccess"))
+            sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportSuccess"))
                     .replaceAll("%fileName%", fileName));
         });
 

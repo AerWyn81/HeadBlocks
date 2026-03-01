@@ -1,11 +1,11 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -24,13 +24,18 @@ import java.util.stream.Stream;
 
 @HBAnnotations(command = "debug", permission = "headblocks.debug", isVisible = false)
 public class Debug implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Debug(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         switch (args[1]) {
             case "texture" -> {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.PlayerOnly"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
                     return true;
                 }
 
@@ -45,18 +50,18 @@ public class Debug implements Cmd {
                 }
 
                 if (!HeadUtils.isPlayerHead(blockView)) {
-                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cBlock is not a player head!"));
+                    sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cBlock is not a player head!"));
                     return true;
                 }
 
                 if (args.length < 3 || args[2].isEmpty()) {
-                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cTexture cannot be empty!"));
+                    sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cTexture cannot be empty!"));
                     return true;
                 }
 
-                var headLoc = HeadService.getHeadAt(blockLocation);
+                var headLoc = registry.getHeadService().getHeadAt(blockLocation);
                 if (headLoc == null) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.NoTargetHeadBlock"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
                     return true;
                 }
 
@@ -64,7 +69,7 @@ public class Debug implements Cmd {
 
                 if (applied) {
                     try {
-                        StorageService.createOrUpdateHead(headLoc.getUuid(), args[2]);
+                        registry.getStorageService().createOrUpdateHead(headLoc.getUuid(), args[2]);
                     } catch (InternalException e) {
                         LogUtil.error("Error with storage, head new texture not saved: {0}", e.getMessage());
                         applied = false;
@@ -72,9 +77,9 @@ public class Debug implements Cmd {
                 }
 
                 if (applied) {
-                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &aTexture applied!"));
+                    sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &aTexture applied!"));
                 } else {
-                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError trying to apply the texture, check logs."));
+                    sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cError trying to apply the texture, check logs."));
                 }
                 return true;
             }
@@ -90,9 +95,9 @@ public class Debug implements Cmd {
                         ArrayList<UUID> heads;
 
                         try {
-                            heads = StorageService.getHeads();
+                            heads = registry.getStorageService().getHeads();
                         } catch (InternalException e) {
-                            sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError when retrieving heads from storage: &e" + e.getMessage()));
+                            sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cError when retrieving heads from storage: &e" + e.getMessage()));
                             return;
                         }
 
@@ -100,23 +105,23 @@ public class Debug implements Cmd {
 
                         if (pName.equals("all")) {
                             try {
-                                var players = StorageService.getAllPlayers();
+                                var players = registry.getStorageService().getAllPlayers();
                                 players.forEach(uuid -> debugPlayers.add(new PlayerProfileLight(uuid)));
                             } catch (InternalException e) {
-                                sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError when retrieving players from storage: &e" + e.getMessage()));
+                                sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cError when retrieving players from storage: &e" + e.getMessage()));
                                 return;
                             }
                         } else {
                             try {
-                                var playerFound = StorageService.getPlayerByName(pName);
+                                var playerFound = registry.getStorageService().getPlayerByName(pName);
                                 if (playerFound == null) {
-                                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cPlayer &e" + pName + " &cnot found!"));
+                                    sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cPlayer &e" + pName + " &cnot found!"));
                                     return;
                                 }
 
                                 debugPlayers.add(playerFound);
                             } catch (InternalException e) {
-                                sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError when retrieving player &e" + pName + " &cfrom storage: &e" + e.getMessage()));
+                                sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cError when retrieving player &e" + pName + " &cfrom storage: &e" + e.getMessage()));
                                 return;
                             }
                         }
@@ -127,9 +132,9 @@ public class Debug implements Cmd {
                             for (var player : debugPlayers) {
                                 var toGive = new ArrayList<>(heads);
                                 try {
-                                    toGive.removeAll(StorageService.getHeadsPlayer(player.uuid()).asFuture().get());
+                                    toGive.removeAll(registry.getStorageService().getHeadsPlayer(player.uuid()).asFuture().get());
                                 } catch (Exception e) {
-                                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError when retrieving heads for player &e" + pName + "&c: &e" + e.getMessage()));
+                                    sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cError when retrieving heads for player &e" + pName + "&c: &e" + e.getMessage()));
                                     toGive.clear();
                                 }
                                 if (!toGive.isEmpty()) {
@@ -139,7 +144,7 @@ public class Debug implements Cmd {
 
                         } else if (type.equals("ordered") || type.equals("random")) {
                             if (args.length < 5) {
-                                sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cOrdered or random type require a number of players!"));
+                                sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cOrdered or random type require a number of players!"));
                                 return;
                             }
 
@@ -150,12 +155,12 @@ public class Debug implements Cmd {
                                     throw new NumberFormatException();
                                 }
                             } catch (NumberFormatException e) {
-                                sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cNumber &e" + args[4] + " &cis not a number!"));
+                                sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cNumber &e" + args[4] + " &cis not a number!"));
                                 return;
                             }
 
                             if (number > heads.size()) {
-                                sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cThere are not as many heads as provided!" + " &7&o(Provided: " + number + ", max: " + heads.size() + ")"));
+                                sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cThere are not as many heads as provided!" + " &7&o(Provided: " + number + ", max: " + heads.size() + ")"));
                                 return;
                             }
 
@@ -164,9 +169,9 @@ public class Debug implements Cmd {
                             if (type.equals("random")) {
                                 for (var player : debugPlayers) {
                                     try {
-                                        toGive.removeAll(StorageService.getHeadsPlayer(player.uuid()).asFuture().get());
+                                        toGive.removeAll(registry.getStorageService().getHeadsPlayer(player.uuid()).asFuture().get());
                                     } catch (Exception e) {
-                                        sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError when retrieving heads for player &e" + pName + "&c: &e" + e.getMessage()));
+                                        sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cError when retrieving heads for player &e" + pName + "&c: &e" + e.getMessage()));
                                         toGive.clear();
                                     }
 
@@ -179,9 +184,9 @@ public class Debug implements Cmd {
                             } else {
                                 for (var player : debugPlayers) {
                                     try {
-                                        toGive.removeAll(StorageService.getHeadsPlayer(player.uuid()).asFuture().get());
+                                        toGive.removeAll(registry.getStorageService().getHeadsPlayer(player.uuid()).asFuture().get());
                                     } catch (Exception e) {
-                                        sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cError when retrieving heads for player &e" + pName + "&c: &e" + e.getMessage()));
+                                        sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cError when retrieving heads for player &e" + pName + "&c: &e" + e.getMessage()));
                                         toGive.clear();
                                     }
 
@@ -211,7 +216,7 @@ public class Debug implements Cmd {
 
                             try {
                                 for (var entryHead : playerEntry.getValue()) {
-                                    StorageService.addHead(playerEntry.getKey(), entryHead);
+                                    registry.getStorageService().addHead(playerEntry.getKey(), entryHead);
                                 }
 
                                 LogUtil.info("> Gived!");
@@ -228,24 +233,24 @@ public class Debug implements Cmd {
 
                         var stopTime = System.currentTimeMillis();
 
-                        sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &aCommand performed in &e" + (stopTime - startTime) + "ms &a! Updated: &e" + count + "&a of &e" + debugPlayers.size() + " players&a."));
+                        sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &aCommand performed in &e" + (stopTime - startTime) + "ms &a! Updated: &e" + count + "&a of &e" + debugPlayers.size() + " players&a."));
                     });
                 } else {
-                    sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cInvalid arguments: give <all|player_name> <all|random|ordered> <numberOfHeads>"));
+                    sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cInvalid arguments: give <all|player_name> <all|random|ordered> <numberOfHeads>"));
                 }
 
                 return true;
             }
             case "holograms" -> {
-                HologramService.unload();
-                HologramService.load();
+                registry.getHologramService().unload();
+                registry.getHologramService().load();
 
-                sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &aHolograms reloaded!"));
+                sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &aHolograms reloaded!"));
                 return true;
             }
             case "resync" -> {
                 if (args.length < 3) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncUsage"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.ResyncUsage"));
                     return true;
                 }
 
@@ -260,53 +265,53 @@ public class Debug implements Cmd {
                         return true;
                     }
                     default -> {
-                        sender.sendMessage(LanguageService.getMessage("Messages.ResyncUnknownType"));
+                        sender.sendMessage(registry.getLanguageService().message("Messages.ResyncUnknownType"));
                         return true;
                     }
                 }
             }
         }
 
-        sender.sendMessage(MessageUtils.colorize(LanguageService.getPrefix() + " &cUnknown debug command!"));
+        sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cUnknown debug command!"));
         return true;
     }
 
     private boolean handleResyncDatabase(CommandSender sender, boolean force) {
         CompletableBukkitFuture.runAsync(HeadBlocks.getInstance(), () -> {
             try {
-                if (StorageService.hasStorageError()) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+                if (registry.getStorageService().isStorageError()) {
+                    sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
                     return;
                 }
 
                 // MySQL requires --force (user must backup manually)
-                if (ConfigService.isDatabaseEnabled() && !force) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncMySQLRequiresForce"));
+                if (registry.getConfigService().databaseEnabled() && !force) {
+                    sender.sendMessage(registry.getLanguageService().message("Messages.ResyncMySQLRequiresForce"));
                     return;
                 }
 
                 // Check for multi-server setup
-                var distinctServerIds = StorageService.getDistinctServerIds();
+                var distinctServerIds = registry.getStorageService().getDistinctServerIds();
 
                 if (distinctServerIds.size() > 1 && !force) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncMultiServerDetected"));
-                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncMultiServerCount")
+                    sender.sendMessage(registry.getLanguageService().message("Messages.ResyncMultiServerDetected"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.ResyncMultiServerCount")
                             .replaceAll("%count%", String.valueOf(distinctServerIds.size()))
                             .replaceAll("%serverIds%", String.join(", ", distinctServerIds)));
-                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncMultiServerWarningDb"));
-                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncOperationCancelled"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.ResyncMultiServerWarningDb"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.ResyncOperationCancelled"));
                     return;
                 }
 
-                var currentServerId = StorageService.getServerIdentifier();
+                var currentServerId = registry.getStorageService().getServerIdentifier();
                 if (!currentServerId.isEmpty()) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncCurrentServerId")
+                    sender.sendMessage(registry.getLanguageService().message("Messages.ResyncCurrentServerId")
                             .replaceAll("%serverId%", currentServerId));
                 }
 
                 // Get heads from database for current server
-                var dbHeads = StorageService.getHeadsByServerId();
-                var locationHeadUuids = HeadService.getHeadLocations().stream()
+                var dbHeads = registry.getStorageService().getHeadsByServerId();
+                var locationHeadUuids = registry.getHeadService().getHeadLocations().stream()
                         .map(HeadLocation::getUuid)
                         .collect(Collectors.toSet());
 
@@ -316,21 +321,21 @@ public class Debug implements Cmd {
                         .toList();
 
                 if (headsToRemove.isEmpty()) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseAlreadyInSync"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseAlreadyInSync"));
                     return;
                 }
 
-                sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseFoundHeads")
+                sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseFoundHeads")
                         .replaceAll("%count%", String.valueOf(headsToRemove.size())));
 
                 // Backup database before making changes (SQLite only, MySQL users already backed up manually)
-                if (!ConfigService.isDatabaseEnabled()) {
-                    var backupResult = StorageService.backupDatabase("save-resync-");
+                if (!registry.getConfigService().databaseEnabled()) {
+                    var backupResult = registry.getStorageService().backupDatabase("save-resync-");
                     if (backupResult != null) {
-                        sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseBackupSuccess")
+                        sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseBackupSuccess")
                                 .replaceAll("%fileName%", backupResult));
                     } else {
-                        sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseBackupError"));
+                        sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseBackupError"));
                         return;
                     }
                 }
@@ -338,7 +343,7 @@ public class Debug implements Cmd {
                 int removed = 0;
                 for (var headUuid : headsToRemove) {
                     try {
-                        StorageService.removeHead(headUuid, true);
+                        registry.getStorageService().removeHead(headUuid, true);
                         removed++;
                         LogUtil.info("Resync: Removed head {0} from database", headUuid);
                     } catch (InternalException e) {
@@ -346,11 +351,11 @@ public class Debug implements Cmd {
                     }
                 }
 
-                sender.sendMessage(LanguageService.getMessage("Messages.ResyncDatabaseSuccess")
+                sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseSuccess")
                         .replaceAll("%count%", String.valueOf(removed)));
 
             } catch (InternalException e) {
-                sender.sendMessage(LanguageService.getMessage("Messages.ResyncError")
+                sender.sendMessage(registry.getLanguageService().message("Messages.ResyncError")
                         .replaceAll("%error%", e.getMessage()));
                 LogUtil.error("Resync database error: {0}", e.getMessage());
             }
@@ -360,14 +365,14 @@ public class Debug implements Cmd {
     }
 
     private void handleResyncLocations(CommandSender sender) {
-        var headLocations = HeadService.getHeadLocations();
+        var headLocations = registry.getHeadService().getHeadLocations();
 
         if (headLocations.isEmpty()) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
             return;
         }
 
-        sender.sendMessage(LanguageService.getMessage("Messages.ResyncLocationsStarting")
+        sender.sendMessage(registry.getLanguageService().message("Messages.ResyncLocationsStarting")
                 .replaceAll("%count%", String.valueOf(headLocations.size())));
 
         // Run on main thread since we're modifying blocks
@@ -385,7 +390,7 @@ public class Debug implements Cmd {
                 }
 
                 try {
-                    var texture = StorageService.getHeadTexture(headLocation.getUuid());
+                    var texture = registry.getStorageService().getHeadTexture(headLocation.getUuid());
                     if (texture == null || texture.isEmpty()) {
                         LogUtil.warning("Resync locations: No texture found for head {0}", headLocation.getUuid());
                         failed++;
@@ -422,7 +427,7 @@ public class Debug implements Cmd {
                 }
             }
 
-            sender.sendMessage(LanguageService.getMessage("Messages.ResyncLocationsSuccess")
+            sender.sendMessage(registry.getLanguageService().message("Messages.ResyncLocationsSuccess")
                     .replaceAll("%restored%", String.valueOf(restored))
                     .replaceAll("%textureApplied%", String.valueOf(textureApplied))
                     .replaceAll("%skipped%", String.valueOf(skipped))
@@ -453,7 +458,7 @@ public class Debug implements Cmd {
                 var completion = new ArrayList<String>();
 
                 switch (args[1]) {
-                    case "texture" -> completion.addAll(ConfigService.getHeads().stream()
+                    case "texture" -> completion.addAll(registry.getConfigService().heads().stream()
                             .filter(s -> s.startsWith("default"))
                             .map(s -> s.replace("default:", "")).toList());
                     case "give" -> {

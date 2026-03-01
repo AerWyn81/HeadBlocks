@@ -1,11 +1,10 @@
 package fr.aerwyn81.headblocks.services.gui.types;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HuntCreateEvent;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.*;
-import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
@@ -20,8 +19,13 @@ import java.util.stream.IntStream;
 
 public class BehaviorSelectionGui {
 
+    private final ServiceRegistry registry;
     private final ConcurrentHashMap<UUID, Set<String>> selectedBehaviors = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> pendingHuntNames = new ConcurrentHashMap<>();
+
+    public BehaviorSelectionGui(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     public void open(Player player, String huntName) {
         pendingHuntNames.put(player.getUniqueId(), huntName);
@@ -31,8 +35,8 @@ public class BehaviorSelectionGui {
     }
 
     private void buildAndOpenGui(Player player) {
-        var menu = new HBMenu(HeadBlocks.getInstance(),
-                LanguageService.getMessage("Gui.BehaviorSelectionTitle"), false, 2);
+        var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
+                registry.getLanguageService().message("Gui.BehaviorSelectionTitle"), false, 2);
 
         // Borders
         int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 16, 17};
@@ -45,26 +49,26 @@ public class BehaviorSelectionGui {
 
         // Slot 11: Ordered
         menu.setItem(0, 11, createBehaviorItem("ordered",
-                LanguageService.getMessage("Gui.BehaviorOrderedName"),
-                LanguageService.getMessages("Gui.BehaviorOrderedLore"),
+                registry.getLanguageService().message("Gui.BehaviorOrderedName"),
+                registry.getLanguageService().messageList("Gui.BehaviorOrderedLore"),
                 selected.contains("ordered")));
 
         // Slot 12: Scheduled
         menu.setItem(0, 12, createBehaviorItem("scheduled",
-                LanguageService.getMessage("Gui.BehaviorScheduledName"),
-                LanguageService.getMessages("Gui.BehaviorScheduledLore"),
+                registry.getLanguageService().message("Gui.BehaviorScheduledName"),
+                registry.getLanguageService().messageList("Gui.BehaviorScheduledLore"),
                 selected.contains("scheduled")));
 
         // Slot 13: Timed
         menu.setItem(0, 13, createBehaviorItem("timed",
-                LanguageService.getMessage("Gui.BehaviorTimedName"),
-                LanguageService.getMessages("Gui.BehaviorTimedLore"),
+                registry.getLanguageService().message("Gui.BehaviorTimedName"),
+                registry.getLanguageService().messageList("Gui.BehaviorTimedLore"),
                 selected.contains("timed")));
 
         // Slot 15: Validate button
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
-                .setName(LanguageService.getMessage("Gui.ValidateCreate"))
-                .setLore(LanguageService.getMessages("Gui.ValidateCreateLore"))
+                .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
+                .setLore(registry.getLanguageService().messageList("Gui.ValidateCreateLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
 
@@ -74,8 +78,8 @@ public class BehaviorSelectionGui {
     private ItemGUI createBehaviorItem(String behaviorId, String name, List<String> lore, boolean isSelected) {
         Material material = isSelected ? Material.LIME_DYE : Material.GRAY_DYE;
         String statusLine = isSelected
-                ? LanguageService.getMessage("Gui.BehaviorEnabled")
-                : LanguageService.getMessage("Gui.BehaviorDisabled");
+                ? registry.getLanguageService().message("Gui.BehaviorEnabled")
+                : registry.getLanguageService().message("Gui.BehaviorDisabled");
 
         List<String> fullLore = new ArrayList<>(lore);
         fullLore.add("");
@@ -105,7 +109,7 @@ public class BehaviorSelectionGui {
         Set<String> selected = selectedBehaviors.get(player.getUniqueId());
 
         if (selected != null && selected.contains("timed")) {
-            GuiService.getTimedConfigManager().open(player);
+            registry.getGuiService().getTimedConfigManager().open(player);
             return;
         }
 
@@ -122,7 +126,7 @@ public class BehaviorSelectionGui {
         }
 
         String huntId = huntName.toLowerCase();
-        Hunt hunt = new Hunt(huntId, huntName, HuntState.ACTIVE, 1, "PLAYER_HEAD");
+        Hunt hunt = new Hunt(registry.getConfigService(), huntId, huntName, HuntState.ACTIVE, 1, "PLAYER_HEAD");
 
         // Build behaviors list
         List<Behavior> behaviors = new ArrayList<>();
@@ -131,9 +135,9 @@ public class BehaviorSelectionGui {
         if (selected != null) {
             for (String behaviorId : selected) {
                 switch (behaviorId) {
-                    case "ordered" -> behaviors.add(new OrderedBehavior());
-                    case "scheduled" -> behaviors.add(new ScheduledBehavior(null, null));
-                    case "timed" -> behaviors.add(new TimedBehavior(plateLocation, repeatable));
+                    case "ordered" -> behaviors.add(new OrderedBehavior(registry));
+                    case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, null, null));
+                    case "timed" -> behaviors.add(new TimedBehavior(registry, plateLocation, repeatable));
                 }
             }
         }
@@ -147,26 +151,26 @@ public class BehaviorSelectionGui {
             return;
         }
 
-        HuntConfigService.saveHunt(hunt);
+        registry.getHuntConfigService().saveHunt(hunt);
 
         try {
-            StorageService.createHuntInDb(hunt.getId(), hunt.getDisplayName(), hunt.getState().name());
+            registry.getStorageService().createHuntInDb(hunt.getId(), hunt.getDisplayName(), hunt.getState().name());
         } catch (Exception e) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             player.closeInventory();
             return;
         }
 
-        HuntService.registerHunt(hunt);
-        StorageService.incrementHuntVersion();
+        registry.getHuntService().registerHunt(hunt);
+        registry.getStorageService().incrementHuntVersion();
 
         player.closeInventory();
 
-        player.sendMessage(LanguageService.getMessage("Messages.HuntCreated")
+        player.sendMessage(registry.getLanguageService().message("Messages.HuntCreated")
                 .replaceAll("%hunt%", hunt.getId()));
 
-        HuntService.setSelectedHunt(player.getUniqueId(), hunt.getId());
-        player.sendMessage(LanguageService.getMessage("Messages.HuntSelected")
+        registry.getHuntService().setSelectedHunt(player.getUniqueId(), hunt.getId());
+        player.sendMessage(registry.getLanguageService().message("Messages.HuntSelected")
                 .replaceAll("%hunt%", hunt.getId()));
     }
 

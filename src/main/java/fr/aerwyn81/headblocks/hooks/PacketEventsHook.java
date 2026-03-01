@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.hooks;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -26,9 +27,9 @@ public class PacketEventsHook {
         }
     }
 
-    public void init() {
+    public void init(ServiceRegistry registry) {
         if (packetEventsImpl != null && isEnabled) {
-            packetEventsImpl.init();
+            packetEventsImpl.init(registry);
         }
     }
 

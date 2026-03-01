@@ -1,10 +1,10 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
-import fr.aerwyn81.headblocks.services.*;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -14,32 +14,24 @@ import java.util.Collections;
 
 @HBAnnotations(command = "reload", permission = "headblocks.admin")
 public class Reload implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Reload(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
         var plugin = HeadBlocks.getInstance();
         HeadBlocks.isReloadInProgress = true;
 
-        GuiService.clearCache();
-
-        HologramService.unload();
-
-        StorageService.close();
-
         plugin.reloadConfig();
-        ConfigService.load();
 
-        LanguageService.setLanguage(ConfigService.getLanguage());
-        LanguageService.pushMessages();
-
-        StorageService.initialize();
-        HuntConfigService.initialize();
-        HuntService.initialize();
-        HeadService.load();
+        registry.reload();
 
         if (HeadBlocks.isHeadDatabaseActive) {
             if (plugin.getHeadDatabaseHook() == null) {
-                var headDatabaseApi = new HeadDatabaseHook();
+                var headDatabaseApi = new HeadDatabaseHook(registry);
                 if (headDatabaseApi.init()) {
                     plugin.setHeadDatabaseHook(headDatabaseApi);
                 }
@@ -48,16 +40,14 @@ public class Reload implements Cmd {
             plugin.getHeadDatabaseHook().loadHeadsHDB();
         }
 
-        HologramService.load();
-
         var players = Collections.synchronizedCollection(Bukkit.getOnlinePlayers());
-        StorageService.loadPlayers(players.toArray(new Player[0]));
+        registry.getStorageService().loadPlayers(players.toArray(new Player[0]));
 
         plugin.startInternalTaskTimer();
 
         HeadBlocks.isReloadInProgress = false;
 
-        sender.sendMessage(LanguageService.getMessage("Messages.ReloadComplete"));
+        sender.sendMessage(registry.getLanguageService().message("Messages.ReloadComplete"));
         return true;
     }
 

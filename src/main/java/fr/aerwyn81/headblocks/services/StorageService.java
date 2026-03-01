@@ -26,45 +26,58 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class StorageService {
-    private static Storage storage;
-    private static Database database;
+    private final ConfigService configService;
+    private final File dataFolder;
 
-    private static boolean storageError;
+    private Storage storage;
+    private Database database;
+    private boolean storageError;
+    private String serverIdentifier = "";
 
-    private static String serverIdentifier = "";
+    // --- Constructor ---
 
-    public static void initialize() {
+    public StorageService(ConfigService configService, File dataFolder) {
+        this.configService = configService;
+        this.dataFolder = dataFolder;
+
+        initialize();
+    }
+
+    // --- Instance methods ---
+
+    public void initialize() {
         storageError = false;
 
-        if (ConfigService.isRedisEnabled() && !ConfigService.isDatabaseEnabled()) {
+        if (configService.redisEnabled() && !configService.databaseEnabled()) {
             LogUtil.error("Error you can't use Redis without setting up an SQL database");
             storageError = true;
             return;
         }
 
-        if (ConfigService.isRedisEnabled()) {
+        if (configService.redisEnabled()) {
             storage = new Redis(
-                    ConfigService.getRedisHostname(),
-                    ConfigService.getRedisPassword(),
-                    ConfigService.getRedisPort(),
-                    ConfigService.getRedisDatabase());
+                    configService.redisHostname(),
+                    configService.redisPassword(),
+                    configService.redisPort(),
+                    configService.redisDatabase());
         } else {
             storage = new Memory();
         }
 
-        String pathToDatabase = HeadBlocks.getInstance().getDataFolder() + File.separator + "headblocks.db";
+        String pathToDatabase = dataFolder + File.separator + "headblocks.db";
         var isFileExist = new File(pathToDatabase).exists();
 
-        if (ConfigService.isDatabaseEnabled()) {
-            generateServerIdentifier();
+        if (configService.databaseEnabled()) {
+            doGenerateServerIdentifier();
 
             database = new MySQL(
-                    ConfigService.getDatabaseUsername(),
-                    ConfigService.getDatabasePassword(),
-                    ConfigService.getDatabaseHostname(),
-                    ConfigService.getDatabasePort(),
-                    ConfigService.getDatabaseName(),
-                    ConfigService.getDatabaseSsl());
+                    configService.databaseUsername(),
+                    configService.databasePassword(),
+                    configService.databaseHostname(),
+                    configService.databasePort(),
+                    configService.databaseName(),
+                    configService.databaseSsl(),
+                    configService);
         } else {
             database = new SQLite(pathToDatabase);
         }
@@ -72,7 +85,7 @@ public class StorageService {
         try {
             storage.init();
 
-            if (ConfigService.isRedisEnabled()) {
+            if (configService.redisEnabled()) {
                 LogUtil.info("Redis cache properly connected!");
             }
         } catch (InternalException ex) {
@@ -85,27 +98,27 @@ public class StorageService {
             database.open();
 
             if (database instanceof MySQL || isFileExist) {
-                verifyDatabaseMigration();
+                doVerifyDatabaseMigration();
             }
 
             database.load();
         } catch (InternalException ex) {
-            LogUtil.error("Error while trying to connect to the {0} database: {1}", ConfigService.getDatabaseType(), ex.getMessage());
+            LogUtil.error("Error while trying to connect to the {0} database: {1}", configService.databaseType(), ex.getMessage());
             storageError = true;
         }
 
         if (!storageError) {
-            if (ConfigService.isDatabaseEnabled()) {
-                LogUtil.info("{0} storage properly connected!", ConfigService.getDatabaseType());
+            if (configService.databaseEnabled()) {
+                LogUtil.info("{0} storage properly connected!", configService.databaseType());
             } else {
                 LogUtil.info("SQLite storage properly connected!");
             }
         }
     }
 
-    private static void generateServerIdentifier() {
-        var file = new File(HeadBlocks.getInstance().getDataFolder() + File.separator + "server.identifier");
-        if (ConfigService.isDatabaseEnabled() && file.exists()) {
+    private void doGenerateServerIdentifier() {
+        var file = new File(dataFolder + File.separator + "server.identifier");
+        if (configService.databaseEnabled() && file.exists()) {
             try {
                 serverIdentifier = Files.readAllLines(file.toPath()).get(0);
             } catch (Exception ex) {
@@ -127,18 +140,19 @@ public class StorageService {
         }
     }
 
-    public static boolean hasStorageError() {
+    public boolean isStorageError() {
         return storageError;
     }
 
-    public static String selectedStorageType() {
-        if (!ConfigService.isDatabaseEnabled())
+    public String selectedStorageType() {
+        if (!configService.databaseEnabled()) {
             return "SQLite";
+        }
 
-        return ConfigService.getDatabaseType().name();
+        return configService.databaseType().name();
     }
 
-    private static void verifyDatabaseMigration() throws InternalException {
+    private void doVerifyDatabaseMigration() throws InternalException {
         if (!database.isDefaultTablesExist()) {
             return;
         }
@@ -204,8 +218,8 @@ public class StorageService {
         }
     }
 
-    public static String backupDatabase(String suffix) {
-        var pathToDatabase = HeadBlocks.getInstance().getDataFolder() + File.separator + "headblocks.db";
+    public String backupDatabase(String suffix) {
+        var pathToDatabase = dataFolder + File.separator + "headblocks.db";
         var databaseFile = new File(pathToDatabase);
 
         if (!databaseFile.exists()) {
@@ -213,7 +227,7 @@ public class StorageService {
         }
 
         var backupFileName = "headblocks.db." + suffix + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"));
-        var copied = new File(HeadBlocks.getInstance().getDataFolder() + File.separator + backupFileName);
+        var copied = new File(dataFolder + File.separator + backupFileName);
         try (var in = new BufferedInputStream(new FileInputStream(databaseFile));
              var out = new BufferedOutputStream(new FileOutputStream(copied))) {
 
@@ -231,7 +245,7 @@ public class StorageService {
         return backupFileName;
     }
 
-    public static void loadPlayers(Player... players) {
+    public void loadPlayers(Player... players) {
         CompletableBukkitFuture.runAsync(HeadBlocks.getInstance(), () -> {
             for (var player : players) {
                 UUID pUuid = player.getUniqueId();
@@ -240,7 +254,7 @@ public class StorageService {
                 try {
                     boolean isExist = containsPlayer(pUuid);
 
-                    String playerDisplayName = getCustomDisplay(player);
+                    String playerDisplayName = doGetCustomDisplay(player);
 
                     var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
 
@@ -270,19 +284,19 @@ public class StorageService {
         });
     }
 
-    private static String getCustomDisplay(Player player) {
+    private String doGetCustomDisplay(Player player) {
         var customName = player.getName();
 
-        if (ConfigService.isPlaceholdersLeaderboardUseNickname()) {
+        if (configService.placeholdersLeaderboardUseNickname()) {
             customName = player.getDisplayName();
         }
 
-        var prefix = ConfigService.getPlaceholdersLeaderboardPrefix();
+        var prefix = configService.placeholdersLeaderboardPrefix();
         if (!prefix.isEmpty()) {
             customName = PlaceholderAPI.setPlaceholders(player, prefix) + customName;
         }
 
-        var suffix = ConfigService.getPlaceholdersLeaderboardSuffix();
+        var suffix = configService.placeholdersLeaderboardSuffix();
         if (!suffix.isEmpty()) {
             customName = customName + PlaceholderAPI.setPlaceholders(player, suffix);
         }
@@ -290,7 +304,7 @@ public class StorageService {
         return customName;
     }
 
-    public static void unloadPlayer(Player player) {
+    public void unloadPlayer(Player player) {
         UUID uuid = player.getUniqueId();
         String playerName = player.getName();
 
@@ -319,7 +333,7 @@ public class StorageService {
         }
     }
 
-    public static void close() {
+    public void close() {
         try {
             if (storage != null) {
                 storage.close();
@@ -339,15 +353,16 @@ public class StorageService {
         }
     }
 
-    public static boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
+    public boolean hasHead(UUID playerUuid, UUID headUuid) throws InternalException {
         Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
-        if (cachedHeads != null)
+        if (cachedHeads != null) {
             return cachedHeads.contains(headUuid);
+        }
 
         return storage.hasHead(playerUuid, headUuid);
     }
 
-    public static void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
+    public void addHead(UUID playerUuid, UUID headUuid) throws InternalException {
         storage.addHead(playerUuid, headUuid);
         database.addHead(playerUuid, headUuid);
 
@@ -356,15 +371,16 @@ public class StorageService {
         storage.clearCachedTopPlayers();
     }
 
-    public static Boolean containsPlayer(UUID playerUuid) throws InternalException {
+    public Boolean containsPlayer(UUID playerUuid) throws InternalException {
         return storage.containsPlayer(playerUuid) || database.containsPlayer(playerUuid);
     }
 
-    public static BukkitFutureResult<Set<UUID>> getHeadsPlayer(UUID playerUuid) {
+    public BukkitFutureResult<Set<UUID>> getHeadsPlayer(UUID playerUuid) {
         try {
             Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
-            if (cachedHeads != null)
+            if (cachedHeads != null) {
                 return BukkitFutureResult.of(HeadBlocks.getInstance(), CompletableFuture.completedFuture(cachedHeads));
+            }
         } catch (InternalException ex) {
             LogUtil.error("Error while trying to get cached heads for {0}: {1}", playerUuid, ex.getMessage());
         }
@@ -388,14 +404,14 @@ public class StorageService {
         });
     }
 
-    public static void resetPlayer(UUID playerUuid) throws InternalException {
+    public void resetPlayer(UUID playerUuid) throws InternalException {
         invalidateCachePlayer(playerUuid);
 
         storage.resetPlayer(playerUuid);
         database.resetPlayer(playerUuid);
     }
 
-    public static void resetPlayerHead(UUID playerUuid, UUID headUuid) throws InternalException {
+    public void resetPlayerHead(UUID playerUuid, UUID headUuid) throws InternalException {
         try {
             Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
             if (cachedHeads != null) {
@@ -412,17 +428,17 @@ public class StorageService {
         database.resetPlayerHead(playerUuid, headUuid);
     }
 
-    public static void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
+    public void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
         storage.removeHead(headUuid);
         database.removeHead(headUuid, withDelete);
         storage.removeCachedHead(headUuid);
     }
 
-    public static List<UUID> getAllPlayers() throws InternalException {
+    public List<UUID> getAllPlayers() throws InternalException {
         return database.getAllPlayers();
     }
 
-    public static LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
+    public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
         LinkedHashMap<PlayerProfileLight, Integer> cached = storage.getCachedTopPlayers();
 
         if (!cached.isEmpty()) {
@@ -436,29 +452,28 @@ public class StorageService {
         return topPlayers;
     }
 
-    public static void updatePlayerName(PlayerProfileLight profile) throws InternalException {
+    public void updatePlayerName(PlayerProfileLight profile) throws InternalException {
         database.updatePlayerInfo(profile);
     }
 
-    public static boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException {
+    public boolean hasPlayerRenamed(PlayerProfileLight profile) throws InternalException {
         return database.hasPlayerRenamed(profile);
     }
 
-    public static void createOrUpdateHead(UUID headUuid, String texture) throws InternalException {
+    public void createOrUpdateHead(UUID headUuid, String texture) throws InternalException {
         database.createNewHead(headUuid, texture, serverIdentifier);
 
         storage.addCachedHead(headUuid);
     }
 
-    public static boolean isHeadExist(UUID headUuid) throws InternalException {
+    public boolean isHeadExist(UUID headUuid) throws InternalException {
         return database.isHeadExist(headUuid);
     }
 
-    public static ArrayList<String> getInstructionsExport(EnumTypeDatabase type) throws InternalException {
+    public ArrayList<String> getInstructionsExport(EnumTypeDatabase type) throws InternalException {
         ArrayList<String> instructions = new ArrayList<>();
 
-        // Table : hb_heads
-        instructions.add("DROP TABLE IF EXISTS " + ConfigService.getDatabasePrefix() + "hb_heads;");
+        instructions.add("DROP TABLE IF EXISTS " + configService.databasePrefix() + "hb_heads;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTableHeadsMySQL() + ";");
@@ -468,14 +483,13 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = database.getTableHeads();
         for (AbstractMap.SimpleEntry<String, Boolean> head : heads) {
-            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + head.getKey() +
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + head.getKey() +
                     "', " + (head.getValue() ? 1 : 0) + ", '', '" + serverIdentifier + "');");
         }
 
         instructions.add("");
 
-        // Table : hb_playerHeads
-        instructions.add("DROP TABLE IF EXISTS " + ConfigService.getDatabasePrefix() + "hb_playerHeads;");
+        instructions.add("DROP TABLE IF EXISTS " + configService.databasePrefix() + "hb_playerHeads;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTablePlayerHeadsMySQL() + ";");
@@ -485,14 +499,13 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = database.getTablePlayerHeads();
         for (AbstractMap.SimpleEntry<String, String> pHead : playerHeads) {
-            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + pHead.getKey() +
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + pHead.getKey() +
                     "', '" + pHead.getValue() + "');");
         }
 
         instructions.add("");
 
-        // Table : hb_players
-        instructions.add("DROP TABLE IF EXISTS " + ConfigService.getDatabasePrefix() + "hb_players;");
+        instructions.add("DROP TABLE IF EXISTS " + configService.databasePrefix() + "hb_players;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTablePlayersMySQL() + ";");
@@ -502,32 +515,31 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getTablePlayers();
         for (AbstractMap.SimpleEntry<String, String> player : players) {
-            instructions.add("INSERT INTO " + ConfigService.getDatabasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "', '');");
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "', '');");
         }
 
         instructions.add("");
 
-        // Table : hb_version
-        instructions.add("DROP TABLE IF EXISTS " + ConfigService.getDatabasePrefix() + "hb_version;");
+        instructions.add("DROP TABLE IF EXISTS " + configService.databasePrefix() + "hb_version;");
         instructions.add(Requests.createTableVersion() + ";");
         instructions.add(Requests.upsertVersion().replaceAll("\\?", String.valueOf(Database.version)) + ";");
 
         return instructions;
     }
 
-    public static String getHeadTexture(UUID headUuid) throws InternalException {
+    public String getHeadTexture(UUID headUuid) throws InternalException {
         return database.getHeadTexture(headUuid);
     }
 
-    public static ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
+    public ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
         return database.getPlayers(headUuid);
     }
 
-    public static PlayerProfileLight getPlayerByName(String pName) throws InternalException {
+    public PlayerProfileLight getPlayerByName(String pName) throws InternalException {
         return database.getPlayerByName(pName);
     }
 
-    public static void invalidateCachePlayer(UUID playerUuid) {
+    public void invalidateCachePlayer(UUID playerUuid) {
         try {
             storage.clearCachedTopPlayers();
 
@@ -541,10 +553,11 @@ public class StorageService {
         }
     }
 
-    public static ArrayList<UUID> getHeads() throws InternalException {
+    public ArrayList<UUID> getHeads() throws InternalException {
         Set<UUID> cachedHeads = storage.getCachedHeads();
-        if (!cachedHeads.isEmpty())
+        if (!cachedHeads.isEmpty()) {
             return new ArrayList<>(cachedHeads);
+        }
 
         var heads = database.getHeads();
         for (UUID head : heads) {
@@ -553,17 +566,17 @@ public class StorageService {
         return heads;
     }
 
-    public static ArrayList<UUID> getHeadsByServerId() throws InternalException {
+    public ArrayList<UUID> getHeadsByServerId() throws InternalException {
         return database.getHeads(serverIdentifier);
     }
 
-    public static ArrayList<String> getDistinctServerIds() throws InternalException {
+    public ArrayList<String> getDistinctServerIds() throws InternalException {
         return database.getDistinctServerIds();
     }
 
     // --- Hunt-aware player progression ---
 
-    public static void addHeadForHunt(UUID playerUuid, UUID headUuid, String huntId) throws InternalException {
+    public void addHeadForHunt(UUID playerUuid, UUID headUuid, String huntId) throws InternalException {
         storage.addHead(playerUuid, headUuid);
         database.addHeadForHunt(playerUuid, headUuid, huntId);
 
@@ -574,7 +587,7 @@ public class StorageService {
         storage.clearCachedTopPlayersForHunt(huntId);
     }
 
-    public static ArrayList<UUID> getHeadsPlayerForHunt(UUID playerUuid, String huntId) throws InternalException {
+    public ArrayList<UUID> getHeadsPlayerForHunt(UUID playerUuid, String huntId) throws InternalException {
         Set<UUID> cached = storage.getCachedPlayerHeadsForHunt(playerUuid, huntId);
         if (cached != null) {
             return new ArrayList<>(cached);
@@ -585,7 +598,7 @@ public class StorageService {
         return fromDb;
     }
 
-    public static LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException {
+    public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException {
         LinkedHashMap<PlayerProfileLight, Integer> cached = storage.getCachedTopPlayersForHunt(huntId);
         if (cached != null) {
             return cached.entrySet().stream()
@@ -597,7 +610,7 @@ public class StorageService {
         return topPlayers;
     }
 
-    public static void resetPlayerHunt(UUID playerUuid, String huntId) throws InternalException {
+    public void resetPlayerHunt(UUID playerUuid, String huntId) throws InternalException {
         database.resetPlayerHunt(playerUuid, huntId);
         invalidateCachePlayer(playerUuid);
 
@@ -607,43 +620,43 @@ public class StorageService {
 
     // --- Hunt DB access ---
 
-    public static ArrayList<String[]> getHuntsFromDb() throws InternalException {
+    public ArrayList<String[]> getHuntsFromDb() throws InternalException {
         return database.getHunts();
     }
 
-    public static void createHuntInDb(String huntId, String name, String state) throws InternalException {
+    public void createHuntInDb(String huntId, String name, String state) throws InternalException {
         database.createHunt(huntId, name, state);
     }
 
-    public static ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException {
+    public ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException {
         return database.getHeadsForHunt(huntId);
     }
 
-    public static void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException {
+    public void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException {
         database.linkHeadToHunt(headUUID, huntId);
     }
 
-    public static void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException {
+    public void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException {
         database.unlinkHeadFromHunt(headUUID, huntId);
     }
 
-    public static void updateHuntStateInDb(String huntId, String state) throws InternalException {
+    public void updateHuntStateInDb(String huntId, String state) throws InternalException {
         database.updateHuntState(huntId, state);
     }
 
-    public static void updateHuntNameInDb(String huntId, String name) throws InternalException {
+    public void updateHuntNameInDb(String huntId, String name) throws InternalException {
         database.updateHuntName(huntId, name);
     }
 
-    public static void deleteHuntFromDb(String huntId) throws InternalException {
+    public void deleteHuntFromDb(String huntId) throws InternalException {
         database.deleteHunt(huntId);
     }
 
-    public static void unlinkAllHeadsFromHuntInDb(String huntId) throws InternalException {
+    public void unlinkAllHeadsFromHuntInDb(String huntId) throws InternalException {
         database.unlinkAllHeadsFromHunt(huntId);
     }
 
-    public static void resetAllPlayersForHunt(String huntId) throws InternalException {
+    public void resetAllPlayersForHunt(String huntId) throws InternalException {
         for (UUID playerUuid : database.getAllPlayers()) {
             database.resetPlayerHunt(playerUuid, huntId);
         }
@@ -652,7 +665,7 @@ public class StorageService {
         storage.clearCachedTopPlayersForHunt(huntId);
     }
 
-    public static void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException {
+    public void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException {
         database.transferPlayerProgress(fromHuntId, toHuntId);
 
         storage.clearCachedPlayerHeadsForHunt(fromHuntId);
@@ -661,7 +674,7 @@ public class StorageService {
         storage.clearCachedTopPlayersForHunt(toHuntId);
     }
 
-    public static void deletePlayerProgressForHunt(String huntId) throws InternalException {
+    public void deletePlayerProgressForHunt(String huntId) throws InternalException {
         database.deletePlayerProgressForHunt(huntId);
 
         storage.clearCachedPlayerHeadsForHunt(huntId);
@@ -670,7 +683,7 @@ public class StorageService {
 
     // --- Timed runs ---
 
-    public static void saveTimedRun(UUID playerUuid, String huntId, long timeMs) throws InternalException {
+    public void saveTimedRun(UUID playerUuid, String huntId, long timeMs) throws InternalException {
         database.saveTimedRun(playerUuid, huntId, timeMs);
 
         storage.clearCachedTimedLeaderboard(huntId);
@@ -678,7 +691,7 @@ public class StorageService {
         storage.clearCachedTimedRunCount(playerUuid, huntId);
     }
 
-    public static LinkedHashMap<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException {
+    public LinkedHashMap<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException {
         LinkedHashMap<PlayerProfileLight, Long> cached = storage.getCachedTimedLeaderboard(huntId);
         if (cached != null) {
             return cached.entrySet().stream()
@@ -691,7 +704,7 @@ public class StorageService {
         return fromDb;
     }
 
-    public static Long getBestTime(UUID playerUuid, String huntId) throws InternalException {
+    public Long getBestTime(UUID playerUuid, String huntId) throws InternalException {
         Long cached = storage.getCachedBestTime(playerUuid, huntId);
         if (cached != null) {
             return cached == -1L ? null : cached;
@@ -702,7 +715,7 @@ public class StorageService {
         return fromDb;
     }
 
-    public static int getTimedRunCount(UUID playerUuid, String huntId) throws InternalException {
+    public int getTimedRunCount(UUID playerUuid, String huntId) throws InternalException {
         Integer cached = storage.getCachedTimedRunCount(playerUuid, huntId);
         if (cached != null) {
             return cached;
@@ -713,13 +726,13 @@ public class StorageService {
         return fromDb;
     }
 
-    public static String getServerIdentifier() {
+    public String getServerIdentifier() {
         return serverIdentifier;
     }
 
-    // --- Hunt sync version (cross-server via Redis) ---
+    // --- Hunt sync version ---
 
-    public static long getHuntVersion() {
+    public long getHuntVersion() {
         try {
             return storage.getHuntVersion();
         } catch (InternalException e) {
@@ -727,11 +740,12 @@ public class StorageService {
         }
     }
 
-    public static void incrementHuntVersion() {
+    public void incrementHuntVersion() {
         try {
             storage.incrementHuntVersion();
         } catch (InternalException e) {
             LogUtil.error("Failed to increment hunt version: {0}", e.getMessage());
         }
     }
+
 }

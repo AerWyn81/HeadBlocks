@@ -3,6 +3,18 @@ package fr.aerwyn81.headblocks.databases;
 import fr.aerwyn81.headblocks.services.ConfigService;
 
 public class Requests {
+    private static String tablePrefix = "";
+    private static String databaseName = "";
+
+    public static void init(ConfigService configService) {
+        if (configService.databaseEnabled()) {
+            tablePrefix = configService.databasePrefix();
+        } else {
+            tablePrefix = "";
+        }
+        databaseName = configService.databaseName();
+    }
+
     public static String getTablePlayers() {
         return addPrefix() + "hb_players";
     }
@@ -28,13 +40,7 @@ public class Requests {
     }
 
     private static String addPrefix() {
-        var prefix = "";
-
-        if (ConfigService.isDatabaseEnabled()) {
-            prefix = ConfigService.getDatabasePrefix();
-        }
-
-        return prefix;
+        return tablePrefix;
     }
 
     public static String getIsTablePlayersExistSQLite() {
@@ -46,7 +52,7 @@ public class Requests {
     }
 
     public static String getIsTablePlayersExistMySQL() {
-        return String.format("SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = '%s' AND table_name = '%s' LIMIT 1", ConfigService.getDatabaseName(), getTablePlayers());
+        return String.format("SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = '%s' AND table_name = '%s' LIMIT 1", databaseName, getTablePlayers());
     }
 
     public static String getTableHeadsColumnsMySQL() {
@@ -255,7 +261,7 @@ public class Requests {
     }
 
     public static String isColumnExist() {
-        return String.format("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = ? AND COLUMN_NAME = ?", ConfigService.getDatabaseName());
+        return String.format("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = ? AND COLUMN_NAME = ?", databaseName);
     }
 
     public static String addColumnServerIdentifierMySQL() {

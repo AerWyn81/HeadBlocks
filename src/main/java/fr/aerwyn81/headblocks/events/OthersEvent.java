@@ -1,10 +1,11 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
-import fr.aerwyn81.headblocks.services.*;
+import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import org.bukkit.Location;
@@ -22,6 +23,12 @@ import org.bukkit.event.world.WorldLoadEvent;
 
 public class OthersEvent implements Listener {
 
+    private final ServiceRegistry registry;
+
+    public OthersEvent(ServiceRegistry registry) {
+        this.registry = registry;
+    }
+
     @EventHandler
     public void onPlayerInteract(BlockBreakEvent e) {
         Block block = e.getBlock();
@@ -32,7 +39,7 @@ public class OthersEvent implements Listener {
         }
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = HeadService.getHeadAt(block.getLocation());
+        HeadLocation headLocation = registry.getHeadService().getHeadAt(block.getLocation());
         if (headLocation == null) {
             return;
         }
@@ -42,10 +49,11 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent e) {
-        if (!ConfigService.isPreventPistonExtension())
+        if (!registry.getConfigService().preventPistonExtension()) {
             return;
+        }
 
-        if (e.getBlocks().stream().anyMatch(b -> HeadService.getChargedHeadLocations().stream()
+        if (e.getBlocks().stream().anyMatch(b -> registry.getHeadService().getChargedHeadLocations().stream()
                 .anyMatch(p -> LocationUtils.areEquals(p.getLocation(), b.getLocation())))) {
             e.setCancelled(true);
         }
@@ -53,7 +61,7 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        StorageService.loadPlayers(e.getPlayer());
+        registry.getStorageService().loadPlayers(e.getPlayer());
 
         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
         if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
@@ -63,12 +71,12 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        StorageService.unloadPlayer(e.getPlayer());
-        HeadService.getHeadMoves().remove(e.getPlayer().getUniqueId());
-        HuntService.clearSelectedHunt(e.getPlayer().getUniqueId());
+        registry.getStorageService().unloadPlayer(e.getPlayer());
+        registry.getHeadService().getHeadMoves().remove(e.getPlayer().getUniqueId());
+        registry.getHuntService().clearSelectedHunt(e.getPlayer().getUniqueId());
         TimedRunManager.leaveRun(e.getPlayer().getUniqueId());
-        GuiService.getBehaviorSelectionManager().clearState(e.getPlayer().getUniqueId());
-        GuiService.getTimedConfigManager().clearState(e.getPlayer().getUniqueId());
+        registry.getGuiService().getBehaviorSelectionManager().clearState(e.getPlayer().getUniqueId());
+        registry.getGuiService().getTimedConfigManager().clearState(e.getPlayer().getUniqueId());
 
         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
         if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
@@ -78,7 +86,7 @@ public class OthersEvent implements Listener {
 
     @EventHandler
     public void onWorldLoaded(WorldLoadEvent e) {
-        var headsInWorld = HeadService.getHeadLocations()
+        var headsInWorld = registry.getHeadService().getHeadLocations()
                 .stream()
                 .filter(h -> !h.isCharged() && e.getWorld().getName().equals(h.getConfigWorldName()))
                 .toList();
@@ -87,31 +95,32 @@ public class OthersEvent implements Listener {
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));
             head.setCharged(true);
 
-            Hunt primaryHunt = HuntService.getHighestPriorityHuntForHead(head.getUuid());
-            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig();
-            HologramService.createHolograms(head.getLocation(), huntConfig);
+            Hunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(head.getUuid());
+            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig(registry.getConfigService());
+            registry.getHologramService().createHolograms(head.getLocation(), huntConfig);
         }
     }
 
     @EventHandler
     public void onBlockChange(BlockFromToEvent e) {
-        if (!ConfigService.isPreventLiquidFlow())
+        if (!registry.getConfigService().preventLiquidFlow()) {
             return;
+        }
 
-        if (e.getBlock().isLiquid() && HeadService.getHeadAt(e.getToBlock().getLocation()) != null) {
+        if (e.getBlock().isLiquid() && registry.getHeadService().getHeadAt(e.getToBlock().getLocation()) != null) {
             e.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onExplosion(EntityExplodeEvent e) {
-        if (!ConfigService.isPreventExplosion()) {
+        if (!registry.getConfigService().preventExplosion()) {
             return;
         }
 
         e.blockList().removeIf(block -> {
             if (HeadUtils.isPlayerHead(block)) {
-                var headLocation = HeadService.getHeadAt(block.getLocation());
+                var headLocation = registry.getHeadService().getHeadAt(block.getLocation());
                 return headLocation != null;
             }
             return false;
@@ -122,6 +131,6 @@ public class OthersEvent implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
 
-        GuiService.getRewardsManager().cancelPendingRewardInput(player);
+        registry.getGuiService().getRewardsManager().cancelPendingRewardInput(player);
     }
 }

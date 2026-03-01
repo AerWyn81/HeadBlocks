@@ -1,8 +1,6 @@
 package fr.aerwyn81.headblocks.services.gui.types;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.services.GuiService;
-import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
@@ -20,9 +18,14 @@ import java.util.stream.IntStream;
 
 public class TimedConfigGui {
 
+    private final ServiceRegistry registry;
     private final ConcurrentHashMap<UUID, Location> plateLocations = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Boolean> repeatableStates = new ConcurrentHashMap<>();
     private final Set<UUID> pendingPlatePlacements = ConcurrentHashMap.newKeySet();
+
+    public TimedConfigGui(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     public void open(Player player) {
         repeatableStates.putIfAbsent(player.getUniqueId(), true);
@@ -30,8 +33,8 @@ public class TimedConfigGui {
     }
 
     private void buildAndOpenGui(Player player) {
-        var menu = new HBMenu(HeadBlocks.getInstance(),
-                LanguageService.getMessage("Gui.TimedConfigTitle"), false, 2);
+        var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
+                registry.getLanguageService().message("Gui.TimedConfigTitle"), false, 2);
 
         // Borders
         int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17};
@@ -46,43 +49,43 @@ public class TimedConfigGui {
         Location plateLoc = plateLocations.get(uuid);
         String locationText;
         if (plateLoc != null) {
-            locationText = MessageUtils.colorize(LanguageService.getMessage("Gui.TimedConfigPlateLocation")
+            locationText = MessageUtils.colorize(registry.getLanguageService().message("Gui.TimedConfigPlateLocation")
                     .replaceAll("%world%", plateLoc.getWorld() != null ? plateLoc.getWorld().getName() : "?")
                     .replaceAll("%x%", String.valueOf(plateLoc.getBlockX()))
                     .replaceAll("%y%", String.valueOf(plateLoc.getBlockY()))
                     .replaceAll("%z%", String.valueOf(plateLoc.getBlockZ())));
         } else {
-            locationText = LanguageService.getMessage("Gui.TimedConfigPlateNotDefined");
+            locationText = registry.getLanguageService().message("Gui.TimedConfigPlateNotDefined");
         }
 
-        List<String> plateLore = LanguageService.getMessages("Gui.TimedConfigPlateLore").stream()
+        List<String> plateLore = registry.getLanguageService().messageList("Gui.TimedConfigPlateLore").stream()
                 .map(s -> s.replaceAll("%location%", locationText))
                 .collect(Collectors.toList());
 
         menu.setItem(0, 11, new ItemGUI(new ItemBuilder(Material.HEAVY_WEIGHTED_PRESSURE_PLATE)
-                .setName(LanguageService.getMessage("Gui.TimedConfigPlate"))
+                .setName(registry.getLanguageService().message("Gui.TimedConfigPlate"))
                 .setLore(plateLore)
                 .toItemStack(), true)
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
                     p.closeInventory();
                     pendingPlatePlacements.add(p.getUniqueId());
-                    p.sendMessage(LanguageService.getMessage("Gui.TimedConfigPlacePlate"));
+                    p.sendMessage(registry.getLanguageService().message("Gui.TimedConfigPlacePlate"));
                 }));
 
         // Slot 13: Repeatable toggle
         boolean repeatable = repeatableStates.getOrDefault(uuid, true);
         Material repeatableMat = repeatable ? Material.LIME_DYE : Material.GRAY_DYE;
         String statusText = repeatable
-                ? LanguageService.getMessage("Gui.BehaviorEnabled")
-                : LanguageService.getMessage("Gui.BehaviorDisabled");
+                ? registry.getLanguageService().message("Gui.BehaviorEnabled")
+                : registry.getLanguageService().message("Gui.BehaviorDisabled");
 
-        List<String> repeatableLore = LanguageService.getMessages("Gui.TimedConfigRepeatableLore").stream()
+        List<String> repeatableLore = registry.getLanguageService().messageList("Gui.TimedConfigRepeatableLore").stream()
                 .map(s -> s.replaceAll("%status%", statusText))
                 .collect(Collectors.toList());
 
         menu.setItem(0, 13, new ItemGUI(new ItemBuilder(repeatableMat)
-                .setName(LanguageService.getMessage("Gui.TimedConfigRepeatable"))
+                .setName(registry.getLanguageService().message("Gui.TimedConfigRepeatable"))
                 .setLore(repeatableLore)
                 .toItemStack(), true)
                 .addOnClickEvent(event -> {
@@ -94,8 +97,8 @@ public class TimedConfigGui {
 
         // Slot 15: Validate
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
-                .setName(LanguageService.getMessage("Gui.ValidateCreate"))
-                .setLore(LanguageService.getMessages("Gui.ValidateCreateLore"))
+                .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
+                .setLore(registry.getLanguageService().messageList("Gui.ValidateCreateLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
 
@@ -108,7 +111,7 @@ public class TimedConfigGui {
         boolean repeatable = repeatableStates.getOrDefault(uuid, true);
         repeatableStates.remove(uuid);
 
-        GuiService.getBehaviorSelectionManager().createHunt(player, plateLoc, repeatable);
+        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, plateLoc, repeatable);
     }
 
     public boolean hasPendingPlatePlacement(UUID playerUuid) {
@@ -118,7 +121,7 @@ public class TimedConfigGui {
     public void handlePlatePlaced(Player player, Location location) {
         pendingPlatePlacements.remove(player.getUniqueId());
         plateLocations.put(player.getUniqueId(), location);
-        player.sendMessage(LanguageService.getMessage("Gui.TimedConfigPlatePlaced"));
+        player.sendMessage(registry.getLanguageService().message("Gui.TimedConfigPlatePlaced"));
         open(player);
     }
 

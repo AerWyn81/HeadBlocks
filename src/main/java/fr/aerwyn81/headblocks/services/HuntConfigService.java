@@ -1,11 +1,12 @@
 package fr.aerwyn81.headblocks.services;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -16,21 +17,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HuntConfigService {
-    private static File huntsDir;
+    private final PluginProvider pluginProvider;
+    private final ConfigService configService;
+    private final ServiceRegistry registry;
+    private File huntsDir;
 
-    public static void initialize() {
-        huntsDir = new File(HeadBlocks.getInstance().getDataFolder(), "hunts");
+    // --- Constructor ---
+
+    public HuntConfigService(PluginProvider pluginProvider, ConfigService configService, ServiceRegistry registry) {
+        this.pluginProvider = pluginProvider;
+        this.configService = configService;
+        this.registry = registry;
+
+        initialize();
+    }
+
+    // --- Instance methods ---
+
+    public void initialize() {
+        huntsDir = new File(pluginProvider.getDataFolder(), "hunts");
         if (!huntsDir.exists() && !huntsDir.mkdirs()) {
             LogUtil.error("Failed to create hunts directory: {0}", huntsDir.getAbsolutePath());
         }
 
-        // On first run after migration: generate default.yml from existing config.yml
         if (!huntFileExists("default")) {
             generateDefaultFromConfig();
         }
     }
 
-    public static List<Hunt> loadHunts() {
+    public List<Hunt> loadHunts() {
         List<Hunt> hunts = new ArrayList<>();
         File[] files = huntsDir.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null) {
@@ -51,7 +66,7 @@ public class HuntConfigService {
         return hunts;
     }
 
-    public static Hunt loadHunt(File file) {
+    public Hunt loadHunt(File file) {
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
 
         String id = yaml.getString("id");
@@ -65,7 +80,7 @@ public class HuntConfigService {
         int priority = yaml.getInt("priority", 1);
         String icon = yaml.getString("icon", "CHEST_MINECART");
 
-        Hunt hunt = new Hunt(id, displayName, state, priority, icon);
+        Hunt hunt = new Hunt(configService, id, displayName, state, priority, icon);
 
         List<Behavior> behaviors = loadBehaviors(yaml);
         hunt.setBehaviors(behaviors);
@@ -76,7 +91,7 @@ public class HuntConfigService {
         return hunt;
     }
 
-    public static void saveHunt(Hunt hunt) {
+    public void saveHunt(Hunt hunt) {
         File file = new File(huntsDir, hunt.getId() + ".yml");
         YamlConfiguration yaml = new YamlConfiguration();
 
@@ -96,11 +111,11 @@ public class HuntConfigService {
         }
     }
 
-    public static boolean huntFileExists(String huntId) {
+    public boolean huntFileExists(String huntId) {
         return new File(huntsDir, huntId + ".yml").exists();
     }
 
-    public static void deleteHuntFile(String huntId) {
+    public void deleteHuntFile(String huntId) {
         File file = new File(huntsDir, huntId + ".yml");
         if (file.exists()) {
             if (!file.delete()) {
@@ -109,10 +124,8 @@ public class HuntConfigService {
         }
     }
 
-    // --- Migration: generate default.yml from existing config.yml ---
-
-    public static void generateDefaultFromConfig() {
-        File dir = new File(HeadBlocks.getInstance().getDataFolder(), "hunts");
+    public void generateDefaultFromConfig() {
+        File dir = new File(pluginProvider.getDataFolder(), "hunts");
         if (!dir.exists() && !dir.mkdirs()) {
             LogUtil.error("Failed to create hunts directory: {0}", dir.getAbsolutePath());
         }
@@ -127,80 +140,95 @@ public class HuntConfigService {
         YamlConfiguration yaml = new YamlConfiguration();
         String p = "config.";
 
-        // Hunt identity
         yaml.set("id", "default");
         yaml.set("displayName", "Default");
         yaml.set("state", "ACTIVE");
         yaml.set("priority", 0);
         yaml.set("icon", "CHEST_MINECART");
 
-        // Behavior
         yaml.createSection("behaviors.free");
 
-        // HeadClick
-        List<String> messages = ConfigService.getHeadClickMessages();
-        if (!messages.isEmpty())
+        List<String> messages = configService.headClickMessages();
+        if (!messages.isEmpty()) {
             yaml.set(p + "headClick.messages", messages);
+        }
 
-        yaml.set(p + "headClick.title.enabled", ConfigService.isHeadClickTitleEnabled());
-        String titleFirst = ConfigService.getHeadClickTitleFirstLine();
-        if (!titleFirst.isEmpty()) yaml.set(p + "headClick.title.firstLine", titleFirst);
-        String titleSub = ConfigService.getHeadClickTitleSubTitle();
-        if (!titleSub.isEmpty()) yaml.set(p + "headClick.title.subTitle", titleSub);
-        yaml.set(p + "headClick.title.fadeIn", ConfigService.getHeadClickTitleFadeIn());
-        yaml.set(p + "headClick.title.stay", ConfigService.getHeadClickTitleStay());
-        yaml.set(p + "headClick.title.fadeOut", ConfigService.getHeadClickTitleFadeOut());
+        yaml.set(p + "headClick.title.enabled", configService.headClickTitleEnabled());
+        String titleFirst = configService.headClickTitleFirstLine();
+        if (!titleFirst.isEmpty()) {
+            yaml.set(p + "headClick.title.firstLine", titleFirst);
+        }
+        String titleSub = configService.headClickTitleSubTitle();
+        if (!titleSub.isEmpty()) {
+            yaml.set(p + "headClick.title.subTitle", titleSub);
+        }
+        yaml.set(p + "headClick.title.fadeIn", configService.headClickTitleFadeIn());
+        yaml.set(p + "headClick.title.stay", configService.headClickTitleStay());
+        yaml.set(p + "headClick.title.fadeOut", configService.headClickTitleFadeOut());
 
-        String soundFound = ConfigService.getHeadClickNotOwnSound();
-        if (soundFound != null) yaml.set(p + "headClick.sound.found", soundFound);
-        String soundOwn = ConfigService.getHeadClickAlreadyOwnSound();
-        if (soundOwn != null) yaml.set(p + "headClick.sound.alreadyOwn", soundOwn);
+        String soundFound = configService.headClickNotOwnSound();
+        if (soundFound != null) {
+            yaml.set(p + "headClick.sound.found", soundFound);
+        }
+        String soundOwn = configService.headClickAlreadyOwnSound();
+        if (soundOwn != null) {
+            yaml.set(p + "headClick.sound.alreadyOwn", soundOwn);
+        }
 
-        yaml.set(p + "headClick.firework.enabled", ConfigService.isFireworkEnabled());
+        yaml.set(p + "headClick.firework.enabled", configService.fireworkEnabled());
 
-        List<String> commands = ConfigService.getHeadClickCommands();
-        if (!commands.isEmpty())
+        List<String> commands = configService.headClickCommands();
+        if (!commands.isEmpty()) {
             yaml.set(p + "headClick.commands", commands);
+        }
 
-        yaml.set(p + "headClick.eject.enabled", ConfigService.isHeadClickEjectEnabled());
-        yaml.set(p + "headClick.eject.power", ConfigService.getHeadClickEjectPower());
+        yaml.set(p + "headClick.eject.enabled", configService.headClickEjectEnabled());
+        yaml.set(p + "headClick.eject.power", configService.headClickEjectPower());
 
-        // Holograms
-        yaml.set(p + "holograms.found.enabled", ConfigService.isHologramsFoundEnabled());
-        yaml.set(p + "holograms.notFound.enabled", ConfigService.isHologramsNotFoundEnabled());
-        ArrayList<String> foundLines = ConfigService.getHologramsFoundLines();
-        if (!foundLines.isEmpty()) yaml.set(p + "holograms.found.lines", foundLines);
-        ArrayList<String> notFoundLines = ConfigService.getHologramsNotFoundLines();
-        if (!notFoundLines.isEmpty()) yaml.set(p + "holograms.notFound.lines", notFoundLines);
+        yaml.set(p + "holograms.found.enabled", configService.hologramsFoundEnabled());
+        yaml.set(p + "holograms.notFound.enabled", configService.hologramsNotFoundEnabled());
+        ArrayList<String> foundLines = configService.hologramsFoundLines();
+        if (!foundLines.isEmpty()) {
+            yaml.set(p + "holograms.found.lines", foundLines);
+        }
+        ArrayList<String> notFoundLines = configService.hologramsNotFoundLines();
+        if (!notFoundLines.isEmpty()) {
+            yaml.set(p + "holograms.notFound.lines", notFoundLines);
+        }
 
-        // Hints
-        yaml.set(p + "hints.distance", ConfigService.getHintDistanceBlocks());
-        yaml.set(p + "hints.frequency", ConfigService.getHintFrequency());
+        yaml.set(p + "hints.distance", configService.hintDistanceBlocks());
+        yaml.set(p + "hints.frequency", configService.hintFrequency());
 
-        // Spin
-        yaml.set(p + "spin.enabled", ConfigService.isSpinEnabled());
-        yaml.set(p + "spin.speed", ConfigService.getSpinSpeed());
-        yaml.set(p + "spin.linked", ConfigService.isSpinLinked());
+        yaml.set(p + "spin.enabled", configService.spinEnabled());
+        yaml.set(p + "spin.speed", configService.spinSpeed());
+        yaml.set(p + "spin.linked", configService.spinLinked());
 
-        // Particles
-        yaml.set(p + "particles.found.enabled", ConfigService.isParticlesFoundEnabled());
-        yaml.set(p + "particles.found.type", ConfigService.getParticlesFoundType());
-        yaml.set(p + "particles.found.amount", ConfigService.getParticlesFoundAmount());
-        yaml.set(p + "particles.notFound.enabled", ConfigService.isParticlesNotFoundEnabled());
-        yaml.set(p + "particles.notFound.type", ConfigService.getParticlesNotFoundType());
-        yaml.set(p + "particles.notFound.amount", ConfigService.getParticlesNotFoundAmount());
+        yaml.set(p + "particles.found.enabled", configService.particlesFoundEnabled());
+        yaml.set(p + "particles.found.type", configService.particlesFoundType());
+        yaml.set(p + "particles.found.amount", configService.particlesFoundAmount());
+        yaml.set(p + "particles.notFound.enabled", configService.particlesNotFoundEnabled());
+        yaml.set(p + "particles.notFound.type", configService.particlesNotFoundType());
+        yaml.set(p + "particles.notFound.amount", configService.particlesNotFoundAmount());
 
-        // TieredRewards
-        List<TieredReward> tieredRewards = ConfigService.getTieredRewards();
+        List<TieredReward> tieredRewards = configService.tieredRewards();
         if (!tieredRewards.isEmpty()) {
             for (TieredReward reward : tieredRewards) {
                 String key = p + "tieredRewards." + reward.level();
-                if (!reward.messages().isEmpty()) yaml.set(key + ".messages", reward.messages());
-                if (!reward.commands().isEmpty()) yaml.set(key + ".commands", reward.commands());
-                if (!reward.broadcastMessages().isEmpty())
+                if (!reward.messages().isEmpty()) {
+                    yaml.set(key + ".messages", reward.messages());
+                }
+                if (!reward.commands().isEmpty()) {
+                    yaml.set(key + ".commands", reward.commands());
+                }
+                if (!reward.broadcastMessages().isEmpty()) {
                     yaml.set(key + ".broadcast", reward.broadcastMessages());
-                if (reward.slotsRequired() != -1) yaml.set(key + ".slotsRequired", reward.slotsRequired());
-                if (reward.isRandom()) yaml.set(key + ".randomizeCommands", true);
+                }
+                if (reward.slotsRequired() != -1) {
+                    yaml.set(key + ".slotsRequired", reward.slotsRequired());
+                }
+                if (reward.isRandom()) {
+                    yaml.set(key + ".randomizeCommands", true);
+                }
             }
         }
 
@@ -212,9 +240,9 @@ public class HuntConfigService {
         }
     }
 
-    // --- Behaviors ---
+    // --- Private helpers ---
 
-    private static List<Behavior> loadBehaviors(YamlConfiguration yaml) {
+    private List<Behavior> loadBehaviors(YamlConfiguration yaml) {
         List<Behavior> behaviors = new ArrayList<>();
 
         ConfigurationSection section = yaml.getConfigurationSection("behaviors");
@@ -224,20 +252,24 @@ public class HuntConfigService {
 
         for (String type : section.getKeys(false)) {
             ConfigurationSection behaviorSection = section.getConfigurationSection(type);
-            behaviors.add(Behavior.fromConfig(type, behaviorSection));
+            behaviors.add(Behavior.fromConfig(type, registry, behaviorSection));
         }
 
         return behaviors;
     }
 
-    private static void saveBehaviors(YamlConfiguration yaml, List<Behavior> behaviors) {
+    private void saveBehaviors(YamlConfiguration yaml, List<Behavior> behaviors) {
         for (Behavior behavior : behaviors) {
             String key = "behaviors." + behavior.getId();
             yaml.createSection(key);
 
             if (behavior instanceof fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior sb) {
-                if (sb.start() != null) yaml.set(key + ".start", sb.start().toString());
-                if (sb.end() != null) yaml.set(key + ".end", sb.end().toString());
+                if (sb.start() != null) {
+                    yaml.set(key + ".start", sb.start().toString());
+                }
+                if (sb.end() != null) {
+                    yaml.set(key + ".end", sb.end().toString());
+                }
             }
 
             if (behavior instanceof fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior tb) {
@@ -255,89 +287,111 @@ public class HuntConfigService {
         }
     }
 
-    // --- HuntConfig loading ---
-
-    private static HuntConfig loadHuntConfig(YamlConfiguration yaml) {
-        HuntConfig hc = new HuntConfig();
+    private HuntConfig loadHuntConfig(YamlConfiguration yaml) {
+        HuntConfig hc = new HuntConfig(configService);
         String p = "config.";
 
-        // HeadClick
-        if (yaml.contains(p + "headClick.messages"))
+        if (yaml.contains(p + "headClick.messages")) {
             hc.setHeadClickMessages(yaml.getStringList(p + "headClick.messages"));
-        if (yaml.contains(p + "headClick.title.enabled"))
+        }
+        if (yaml.contains(p + "headClick.title.enabled")) {
             hc.setHeadClickTitleEnabled(yaml.getBoolean(p + "headClick.title.enabled"));
-        if (yaml.contains(p + "headClick.title.firstLine"))
+        }
+        if (yaml.contains(p + "headClick.title.firstLine")) {
             hc.setHeadClickTitleFirstLine(yaml.getString(p + "headClick.title.firstLine"));
-        if (yaml.contains(p + "headClick.title.subTitle"))
+        }
+        if (yaml.contains(p + "headClick.title.subTitle")) {
             hc.setHeadClickTitleSubTitle(yaml.getString(p + "headClick.title.subTitle"));
-        if (yaml.contains(p + "headClick.title.fadeIn"))
+        }
+        if (yaml.contains(p + "headClick.title.fadeIn")) {
             hc.setHeadClickTitleFadeIn(yaml.getInt(p + "headClick.title.fadeIn"));
-        if (yaml.contains(p + "headClick.title.stay"))
+        }
+        if (yaml.contains(p + "headClick.title.stay")) {
             hc.setHeadClickTitleStay(yaml.getInt(p + "headClick.title.stay"));
-        if (yaml.contains(p + "headClick.title.fadeOut"))
+        }
+        if (yaml.contains(p + "headClick.title.fadeOut")) {
             hc.setHeadClickTitleFadeOut(yaml.getInt(p + "headClick.title.fadeOut"));
-        if (yaml.contains(p + "headClick.sound.found"))
+        }
+        if (yaml.contains(p + "headClick.sound.found")) {
             hc.setHeadClickSoundFound(yaml.getString(p + "headClick.sound.found"));
-        if (yaml.contains(p + "headClick.sound.alreadyOwn"))
+        }
+        if (yaml.contains(p + "headClick.sound.alreadyOwn")) {
             hc.setHeadClickSoundAlreadyOwn(yaml.getString(p + "headClick.sound.alreadyOwn"));
-        if (yaml.contains(p + "headClick.firework.enabled"))
+        }
+        if (yaml.contains(p + "headClick.firework.enabled")) {
             hc.setFireworkEnabled(yaml.getBoolean(p + "headClick.firework.enabled"));
-        if (yaml.contains(p + "headClick.commands"))
+        }
+        if (yaml.contains(p + "headClick.commands")) {
             hc.setHeadClickCommands(yaml.getStringList(p + "headClick.commands"));
-        if (yaml.contains(p + "headClick.eject.enabled"))
+        }
+        if (yaml.contains(p + "headClick.eject.enabled")) {
             hc.setHeadClickEjectEnabled(yaml.getBoolean(p + "headClick.eject.enabled"));
-        if (yaml.contains(p + "headClick.eject.power"))
+        }
+        if (yaml.contains(p + "headClick.eject.power")) {
             hc.setHeadClickEjectPower(yaml.getDouble(p + "headClick.eject.power"));
+        }
 
-        // Holograms
-        if (yaml.contains(p + "holograms.enabled"))
+        if (yaml.contains(p + "holograms.enabled")) {
             hc.setHologramsEnabled(yaml.getBoolean(p + "holograms.enabled"));
-        if (yaml.contains(p + "holograms.found.enabled"))
+        }
+        if (yaml.contains(p + "holograms.found.enabled")) {
             hc.setHologramsFoundEnabled(yaml.getBoolean(p + "holograms.found.enabled"));
-        if (yaml.contains(p + "holograms.notFound.enabled"))
+        }
+        if (yaml.contains(p + "holograms.notFound.enabled")) {
             hc.setHologramsNotFoundEnabled(yaml.getBoolean(p + "holograms.notFound.enabled"));
-        if (yaml.contains(p + "holograms.found.lines"))
+        }
+        if (yaml.contains(p + "holograms.found.lines")) {
             hc.setHologramsFoundLines(new ArrayList<>(yaml.getStringList(p + "holograms.found.lines")));
-        if (yaml.contains(p + "holograms.notFound.lines"))
+        }
+        if (yaml.contains(p + "holograms.notFound.lines")) {
             hc.setHologramsNotFoundLines(new ArrayList<>(yaml.getStringList(p + "holograms.notFound.lines")));
+        }
 
-        // Hints
-        if (yaml.contains(p + "hints.enabled"))
+        if (yaml.contains(p + "hints.enabled")) {
             hc.setHintsEnabled(yaml.getBoolean(p + "hints.enabled"));
-        if (yaml.contains(p + "hints.distance"))
+        }
+        if (yaml.contains(p + "hints.distance")) {
             hc.setHintDistance(yaml.getInt(p + "hints.distance"));
-        if (yaml.contains(p + "hints.frequency"))
+        }
+        if (yaml.contains(p + "hints.frequency")) {
             hc.setHintFrequency(yaml.getInt(p + "hints.frequency"));
+        }
 
-        // Spin
-        if (yaml.contains(p + "spin.enabled"))
+        if (yaml.contains(p + "spin.enabled")) {
             hc.setSpinEnabled(yaml.getBoolean(p + "spin.enabled"));
-        if (yaml.contains(p + "spin.speed"))
+        }
+        if (yaml.contains(p + "spin.speed")) {
             hc.setSpinSpeed(yaml.getInt(p + "spin.speed"));
-        if (yaml.contains(p + "spin.linked"))
+        }
+        if (yaml.contains(p + "spin.linked")) {
             hc.setSpinLinked(yaml.getBoolean(p + "spin.linked"));
+        }
 
-        // Particles
-        if (yaml.contains(p + "particles.found.enabled"))
+        if (yaml.contains(p + "particles.found.enabled")) {
             hc.setParticlesFoundEnabled(yaml.getBoolean(p + "particles.found.enabled"));
-        if (yaml.contains(p + "particles.notFound.enabled"))
+        }
+        if (yaml.contains(p + "particles.notFound.enabled")) {
             hc.setParticlesNotFoundEnabled(yaml.getBoolean(p + "particles.notFound.enabled"));
-        if (yaml.contains(p + "particles.found.type"))
+        }
+        if (yaml.contains(p + "particles.found.type")) {
             hc.setParticlesFoundType(yaml.getString(p + "particles.found.type"));
-        if (yaml.contains(p + "particles.found.amount"))
+        }
+        if (yaml.contains(p + "particles.found.amount")) {
             hc.setParticlesFoundAmount(yaml.getInt(p + "particles.found.amount"));
-        if (yaml.contains(p + "particles.notFound.type"))
+        }
+        if (yaml.contains(p + "particles.notFound.type")) {
             hc.setParticlesNotFoundType(yaml.getString(p + "particles.notFound.type"));
-        if (yaml.contains(p + "particles.notFound.amount"))
+        }
+        if (yaml.contains(p + "particles.notFound.amount")) {
             hc.setParticlesNotFoundAmount(yaml.getInt(p + "particles.notFound.amount"));
+        }
 
-        // TieredRewards
         loadTieredRewards(yaml, hc, p);
 
         return hc;
     }
 
-    private static void loadTieredRewards(YamlConfiguration yaml, HuntConfig hc, String prefix) {
+    private void loadTieredRewards(YamlConfiguration yaml, HuntConfig hc, String prefix) {
         ConfigurationSection section = yaml.getConfigurationSection(prefix + "tieredRewards");
         if (section == null) {
             return;
@@ -347,16 +401,19 @@ public class HuntConfigService {
         for (String level : section.getKeys(false)) {
             try {
                 List<String> messages = new ArrayList<>();
-                if (section.contains(level + ".messages"))
+                if (section.contains(level + ".messages")) {
                     messages = section.getStringList(level + ".messages");
+                }
 
                 List<String> commands = new ArrayList<>();
-                if (section.contains(level + ".commands"))
+                if (section.contains(level + ".commands")) {
                     commands = section.getStringList(level + ".commands");
+                }
 
                 List<String> broadcast = new ArrayList<>();
-                if (section.contains(level + ".broadcast"))
+                if (section.contains(level + ".broadcast")) {
                     broadcast = section.getStringList(level + ".broadcast");
+                }
 
                 int slotsRequired = section.getInt(level + ".slotsRequired", -1);
                 boolean isRandom = section.getBoolean(level + ".randomizeCommands", false);
@@ -374,40 +431,44 @@ public class HuntConfigService {
         }
     }
 
-    // --- HuntConfig saving ---
-
-    private static void saveHuntConfig(YamlConfiguration yaml, HuntConfig hc) {
+    private void saveHuntConfig(YamlConfiguration yaml, HuntConfig hc) {
         String p = "config.";
 
-        // HeadClick
-        if (hc.hasHeadClickMessages())
+        if (hc.hasHeadClickMessages()) {
             yaml.set(p + "headClick.messages", hc.getHeadClickMessages());
+        }
 
-        // Holograms
-        if (hc.hasHologramsFoundLines())
+        if (hc.hasHologramsFoundLines()) {
             yaml.set(p + "holograms.found.lines", hc.getHologramsFoundLines());
-        if (hc.hasHologramsNotFoundLines())
+        }
+        if (hc.hasHologramsNotFoundLines()) {
             yaml.set(p + "holograms.notFound.lines", hc.getHologramsNotFoundLines());
+        }
 
-        // TieredRewards
         if (hc.hasTieredRewards()) {
             saveTieredRewards(yaml, hc.getTieredRewards(), p);
         }
     }
 
-    private static void saveTieredRewards(YamlConfiguration yaml, List<TieredReward> rewards, String prefix) {
+    private void saveTieredRewards(YamlConfiguration yaml, List<TieredReward> rewards, String prefix) {
         for (TieredReward reward : rewards) {
             String key = prefix + "tieredRewards." + reward.level();
-            if (!reward.messages().isEmpty())
+            if (!reward.messages().isEmpty()) {
                 yaml.set(key + ".messages", reward.messages());
-            if (!reward.commands().isEmpty())
+            }
+            if (!reward.commands().isEmpty()) {
                 yaml.set(key + ".commands", reward.commands());
-            if (!reward.broadcastMessages().isEmpty())
+            }
+            if (!reward.broadcastMessages().isEmpty()) {
                 yaml.set(key + ".broadcast", reward.broadcastMessages());
-            if (reward.slotsRequired() != -1)
+            }
+            if (reward.slotsRequired() != -1) {
                 yaml.set(key + ".slotsRequired", reward.slotsRequired());
-            if (reward.isRandom())
+            }
+            if (reward.isRandom()) {
                 yaml.set(key + ".randomizeCommands", true);
+            }
         }
     }
+
 }

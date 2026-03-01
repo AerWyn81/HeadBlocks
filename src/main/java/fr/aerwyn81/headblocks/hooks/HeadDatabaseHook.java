@@ -1,9 +1,9 @@
 package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
-import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
@@ -14,7 +14,12 @@ import org.bukkit.Bukkit;
 import java.util.List;
 
 public class HeadDatabaseHook {
+    private final ServiceRegistry registry;
     private HeadDatabaseAPI headDatabaseAPI;
+
+    public HeadDatabaseHook(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     public boolean init() {
         var plugin = HeadBlocks.getInstance();
@@ -54,7 +59,7 @@ public class HeadDatabaseHook {
     }
 
     public void loadHeadsHDB() {
-        HeadService.getHeads().stream()
+        registry.getHeadService().getHeads().stream()
                 .filter(HBHeadHDB.class::isInstance)
                 .map(HBHeadHDB.class::cast)
                 .filter(h -> !h.isLoaded())

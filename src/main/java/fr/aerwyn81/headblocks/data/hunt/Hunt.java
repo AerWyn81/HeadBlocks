@@ -4,12 +4,14 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.BehaviorResult;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.services.ConfigService;
 import org.bukkit.entity.Player;
 
 import java.util.*;
 
 public class Hunt {
     private final String id;
+    private final ConfigService configService;
     private String displayName;
     private HuntState state;
     private int priority;
@@ -18,15 +20,16 @@ public class Hunt {
     private HuntConfig config;
     private final Set<UUID> headUUIDs;
 
-    public Hunt(String id, String displayName, HuntState state, int priority, String icon) {
+    public Hunt(ConfigService configService, String id, String displayName, HuntState state, int priority, String icon) {
         this.id = id;
+        this.configService = configService;
         this.displayName = displayName;
         this.state = state;
         this.priority = priority;
         this.icon = icon;
         this.behaviors = new ArrayList<>();
         this.behaviors.add(new FreeBehavior());
-        this.config = new HuntConfig();
+        this.config = new HuntConfig(configService);
         this.headUUIDs = new HashSet<>();
     }
 
@@ -118,7 +121,7 @@ public class Hunt {
     }
 
     public void setConfig(HuntConfig config) {
-        this.config = config != null ? config : new HuntConfig();
+        this.config = config != null ? config : new HuntConfig(configService);
     }
 
     // --- Head management ---

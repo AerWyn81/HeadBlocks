@@ -1,8 +1,8 @@
 package fr.aerwyn81.headblocks.commands;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.list.*;
 import fr.aerwyn81.headblocks.commands.list.List;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,35 +16,37 @@ import java.util.stream.Collectors;
 
 public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     private final HashMap<String, HBCommand> registeredCommands;
+    private final ServiceRegistry registry;
 
     private final Help helpCommand;
 
-    public HBCommandExecutor() {
+    public HBCommandExecutor(ServiceRegistry registry) {
+        this.registry = registry;
         this.registeredCommands = new HashMap<>();
 
-        this.helpCommand = new Help();
+        this.helpCommand = new Help(registry);
 
         this.register(helpCommand);
-        this.register(new Give());
-        this.register(new Reload());
-        this.register(new List());
-        this.register(new Progress());
-        this.register(new Remove());
-        this.register(new RemoveAll());
-        this.register(new Reset());
-        this.register(new ResetAll());
-        this.register(new Version());
-        this.register(new Stats());
-        this.register(new Top());
-        this.register(new Tp());
-        this.register(new Move());
-        this.register(new Options());
-        this.register(new Export());
-        this.register(new Info());
-        this.register(new RenameHead());
-        this.register(new Hunt());
-        this.register(new Leave());
-        this.register(new Debug());
+        this.register(new Give(registry));
+        this.register(new Reload(registry));
+        this.register(new List(registry));
+        this.register(new Progress(registry));
+        this.register(new Remove(registry));
+        this.register(new RemoveAll(registry));
+        this.register(new Reset(registry));
+        this.register(new ResetAll(registry));
+        this.register(new Version(registry));
+        this.register(new Stats(registry));
+        this.register(new Top(registry));
+        this.register(new Tp(registry));
+        this.register(new Move(registry));
+        this.register(new Options(registry));
+        this.register(new Export(registry));
+        this.register(new Info(registry));
+        this.register(new RenameHead(registry));
+        this.register(new Hunt(registry));
+        this.register(new Leave(registry));
+        this.register(new Debug(registry));
     }
 
     private void register(Cmd c) {
@@ -60,7 +62,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command c, @NotNull String s, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
             return false;
         }
 
@@ -72,25 +74,25 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
             if (aliasCmd.isPresent()) {
                 command = aliasCmd.get().getValue();
             } else {
-                sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
+                sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
                 return false;
             }
         }
 
         if (!PlayerUtils.hasPermission(sender, command.getPermission())) {
-            sender.sendMessage(LanguageService.getMessage("Messages.NoPermission"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.NoPermission"));
             return false;
         }
 
         if (command.isPlayerCommand() && !(sender instanceof Player)) {
-            sender.sendMessage(LanguageService.getMessage("Messages.PlayerOnly"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
             return false;
         }
 
         int argsWithoutCmd = Arrays.copyOfRange(args, 1, args.length).length;
 
         if (argsWithoutCmd < command.getArgs().length) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
             return false;
         }
 

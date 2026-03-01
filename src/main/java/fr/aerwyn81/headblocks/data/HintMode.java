@@ -6,10 +6,10 @@ public enum HintMode {
     SOUND,
     ACTIONBAR;
 
-    public String getLocalizedName() {
+    public String getLocalizedName(LanguageService ls) {
         return switch (this) {
-            case SOUND -> LanguageService.getMessage("Other.Sound");
-            case ACTIONBAR -> LanguageService.getMessage("Other.ActionBar");
+            case SOUND -> ls.message("Other.Sound");
+            case ACTIONBAR -> ls.message("Other.ActionBar");
         };
     }
 

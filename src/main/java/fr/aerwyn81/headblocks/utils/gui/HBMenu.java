@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 public class HBMenu implements InventoryHolder {
     private final JavaPlugin owner;
+    private final GuiService guiService;
 
     private int rowsPerPage;
     private String name;
@@ -34,8 +35,9 @@ public class HBMenu implements InventoryHolder {
 
     private HBPaginationButtonBuilder paginationButtonBuilder;
 
-    public HBMenu(JavaPlugin owner, String name, boolean isNestedMenu, int rowsPerPage) {
+    public HBMenu(JavaPlugin owner, GuiService guiService, String name, boolean isNestedMenu, int rowsPerPage) {
         this.owner = owner;
+        this.guiService = guiService;
 
         setName(name);
         this.rowsPerPage = rowsPerPage;
@@ -94,8 +96,9 @@ public class HBMenu implements InventoryHolder {
     }
 
     public void setItem(int page, int slot, ItemGUI button) {
-        if (slot < 0 || slot > getPageSize())
+        if (slot < 0 || slot > getPageSize()) {
             return;
+        }
 
         addItem((page * getPageSize()) + slot, button);
     }
@@ -105,22 +108,25 @@ public class HBMenu implements InventoryHolder {
     }
 
     public void removeItem(int page, int slot) {
-        if (slot < 0 || slot > getPageSize())
+        if (slot < 0 || slot > getPageSize()) {
             return;
+        }
 
         removeItem((page * getPageSize()) + slot);
     }
 
     public ItemGUI getItem(int slot) {
-        if (slot < 0 || slot > getHighestFilledSlot())
+        if (slot < 0 || slot > getHighestFilledSlot()) {
             return null;
+        }
 
         return items.get(slot);
     }
 
     public ItemGUI getItem(int page, int slot) {
-        if (slot < 0 || slot > getPageSize())
+        if (slot < 0 || slot > getPageSize()) {
             return null;
+        }
 
         return getItem((page * getPageSize()) + slot);
     }
@@ -141,8 +147,9 @@ public class HBMenu implements InventoryHolder {
         int slot = 0;
 
         for (int nextSlot : items.keySet()) {
-            if (items.get(nextSlot) != null && nextSlot > slot)
+            if (items.get(nextSlot) != null && nextSlot > slot) {
                 slot = nextSlot;
+            }
         }
 
         return slot;
@@ -215,8 +222,8 @@ public class HBMenu implements InventoryHolder {
                     paginationButton = paginationButtonBuilder.buildPaginationButton(buttonType, this);
                 }
 
-                if (paginationButton == null) {
-                    paginationButton = GuiService.getDefaultPaginationButtonBuilder(buttonType, this);
+                if (paginationButton == null && guiService != null) {
+                    paginationButton = guiService.getDefaultPaginationButtonBuilder(buttonType, this);
                 }
 
                 if (!items.containsKey(i)) {

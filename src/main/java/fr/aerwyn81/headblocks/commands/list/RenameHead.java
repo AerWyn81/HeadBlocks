@@ -1,9 +1,8 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -13,6 +12,11 @@ import java.util.Arrays;
 
 @HBAnnotations(command = "rename", permission = "headblocks.admin", isPlayerCommand = true, alias = "r", args = {"name"})
 public class RenameHead implements Cmd {
+    private final ServiceRegistry registry;
+
+    public RenameHead(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
@@ -20,10 +24,10 @@ public class RenameHead implements Cmd {
 
         var targetLoc = player.getTargetBlock(null, 100).getLocation();
 
-        var headLocation = HeadService.getHeadAt(targetLoc);
+        var headLocation = registry.getHeadService().getHeadAt(targetLoc);
 
         if (headLocation == null) {
-            player.sendMessage(LanguageService.getMessage("Messages.NoTargetHeadBlock"));
+            player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
             return true;
         }
 
@@ -31,14 +35,14 @@ public class RenameHead implements Cmd {
 
         var name = String.join(" ", args);
         if (name.isEmpty()) {
-            player.sendMessage(LanguageService.getMessage("Messages.NameCannotBeEmpty"));
+            player.sendMessage(registry.getLanguageService().message("Messages.NameCannotBeEmpty"));
             return true;
         }
 
         headLocation.setName(name);
-        HeadService.saveHeadInConfig(headLocation);
+        registry.getHeadService().saveHeadInConfig(headLocation);
 
-        player.sendMessage(LanguageService.getMessage("Messages.HeadRenamed")
+        player.sendMessage(registry.getLanguageService().message("Messages.HeadRenamed")
                 .replaceAll("%name%", MessageUtils.colorize(name)));
         return true;
     }

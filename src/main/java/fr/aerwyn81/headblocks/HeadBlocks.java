@@ -11,8 +11,8 @@ import fr.aerwyn81.headblocks.hooks.PacketEventsHook;
 import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.runnables.TimedRunTask;
-import fr.aerwyn81.headblocks.services.*;
-import fr.aerwyn81.headblocks.utils.bukkit.VersionUtils;
+import fr.aerwyn81.headblocks.services.ConfigService;
+import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bstats.bukkit.Metrics;
@@ -38,6 +38,8 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isHeadDatabaseActive;
     public static boolean isPacketEventsActive;
 
+    private ServiceRegistry serviceRegistry;
+    private ConfigService earlyConfigService;
     private GlobalTask globalTask;
     private HeadDatabaseHook headDatabaseHook;
     private PacketEventsHook packetEventsHook;
@@ -62,10 +64,10 @@ public final class HeadBlocks extends JavaPlugin {
         }
         reloadConfig();
 
-        ConfigService.initialize(configFile);
+        earlyConfigService = new ConfigService(configFile);
 
-        if (ConfigService.isHologramsEnabled()
-                && HologramService.getHologramTypeFromConfig() != EnumTypeHologram.DEFAULT) {
+        if (earlyConfigService.hologramsEnabled()
+                && EnumTypeHologram.getEnumFromText(earlyConfigService.hologramPlugin()) != EnumTypeHologram.DEFAULT) {
             if (isPacketEventsLoaded) {
                 holoEasyLib = new HoloEasy(this);
             } else {
@@ -82,6 +84,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         LogUtil.info("HeadBlocks initializing...");
 
+        File configFile = new File(getDataFolder(), "config.yml");
         File locationFile = new File(getDataFolder(), "locations.yml");
 
         if (!VersionUtils.isAtLeastVersion(VersionUtils.v1_20_R1)) {
@@ -95,51 +98,54 @@ public final class HeadBlocks extends JavaPlugin {
         isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
 
         isPlaceholderApiActive = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
-        if (isPlaceholderApiActive) {
-            new PlaceholderHook().register();
-        }
 
         isPacketEventsActive = Bukkit.getPluginManager().isPluginEnabled("packetevents");
 
-        LanguageService.initialize(ConfigService.getLanguage());
-        LanguageService.pushMessages();
+        // --- Create ServiceRegistry (DI wiring) ---
+        PluginProvider pluginProvider = new HeadBlocksPluginProvider(this);
+        SchedulerAdapter scheduler = new BukkitSchedulerAdapter(this);
+        CommandDispatcher commandDispatcher = new BukkitCommandDispatcher();
 
-        StorageService.initialize();
-        HuntConfigService.initialize();
-        HuntService.initialize();
-        HeadService.initialize(locationFile);
-        HologramService.load();
+        this.serviceRegistry = new ServiceRegistry(
+                pluginProvider, scheduler, commandDispatcher,
+                configFile, locationFile, holoEasyLib, earlyConfigService);
+
+        packetEventsHook.init(serviceRegistry);
+
+        if (isPlaceholderApiActive) {
+            new PlaceholderHook(serviceRegistry).register();
+        }
 
         startInternalTaskTimer();
 
         if (isHeadDatabaseActive) {
-            this.headDatabaseHook = new HeadDatabaseHook();
+            this.headDatabaseHook = new HeadDatabaseHook(serviceRegistry);
             if (!this.headDatabaseHook.init()) {
                 isHeadDatabaseActive = false;
             }
         }
 
-        getCommand("headblocks").setExecutor(new HBCommandExecutor());
+        getCommand("headblocks").setExecutor(new HBCommandExecutor(serviceRegistry));
 
-        Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(), this);
-        Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(), this);
-        Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(), this);
-        Bukkit.getPluginManager().registerEvents(new OthersEvent(), this);
-        Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(), this);
-        Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(), this);
-        Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OthersEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(serviceRegistry), this);
 
-        new TimedRunTask().runTaskTimer(this, 0, 2);
+        new TimedRunTask(serviceRegistry).runTaskTimer(this, 0, 2);
 
-        if (ConfigService.isMetricsEnabled()) {
+        if (serviceRegistry.getConfigService().metricsEnabled()) {
             var m = new Metrics(this, 15495);
-            m.addCustomChart(new SimplePie("database_type", StorageService::selectedStorageType));
-            m.addCustomChart(new SingleLineChart("heads", () -> HeadService.getChargedHeadLocations().size()));
-            m.addCustomChart(new SimplePie("lang", LanguageService::getLanguage));
-            m.addCustomChart(new SingleLineChart("hunts", () -> HuntService.getAllHunts().size()));
+            m.addCustomChart(new SimplePie("database_type", () -> serviceRegistry.getStorageService().selectedStorageType()));
+            m.addCustomChart(new SingleLineChart("heads", () -> serviceRegistry.getHeadService().getChargedHeadLocations().size()));
+            m.addCustomChart(new SimplePie("lang", () -> serviceRegistry.getLanguageService().language()));
+            m.addCustomChart(new SingleLineChart("hunts", () -> serviceRegistry.getHuntService().getAllHunts().size()));
             m.addCustomChart(new AdvancedBarChart("hunt_behaviors", () -> {
                 Map<String, int[]> map = new HashMap<>();
-                for (var hunt : HuntService.getAllHunts()) {
+                for (var hunt : serviceRegistry.getHuntService().getAllHunts()) {
                     for (var behavior : hunt.getBehaviors()) {
                         String name = behavior.getClass().getSimpleName().replace("Behavior", "");
                         map.merge(name, new int[]{1}, (a, b) -> new int[]{a[0] + b[0]});
@@ -148,19 +154,24 @@ public final class HeadBlocks extends JavaPlugin {
                 return map;
             }));
             m.addCustomChart(new AdvancedBarChart("features", () -> {
-                var heads = HeadService.getChargedHeadLocations();
+                var heads = serviceRegistry.getHeadService().getChargedHeadLocations();
                 Map<String, int[]> map = new HashMap<>();
 
-                if (heads.stream().anyMatch(h -> h.getOrderIndex() != -1))
+                if (heads.stream().anyMatch(h -> h.getOrderIndex() != -1)) {
                     map.put("Order", new int[]{1});
-                if (heads.stream().anyMatch(HeadLocation::isHintSoundEnabled))
+                }
+                if (heads.stream().anyMatch(HeadLocation::isHintSoundEnabled)) {
                     map.put("Hint sound", new int[]{1});
-                if (heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled))
+                }
+                if (heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled)) {
                     map.put("Hint action bar", new int[]{1});
-                if (heads.stream().anyMatch(h -> !h.getRewards().isEmpty()))
+                }
+                if (heads.stream().anyMatch(h -> !h.getRewards().isEmpty())) {
                     map.put("Hint rewards", new int[]{1});
-                if (ConfigService.hideFoundHeads())
+                }
+                if (serviceRegistry.getConfigService().isHideFoundHeads()) {
                     map.put("Hide heads", new int[]{1});
+                }
 
                 return map;
             }));
@@ -170,8 +181,6 @@ public final class HeadBlocks extends JavaPlugin {
     }
 
     private void initializeExternals() {
-        packetEventsHook.init();
-
         NBT.preloadApi();
 
         MinecraftVersion.disableBStats();
@@ -181,11 +190,9 @@ public final class HeadBlocks extends JavaPlugin {
     public void onDisable() {
         Bukkit.getScheduler().cancelTasks(this);
 
-        HologramService.unload();
-        StorageService.close();
-        HeadService.clearHeadMoves();
-        GuiService.clearCache();
-        TimedRunManager.clearAll();
+        if (serviceRegistry != null) {
+            serviceRegistry.shutdown();
+        }
 
         packetEventsHook.unload();
 
@@ -207,17 +214,22 @@ public final class HeadBlocks extends JavaPlugin {
             }
         }
 
-        this.globalTask = new GlobalTask();
+        this.globalTask = new GlobalTask(serviceRegistry);
 
-        if (!ConfigService.isHologramsEnabled() && !ConfigService.isParticlesEnabled()) {
+        var configSvc = serviceRegistry.getConfigService();
+        if (!configSvc.hologramsEnabled() && !configSvc.particlesEnabled()) {
             return;
         }
 
-        globalTask.runTaskTimer(this, 0, ConfigService.getDelayGlobalTask());
+        globalTask.runTaskTimer(this, 0, configSvc.delayGlobalTask());
     }
 
     public static HeadBlocks getInstance() {
         return instance;
+    }
+
+    public ServiceRegistry getServiceRegistry() {
+        return serviceRegistry;
     }
 
     public HeadDatabaseHook getHeadDatabaseHook() {

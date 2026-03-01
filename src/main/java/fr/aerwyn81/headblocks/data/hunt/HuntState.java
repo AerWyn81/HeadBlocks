@@ -7,11 +7,11 @@ public enum HuntState {
     INACTIVE,
     ARCHIVED;
 
-    public String getLocalizedName() {
+    public String getLocalizedName(LanguageService ls) {
         return switch (this) {
-            case ACTIVE -> LanguageService.getMessage("Hunt.State.Active");
-            case INACTIVE -> LanguageService.getMessage("Hunt.State.Inactive");
-            case ARCHIVED -> LanguageService.getMessage("Hunt.State.Archived");
+            case ACTIVE -> ls.message("Hunt.State.Active");
+            case INACTIVE -> ls.message("Hunt.State.Inactive");
+            case ARCHIVED -> ls.message("Hunt.State.Archived");
         };
     }
 

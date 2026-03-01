@@ -1,10 +1,9 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -22,28 +21,33 @@ import java.util.Map;
 
 @HBAnnotations(command = "top", permission = "headblocks.commands.top", alias = "t")
 public class Top implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Top(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        ChatPageUtils cpu = new ChatPageUtils(sender).currentPage(args);
+        ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService()).currentPage(args);
 
         ArrayList<Map.Entry<PlayerProfileLight, Integer>> top;
         try {
-            top = new ArrayList<>(StorageService.getTopPlayers().entrySet());
+            top = new ArrayList<>(registry.getStorageService().getTopPlayers().entrySet());
         } catch (InternalException ex) {
-            sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while retrieving top players from the storage: {0}", ex.getMessage());
             return true;
         }
 
         if (top.isEmpty()) {
-            sender.sendMessage(LanguageService.getMessage("Messages.TopEmpty"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.TopEmpty"));
             return true;
         }
 
         cpu.entriesCount(top.size());
 
-        String message = LanguageService.getMessage("Chat.TopTitle");
+        String message = registry.getLanguageService().message("Chat.TopTitle");
         if (sender instanceof Player) {
             TextComponent titleComponent = new TextComponent(message);
             cpu.addTitleLine(titleComponent);
@@ -55,7 +59,7 @@ public class Top implements Cmd {
             int pos = i + 1;
             Map.Entry<PlayerProfileLight, Integer> currentScore = top.get(i);
 
-            message = LanguageService.getMessage("Chat.LineTop", currentScore.getKey().name())
+            message = registry.getLanguageService().message("Chat.LineTop", currentScore.getKey().name())
                     .replaceAll("%pos%", String.valueOf(pos))
                     .replaceAll("%count%", String.valueOf(currentScore.getValue()));
 
@@ -64,7 +68,7 @@ public class Top implements Cmd {
 
                 if (PlayerUtils.hasPermission(sender, "headblocks.admin")) {
                     msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks stats " + currentScore.getKey().name()));
-                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.LineTop"))));
+                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.LineTop"))));
                 }
 
                 cpu.addLine(msg);

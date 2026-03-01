@@ -2,36 +2,32 @@ package fr.aerwyn81.headblocks.data.hunt;
 
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.services.ConfigService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class HuntConfigTest {
 
-    private MockedStatic<ConfigService> configMock;
+    @Mock
+    ConfigService configService;
 
-    @BeforeEach
-    void setUp() {
-        configMock = mockStatic(ConfigService.class);
-    }
-
-    @AfterEach
-    void tearDown() {
-        configMock.close();
+    private HuntConfig newConfig() {
+        return new HuntConfig(configService);
     }
 
     // ---- HeadClick Messages ----
 
     @Test
     void getHeadClickMessages_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         List<String> override = List.of("Custom message");
         config.setHeadClickMessages(override);
 
@@ -41,9 +37,9 @@ class HuntConfigTest {
     @Test
     void getHeadClickMessages_noOverride_fallsBackToConfigService() {
         List<String> fallback = List.of("Global message");
-        configMock.when(ConfigService::getHeadClickMessages).thenReturn(fallback);
+        when(configService.headClickMessages()).thenReturn(fallback);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.getHeadClickMessages()).isEqualTo(fallback);
     }
@@ -52,7 +48,7 @@ class HuntConfigTest {
 
     @Test
     void isHeadClickTitleEnabled_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setHeadClickTitleEnabled(true);
 
         assertThat(config.isHeadClickTitleEnabled()).isTrue();
@@ -60,9 +56,9 @@ class HuntConfigTest {
 
     @Test
     void isHeadClickTitleEnabled_noOverride_fallsBackToConfigService() {
-        configMock.when(ConfigService::isHeadClickTitleEnabled).thenReturn(false);
+        when(configService.headClickTitleEnabled()).thenReturn(false);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.isHeadClickTitleEnabled()).isFalse();
     }
@@ -71,7 +67,7 @@ class HuntConfigTest {
 
     @Test
     void isHologramsEnabled_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setHologramsEnabled(true);
 
         assertThat(config.isHologramsEnabled()).isTrue();
@@ -79,20 +75,20 @@ class HuntConfigTest {
 
     @Test
     void isHologramsEnabled_noOverride_derivedFromFoundAndNotFound() {
-        configMock.when(ConfigService::isHologramsFoundEnabled).thenReturn(false);
-        configMock.when(ConfigService::isHologramsNotFoundEnabled).thenReturn(true);
+        when(configService.hologramsFoundEnabled()).thenReturn(false);
+        when(configService.hologramsNotFoundEnabled()).thenReturn(true);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.isHologramsEnabled()).isTrue();
     }
 
     @Test
     void isHologramsEnabled_noOverride_bothFalse_returnsFalse() {
-        configMock.when(ConfigService::isHologramsFoundEnabled).thenReturn(false);
-        configMock.when(ConfigService::isHologramsNotFoundEnabled).thenReturn(false);
+        when(configService.hologramsFoundEnabled()).thenReturn(false);
+        when(configService.hologramsNotFoundEnabled()).thenReturn(false);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.isHologramsEnabled()).isFalse();
     }
@@ -101,7 +97,7 @@ class HuntConfigTest {
 
     @Test
     void isHintsEnabled_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setHintsEnabled(true);
 
         assertThat(config.isHintsEnabled()).isTrue();
@@ -109,18 +105,18 @@ class HuntConfigTest {
 
     @Test
     void isHintsEnabled_noOverride_fallbackUsesHintDistance() {
-        configMock.when(ConfigService::getHintDistanceBlocks).thenReturn(10);
+        when(configService.hintDistanceBlocks()).thenReturn(10);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.isHintsEnabled()).isTrue();
     }
 
     @Test
     void isHintsEnabled_noOverride_hintDistanceZero_returnsFalse() {
-        configMock.when(ConfigService::getHintDistanceBlocks).thenReturn(0);
+        when(configService.hintDistanceBlocks()).thenReturn(0);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.isHintsEnabled()).isFalse();
     }
@@ -129,7 +125,7 @@ class HuntConfigTest {
 
     @Test
     void getTieredRewards_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         List<TieredReward> override = List.of(
                 new TieredReward(1, List.of("msg"), List.of("cmd"), List.of(), 1, false));
         config.setTieredRewards(override);
@@ -141,9 +137,9 @@ class HuntConfigTest {
     void getTieredRewards_noOverride_fallsBackToConfigService() {
         List<TieredReward> fallback = List.of(
                 new TieredReward(5, List.of("a"), List.of("b"), List.of("c"), 2, true));
-        configMock.when(ConfigService::getTieredRewards).thenReturn(fallback);
+        when(configService.tieredRewards()).thenReturn(fallback);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.getTieredRewards()).isEqualTo(fallback);
     }
@@ -152,7 +148,7 @@ class HuntConfigTest {
 
     @Test
     void isSpinEnabled_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setSpinEnabled(true);
 
         assertThat(config.isSpinEnabled()).isTrue();
@@ -160,9 +156,9 @@ class HuntConfigTest {
 
     @Test
     void isSpinEnabled_noOverride_fallsBackToConfigService() {
-        configMock.when(ConfigService::isSpinEnabled).thenReturn(false);
+        when(configService.spinEnabled()).thenReturn(false);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.isSpinEnabled()).isFalse();
     }
@@ -171,7 +167,7 @@ class HuntConfigTest {
 
     @Test
     void getParticlesFoundType_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setParticlesFoundType("FLAME");
 
         assertThat(config.getParticlesFoundType()).isEqualTo("FLAME");
@@ -179,9 +175,9 @@ class HuntConfigTest {
 
     @Test
     void getParticlesFoundType_noOverride_fallsBackToConfigService() {
-        configMock.when(ConfigService::getParticlesFoundType).thenReturn("HEART");
+        when(configService.particlesFoundType()).thenReturn("HEART");
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.getParticlesFoundType()).isEqualTo("HEART");
     }
@@ -190,7 +186,7 @@ class HuntConfigTest {
 
     @Test
     void getHeadClickSoundFound_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setHeadClickSoundFound("ENTITY_PLAYER_LEVELUP");
 
         assertThat(config.getHeadClickSoundFound()).isEqualTo("ENTITY_PLAYER_LEVELUP");
@@ -198,16 +194,16 @@ class HuntConfigTest {
 
     @Test
     void getHeadClickSoundFound_noOverride_fallsBackToConfigService() {
-        configMock.when(ConfigService::getHeadClickNotOwnSound).thenReturn("BLOCK_NOTE_BLOCK_PLING");
+        when(configService.headClickNotOwnSound()).thenReturn("BLOCK_NOTE_BLOCK_PLING");
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.getHeadClickSoundFound()).isEqualTo("BLOCK_NOTE_BLOCK_PLING");
     }
 
     @Test
     void getHeadClickSoundAlreadyOwn_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setHeadClickSoundAlreadyOwn("ENTITY_VILLAGER_NO");
 
         assertThat(config.getHeadClickSoundAlreadyOwn()).isEqualTo("ENTITY_VILLAGER_NO");
@@ -215,9 +211,9 @@ class HuntConfigTest {
 
     @Test
     void getHeadClickSoundAlreadyOwn_noOverride_fallsBackToConfigService() {
-        configMock.when(ConfigService::getHeadClickAlreadyOwnSound).thenReturn("BLOCK_ANVIL_LAND");
+        when(configService.headClickAlreadyOwnSound()).thenReturn("BLOCK_ANVIL_LAND");
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.getHeadClickSoundAlreadyOwn()).isEqualTo("BLOCK_ANVIL_LAND");
     }
@@ -226,7 +222,7 @@ class HuntConfigTest {
 
     @Test
     void getHologramsFoundLines_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         ArrayList<String> lines = new ArrayList<>(List.of("Found!"));
         config.setHologramsFoundLines(lines);
 
@@ -236,16 +232,16 @@ class HuntConfigTest {
     @Test
     void getHologramsFoundLines_noOverride_fallsBackToConfigService() {
         ArrayList<String> fallback = new ArrayList<>(List.of("Default found"));
-        configMock.when(ConfigService::getHologramsFoundLines).thenReturn(fallback);
+        when(configService.hologramsFoundLines()).thenReturn(fallback);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.getHologramsFoundLines()).containsExactly("Default found");
     }
 
     @Test
     void getHologramsNotFoundLines_override_returnsOverride() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         ArrayList<String> lines = new ArrayList<>(List.of("Not found!"));
         config.setHologramsNotFoundLines(lines);
 
@@ -255,9 +251,9 @@ class HuntConfigTest {
     @Test
     void getHologramsNotFoundLines_noOverride_fallsBackToConfigService() {
         ArrayList<String> fallback = new ArrayList<>(List.of("Default not found"));
-        configMock.when(ConfigService::getHologramsNotFoundLines).thenReturn(fallback);
+        when(configService.hologramsNotFoundLines()).thenReturn(fallback);
 
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.getHologramsNotFoundLines()).containsExactly("Default not found");
     }
@@ -266,7 +262,7 @@ class HuntConfigTest {
 
     @Test
     void hasHeadClickMessages_true_whenSet() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setHeadClickMessages(List.of("msg"));
 
         assertThat(config.hasHeadClickMessages()).isTrue();
@@ -274,14 +270,14 @@ class HuntConfigTest {
 
     @Test
     void hasHeadClickMessages_false_whenNull() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.hasHeadClickMessages()).isFalse();
     }
 
     @Test
     void hasTieredRewards_true_whenSet() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setTieredRewards(List.of());
 
         assertThat(config.hasTieredRewards()).isTrue();
@@ -289,14 +285,14 @@ class HuntConfigTest {
 
     @Test
     void hasTieredRewards_false_whenNull() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.hasTieredRewards()).isFalse();
     }
 
     @Test
     void hasSpinConfig_true_whenSet() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setSpinEnabled(false);
 
         assertThat(config.hasSpinConfig()).isTrue();
@@ -304,14 +300,14 @@ class HuntConfigTest {
 
     @Test
     void hasSpinConfig_false_whenNull() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.hasSpinConfig()).isFalse();
     }
 
     @Test
     void hasParticlesConfig_true_whenFoundSet() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setParticlesFoundEnabled(true);
 
         assertThat(config.hasParticlesConfig()).isTrue();
@@ -319,7 +315,7 @@ class HuntConfigTest {
 
     @Test
     void hasHintsConfig_true_whenSet() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
         config.setHintsEnabled(true);
 
         assertThat(config.hasHintsConfig()).isTrue();
@@ -327,7 +323,7 @@ class HuntConfigTest {
 
     @Test
     void hasHintsConfig_false_whenNull() {
-        HuntConfig config = new HuntConfig();
+        HuntConfig config = newConfig();
 
         assertThat(config.hasHintsConfig()).isFalse();
     }

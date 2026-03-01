@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.hooks;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -26,7 +27,7 @@ class PacketEventsHookImpl {
         }
     }
 
-    public void init() {
+    public void init(ServiceRegistry registry) {
         if (!isEnabled) {
             return;
         }
@@ -34,7 +35,7 @@ class PacketEventsHookImpl {
         PacketEvents.getAPI().getSettings().checkForUpdates(false);
         PacketEvents.getAPI().init();
 
-        headHidingListener = new HeadHidingPacketListener();
+        headHidingListener = new HeadHidingPacketListener(registry);
         PacketEvents.getAPI().getEventManager().registerListener(headHidingListener, PacketListenerPriority.NORMAL);
     }
 

@@ -1,11 +1,10 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -17,6 +16,11 @@ import java.util.stream.IntStream;
 
 @HBAnnotations(command = "give", permission = "headblocks.admin", isPlayerCommand = true, alias = "g")
 public class Give implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Give(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
@@ -26,16 +30,16 @@ public class Give implements Cmd {
             Player pTemp = Bukkit.getPlayer(args[1]);
 
             if (pTemp == null) {
-                player.sendMessage(LanguageService.getMessage("Messages.PlayerNotConnected", args[1]));
+                player.sendMessage(registry.getLanguageService().message("Messages.PlayerNotConnected", args[1]));
                 return true;
             }
 
             player = pTemp;
         }
 
-        ArrayList<HBHead> hbHeads = HeadService.getHeads();
+        ArrayList<HBHead> hbHeads = registry.getHeadService().getHeads();
         if (hbHeads.isEmpty()) {
-            player.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
+            player.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
             return true;
         }
 
@@ -59,7 +63,7 @@ public class Give implements Cmd {
 
             int finalId = --id;
             if (finalId > hbHeads.size() - 1) {
-                player.sendMessage(LanguageService.getMessage("Messages.ErrorCommand"));
+                player.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
                 return true;
             }
 
@@ -67,7 +71,7 @@ public class Give implements Cmd {
         }
 
         if (PlayerUtils.getEmptySlots(player) < headsToGive.size()) {
-            player.sendMessage(LanguageService.getMessage("Messages.InventoryFull"));
+            player.sendMessage(registry.getLanguageService().message("Messages.InventoryFull"));
             return true;
         }
 
@@ -75,7 +79,7 @@ public class Give implements Cmd {
         for (HBHead head : headsToGive) {
             if (head instanceof HBHeadHDB headHDB) {
                 if (!headHDB.isLoaded()) {
-                    player.sendMessage(LanguageService.getMessage("Messages.HeadNotYetLoaded")
+                    player.sendMessage(registry.getLanguageService().message("Messages.HeadNotYetLoaded")
                             .replaceAll("%id%", String.valueOf(headHDB.getId())));
                     continue;
                 }
@@ -87,7 +91,7 @@ public class Give implements Cmd {
 
 
         if (headGiven != 0) {
-            player.sendMessage(LanguageService.getMessage("Messages.HeadGiven"));
+            player.sendMessage(registry.getLanguageService().message("Messages.HeadGiven"));
         }
 
         return true;
@@ -102,7 +106,7 @@ public class Give implements Cmd {
                     .collect(Collectors.toCollection(ArrayList::new));
         }
 
-        int headCount = HeadService.getHeads().size();
+        int headCount = registry.getHeadService().getHeads().size();
 
         ArrayList<String> items = new ArrayList<>();
         if (args.length == 3 && headCount > 0) {

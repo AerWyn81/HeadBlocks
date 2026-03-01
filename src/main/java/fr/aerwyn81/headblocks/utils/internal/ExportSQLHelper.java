@@ -1,8 +1,8 @@
 package fr.aerwyn81.headblocks.utils.internal;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
-import fr.aerwyn81.headblocks.services.StorageService;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 public class ExportSQLHelper {
 
-    public static void generateFile(EnumTypeDatabase enumTypeDatabase, String fileName) throws Exception {
+    public static void generateFile(ServiceRegistry registry, EnumTypeDatabase enumTypeDatabase, String fileName) throws Exception {
         File sqlFile = new File(HeadBlocks.getInstance().getDataFolder(), fileName);
 
         if (sqlFile.exists()) {
@@ -34,7 +34,7 @@ public class ExportSQLHelper {
         ps.println("-- ");
         ps.println();
 
-        ArrayList<String> instructions = StorageService.getInstructionsExport(enumTypeDatabase);
+        ArrayList<String> instructions = registry.getStorageService().getInstructionsExport(enumTypeDatabase);
 
         for (String ins : instructions) {
             ps.println(ins);

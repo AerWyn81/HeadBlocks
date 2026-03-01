@@ -1,17 +1,19 @@
 package fr.aerwyn81.headblocks.data.hunt.behavior;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import org.bukkit.entity.Player;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -32,12 +34,31 @@ class OrderedBehaviorTest {
     @Mock
     HeadLocation headLocation;
 
-    private final OrderedBehavior behavior = new OrderedBehavior();
-    private final Hunt hunt = createTestHunt();
+    @Mock
+    ServiceRegistry registry;
 
-    private static Hunt createTestHunt() {
-        Hunt h = new Hunt("hunt1", "Test Hunt", HuntState.ACTIVE, 1, "DIAMOND");
-        return h;
+    @Mock
+    StorageService storageService;
+
+    @Mock
+    HeadService headService;
+
+    @Mock
+    LanguageService languageService;
+
+    @Mock
+    ConfigService configService;
+
+    private OrderedBehavior behavior;
+    private Hunt hunt;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(registry.getStorageService()).thenReturn(storageService);
+        lenient().when(registry.getHeadService()).thenReturn(headService);
+        lenient().when(registry.getLanguageService()).thenReturn(languageService);
+        behavior = new OrderedBehavior(registry);
+        hunt = new Hunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "DIAMOND");
     }
 
     @Test
@@ -60,7 +81,7 @@ class OrderedBehaviorTest {
     }
 
     @Test
-    void canPlayerClick_noPriorUnfound_returnsAllow() {
+    void canPlayerClick_noPriorUnfound_returnsAllow() throws InternalException {
         UUID headUuid = UUID.randomUUID();
         UUID playerUuid = UUID.randomUUID();
 
@@ -77,28 +98,25 @@ class OrderedBehaviorTest {
         hunt.addHead(headUuid);
         hunt.addHead(priorHeadUuid);
 
-        try (MockedStatic<StorageService> ss = mockStatic(StorageService.class);
-             MockedStatic<HeadService> hs = mockStatic(HeadService.class)) {
+        ArrayList<UUID> playerHeads = new ArrayList<>();
+        playerHeads.add(priorHeadUuid);
+        when(storageService.getHeadsPlayerForHunt(playerUuid, "hunt1")).thenReturn(playerHeads);
+        when(headService.getChargedHeadLocations()).thenReturn(new ArrayList<>(java.util.List.of(priorHead, headLocation)));
 
-            ArrayList<UUID> playerHeads = new ArrayList<>();
-            playerHeads.add(priorHeadUuid);
-            ss.when(() -> StorageService.getHeadsPlayerForHunt(playerUuid, "hunt1")).thenReturn(playerHeads);
-            hs.when(HeadService::getChargedHeadLocations).thenReturn(new ArrayList<>(java.util.List.of(priorHead, headLocation)));
+        BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
 
-            BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
-
-            assertThat(result.allowed()).isTrue();
-        }
+        assertThat(result.allowed()).isTrue();
     }
 
     @Test
-    void canPlayerClick_priorUnfound_returnsDeny() {
+    void canPlayerClick_priorUnfound_returnsDeny() throws InternalException {
         UUID headUuid = UUID.randomUUID();
         UUID playerUuid = UUID.randomUUID();
 
         when(headLocation.getOrderIndex()).thenReturn(2);
         when(headLocation.getUuid()).thenReturn(headUuid);
-        when(headLocation.getNameOrUnnamed()).thenReturn("TestHead");
+        when(languageService.message("Gui.Unnamed")).thenReturn("Unnamed");
+        when(headLocation.getNameOrUnnamed("Unnamed")).thenReturn("TestHead");
         when(player.getUniqueId()).thenReturn(playerUuid);
 
         // Prior head with orderIndex=1 that player has NOT found
@@ -110,38 +128,30 @@ class OrderedBehaviorTest {
         hunt.addHead(headUuid);
         hunt.addHead(priorHeadUuid);
 
-        try (MockedStatic<StorageService> ss = mockStatic(StorageService.class);
-             MockedStatic<HeadService> hs = mockStatic(HeadService.class);
-             MockedStatic<LanguageService> ls = mockStatic(LanguageService.class)) {
+        ArrayList<UUID> playerHeads = new ArrayList<>(); // empty = nothing found
+        when(storageService.getHeadsPlayerForHunt(playerUuid, "hunt1")).thenReturn(playerHeads);
+        when(headService.getChargedHeadLocations()).thenReturn(new ArrayList<>(java.util.List.of(priorHead, headLocation)));
+        when(languageService.message("Messages.OrderClickError")).thenReturn("Must find %name% first");
 
-            ArrayList<UUID> playerHeads = new ArrayList<>(); // empty = nothing found
-            ss.when(() -> StorageService.getHeadsPlayerForHunt(playerUuid, "hunt1")).thenReturn(playerHeads);
-            hs.when(HeadService::getChargedHeadLocations).thenReturn(new ArrayList<>(java.util.List.of(priorHead, headLocation)));
-            ls.when(() -> LanguageService.getMessage("Messages.OrderClickError")).thenReturn("Must find %name% first");
+        BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
 
-            BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
-
-            assertThat(result.allowed()).isFalse();
-            assertThat(result.denyMessage()).contains("TestHead");
-        }
+        assertThat(result.allowed()).isFalse();
+        assertThat(result.denyMessage()).contains("TestHead");
     }
 
     @Test
     void canPlayerClick_storageException_returnsAllowGracefully() throws InternalException {
-        UUID headUuid = UUID.randomUUID();
         UUID playerUuid = UUID.randomUUID();
 
         when(headLocation.getOrderIndex()).thenReturn(2);
         when(player.getUniqueId()).thenReturn(playerUuid);
 
-        try (MockedStatic<StorageService> ss = mockStatic(StorageService.class)) {
-            ss.when(() -> StorageService.getHeadsPlayerForHunt(any(), anyString()))
-                    .thenThrow(new InternalException("DB error"));
+        when(storageService.getHeadsPlayerForHunt(any(), anyString()))
+                .thenThrow(new InternalException("DB error"));
 
-            BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
+        BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
 
-            assertThat(result.allowed()).isTrue();
-        }
+        assertThat(result.allowed()).isTrue();
     }
 
     @Test

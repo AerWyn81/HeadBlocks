@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.services;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -13,14 +13,30 @@ import java.util.List;
 import java.util.UUID;
 
 public class PlaceholdersService {
+    private final StorageService storageService;
+    private final ConfigService configService;
+    private final LanguageService languageService;
+    private final PluginProvider pluginProvider;
 
-    public static String parse(String pName, UUID pUuid, String message) {
+    // --- Constructor ---
+
+    public PlaceholdersService(StorageService storageService, ConfigService configService,
+                               LanguageService languageService, PluginProvider pluginProvider) {
+        this.storageService = storageService;
+        this.configService = configService;
+        this.languageService = languageService;
+        this.pluginProvider = pluginProvider;
+    }
+
+    // --- Instance methods ---
+
+    public String parse(String pName, UUID pUuid, String message) {
         return parse(pName, pUuid, null, message);
     }
 
-    public static String parse(String pName, UUID pUuid, HeadLocation headLocation, String message) {
+    public String parse(String pName, UUID pUuid, HeadLocation headLocation, String message) {
         message = message.replaceAll("%player%", pName)
-                .replaceAll("%prefix%", LanguageService.getPrefix());
+                .replaceAll("%prefix%", languageService.prefix());
 
         if (message.contains("%progress%") || message.contains("%current%") || message.contains("%max%") || message.contains("%left%") || message.contains("%headName%")) {
             message = parseInternal(pUuid, message, headLocation);
@@ -28,13 +44,14 @@ public class PlaceholdersService {
             message = MessageUtils.colorize(message);
         }
 
-        if (HeadBlocks.isPlaceholderApiActive)
+        if (pluginProvider.isPlaceholderApiActive()) {
             return PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(pUuid), MessageUtils.centerMessage(message));
+        }
 
         return MessageUtils.centerMessage(message);
     }
 
-    public static String[] parse(Player player, HeadLocation headLocation, List<String> messages) {
+    public String[] parse(Player player, HeadLocation headLocation, List<String> messages) {
         List<String> msgs = new ArrayList<>();
 
         messages.forEach(message -> msgs.add(parse(player.getName(), player.getUniqueId(), headLocation, message)));
@@ -42,25 +59,25 @@ public class PlaceholdersService {
         return msgs.toArray(new String[0]);
     }
 
-    public static String parseInternal(UUID pUuid, String message, HeadLocation headLocation) {
+    public String parseInternal(UUID pUuid, String message, HeadLocation headLocation) {
         String progress;
 
-        var future = StorageService.getHeadsPlayer(pUuid).asFuture();
+        var future = storageService.getHeadsPlayer(pUuid).asFuture();
 
         try {
             var current = future.get().size();
 
-            int total = StorageService.getHeads().size();
+            int total = storageService.getHeads().size();
 
             message = message.replaceAll("%current%", String.valueOf(current))
                     .replaceAll("%max%", String.valueOf(total));
 
             if (message.contains("%progress%")) {
                 progress = MessageUtils.createProgressBar(current, total,
-                        ConfigService.getProgressBarBars(),
-                        ConfigService.getProgressBarSymbol(),
-                        ConfigService.getProgressBarCompletedColor(),
-                        ConfigService.getProgressBarNotCompletedColor());
+                        configService.progressBarBars(),
+                        configService.progressBarSymbol(),
+                        configService.progressBarCompletedColor(),
+                        configService.progressBarNotCompletedColor());
 
                 message = message.replaceAll("%progress%", progress);
             }
@@ -75,7 +92,7 @@ public class PlaceholdersService {
         if (message.contains("%headName%")) {
             String headName;
             if (headLocation == null) {
-                headName = LanguageService.getMessage("Other.NameNotSet");
+                headName = languageService.message("Other.NameNotSet");
             } else {
                 headName = headLocation.getName().isEmpty() ? headLocation.getUuid().toString() : headLocation.getName();
             }
@@ -85,4 +102,5 @@ public class PlaceholdersService {
 
         return MessageUtils.colorize(message);
     }
+
 }

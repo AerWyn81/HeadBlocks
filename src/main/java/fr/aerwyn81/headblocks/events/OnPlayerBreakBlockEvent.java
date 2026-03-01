@@ -1,10 +1,10 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
-import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -19,6 +19,12 @@ import org.bukkit.event.block.BlockBreakEvent;
 
 public class OnPlayerBreakBlockEvent implements Listener {
 
+    private final ServiceRegistry registry;
+
+    public OnPlayerBreakBlockEvent(ServiceRegistry registry) {
+        this.registry = registry;
+    }
+
     @EventHandler
     public void OnBlockBreakEvent(BlockBreakEvent e) {
         var player = e.getPlayer();
@@ -32,21 +38,21 @@ public class OnPlayerBreakBlockEvent implements Listener {
         Location blockLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = HeadService.getHeadAt(blockLocation);
+        HeadLocation headLocation = registry.getHeadService().getHeadAt(blockLocation);
         if (headLocation == null) {
             return;
         }
 
         if (HeadBlocks.isReloadInProgress) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.PluginReloading"));
+            player.sendMessage(registry.getLanguageService().message("Messages.PluginReloading"));
             return;
         }
 
         if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
             e.setCancelled(true);
 
-            var message = LanguageService.getMessage("Messages.NoPermissionBlock");
+            var message = registry.getLanguageService().message("Messages.NoPermissionBlock");
             if (!message.trim().isEmpty()) {
                 player.sendMessage(message);
             }
@@ -56,30 +62,30 @@ public class OnPlayerBreakBlockEvent implements Listener {
         // Destroying HeadBlock require creative gamemode and sneaking
         if (!player.isSneaking() || player.getGameMode() != GameMode.CREATIVE) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.CreativeSneakRemoveHead"));
+            player.sendMessage(registry.getLanguageService().message("Messages.CreativeSneakRemoveHead"));
             return;
         }
 
         // Check if there is a storage issue
-        if (StorageService.hasStorageError()) {
+        if (registry.getStorageService().isStorageError()) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             return;
         }
 
         // Remove the head
         try {
-            HeadService.removeHeadLocation(headLocation, ConfigService.shouldResetPlayerData());
+            registry.getHeadService().removeHeadLocation(headLocation, registry.getConfigService().resetPlayerData());
         } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while trying to remove a head \"{0}\" from the storage: {1}", headLocation.getNameOrUuid(), ex.getMessage());
         }
 
         // Send player success message
-        player.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadRemoved"), blockLocation));
+        player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadRemoved"), blockLocation));
 
         // Trigger the event HeadDeleted
-        Hunt primaryHunt = HuntService.getHighestPriorityHuntForHead(headLocation.getUuid());
+        Hunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(headLocation.getUuid());
         String huntId = primaryHunt != null ? primaryHunt.getId() : null;
         Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation, huntId));
     }

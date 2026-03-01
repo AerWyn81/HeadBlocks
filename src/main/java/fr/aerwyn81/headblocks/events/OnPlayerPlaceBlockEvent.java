@@ -1,8 +1,8 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
-import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -25,16 +25,22 @@ import java.util.UUID;
 
 public class OnPlayerPlaceBlockEvent implements Listener {
 
+    private final ServiceRegistry registry;
+
+    public OnPlayerPlaceBlockEvent(ServiceRegistry registry) {
+        this.registry = registry;
+    }
+
     @EventHandler
     public void onPlayerPlaceBlock(BlockPlaceEvent e) {
         Player player = e.getPlayer();
         Block headBlock = e.getBlockPlaced();
 
         // Check for pending timed plate placement
-        if (GuiService.getTimedConfigManager().hasPendingPlatePlacement(player.getUniqueId())) {
+        if (registry.getGuiService().getTimedConfigManager().hasPendingPlatePlacement(player.getUniqueId())) {
             if (headBlock.getType().name().contains("PRESSURE_PLATE")) {
                 Location plateLoc = headBlock.getLocation().clone().add(0.5, 0, 0.5);
-                GuiService.getTimedConfigManager().handlePlatePlaced(player, plateLoc);
+                registry.getGuiService().getTimedConfigManager().handlePlatePlaced(player, plateLoc);
             }
             return;
         }
@@ -45,14 +51,14 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         if (HeadBlocks.isReloadInProgress) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.PluginReloading"));
+            player.sendMessage(registry.getLanguageService().message("Messages.PluginReloading"));
             return;
         }
 
         if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
             e.setCancelled(true);
 
-            var message = LanguageService.getMessage("Messages.NoPermissionBlock");
+            var message = registry.getLanguageService().message("Messages.NoPermissionBlock");
             if (!message.trim().isEmpty()) {
                 player.sendMessage(message);
             }
@@ -62,38 +68,38 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         if (!player.isSneaking() || player.getGameMode() != GameMode.CREATIVE) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.CreativeSneakAddHead"));
+            player.sendMessage(registry.getLanguageService().message("Messages.CreativeSneakAddHead"));
             return;
         }
 
         Location headLocation = headBlock.getLocation();
         headLocation = headLocation.clone().add(0.5, 0, 0.5);
 
-        if (HeadService.getHeadAt(headLocation) != null) {
+        if (registry.getHeadService().getHeadAt(headLocation) != null) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.HeadAlreadyExistHere"));
+            player.sendMessage(registry.getLanguageService().message("Messages.HeadAlreadyExistHere"));
             return;
         }
 
         // Check if there is a storage issue
-        if (StorageService.hasStorageError()) {
+        if (registry.getStorageService().isStorageError()) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             return;
         }
 
         var headTexture = HeadUtils.getHeadTexture(e.getItemInHand());
         if (headTexture == null) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error, head texture not resolved when trying to save the head for player {0}", player.getName());
             return;
         }
 
         UUID headUuid;
         try {
-            headUuid = HeadService.saveHeadLocation(headLocation, headTexture);
+            headUuid = registry.getHeadService().saveHeadLocation(headLocation, headTexture);
         } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while trying to create new HeadBlocks from the storage: {0}", ex.getMessage());
             return;
         }
@@ -104,19 +110,19 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
         }
 
-        player.sendMessage(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Messages.HeadPlaced"), headLocation));
+        player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadPlaced"), headLocation));
 
         // Auto-assign head to selected hunt
-        String selectedHuntId = HuntService.getSelectedHunt(player.getUniqueId());
+        String selectedHuntId = registry.getHuntService().getSelectedHunt(player.getUniqueId());
         try {
-            HuntService.assignHeadToHunt(headUuid, selectedHuntId);
+            registry.getHuntService().assignHeadToHunt(headUuid, selectedHuntId);
         } catch (Exception ex) {
             LogUtil.error("Error assigning head to hunt {0}: {1}", selectedHuntId, ex.getMessage());
         }
 
         if ("default".equals(selectedHuntId)) {
             TextComponent msg = new TextComponent(MessageUtils.colorize(
-                    LanguageService.getPrefix() + " &7Assigned to &edefault&7. "));
+                    registry.getLanguageService().prefix() + " &7Assigned to &edefault&7. "));
             TextComponent clickable = new TextComponent(MessageUtils.colorize("&a&l[Reassign]"));
             clickable.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                     new Text(MessageUtils.colorize("&7Click to reassign this head"))));
@@ -130,6 +136,6 @@ public class OnPlayerPlaceBlockEvent implements Listener {
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {
-        return HeadService.getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
+        return registry.getHeadService().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
     }
 }

@@ -2,7 +2,6 @@ package fr.aerwyn81.headblocks.data;
 
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.data.reward.RewardType;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -67,15 +66,11 @@ class HeadLocationTest {
     // --- Name resolution ---
 
     @Test
-    void getNameOrUnnamed_emptyName_returnsLanguageMessage() {
+    void getNameOrUnnamed_emptyName_returnsFallbackLabel() {
         UUID uuid = UUID.randomUUID();
         HeadLocation hl = new HeadLocation("", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
-        try (MockedStatic<LanguageService> ls = mockStatic(LanguageService.class)) {
-            ls.when(() -> LanguageService.getMessage("Gui.Unnamed")).thenReturn("Sans nom");
-
-            assertThat(hl.getNameOrUnnamed()).isEqualTo("Sans nom");
-        }
+        assertThat(hl.getNameOrUnnamed("Sans nom")).isEqualTo("Sans nom");
     }
 
     @Test
@@ -86,7 +81,7 @@ class HeadLocationTest {
         try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
             mu.when(() -> MessageUtils.colorize("&aGreen")).thenReturn("§aGreen");
 
-            assertThat(hl.getNameOrUnnamed()).isEqualTo("§aGreen");
+            assertThat(hl.getNameOrUnnamed("Unnamed")).isEqualTo("§aGreen");
         }
     }
 
@@ -133,15 +128,11 @@ class HeadLocationTest {
     // --- Displayed order index ---
 
     @Test
-    void getDisplayedOrderIndex_minusOne_returnsLanguageMessage() {
+    void getDisplayedOrderIndex_minusOne_returnsFallbackLabel() {
         UUID uuid = UUID.randomUUID();
         HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
-        try (MockedStatic<LanguageService> ls = mockStatic(LanguageService.class)) {
-            ls.when(() -> LanguageService.getMessage("Gui.NoOrder")).thenReturn("Aucun");
-
-            assertThat(hl.getDisplayedOrderIndex()).isEqualTo("Aucun");
-        }
+        assertThat(hl.getDisplayedOrderIndex("Aucun")).isEqualTo("Aucun");
     }
 
     @Test
@@ -149,7 +140,7 @@ class HeadLocationTest {
         UUID uuid = UUID.randomUUID();
         HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, 5, false, false, new ArrayList<>());
 
-        assertThat(hl.getDisplayedOrderIndex()).isEqualTo("5");
+        assertThat(hl.getDisplayedOrderIndex("None")).isEqualTo("5");
     }
 
     // --- Setters ---

@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.holograms;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.holograms.types.AdvancedHologram;
 import fr.aerwyn81.headblocks.holograms.types.BasicHologram;
 import org.bukkit.Location;
@@ -13,9 +14,9 @@ public class InternalHologram {
     private Location location;
     private IHologram hologram;
 
-    public InternalHologram(EnumTypeHologram enumTypeHologram) {
+    public InternalHologram(EnumTypeHologram enumTypeHologram, ServiceRegistry registry) {
         if (enumTypeHologram == EnumTypeHologram.ADVANCED) {
-            hologram = new AdvancedHologram();
+            hologram = new AdvancedHologram(registry);
             return;
         }
 

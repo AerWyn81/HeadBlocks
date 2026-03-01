@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.data;
 
 import fr.aerwyn81.headblocks.data.reward.Reward;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
@@ -59,10 +58,10 @@ public class HeadLocation {
         return name;
     }
 
-    public String getNameOrUnnamed() {
-        if (name.isEmpty())
-            return LanguageService.getMessage("Gui.Unnamed");
-
+    public String getNameOrUnnamed(String unnamedLabel) {
+        if (name.isEmpty()) {
+            return unnamedLabel;
+        }
         return MessageUtils.colorize(name);
     }
 
@@ -104,11 +103,10 @@ public class HeadLocation {
         return orderIndex;
     }
 
-    public String getDisplayedOrderIndex() {
+    public String getDisplayedOrderIndex(String noOrderLabel) {
         if (orderIndex == -1) {
-            return LanguageService.getMessage("Gui.NoOrder");
+            return noOrderLabel;
         }
-
         return String.valueOf(orderIndex);
     }
 

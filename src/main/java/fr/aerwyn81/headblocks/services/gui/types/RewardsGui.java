@@ -1,11 +1,10 @@
 package fr.aerwyn81.headblocks.services.gui.types;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.data.reward.RewardType;
-import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -31,6 +30,10 @@ public class RewardsGui extends GuiBase {
                                       RewardType rewardType) {
     }
 
+    public RewardsGui(ServiceRegistry registry) {
+        super(registry);
+    }
+
     public void clearCache() {
         pendingRewardInputs.clear();
     }
@@ -41,18 +44,18 @@ public class RewardsGui extends GuiBase {
             return;
         }
 
-        GuiService.openHuntSelectionOrDirect(player, this::openRewardsSelectionGuiForHunt);
+        registry.getGuiService().openHuntSelectionOrDirect(player, this::openRewardsSelectionGuiForHunt);
     }
 
     public void openRewardsSelectionGuiForHunt(Player player, Hunt hunt) {
-        var rewardsSelectionMenu = new HBMenu(HeadBlocks.getInstance(),
-                LanguageService.getMessage("Gui.TitleRewardsSelection"), true, 5);
+        var rewardsSelectionMenu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
+                registry.getLanguageService().message("Gui.TitleRewardsSelection"), true, 5);
 
-        var headLocations = HeadService.getHeadLocationsForHunt(hunt);
+        var headLocations = registry.getHeadService().getHeadLocationsForHunt(hunt);
 
         if (headLocations.isEmpty()) {
             rewardsSelectionMenu.setItem(0, 22, new ItemGUI(new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
-                    .setName(LanguageService.getMessage("Gui.NoHeads"))
+                    .setName(registry.getLanguageService().message("Gui.NoHeads"))
                     .toItemStack(), true));
         } else {
             for (int i = 0; i < headLocations.size(); i++) {
@@ -60,9 +63,9 @@ public class RewardsGui extends GuiBase {
 
                 var rewardCount = headLocation.getRewards().size();
                 var rewardsItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
-                        .setName(LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Gui.RewardsSelectionItemName")
-                                .replaceAll("%headName%", headLocation.getNameOrUnnamed()), headLocation.getLocation()))
-                        .setLore(LanguageService.getMessages("Gui.RewardsSelectionItemLore").stream().map(s ->
+                        .setName(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Gui.RewardsSelectionItemName")
+                                .replaceAll("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
+                        .setLore(registry.getLanguageService().messageList("Gui.RewardsSelectionItemLore").stream().map(s ->
                                         s.replaceAll("%count%", String.valueOf(rewardCount)))
                                 .collect(Collectors.toList())).toItemStack(), true)
                         .addOnClickEvent(event -> openRewardsGui((Player) event.getWhoClicked(), headLocation));
@@ -71,12 +74,12 @@ public class RewardsGui extends GuiBase {
             }
         }
 
-        if (HuntService.isMultiHunt()) {
+        if (registry.getHuntService().isMultiHunt()) {
             rewardsSelectionMenu.setPaginationButtonBuilder((type, inventory) -> {
                 if (type == HBPaginationButtonType.BACK_BUTTON) {
-                    return new ItemGUI(ConfigService.getGuiBackIcon()
-                            .setName(LanguageService.getMessage("Gui.Back"))
-                            .setLore(LanguageService.getMessages("Gui.BackLore"))
+                    return new ItemGUI(registry.getConfigService().guiBackIcon()
+                            .setName(registry.getLanguageService().message("Gui.Back"))
+                            .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
                             .toItemStack())
                             .addOnClickEvent(event -> openRewardsSelectionGui((Player) event.getWhoClicked(), null));
                 }
@@ -89,8 +92,8 @@ public class RewardsGui extends GuiBase {
     }
 
     public void openRewardsGui(Player player, HeadLocation headLocation) {
-        var rewardsMenu = new HBMenu(HeadBlocks.getInstance(),
-                LanguageService.getMessage("Gui.TitleRewards").replaceAll("%headName%", headLocation.getNameOrUnnamed()),
+        var rewardsMenu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
+                registry.getLanguageService().message("Gui.TitleRewards").replaceAll("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))),
                 true, 5);
 
         var rewards = headLocation.getRewards();
@@ -107,12 +110,12 @@ public class RewardsGui extends GuiBase {
             };
 
             List<String> lore = new ArrayList<>();
-            lore.add(LanguageService.getMessage("Gui.RewardType")
+            lore.add(registry.getLanguageService().message("Gui.RewardType")
                     .replaceAll("%type%", reward.type().name()));
 
             var valueLabel = switch (reward.type()) {
-                case MESSAGE, BROADCAST -> LanguageService.getMessage("Gui.RewardMessage");
-                default -> LanguageService.getMessage("Gui.RewardCommand");
+                case MESSAGE, BROADCAST -> registry.getLanguageService().message("Gui.RewardMessage");
+                default -> registry.getLanguageService().message("Gui.RewardCommand");
             };
 
             var displayValue = reward.value();
@@ -125,10 +128,10 @@ public class RewardsGui extends GuiBase {
                     .replaceAll("%message%", displayValue)
                     .replaceAll("%broadcast%", displayValue));
             lore.add("");
-            lore.addAll(LanguageService.getMessages("Gui.RewardItemLore"));
+            lore.addAll(registry.getLanguageService().messageList("Gui.RewardItemLore"));
 
             var rewardItemGui = new ItemGUI(new ItemBuilder(rewardMaterial)
-                    .setName(LanguageService.getMessage("Gui.RewardItemName").replaceAll("%index%", String.valueOf(i + 1)))
+                    .setName(registry.getLanguageService().message("Gui.RewardItemName").replaceAll("%index%", String.valueOf(i + 1)))
                     .setLore(lore)
                     .toItemStack(), true)
                     .addOnClickEvent(event -> {
@@ -136,7 +139,7 @@ public class RewardsGui extends GuiBase {
                             setPendingRewardInput(player, headLocation, true, rewardIndex, reward.type());
                         } else if (event.getClick() == ClickType.SHIFT_LEFT) {
                             headLocation.getRewards().remove(rewardIndex);
-                            HeadService.saveHeadInConfig(headLocation);
+                            registry.getHeadService().saveHeadInConfig(headLocation);
                             openRewardsGui(player, headLocation);
                         }
                     });
@@ -145,8 +148,8 @@ public class RewardsGui extends GuiBase {
         }
 
         var addRewardGui = new ItemGUI(new ItemBuilder(Material.SLIME_BALL)
-                .setName(LanguageService.getMessage("Gui.AddRewardName"))
-                .setLore(LanguageService.getMessages("Gui.AddRewardLore"))
+                .setName(registry.getLanguageService().message("Gui.AddRewardName"))
+                .setLore(registry.getLanguageService().messageList("Gui.AddRewardLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> openRewardTypeSelectionGui(player, headLocation, false, -1));
 
@@ -154,9 +157,9 @@ public class RewardsGui extends GuiBase {
 
         rewardsMenu.setPaginationButtonBuilder((type, inventory) -> {
             if (type == HBPaginationButtonType.BACK_BUTTON) {
-                return new ItemGUI(ConfigService.getGuiBackIcon()
-                        .setName(LanguageService.getMessage("Gui.Back"))
-                        .setLore(LanguageService.getMessages("Gui.BackLore"))
+                return new ItemGUI(registry.getConfigService().guiBackIcon()
+                        .setName(registry.getLanguageService().message("Gui.Back"))
+                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
                         .toItemStack())
                         .addOnClickEvent(event -> openRewardsSelectionGui((Player) event.getWhoClicked(), null));
             }
@@ -168,24 +171,24 @@ public class RewardsGui extends GuiBase {
     }
 
     public void openRewardTypeSelectionGui(Player player, HeadLocation headLocation, boolean isEdit, int rewardIndex) {
-        var typeSelectionMenu = new HBMenu(HeadBlocks.getInstance(),
-                LanguageService.getMessage("Gui.TitleRewardTypeSelection"), true, 3);
+        var typeSelectionMenu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
+                registry.getLanguageService().message("Gui.TitleRewardTypeSelection"), true, 3);
 
         var messageGui = new ItemGUI(new ItemBuilder(Material.PAPER)
-                .setName(LanguageService.getMessage("Gui.RewardTypeMessage"))
-                .setLore(LanguageService.getMessages("Gui.RewardTypeMessageLore"))
+                .setName(registry.getLanguageService().message("Gui.RewardTypeMessage"))
+                .setLore(registry.getLanguageService().messageList("Gui.RewardTypeMessageLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> setPendingRewardInput(player, headLocation, isEdit, rewardIndex, RewardType.MESSAGE));
 
         var commandGui = new ItemGUI(new ItemBuilder(Material.COMMAND_BLOCK)
-                .setName(LanguageService.getMessage("Gui.RewardTypeCommand"))
-                .setLore(LanguageService.getMessages("Gui.RewardTypeCommandLore"))
+                .setName(registry.getLanguageService().message("Gui.RewardTypeCommand"))
+                .setLore(registry.getLanguageService().messageList("Gui.RewardTypeCommandLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> setPendingRewardInput(player, headLocation, isEdit, rewardIndex, RewardType.COMMAND));
 
         var broadcastGui = new ItemGUI(new ItemBuilder(Material.BEACON)
-                .setName(LanguageService.getMessage("Gui.RewardTypeBroadcast"))
-                .setLore(LanguageService.getMessages("Gui.RewardTypeBroadcastLore"))
+                .setName(registry.getLanguageService().message("Gui.RewardTypeBroadcast"))
+                .setLore(registry.getLanguageService().messageList("Gui.RewardTypeBroadcastLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> setPendingRewardInput(player, headLocation, isEdit, rewardIndex, RewardType.BROADCAST));
 
@@ -195,9 +198,9 @@ public class RewardsGui extends GuiBase {
 
         typeSelectionMenu.setPaginationButtonBuilder((type, inventory) -> {
             if (type == HBPaginationButtonType.BACK_BUTTON) {
-                return new ItemGUI(ConfigService.getGuiBackIcon()
-                        .setName(LanguageService.getMessage("Gui.Back"))
-                        .setLore(LanguageService.getMessages("Gui.BackLore"))
+                return new ItemGUI(registry.getConfigService().guiBackIcon()
+                        .setName(registry.getLanguageService().message("Gui.Back"))
+                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
                         .toItemStack())
                         .addOnClickEvent(event -> openRewardsGui((Player) event.getWhoClicked(), headLocation));
             }
@@ -218,7 +221,7 @@ public class RewardsGui extends GuiBase {
             default -> "Messages.EnterRewardCommand";
         };
 
-        player.sendMessage(LanguageService.getMessage(messageKey));
+        player.sendMessage(registry.getLanguageService().message(messageKey));
     }
 
     public boolean hasPendingRewardInput(Player player) {
@@ -240,13 +243,13 @@ public class RewardsGui extends GuiBase {
         if (pending.isEdit) {
             if (pending.rewardIndex < pending.headLocation.getRewards().size()) {
                 pending.headLocation.getRewards().set(pending.rewardIndex, new Reward(pending.rewardType, value));
-                HeadService.saveHeadInConfig(pending.headLocation);
-                player.sendMessage(LanguageService.getMessage("Messages.RewardUpdated"));
+                registry.getHeadService().saveHeadInConfig(pending.headLocation);
+                player.sendMessage(registry.getLanguageService().message("Messages.RewardUpdated"));
             }
         } else {
             pending.headLocation.addReward(new Reward(pending.rewardType, value));
-            HeadService.saveHeadInConfig(pending.headLocation);
-            player.sendMessage(LanguageService.getMessage("Messages.RewardAdded"));
+            registry.getHeadService().saveHeadInConfig(pending.headLocation);
+            player.sendMessage(registry.getLanguageService().message("Messages.RewardAdded"));
         }
 
         openRewardsGui(player, pending.headLocation);

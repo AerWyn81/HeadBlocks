@@ -1,6 +1,6 @@
 package fr.aerwyn81.headblocks.services;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -17,73 +17,83 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored", "ConstantConditions"})
 public class LanguageService {
-    private static String language;
-    private static HashMap<String, Object> messages;
+    private final PluginProvider pluginProvider;
+    private final ConfigService configService;
+    private String lang;
+    private HashMap<String, Object> messageMap;
 
-    public static void initialize(String lang) {
-        var langDir = new File(HeadBlocks.getInstance().getDataFolder() + "/language");
+    // --- Constructor ---
+
+    public LanguageService(PluginProvider pluginProvider, ConfigService configService) {
+        this.pluginProvider = pluginProvider;
+        this.configService = configService;
+        this.messageMap = new HashMap<>();
+
+        var langDir = new File(pluginProvider.getDataFolder() + "/language");
         if (!langDir.exists() && !langDir.mkdirs()) {
             LogUtil.error("Failed to create language directory: {0}", langDir.getAbsolutePath());
         }
 
         loadLanguage("en");
         loadLanguage("fr");
-        language = checkLanguage(lang);
-        messages = new HashMap<>();
+        this.lang = checkLanguage(configService.language());
     }
 
-    public static void setLanguage(String lang) {
-        language = lang;
+    // --- Instance methods ---
+
+    public void setLang(String lang) {
+        this.lang = lang;
     }
 
-    public static String getLanguage() {
-        return language;
+    public String language() {
+        return lang;
     }
 
-    public static String getPrefix() {
-        return MessageUtils.colorize(messages.get("Prefix").toString());
+    public String prefix() {
+        return MessageUtils.colorize(messageMap.get("Prefix").toString());
     }
 
-    public static boolean hasMessage(String message) {
-        return messages.containsKey(message);
+    public boolean containsMessage(String message) {
+        return messageMap.containsKey(message);
     }
 
-    public static String getMessage(String message) {
-        return MessageUtils.colorize(messages.get(message).toString()
-                .replaceAll("%prefix%", getPrefix()));
+    public String message(String message) {
+        return MessageUtils.colorize(messageMap.get(message).toString()
+                .replaceAll("%prefix%", prefix()));
     }
 
-    public static String getMessage(String message, String playerName) {
-        return getMessage(message)
+    public String message(String message, String playerName) {
+        return message(message)
                 .replaceAll("%player%", playerName);
     }
 
-    public static List<String> getMessages(String message) {
-        return ((List<String>) messages.get(message)).stream().map(MessageUtils::colorize).collect(Collectors.toList());
+    public List<String> messageList(String message) {
+        return ((List<String>) messageMap.get(message)).stream().map(MessageUtils::colorize).collect(Collectors.toList());
     }
 
-    public static String checkLanguage(String lang) {
-        File f = new File("plugins/HeadBlocks/language/messages_" + lang + ".yml");
-        if (f.exists())
+    public String checkLanguage(String lang) {
+        File f = new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml");
+        if (f.exists()) {
             return lang;
+        }
         return "en";
     }
 
-    public static void pushMessages() {
-        File f = new File("plugins/HeadBlocks/language/messages_" + language + ".yml");
+    public void pushMessages() {
+        File f = new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml");
         YamlConfiguration c = YamlConfiguration.loadConfiguration(f);
 
         c.getKeys(true).stream().filter(key -> !(c.get(key) instanceof MemorySection)).forEach(key -> {
             if (c.get(key) instanceof List) {
-                messages.put(key, c.getStringList(key));
+                messageMap.put(key, c.getStringList(key));
             } else {
-                messages.put(key, c.getString(key));
+                messageMap.put(key, c.getString(key));
             }
         });
     }
 
-    public static void loadLanguage(String lang) {
-        File file = new File(HeadBlocks.getInstance().getDataFolder() + "/language/messages_" + lang + ".yml");
+    public void loadLanguage(String lang) {
+        File file = new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml");
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -105,7 +115,7 @@ public class LanguageService {
 
         Map<String, Object> msgDefaults = new LinkedHashMap<>();
 
-        InputStreamReader input = new InputStreamReader(HeadBlocks.getInstance().getResource("language/messages_" + lang + ".yml"), StandardCharsets.UTF_8);
+        InputStreamReader input = new InputStreamReader(pluginProvider.getResource("language/messages_" + lang + ".yml"), StandardCharsets.UTF_8);
         FileConfiguration data = YamlConfiguration.loadConfiguration(input);
 
         for (String key : data.getKeys(true)) {
@@ -139,9 +149,10 @@ public class LanguageService {
         }
 
         try {
-            ConfigUpdater.update(HeadBlocks.getInstance(), "language/messages_" + lang + ".yml", new File(HeadBlocks.getInstance().getDataFolder() + "/language/messages_" + lang + ".yml"), Collections.emptyList());
+            ConfigUpdater.update(pluginProvider, "language/messages_" + lang + ".yml", new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml"), Collections.emptyList());
         } catch (IOException e) {
             LogUtil.error("Error loading translation file: {0}", e.getMessage());
         }
     }
+
 }

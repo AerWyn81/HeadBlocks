@@ -1,13 +1,10 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.PlaceholdersService;
-import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.internal.CommandsUtils;
@@ -28,10 +25,15 @@ import java.util.stream.Collectors;
 
 @HBAnnotations(command = "stats", permission = "headblocks.admin", alias = "s")
 public class Stats implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Stats(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        PlayerProfileLight playerProfileLight = CommandsUtils.extractAndGetPlayerUuidByName(sender, args, true);
+        PlayerProfileLight playerProfileLight = CommandsUtils.extractAndGetPlayerUuidByName(registry, sender, args, true);
         if (playerProfileLight == null) {
             return true;
         }
@@ -39,29 +41,29 @@ public class Stats implements Cmd {
         ArrayList<UUID> heads;
 
         try {
-            heads = StorageService.getHeads();
+            heads = registry.getStorageService().getHeads();
         } catch (InternalException e) {
-            sender.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             return true;
         }
 
         if (heads.isEmpty()) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
             return true;
         }
 
-        StorageService.getHeadsPlayer(playerProfileLight.uuid()).whenComplete(pHeads -> {
+        registry.getStorageService().getHeadsPlayer(playerProfileLight.uuid()).whenComplete(pHeads -> {
             var playerHeads = new ArrayList<>(pHeads);
 
             heads.sort(Comparator.comparingInt(playerHeads::indexOf));
 
-            ChatPageUtils cpu = new ChatPageUtils(sender)
+            ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService())
                     .entriesCount(heads.size())
                     .currentPage(args);
 
-            String message = LanguageService.getMessage("Chat.LineTitle");
+            String message = registry.getLanguageService().message("Chat.LineTitle");
             if (sender instanceof Player) {
-                TextComponent titleComponent = new TextComponent(PlaceholdersService.parse(playerProfileLight.name(), playerProfileLight.uuid(), LanguageService.getMessage("Chat.StatsTitleLine")
+                TextComponent titleComponent = new TextComponent(registry.getPlaceholdersService().parse(playerProfileLight.name(), playerProfileLight.uuid(), registry.getLanguageService().message("Chat.StatsTitleLine")
                         .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
                 cpu.addTitleLine(titleComponent);
             } else {
@@ -73,15 +75,15 @@ public class Stats implements Cmd {
 
                 HeadLocation headLocation = null;
 
-                var chargedHead = HeadService.getChargedHeadLocations().stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
+                var chargedHead = registry.getHeadService().getChargedHeadLocations().stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
                 if (chargedHead.isPresent()) {
                     headLocation = chargedHead.get();
                 }
 
-                var hover = LanguageService.getMessage("Chat.Hover.HeadIsNotOnThisServer");
+                var hover = registry.getLanguageService().message("Chat.Hover.HeadIsNotOnThisServer");
 
                 if (headLocation != null) {
-                    hover = LocationUtils.parseLocationPlaceholders(LanguageService.getMessage("Chat.LineCoordinate"), headLocation.getLocation());
+                    hover = LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Chat.LineCoordinate"), headLocation.getLocation());
                 }
 
                 var headName = headLocation != null ? headLocation.getName() : uuid.toString();
@@ -95,14 +97,14 @@ public class Stats implements Cmd {
 
                     TextComponent own;
                     if (playerHeads.stream().anyMatch(s -> s.equals(uuid))) {
-                        own = new TextComponent(LanguageService.getMessage("Chat.Box.Own"));
-                        own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Own"))));
+                        own = new TextComponent(registry.getLanguageService().message("Chat.Box.Own"));
+                        own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Own"))));
                     } else {
-                        own = new TextComponent(LanguageService.getMessage("Chat.Box.NotOwn"));
-                        own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.NotOwn"))));
+                        own = new TextComponent(registry.getLanguageService().message("Chat.Box.NotOwn"));
+                        own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.NotOwn"))));
                     }
 
-                    TextComponent tp = new TextComponent(LanguageService.getMessage("Chat.Box.Teleport"));
+                    TextComponent tp = new TextComponent(registry.getLanguageService().message("Chat.Box.Teleport"));
 
                     if (headLocation != null) {
                         var location = headLocation.getLocation();
@@ -110,16 +112,16 @@ public class Stats implements Cmd {
                         if (location.getWorld() != null) {
                             tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + location.getWorld().getName() + " " + location.getX() + " " + (location.getY() + 1) + " " + location.getZ() + " 0.0 90.0"));
                         }
-                        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.Teleport"))));
+                        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Teleport"))));
                     } else {
-                        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.BlockedTeleport"))));
+                        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.BlockedTeleport"))));
                     }
 
                     TextComponent space = new TextComponent(" ");
                     cpu.addLine(own, space, tp, space, msg, space);
                 } else {
                     sender.sendMessage((playerHeads.stream().anyMatch(s -> s.equals(uuid)) ?
-                            LanguageService.getMessage("Chat.Box.Own") : LanguageService.getMessage("Chat.Box.NotOwn")) + " " +
+                            registry.getLanguageService().message("Chat.Box.Own") : registry.getLanguageService().message("Chat.Box.NotOwn")) + " " +
                             MessageUtils.colorize("&6" + headName));
                 }
             }

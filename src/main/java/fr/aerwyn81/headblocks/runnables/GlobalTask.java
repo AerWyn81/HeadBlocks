@@ -1,10 +1,10 @@
 package fr.aerwyn81.headblocks.runnables;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
-import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -29,50 +29,58 @@ public class GlobalTask extends BukkitRunnable {
     private boolean particlesDisabled = false;
     private int tickCounter = 0;
 
-    public GlobalTask() {
-        VIEW_RADIUS_CHUNKS = (int) Math.ceil(ConfigService.getHologramParticlePlayerViewDistance() / (double) CHUNK_SIZE);
+    private final ServiceRegistry registry;
+
+    public GlobalTask(ServiceRegistry registry) {
+        this.registry = registry;
+        VIEW_RADIUS_CHUNKS = (int) Math.ceil(registry.getConfigService().hologramParticlePlayerViewDistance() / (double) CHUNK_SIZE);
     }
 
     @Override
     public void run() {
-        if (HeadBlocks.isReloadInProgress)
+        if (HeadBlocks.isReloadInProgress) {
             return;
+        }
 
         // Periodic hunt sync check (cross-server via Redis version counter)
         tickCounter++;
         if (tickCounter >= HUNT_SYNC_INTERVAL) {
             tickCounter = 0;
-            HuntService.checkRemoteChanges();
+            registry.getHuntService().checkRemoteChanges();
         }
 
-        HeadService.getChargedHeadLocations().forEach(headLocation -> {
+        registry.getHeadService().getChargedHeadLocations().forEach(headLocation -> {
             var location = headLocation.getLocation();
-            if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))
+            if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
                 return;
-
-            // Resolve primary display hunt for this head
-            Hunt primaryHunt = HuntService.getHighestPriorityHuntForHead(headLocation.getUuid());
-            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig();
-
-            if (huntConfig.isSpinEnabled() && huntConfig.isSpinLinked()) {
-                HeadService.rotateHead(headLocation);
             }
 
-            HologramService.ensureHologramsCreated(location, huntConfig);
+            // Resolve primary display hunt for this head
+            Hunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(headLocation.getUuid());
+            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig(registry.getConfigService());
+
+            if (huntConfig.isSpinEnabled() && huntConfig.isSpinLinked()) {
+                registry.getHeadService().rotateHead(headLocation);
+            }
+
+            registry.getHologramService().ensureHologramsCreated(location, huntConfig);
 
             handleHologramAndParticles(headLocation, huntConfig);
         });
     }
 
     private void spawnParticles(Location location, boolean isFound, Player player, HuntConfig huntConfig) {
-        if (particlesDisabled)
+        if (particlesDisabled) {
             return;
+        }
 
-        if (isFound && ConfigService.hideFoundHeads())
+        if (isFound && registry.getConfigService().isHideFoundHeads()) {
             return;
+        }
 
-        if (isFound ? !huntConfig.isParticlesFoundEnabled() : !huntConfig.isParticlesNotFoundEnabled())
+        if (isFound ? !huntConfig.isParticlesFoundEnabled() : !huntConfig.isParticlesNotFoundEnabled()) {
             return;
+        }
 
         var particle = isFound ? Particle.valueOf(huntConfig.getParticlesFoundType())
                 : Particle.valueOf(huntConfig.getParticlesNotFoundType());
@@ -80,8 +88,8 @@ public class GlobalTask extends BukkitRunnable {
         var amount = isFound ? huntConfig.getParticlesFoundAmount()
                 : huntConfig.getParticlesNotFoundAmount();
 
-        var colors = isFound ? ConfigService.getParticlesFoundColors()
-                : ConfigService.getParticlesNotFoundColors();
+        var colors = isFound ? registry.getConfigService().particlesFoundColors()
+                : registry.getConfigService().particlesNotFoundColors();
 
         try {
             ParticlesUtils.spawn(location, particle, amount, colors, player);
@@ -93,20 +101,22 @@ public class GlobalTask extends BukkitRunnable {
     }
 
     private void handleHologramAndParticles(HeadLocation headLocation, HuntConfig huntConfig) {
-        int rangeParticles = ConfigService.getHologramParticlePlayerViewDistance();
+        int rangeParticles = registry.getConfigService().hologramParticlePlayerViewDistance();
         int rangeHint = huntConfig.getHintDistance();
 
         var location = headLocation.getLocation();
-        if (location.getWorld() == null)
+        if (location.getWorld() == null) {
             return;
+        }
 
         var hologramChunkX = location.getBlockX() / CHUNK_SIZE;
         var hologramChunkZ = location.getBlockZ() / CHUNK_SIZE;
 
         for (var player : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
             var playerLoc = player.getLocation();
-            if (playerLoc.getWorld() != location.getWorld())
+            if (playerLoc.getWorld() != location.getWorld()) {
                 continue;
+            }
 
             var playerChunkX = playerLoc.getBlockX() / CHUNK_SIZE;
             var playerChunkZ = playerLoc.getBlockZ() / CHUNK_SIZE;
@@ -119,34 +129,34 @@ public class GlobalTask extends BukkitRunnable {
 
                 if (distance <= rangeParticles || distance <= rangeHint) {
                     try {
-                        var hasHead = StorageService.hasHead(player.getUniqueId(), headLocation.getUuid());
+                        var hasHead = registry.getStorageService().hasHead(player.getUniqueId(), headLocation.getUuid());
 
                         if (distance <= rangeParticles) {
                             if (hasHead) {
                                 spawnParticles(location, true, player, huntConfig);
-                                HologramService.showFoundTo(player, location, huntConfig);
+                                registry.getHologramService().showFoundTo(player, location, huntConfig);
                             } else {
                                 spawnParticles(location, false, player, huntConfig);
-                                HologramService.showNotFoundTo(player, location, huntConfig);
+                                registry.getHologramService().showNotFoundTo(player, location, huntConfig);
                             }
 
-                            HologramService.refresh(player, location);
+                            registry.getHologramService().refresh(player, location);
                         }
 
                         if (distance <= rangeHint && (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled())) {
                             // Resolve per-player hint config: use the highest-priority active hunt where the player hasn't found this head
                             HuntConfig hintConfig = null;
                             if (!hasHead) {
-                                // Fast path: player hasn't found it globally → primary hunt config
+                                // Fast path: player hasn't found it globally -> primary hunt config
                                 hintConfig = huntConfig;
                             } else {
-                                // Player found it globally — check per-hunt for one they haven't completed
-                                for (Hunt h : HuntService.getHuntsForHead(headLocation.getUuid())) {
+                                // Player found it globally -- check per-hunt for one they haven't completed
+                                for (Hunt h : registry.getHuntService().getHuntsForHead(headLocation.getUuid())) {
                                     if (!h.isActive()) {
                                         continue;
                                     }
                                     try {
-                                        if (!StorageService.getHeadsPlayerForHunt(player.getUniqueId(), h.getId())
+                                        if (!registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), h.getId())
                                                 .contains(headLocation.getUuid())) {
                                             hintConfig = h.getConfig();
                                             break;
@@ -162,9 +172,9 @@ public class GlobalTask extends BukkitRunnable {
                                 var shouldTriggerHintActionBar = random.nextInt(hintFrequency) == 0;
 
                                 if (headLocation.isHintSoundEnabled() && shouldTriggerHintSound) {
-                                    ConfigService.getHintSoundType()
+                                    registry.getConfigService().hintSoundType()
                                             .record()
-                                            .withVolume(ConfigService.getHintSoundVolume())
+                                            .withVolume(registry.getConfigService().hintSoundVolume())
                                             .withPitch(random.nextInt(3))
                                             .soundPlayer()
                                             .forPlayers(player)
@@ -174,7 +184,7 @@ public class GlobalTask extends BukkitRunnable {
 
                                 if (headLocation.isHintActionBarEnabled() && shouldTriggerHintActionBar) {
                                     int hintRange = hintConfig.getHintDistance();
-                                    var message = PlaceholdersService.parse(player.getName(), player.getUniqueId(), headLocation, ConfigService.getHintActionBarMessage());
+                                    var message = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), headLocation, registry.getConfigService().hintActionBarMessage());
                                     message = message
                                             .replaceAll("%distance%", String.valueOf(distance))
                                             .replaceAll("%position%", String.valueOf(hintRange - distance))
@@ -192,7 +202,7 @@ public class GlobalTask extends BukkitRunnable {
                 }
             }
 
-            HologramService.hideHolograms(headLocation, player);
+            registry.getHologramService().hideHolograms(headLocation, player);
         }
     }
 
@@ -214,31 +224,36 @@ public class GlobalTask extends BukkitRunnable {
         var down = dy < -2;
 
         if (angle >= -22.5 && angle < 22.5) {
-            if (up)
+            if (up) {
                 return "⬆";
+            }
             return down ? "⬇" : "⬆";
         }
         if (angle >= 22.5 && angle < 67.5) {
-            if (up)
+            if (up) {
                 return "⬉";
+            }
             return down ? "⬋" : "⬉";
         }
         if (angle >= 67.5 && angle < 112.5) {
-            if (up)
+            if (up) {
                 return "⬉";
+            }
             return down ? "⬋" : "⬅";
         }
         if (angle >= 112.5 && angle < 157.5) {
             return "⬋";
         }
         if (angle >= -67.5 && angle < -22.5) {
-            if (up)
+            if (up) {
                 return "⬈";
+            }
             return down ? "⬊" : "⬈";
         }
         if (angle >= -112.5 && angle < -67.5) {
-            if (up)
+            if (up) {
                 return "⬈";
+            }
             return down ? "⬊" : "➡";
         }
         if (angle >= -157.5 && angle < -112.5) {

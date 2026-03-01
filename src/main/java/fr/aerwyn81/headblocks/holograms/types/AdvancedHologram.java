@@ -1,10 +1,8 @@
 package fr.aerwyn81.headblocks.holograms.types;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.holograms.IHologram;
-import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.holoeasy.hologram.Hologram;
@@ -16,7 +14,12 @@ import java.util.List;
 
 public class AdvancedHologram implements IHologram {
 
+    private final ServiceRegistry registry;
     Hologram hologram;
+
+    public AdvancedHologram(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public void show(Player player) {
@@ -30,7 +33,7 @@ public class AdvancedHologram implements IHologram {
 
     @Override
     public void delete() {
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        registry.getScheduler().runTaskAsync(() -> {
             var pool = getPool();
             if (pool != null) {
                 hologram.hide(getPool());
@@ -40,29 +43,29 @@ public class AdvancedHologram implements IHologram {
 
     @Override
     public IHologram create(String name, Location location, List<String> lines) {
-        hologram = new Hologram(HeadBlocks.getInstance().getHoloEasyLib(), location);
+        hologram = new Hologram(registry.getHoloEasyLib(), location);
 
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
-            ConfigService.getHologramsAdvancedLines().forEach(l -> hologram.getLines().add(
+        registry.getScheduler().runTaskAsync(() -> {
+            registry.getConfigService().hologramsAdvancedLines().forEach(l -> hologram.getLines().add(
                     new DisplayTextLine(hologram, player ->
                     {
                         if (!l.contains("%state%")) {
-                            return PlaceholdersService.parse(player.getName(), player.getUniqueId(), l);
+                            return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), l);
                         }
 
                         try {
-                            var head = HeadService.getHeadAt(location);
+                            var head = registry.getHeadService().getHeadAt(location);
                             if (head == null) {
-                                return PlaceholdersService.parse(player.getName(), player.getUniqueId(), l);
+                                return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), l);
                             }
 
-                            var hasHeadFormatted = ConfigService.getHologramAdvancedNotFoundPlaceholder();
-                            var hasHead = StorageService.hasHead(player.getUniqueId(), head.getUuid());
+                            var hasHeadFormatted = registry.getConfigService().hologramAdvancedNotFoundPlaceholder();
+                            var hasHead = registry.getStorageService().hasHead(player.getUniqueId(), head.getUuid());
                             if (hasHead) {
-                                hasHeadFormatted = ConfigService.getHologramAdvancedFoundPlaceholder();
+                                hasHeadFormatted = registry.getConfigService().hologramAdvancedFoundPlaceholder();
                             }
 
-                            return PlaceholdersService.parse(player.getName(), player.getUniqueId(), head, l
+                            return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), head, l
                                     .replaceAll("%state%", hasHeadFormatted));
                         } catch (InternalException e) {
                             throw new RuntimeException(e);
@@ -86,7 +89,7 @@ public class AdvancedHologram implements IHologram {
     }
 
     public void refresh(Player player) {
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        registry.getScheduler().runTaskAsync(() -> {
             for (Line<?> line : hologram.getLines()) {
                 line.update(player);
             }
@@ -94,6 +97,6 @@ public class AdvancedHologram implements IHologram {
     }
 
     private IHologramPool<Hologram> getPool() {
-        return HologramService.hologramPool;
+        return registry.getHologramService().getHologramPool();
     }
 }

@@ -1,11 +1,9 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.services.ConfigService;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
@@ -13,37 +11,42 @@ import java.util.Collections;
 
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
 public class RemoveAll implements Cmd {
+    private final ServiceRegistry registry;
+
+    public RemoveAll(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        ArrayList<HeadLocation> headLocations = new ArrayList<>(HeadService.getChargedHeadLocations());
+        ArrayList<HeadLocation> headLocations = new ArrayList<>(registry.getHeadService().getChargedHeadLocations());
         int headCount = headLocations.size();
 
         if (headLocations.isEmpty()) {
-            sender.sendMessage(LanguageService.getMessage("Messages.ListHeadEmpty"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
             return true;
         }
 
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
-            sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllInProgress")
+            sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllInProgress")
                     .replaceAll("%headCount%", String.valueOf(headCount)));
 
-            HeadService.removeAllHeadLocationsAsync(headLocations, ConfigService.shouldResetPlayerData(), (headRemoved) -> {
+            registry.getHeadService().removeAllHeadLocationsAsync(headLocations, registry.getConfigService().resetPlayerData(), (headRemoved) -> {
                 if (headRemoved == 0) {
-                    sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllError")
+                    sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllError")
                             .replaceAll("%headCount%", String.valueOf(headCount)));
                     return;
                 }
 
-                sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllSuccess")
+                sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllSuccess")
                         .replaceAll("%headCount%", String.valueOf(headRemoved)));
             });
 
             return true;
         }
 
-        sender.sendMessage(LanguageService.getMessage("Messages.RemoveAllConfirm")
+        sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllConfirm")
                 .replaceAll("%headCount%", String.valueOf(headCount)));
 
         return true;

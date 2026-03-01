@@ -1,10 +1,8 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
@@ -18,6 +16,10 @@ import java.util.UUID;
 
 @HBAnnotations(command = "resetall", permission = "headblocks.admin", isPlayerCommand = true)
 public class ResetAll extends ResetBase {
+
+    public ResetAll(ServiceRegistry registry) {
+        super(registry);
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
@@ -53,15 +55,15 @@ public class ResetAll extends ResetBase {
         List<UUID> playersWithHead;
 
         try {
-            playersWithHead = StorageService.getPlayers(headUuid);
+            playersWithHead = registry.getStorageService().getPlayers(headUuid);
         } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while retrieving players from the storage: {0}", ex.getMessage());
             return;
         }
 
         if (playersWithHead.isEmpty()) {
-            player.sendMessage(LanguageService.getMessage("Messages.ResetAllNoData"));
+            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllNoData"));
             return;
         }
 
@@ -70,7 +72,7 @@ public class ResetAll extends ResetBase {
         if (hasConfirm) {
             for (UUID playerUuid : playersWithHead) {
                 try {
-                    StorageService.resetPlayerHead(playerUuid, headUuid);
+                    registry.getStorageService().resetPlayerHead(playerUuid, headUuid);
 
                     Player onlinePlayer = Bukkit.getPlayer(playerUuid);
                     if (onlinePlayer != null) {
@@ -80,17 +82,17 @@ public class ResetAll extends ResetBase {
                         }
                     }
                 } catch (InternalException ex) {
-                    player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+                    player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
                     LogUtil.error("Error while resetting the player UUID \"{0}\" from the storage: {1}", playerUuid.toString(), ex.getMessage());
                     return;
                 }
             }
 
-            player.sendMessage(LanguageService.getMessage("Messages.ResetAllHeadSuccess")
+            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadSuccess")
                     .replaceAll("%playerCount%", String.valueOf(playersWithHead.size()))
                     .replaceAll("%headName%", headName));
         } else {
-            player.sendMessage(LanguageService.getMessage("Messages.ResetAllHeadConfirm")
+            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadConfirm")
                     .replaceAll("%playerCount%", String.valueOf(playersWithHead.size()))
                     .replaceAll("%headName%", headName));
         }
@@ -101,22 +103,22 @@ public class ResetAll extends ResetBase {
         List<UUID> allPlayers;
 
         try {
-            allPlayers = StorageService.getAllPlayers();
+            allPlayers = registry.getStorageService().getAllPlayers();
         } catch (InternalException ex) {
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while retrieving all players from the storage: {0}", ex.getMessage());
             return;
         }
 
         if (allPlayers.isEmpty()) {
-            player.sendMessage(LanguageService.getMessage("Messages.ResetAllNoData"));
+            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllNoData"));
             return;
         }
 
         if (hasConfirm) {
             for (UUID uuid : allPlayers) {
                 try {
-                    StorageService.resetPlayer(uuid);
+                    registry.getStorageService().resetPlayer(uuid);
 
                     Player onlinePlayer = Bukkit.getPlayer(uuid);
                     if (onlinePlayer != null) {
@@ -126,16 +128,16 @@ public class ResetAll extends ResetBase {
                         }
                     }
                 } catch (InternalException ex) {
-                    player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+                    player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
                     LogUtil.error("Error while resetting the player UUID \"{0}\" from the storage: {1}", uuid.toString(), ex.getMessage());
                     return;
                 }
             }
 
-            player.sendMessage(LanguageService.getMessage("Messages.ResetAllSuccess")
+            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllSuccess")
                     .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
         } else {
-            player.sendMessage(LanguageService.getMessage("Messages.ResetAllConfirm")
+            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllConfirm")
                     .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
         }
 
@@ -152,7 +154,7 @@ public class ResetAll extends ResetBase {
             if (args[1].equalsIgnoreCase("--head")) {
                 ArrayList<String> options = new ArrayList<>();
                 options.add("--confirm");
-                options.addAll(HeadService.getHeadRawNameOrUuid());
+                options.addAll(registry.getHeadService().getHeadRawNameOrUuid());
                 return new ArrayList<>(options.stream()
                         .filter(s -> s.startsWith(args[2])).toList());
             } else if (args[1].equalsIgnoreCase("--confirm")) {
@@ -164,7 +166,7 @@ public class ResetAll extends ResetBase {
             } else if (args[1].equalsIgnoreCase("--head") && !args[2].equalsIgnoreCase("--confirm")) {
                 return new ArrayList<>(Collections.singletonList("--confirm"));
             } else if (args[2].equalsIgnoreCase("--head")) {
-                return new ArrayList<>(HeadService.getHeadRawNameOrUuid()
+                return new ArrayList<>(registry.getHeadService().getHeadRawNameOrUuid()
                         .stream().filter(s -> s.startsWith(args[3])).toList());
             }
         } else if (args.length == 5 && args[2].equalsIgnoreCase("--head")) {

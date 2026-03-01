@@ -1,10 +1,8 @@
 package fr.aerwyn81.headblocks.runnables;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.TimedRunData;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
-import fr.aerwyn81.headblocks.services.HuntService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import net.md_5.bungee.api.ChatMessageType;
@@ -17,6 +15,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class TimedRunTask extends BukkitRunnable {
+
+    private final ServiceRegistry registry;
+
+    public TimedRunTask(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public void run() {
@@ -32,17 +36,17 @@ public class TimedRunTask extends BukkitRunnable {
             long elapsed = System.currentTimeMillis() - data.startTimeMillis();
             String time = TimedRunManager.formatTime(elapsed);
 
-            Hunt hunt = HuntService.getHuntById(data.huntId());
+            Hunt hunt = registry.getHuntService().getHuntById(data.huntId());
             String huntName = hunt != null ? hunt.getDisplayName() : data.huntId();
             int totalHeads = hunt != null ? hunt.getHeadCount() : 0;
 
             int foundHeads = 0;
             try {
-                foundHeads = StorageService.getHeadsPlayerForHunt(playerUuid, data.huntId()).size();
+                foundHeads = registry.getStorageService().getHeadsPlayerForHunt(playerUuid, data.huntId()).size();
             } catch (InternalException ignored) {
             }
 
-            String message = LanguageService.getMessage("Gui.TimedActionBar")
+            String message = registry.getLanguageService().message("Gui.TimedActionBar")
                     .replaceAll("%time%", time)
                     .replaceAll("%hunt%", huntName)
                     .replaceAll("%found%", String.valueOf(foundHeads))

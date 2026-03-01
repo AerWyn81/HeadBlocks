@@ -11,6 +11,8 @@ import java.util.List;
  * Null fields inherit from ConfigService (global config.yml defaults).
  */
 public class HuntConfig {
+    private final ConfigService configService;
+
     // HeadClick
     private List<String> headClickMessages;
     private Boolean headClickTitleEnabled;
@@ -54,10 +56,14 @@ public class HuntConfig {
     // TieredRewards
     private List<TieredReward> tieredRewards;
 
+    public HuntConfig(ConfigService configService) {
+        this.configService = configService;
+    }
+
     // --- HeadClick getters with fallback ---
 
     public List<String> getHeadClickMessages() {
-        return headClickMessages != null ? headClickMessages : ConfigService.getHeadClickMessages();
+        return headClickMessages != null ? headClickMessages : configService.headClickMessages();
     }
 
     public void setHeadClickMessages(List<String> headClickMessages) {
@@ -65,7 +71,7 @@ public class HuntConfig {
     }
 
     public boolean isHeadClickTitleEnabled() {
-        return headClickTitleEnabled != null ? headClickTitleEnabled : ConfigService.isHeadClickTitleEnabled();
+        return headClickTitleEnabled != null ? headClickTitleEnabled : configService.headClickTitleEnabled();
     }
 
     public void setHeadClickTitleEnabled(Boolean enabled) {
@@ -73,7 +79,7 @@ public class HuntConfig {
     }
 
     public String getHeadClickTitleFirstLine() {
-        return headClickTitleFirstLine != null ? headClickTitleFirstLine : ConfigService.getHeadClickTitleFirstLine();
+        return headClickTitleFirstLine != null ? headClickTitleFirstLine : configService.headClickTitleFirstLine();
     }
 
     public void setHeadClickTitleFirstLine(String line) {
@@ -81,7 +87,7 @@ public class HuntConfig {
     }
 
     public String getHeadClickTitleSubTitle() {
-        return headClickTitleSubTitle != null ? headClickTitleSubTitle : ConfigService.getHeadClickTitleSubTitle();
+        return headClickTitleSubTitle != null ? headClickTitleSubTitle : configService.headClickTitleSubTitle();
     }
 
     public void setHeadClickTitleSubTitle(String subTitle) {
@@ -89,7 +95,7 @@ public class HuntConfig {
     }
 
     public int getHeadClickTitleFadeIn() {
-        return headClickTitleFadeIn != null ? headClickTitleFadeIn : ConfigService.getHeadClickTitleFadeIn();
+        return headClickTitleFadeIn != null ? headClickTitleFadeIn : configService.headClickTitleFadeIn();
     }
 
     public void setHeadClickTitleFadeIn(Integer fadeIn) {
@@ -97,7 +103,7 @@ public class HuntConfig {
     }
 
     public int getHeadClickTitleStay() {
-        return headClickTitleStay != null ? headClickTitleStay : ConfigService.getHeadClickTitleStay();
+        return headClickTitleStay != null ? headClickTitleStay : configService.headClickTitleStay();
     }
 
     public void setHeadClickTitleStay(Integer stay) {
@@ -105,7 +111,7 @@ public class HuntConfig {
     }
 
     public int getHeadClickTitleFadeOut() {
-        return headClickTitleFadeOut != null ? headClickTitleFadeOut : ConfigService.getHeadClickTitleFadeOut();
+        return headClickTitleFadeOut != null ? headClickTitleFadeOut : configService.headClickTitleFadeOut();
     }
 
     public void setHeadClickTitleFadeOut(Integer fadeOut) {
@@ -113,7 +119,7 @@ public class HuntConfig {
     }
 
     public String getHeadClickSoundFound() {
-        return headClickSoundFound != null ? headClickSoundFound : ConfigService.getHeadClickNotOwnSound();
+        return headClickSoundFound != null ? headClickSoundFound : configService.headClickNotOwnSound();
     }
 
     public void setHeadClickSoundFound(String sound) {
@@ -121,7 +127,7 @@ public class HuntConfig {
     }
 
     public String getHeadClickSoundAlreadyOwn() {
-        return headClickSoundAlreadyOwn != null ? headClickSoundAlreadyOwn : ConfigService.getHeadClickAlreadyOwnSound();
+        return headClickSoundAlreadyOwn != null ? headClickSoundAlreadyOwn : configService.headClickAlreadyOwnSound();
     }
 
     public void setHeadClickSoundAlreadyOwn(String sound) {
@@ -129,7 +135,7 @@ public class HuntConfig {
     }
 
     public boolean isFireworkEnabled() {
-        return fireworkEnabled != null ? fireworkEnabled : ConfigService.isFireworkEnabled();
+        return fireworkEnabled != null ? fireworkEnabled : configService.fireworkEnabled();
     }
 
     public void setFireworkEnabled(Boolean enabled) {
@@ -137,7 +143,7 @@ public class HuntConfig {
     }
 
     public List<String> getHeadClickCommands() {
-        return headClickCommands != null ? headClickCommands : ConfigService.getHeadClickCommands();
+        return headClickCommands != null ? headClickCommands : configService.headClickCommands();
     }
 
     public void setHeadClickCommands(List<String> commands) {
@@ -145,7 +151,7 @@ public class HuntConfig {
     }
 
     public boolean isHeadClickEjectEnabled() {
-        return headClickEjectEnabled != null ? headClickEjectEnabled : ConfigService.isHeadClickEjectEnabled();
+        return headClickEjectEnabled != null ? headClickEjectEnabled : configService.headClickEjectEnabled();
     }
 
     public void setHeadClickEjectEnabled(Boolean enabled) {
@@ -153,7 +159,7 @@ public class HuntConfig {
     }
 
     public double getHeadClickEjectPower() {
-        return headClickEjectPower != null ? headClickEjectPower : ConfigService.getHeadClickEjectPower();
+        return headClickEjectPower != null ? headClickEjectPower : configService.headClickEjectPower();
     }
 
     public void setHeadClickEjectPower(Double power) {
@@ -172,7 +178,7 @@ public class HuntConfig {
     }
 
     public boolean isHologramsFoundEnabled() {
-        return hologramsFoundEnabled != null ? hologramsFoundEnabled : ConfigService.isHologramsFoundEnabled();
+        return hologramsFoundEnabled != null ? hologramsFoundEnabled : configService.hologramsFoundEnabled();
     }
 
     public void setHologramsFoundEnabled(Boolean enabled) {
@@ -180,7 +186,7 @@ public class HuntConfig {
     }
 
     public boolean isHologramsNotFoundEnabled() {
-        return hologramsNotFoundEnabled != null ? hologramsNotFoundEnabled : ConfigService.isHologramsNotFoundEnabled();
+        return hologramsNotFoundEnabled != null ? hologramsNotFoundEnabled : configService.hologramsNotFoundEnabled();
     }
 
     public void setHologramsNotFoundEnabled(Boolean enabled) {
@@ -188,7 +194,7 @@ public class HuntConfig {
     }
 
     public ArrayList<String> getHologramsFoundLines() {
-        return hologramsFoundLines != null ? hologramsFoundLines : ConfigService.getHologramsFoundLines();
+        return hologramsFoundLines != null ? hologramsFoundLines : configService.hologramsFoundLines();
     }
 
     public void setHologramsFoundLines(ArrayList<String> lines) {
@@ -196,7 +202,7 @@ public class HuntConfig {
     }
 
     public ArrayList<String> getHologramsNotFoundLines() {
-        return hologramsNotFoundLines != null ? hologramsNotFoundLines : ConfigService.getHologramsNotFoundLines();
+        return hologramsNotFoundLines != null ? hologramsNotFoundLines : configService.hologramsNotFoundLines();
     }
 
     public void setHologramsNotFoundLines(ArrayList<String> lines) {
@@ -206,7 +212,7 @@ public class HuntConfig {
     // --- Hints getters with fallback ---
 
     public boolean isHintsEnabled() {
-        return hintsEnabled != null ? hintsEnabled : (ConfigService.getHintDistanceBlocks() > 0);
+        return hintsEnabled != null ? hintsEnabled : (configService.hintDistanceBlocks() > 0);
     }
 
     public void setHintsEnabled(Boolean enabled) {
@@ -214,7 +220,7 @@ public class HuntConfig {
     }
 
     public int getHintDistance() {
-        return hintDistance != null ? hintDistance : ConfigService.getHintDistanceBlocks();
+        return hintDistance != null ? hintDistance : configService.hintDistanceBlocks();
     }
 
     public void setHintDistance(Integer distance) {
@@ -222,7 +228,7 @@ public class HuntConfig {
     }
 
     public int getHintFrequency() {
-        return hintFrequency != null ? hintFrequency : ConfigService.getHintFrequency();
+        return hintFrequency != null ? hintFrequency : configService.hintFrequency();
     }
 
     public void setHintFrequency(Integer frequency) {
@@ -232,7 +238,7 @@ public class HuntConfig {
     // --- Spin getters with fallback ---
 
     public boolean isSpinEnabled() {
-        return spinEnabled != null ? spinEnabled : ConfigService.isSpinEnabled();
+        return spinEnabled != null ? spinEnabled : configService.spinEnabled();
     }
 
     public void setSpinEnabled(Boolean enabled) {
@@ -240,7 +246,7 @@ public class HuntConfig {
     }
 
     public int getSpinSpeed() {
-        return spinSpeed != null ? spinSpeed : ConfigService.getSpinSpeed();
+        return spinSpeed != null ? spinSpeed : configService.spinSpeed();
     }
 
     public void setSpinSpeed(Integer speed) {
@@ -248,7 +254,7 @@ public class HuntConfig {
     }
 
     public boolean isSpinLinked() {
-        return spinLinked != null ? spinLinked : ConfigService.isSpinLinked();
+        return spinLinked != null ? spinLinked : configService.spinLinked();
     }
 
     public void setSpinLinked(Boolean linked) {
@@ -258,7 +264,7 @@ public class HuntConfig {
     // --- Particles getters with fallback ---
 
     public boolean isParticlesFoundEnabled() {
-        return particlesFoundEnabled != null ? particlesFoundEnabled : ConfigService.isParticlesFoundEnabled();
+        return particlesFoundEnabled != null ? particlesFoundEnabled : configService.particlesFoundEnabled();
     }
 
     public void setParticlesFoundEnabled(Boolean enabled) {
@@ -266,7 +272,7 @@ public class HuntConfig {
     }
 
     public boolean isParticlesNotFoundEnabled() {
-        return particlesNotFoundEnabled != null ? particlesNotFoundEnabled : ConfigService.isParticlesNotFoundEnabled();
+        return particlesNotFoundEnabled != null ? particlesNotFoundEnabled : configService.particlesNotFoundEnabled();
     }
 
     public void setParticlesNotFoundEnabled(Boolean enabled) {
@@ -274,7 +280,7 @@ public class HuntConfig {
     }
 
     public String getParticlesNotFoundType() {
-        return particlesNotFoundType != null ? particlesNotFoundType : ConfigService.getParticlesNotFoundType();
+        return particlesNotFoundType != null ? particlesNotFoundType : configService.particlesNotFoundType();
     }
 
     public void setParticlesNotFoundType(String type) {
@@ -282,7 +288,7 @@ public class HuntConfig {
     }
 
     public int getParticlesNotFoundAmount() {
-        return particlesNotFoundAmount != null ? particlesNotFoundAmount : ConfigService.getParticlesNotFoundAmount();
+        return particlesNotFoundAmount != null ? particlesNotFoundAmount : configService.particlesNotFoundAmount();
     }
 
     public void setParticlesNotFoundAmount(Integer amount) {
@@ -290,7 +296,7 @@ public class HuntConfig {
     }
 
     public String getParticlesFoundType() {
-        return particlesFoundType != null ? particlesFoundType : ConfigService.getParticlesFoundType();
+        return particlesFoundType != null ? particlesFoundType : configService.particlesFoundType();
     }
 
     public void setParticlesFoundType(String type) {
@@ -298,7 +304,7 @@ public class HuntConfig {
     }
 
     public int getParticlesFoundAmount() {
-        return particlesFoundAmount != null ? particlesFoundAmount : ConfigService.getParticlesFoundAmount();
+        return particlesFoundAmount != null ? particlesFoundAmount : configService.particlesFoundAmount();
     }
 
     public void setParticlesFoundAmount(Integer amount) {
@@ -308,7 +314,7 @@ public class HuntConfig {
     // --- TieredRewards with fallback ---
 
     public List<TieredReward> getTieredRewards() {
-        return tieredRewards != null ? tieredRewards : ConfigService.getTieredRewards();
+        return tieredRewards != null ? tieredRewards : configService.tieredRewards();
     }
 
     public void setTieredRewards(List<TieredReward> tieredRewards) {

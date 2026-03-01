@@ -1,11 +1,11 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
-import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.FireworkUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
@@ -28,6 +28,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class OnPlayerInteractEvent implements Listener {
+
+    private final ServiceRegistry registry;
+
+    public OnPlayerInteractEvent(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
@@ -52,28 +58,28 @@ public class OnPlayerInteractEvent implements Listener {
 
         if (HeadBlocks.isReloadInProgress) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.PluginReloading"));
+            player.sendMessage(registry.getLanguageService().message("Messages.PluginReloading"));
             return;
         }
 
         Location clickedLocation = block.getLocation();
 
         // Check if the head is a head of the plugin
-        HeadLocation headLocation = HeadService.getHeadAt(clickedLocation);
+        HeadLocation headLocation = registry.getHeadService().getHeadAt(clickedLocation);
         if (headLocation == null) {
             return;
         }
 
         // Check if there is a storage issue
-        if (StorageService.hasStorageError()) {
+        if (registry.getStorageService().isStorageError()) {
             e.setCancelled(true);
-            player.sendMessage(LanguageService.getMessage("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             return;
         }
 
         // Check if the player has the permission to click on the head
         if (!PlayerUtils.hasPermission(player, "headblocks.use")) {
-            String message = LanguageService.getMessage("Messages.NoPermissionBlock");
+            String message = registry.getLanguageService().message("Messages.NoPermissionBlock");
 
             if (!message.trim().isEmpty()) {
                 player.sendMessage(message);
@@ -82,7 +88,7 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Get hunts for this head
-        List<Hunt> allHunts = HuntService.getHuntsForHead(headLocation.getUuid());
+        List<Hunt> allHunts = registry.getHuntService().getHuntsForHead(headLocation.getUuid());
         List<Hunt> activeHunts = allHunts.stream()
                 .filter(Hunt::isActive)
                 .collect(Collectors.toList());
@@ -90,7 +96,7 @@ public class OnPlayerInteractEvent implements Listener {
         if (activeHunts.isEmpty()) {
             if (!allHunts.isEmpty()) {
                 // Head has hunts but all are inactive
-                String msg = LanguageService.getMessage("Messages.HuntHeadInactive");
+                String msg = registry.getLanguageService().message("Messages.HuntHeadInactive");
                 if (!msg.trim().isEmpty()) {
                     player.sendMessage(msg);
                 }
@@ -112,7 +118,7 @@ public class OnPlayerInteractEvent implements Listener {
         Hunt primaryHunt = activeHunts.get(0); // highest priority (list is sorted)
         HuntConfig primaryConfig = primaryHunt.getConfig();
 
-        StorageService.getHeadsPlayer(player.getUniqueId()).whenComplete(allPlayerHeads -> {
+        registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(allPlayerHeads -> {
             var playerHeads = new ArrayList<>(allPlayerHeads);
             boolean globallyFound = playerHeads.contains(headLocation.getUuid());
             boolean anyNewFind = false;
@@ -120,7 +126,7 @@ public class OnPlayerInteractEvent implements Listener {
 
             for (Hunt hunt : activeHunts) {
                 try {
-                    ArrayList<UUID> huntPlayerHeads = StorageService.getHeadsPlayerForHunt(
+                    ArrayList<UUID> huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
                             player.getUniqueId(), hunt.getId());
 
                     if (huntPlayerHeads.contains(headLocation.getUuid())) {
@@ -140,8 +146,8 @@ public class OnPlayerInteractEvent implements Listener {
                     huntPlayerHeads.add(headLocation.getUuid());
 
                     // Check inventory slots
-                    if (!RewardService.hasPlayerSlotsRequired(player, huntPlayerHeads, hunt.getConfig())) {
-                        var message = LanguageService.getMessage("Messages.InventoryFullReward");
+                    if (!registry.getRewardService().hasPlayerSlotsRequired(player, huntPlayerHeads, hunt.getConfig())) {
+                        var message = registry.getLanguageService().message("Messages.InventoryFullReward");
                         if (!message.trim().isEmpty()) {
                             player.sendMessage(message);
                         }
@@ -149,7 +155,7 @@ public class OnPlayerInteractEvent implements Listener {
                     }
 
                     // Register find for this hunt (also updates storage cache globally)
-                    StorageService.addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
+                    registry.getStorageService().addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
 
                     // Update local tracking for subsequent iterations
                     if (!globallyFound) {
@@ -161,12 +167,12 @@ public class OnPlayerInteractEvent implements Listener {
                     hunt.notifyHeadFound(player, headLocation);
 
                     // Give hunt-specific rewards
-                    RewardService.giveReward(player, huntPlayerHeads, headLocation, hunt.getConfig());
+                    registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, hunt.getConfig());
 
                     // Give special head rewards only on first new find
                     if (!anyNewFind) {
                         for (var reward : headLocation.getRewards()) {
-                            reward.execute(player, headLocation);
+                            reward.execute(player, headLocation, registry);
                         }
                     }
 
@@ -198,9 +204,9 @@ public class OnPlayerInteractEvent implements Listener {
 
                 // Title using primary hunt config
                 if (primaryConfig.isHeadClickTitleEnabled()) {
-                    String firstLine = PlaceholdersService.parse(player.getName(), player.getUniqueId(),
+                    String firstLine = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
                             headLocation, primaryConfig.getHeadClickTitleFirstLine());
-                    String subTitle = PlaceholdersService.parse(player.getName(), player.getUniqueId(),
+                    String subTitle = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
                             headLocation, primaryConfig.getHeadClickTitleSubTitle());
                     int fadeIn = primaryConfig.getHeadClickTitleFadeIn();
                     int stay = primaryConfig.getHeadClickTitleStay();
@@ -210,10 +216,10 @@ public class OnPlayerInteractEvent implements Listener {
 
                 // Firework using primary hunt config
                 if (primaryConfig.isFireworkEnabled()) {
-                    List<Color> colors = ConfigService.getHeadClickFireworkColors();
-                    List<Color> fadeColors = ConfigService.getHeadClickFireworkFadeColors();
-                    boolean isFlickering = ConfigService.isFireworkFlickerEnabled();
-                    int power = ConfigService.getHeadClickFireworkPower();
+                    List<Color> colors = registry.getConfigService().headClickFireworkColors();
+                    List<Color> fadeColors = registry.getConfigService().headClickFireworkFadeColors();
+                    boolean isFlickering = registry.getConfigService().fireworkFlickerEnabled();
+                    int power = registry.getConfigService().headClickFireworkPower();
 
                     Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
                     FireworkUtils.launchFirework(loc, isFlickering,
@@ -236,8 +242,8 @@ public class OnPlayerInteractEvent implements Listener {
 
     private void showAlreadyClaimed(Player player, HeadLocation headLocation,
                                     Location clickedLocation, HuntConfig config) {
-        String message = PlaceholdersService.parse(player.getName(), player.getUniqueId(),
-                headLocation, LanguageService.getMessage("Messages.AlreadyClaimHead"));
+        String message = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
+                headLocation, registry.getLanguageService().message("Messages.AlreadyClaimHead"));
         if (!message.trim().isEmpty()) {
             player.sendMessage(message);
         }
@@ -254,15 +260,15 @@ public class OnPlayerInteractEvent implements Listener {
             try {
                 XSound.play(songName, s -> s.forPlayers(player));
             } catch (Exception ex) {
-                player.sendMessage(LanguageService.getMessage("Messages.ErrorCannotPlaySound"));
+                player.sendMessage(registry.getLanguageService().message("Messages.ErrorCannotPlaySound"));
                 LogUtil.error("Error cannot play sound on head click: {0}", ex.getMessage());
             }
         }
 
-        if (ConfigService.isHeadClickParticlesEnabled()) {
-            String particleName = ConfigService.getHeadClickParticlesAlreadyOwnType();
-            int amount = ConfigService.getHeadClickParticlesAmount();
-            ArrayList<String> colors = ConfigService.getHeadClickParticlesColors();
+        if (registry.getConfigService().headClickParticlesEnabled()) {
+            String particleName = registry.getConfigService().headClickParticlesAlreadyOwnType();
+            int amount = registry.getConfigService().headClickParticlesAmount();
+            ArrayList<String> colors = registry.getConfigService().headClickParticlesColors();
 
             try {
                 ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);

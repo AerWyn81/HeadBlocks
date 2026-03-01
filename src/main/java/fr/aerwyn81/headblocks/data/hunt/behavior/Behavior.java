@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.data.hunt.behavior;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import org.bukkit.configuration.ConfigurationSection;
@@ -16,11 +17,11 @@ public interface Behavior {
 
     String getDisplayInfo(Player player, Hunt hunt);
 
-    static Behavior fromConfig(String type, ConfigurationSection section) {
+    static Behavior fromConfig(String type, ServiceRegistry registry, ConfigurationSection section) {
         return switch (type.toLowerCase()) {
-            case "ordered" -> OrderedBehavior.fromConfig(section);
-            case "scheduled" -> ScheduledBehavior.fromConfig(section);
-            case "timed" -> TimedBehavior.fromConfig(section);
+            case "ordered" -> OrderedBehavior.fromConfig(registry, section);
+            case "scheduled" -> ScheduledBehavior.fromConfig(registry, section);
+            case "timed" -> TimedBehavior.fromConfig(registry, section);
             default -> new FreeBehavior();
         };
     }

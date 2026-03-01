@@ -3,7 +3,9 @@ package fr.aerwyn81.headblocks.data.hunt.behavior;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.services.ConfigService;
 import org.bukkit.entity.Player;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -21,8 +23,16 @@ class FreeBehaviorTest {
     @Mock
     HeadLocation headLocation;
 
+    @Mock
+    ConfigService configService;
+
     private final FreeBehavior behavior = new FreeBehavior();
-    private final Hunt hunt = new Hunt("test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+    private Hunt hunt;
+
+    @BeforeEach
+    void setUp() {
+        hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+    }
 
     @Test
     void canPlayerClick_alwaysReturnsAllow() {

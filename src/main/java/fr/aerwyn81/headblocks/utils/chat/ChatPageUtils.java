@@ -16,6 +16,7 @@ import java.util.ArrayList;
 public class ChatPageUtils {
     private final boolean isConsoleSender;
     private final int pageHeight;
+    private final LanguageService languageService;
 
     private BaseComponent lineTitle;
     private Player player;
@@ -26,8 +27,9 @@ public class ChatPageUtils {
 
     private final ArrayList<BaseComponent[]> components;
 
-    public ChatPageUtils(CommandSender sender) {
+    public ChatPageUtils(CommandSender sender, LanguageService languageService) {
         this.components = new ArrayList<>();
+        this.languageService = languageService;
 
         if (sender instanceof Player) {
             isConsoleSender = false;
@@ -105,15 +107,15 @@ public class ChatPageUtils {
             }
 
             if (!isConsoleSender && command != null && size > pageHeight) {
-                TextComponent c1 = new TextComponent(MessageUtils.colorize(LanguageService.getMessage("Chat.PreviousPage")));
+                TextComponent c1 = new TextComponent(MessageUtils.colorize(languageService.message("Chat.PreviousPage")));
                 c1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks " + command + " " + (pageNumber - 1)));
-                c1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.PreviousPage"))));
+                c1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(languageService.message("Chat.Hover.PreviousPage"))));
 
-                TextComponent c2 = new TextComponent(MessageUtils.colorize(LanguageService.getMessage("Chat.NextPage")));
+                TextComponent c2 = new TextComponent(MessageUtils.colorize(languageService.message("Chat.NextPage")));
                 c2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks " + command + " " + (pageNumber + 1)));
-                c2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(LanguageService.getMessage("Chat.Hover.NextPage"))));
+                c2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(languageService.message("Chat.Hover.NextPage"))));
 
-                player.spigot().sendMessage(c1, new TextComponent(LanguageService.getMessage("Chat.PageFooter").replaceAll("%pageNumber%", String.valueOf(pageNumber)).replaceAll("%totalPage%", String.valueOf(totalPage))), c2);
+                player.spigot().sendMessage(c1, new TextComponent(languageService.message("Chat.PageFooter").replaceAll("%pageNumber%", String.valueOf(pageNumber)).replaceAll("%totalPage%", String.valueOf(totalPage))), c2);
             }
         }
     }

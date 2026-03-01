@@ -11,6 +11,8 @@ import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
+import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -24,7 +26,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -36,18 +37,47 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class HeadService {
-    private static File configFile;
-    private static YamlConfiguration config;
+    private final ConfigService configService;
+    private final StorageService storageService;
+    private final LanguageService languageService;
+    private final SchedulerAdapter scheduler;
+    private final PluginProvider pluginProvider;
+    private HologramService hologramService; // setter-injected (circular dep)
+    private HuntService huntService; // setter-injected
 
-    private static ArrayList<HBHead> heads;
-    private static HashMap<UUID, HeadMove> headMoves;
-    private static ArrayList<HeadLocation> headLocations;
+    private File configFile;
+    private YamlConfiguration config;
 
-    private static HashMap<UUID, BukkitTask> tasksHeadSpin;
+    private ArrayList<HBHead> heads;
+    private HashMap<UUID, HeadMove> headMoves;
+    private ArrayList<HeadLocation> headLocations;
+    private HashMap<UUID, Integer> tasksHeadSpin;
 
     public static String HB_KEY = "HB_HEAD";
 
-    public static void initialize(File file) {
+    // --- Constructor + instance lifecycle ---
+
+    public HeadService(ConfigService configService, StorageService storageService,
+                       LanguageService languageService, SchedulerAdapter scheduler,
+                       PluginProvider pluginProvider) {
+        this.configService = configService;
+        this.storageService = storageService;
+        this.languageService = languageService;
+        this.scheduler = scheduler;
+        this.pluginProvider = pluginProvider;
+    }
+
+    public void setHologramService(HologramService hologramService) {
+        this.hologramService = hologramService;
+    }
+
+    public void setHuntService(HuntService huntService) {
+        this.huntService = huntService;
+    }
+
+    // --- Instance lifecycle ---
+
+    public void initialize(File file) {
         configFile = file;
 
         heads = new ArrayList<>();
@@ -58,19 +88,25 @@ public class HeadService {
         load();
     }
 
-    public static void load() {
+    public void load() {
         config = YamlConfiguration.loadConfiguration(configFile);
 
         heads.clear();
         headLocations.clear();
         headMoves.clear();
-        tasksHeadSpin.values().forEach(BukkitTask::cancel);
+        cancelAllSpinTasks();
 
-        loadHeads();
+        doLoadHeads();
         loadLocations();
     }
 
-    private static void saveConfig() {
+    private void cancelAllSpinTasks() {
+        if (tasksHeadSpin != null) {
+            tasksHeadSpin.values().forEach(scheduler::cancelTask);
+        }
+    }
+
+    private void doSaveConfig() {
         try {
             config.save(configFile);
         } catch (IOException e) {
@@ -78,7 +114,7 @@ public class HeadService {
         }
     }
 
-    public static void loadLocations() {
+    public void loadLocations() {
         headLocations.clear();
 
         ConfigurationSection locations = config.getConfigurationSection("locations");
@@ -88,7 +124,7 @@ public class HeadService {
             return;
         }
 
-        if (StorageService.hasStorageError()) {
+        if (storageService.isStorageError()) {
             LogUtil.error("Cannot load locations from storage, theres an issue with the database.");
             return;
         }
@@ -106,17 +142,17 @@ public class HeadService {
                     var headLoc = HeadLocation.fromConfig(config, headUuid);
 
                     try {
-                        boolean isExist = StorageService.isHeadExist(headUuid);
+                        boolean isExist = storageService.isHeadExist(headUuid);
                         if (!isExist) {
                             var headTexture = headLoc.getLocation() != null ? HeadUtils.getHeadTexture(headLoc.getLocation().getBlock()) : "";
-                            StorageService.createOrUpdateHead(headUuid, headTexture);
+                            storageService.createOrUpdateHead(headUuid, headTexture);
                         }
                     } catch (Exception ex) {
                         LogUtil.error("Error while trying to create a head ({0}) in the storage: {1}", headUuid, ex.getMessage());
                         continue;
                     }
 
-                    addHeadToSpin(headLoc, i);
+                    doAddHeadToSpin(headLoc, i);
 
                     headLocations.add(headLoc);
                 } catch (Exception e) {
@@ -126,23 +162,23 @@ public class HeadService {
         }
 
         // Purge for remote database
-        if (ConfigService.isDatabaseEnabled()) {
+        if (configService.databaseEnabled()) {
             try {
-                var heads = StorageService.getHeadsByServerId();
-                if (heads.isEmpty()) {
+                var dbHeads = storageService.getHeadsByServerId();
+                if (dbHeads.isEmpty()) {
                     for (var headLoc : getHeadLocations()) {
-                        StorageService.createOrUpdateHead(headLoc.getUuid(), HeadUtils.getHeadTexture(headLoc.getLocation().getBlock()));
+                        storageService.createOrUpdateHead(headLoc.getUuid(), HeadUtils.getHeadTexture(headLoc.getLocation().getBlock()));
                     }
                 } else {
-                    heads.removeAll(getHeadLocations().stream().map(HeadLocation::getUuid).toList());
+                    dbHeads.removeAll(getHeadLocations().stream().map(HeadLocation::getUuid).toList());
 
-                    if (!heads.isEmpty()) {
+                    if (!dbHeads.isEmpty()) {
                         LogUtil.error("Found {0} heads ({1}) out of sync with the server, deleting...",
-                                heads.size(),
-                                String.join(", ", heads.stream().map(UUID::toString).toList()));
+                                dbHeads.size(),
+                                String.join(", ", dbHeads.stream().map(UUID::toString).toList()));
 
-                        for (var head : heads) {
-                            StorageService.removeHead(head, true);
+                        for (var head : dbHeads) {
+                            storageService.removeHead(head, true);
                         }
 
                         LogUtil.info("Headblocks heads table cleaned!");
@@ -156,80 +192,79 @@ public class HeadService {
         LogUtil.info("Loaded {0} locations!", headLocations.size());
     }
 
-    private static void addHeadToSpin(HeadLocation headLoc, int offset) {
-        if (!ConfigService.isSpinEnabled() || ConfigService.isSpinLinked()) {
+    private void doAddHeadToSpin(HeadLocation headLoc, int offset) {
+        if (!configService.spinEnabled() || configService.spinLinked()) {
             return;
         }
 
-        var task = Bukkit.getScheduler().runTaskTimer(HeadBlocks.getInstance(),
-                () -> rotateHead(headLoc), 5L * offset, ConfigService.getSpinSpeed());
-        tasksHeadSpin.put(headLoc.getUuid(), task);
+        var taskId = scheduler.runTaskTimer(
+                () -> rotateHead(headLoc), 5L * offset, configService.spinSpeed());
+        tasksHeadSpin.put(headLoc.getUuid(), taskId);
     }
 
-    public static UUID saveHeadLocation(Location location, String texture) throws InternalException {
+    public UUID saveHeadLocation(Location location, String texture) throws InternalException {
         UUID uniqueUuid = InternalUtils.generateNewUUID(headLocations.stream().map(HeadLocation::getUuid).collect(Collectors.toList()));
 
-        StorageService.createOrUpdateHead(uniqueUuid, texture);
+        storageService.createOrUpdateHead(uniqueUuid, texture);
 
-        if (ConfigService.isHologramsEnabled()) {
-            HologramService.createHolograms(location);
+        if (configService.hologramsEnabled() && hologramService != null) {
+            hologramService.createHolograms(location);
         }
 
         var headLocation = new HeadLocation("", uniqueUuid, location);
         saveHeadInConfig(headLocation);
 
         headLocations.add(headLocation);
-        addHeadToSpin(headLocation, 1);
+        doAddHeadToSpin(headLocation, 1);
 
         return uniqueUuid;
     }
 
-    public static void saveHeadInConfig(HeadLocation headLocation) {
+    public void saveHeadInConfig(HeadLocation headLocation) {
         headLocation.saveInConfig(config);
-        saveConfig();
+        doSaveConfig();
     }
 
-    public static void saveAllHeadsInConfig() {
+    public void saveAllHeadsInConfig() {
         for (var headLocation : headLocations) {
             headLocation.saveInConfig(config);
         }
 
-        saveConfig();
+        doSaveConfig();
     }
 
-    public static void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
+    public void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
         if (headLocation != null) {
-            StorageService.removeHead(headLocation.getUuid(), withDelete);
+            storageService.removeHead(headLocation.getUuid(), withDelete);
 
             headLocation.getLocation().getBlock().setType(Material.AIR);
 
-            if (ConfigService.isHologramsEnabled()) {
-                HologramService.removeHolograms(headLocation.getLocation());
+            if (configService.hologramsEnabled() && hologramService != null) {
+                hologramService.removeHolograms(headLocation.getLocation());
             }
 
-            // Clean up hunt mappings in memory
-            for (Hunt hunt : HuntService.getAllHunts()) {
+            for (Hunt hunt : huntService.getAllHunts()) {
                 hunt.removeHead(headLocation.getUuid());
             }
-            HuntService.rebuildHeadToHuntsCache();
+            huntService.rebuildHeadToHuntsCache();
 
             headLocations.remove(headLocation);
 
             headLocation.removeFromConfig(config);
-            saveConfig();
+            doSaveConfig();
 
             headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-            var spinTask = tasksHeadSpin.get(headLocation.getUuid());
-            if (spinTask != null) {
-                spinTask.cancel();
+            var spinTaskId = tasksHeadSpin.get(headLocation.getUuid());
+            if (spinTaskId != null) {
+                scheduler.cancelTask(spinTaskId);
                 tasksHeadSpin.remove(headLocation.getUuid());
             }
         }
     }
 
-    public static void removeAllHeadLocationsAsync(ArrayList<HeadLocation> headsToRemove, boolean withDelete,
-                                                   java.util.function.Consumer<Integer> onComplete) {
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+    public void removeAllHeadLocationsAsync(ArrayList<HeadLocation> headsToRemove, boolean withDelete,
+                                            java.util.function.Consumer<Integer> onComplete) {
+        scheduler.runTaskAsync(() -> {
             int removed = 0;
 
             for (HeadLocation headLocation : headsToRemove) {
@@ -238,17 +273,17 @@ public class HeadService {
                 }
 
                 try {
-                    StorageService.removeHead(headLocation.getUuid(), withDelete);
+                    storageService.removeHead(headLocation.getUuid(), withDelete);
                 } catch (InternalException ex) {
                     LogUtil.error("Error removing head {0} from storage: {1}", headLocation.getNameOrUuid(), ex.getMessage());
                     continue;
                 }
 
-                Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> {
+                scheduler.runTask(() -> {
                     headLocation.getLocation().getBlock().setType(Material.AIR);
 
-                    if (ConfigService.isHologramsEnabled()) {
-                        HologramService.removeHolograms(headLocation.getLocation());
+                    if (configService.hologramsEnabled() && hologramService != null) {
+                        hologramService.removeHolograms(headLocation.getLocation());
                     }
                 });
 
@@ -256,46 +291,46 @@ public class HeadService {
                 headLocation.removeFromConfig(config);
 
                 headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-                var spinTask = tasksHeadSpin.get(headLocation.getUuid());
-                if (spinTask != null) {
-                    spinTask.cancel();
+                var spinTaskId = tasksHeadSpin.get(headLocation.getUuid());
+                if (spinTaskId != null) {
+                    scheduler.cancelTask(spinTaskId);
                     tasksHeadSpin.remove(headLocation.getUuid());
                 }
 
                 removed++;
             }
 
-            saveConfig();
+            doSaveConfig();
 
             final int finalRemoved = removed;
-            Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> onComplete.accept(finalRemoved));
+            scheduler.runTask(() -> onComplete.accept(finalRemoved));
         });
     }
 
-    public static HeadLocation getHeadByUUID(UUID headUuid) {
+    public HeadLocation getHeadByUUID(UUID headUuid) {
         return headLocations.stream().filter(h -> h.getUuid().equals(headUuid))
                 .findFirst()
                 .orElse(null);
     }
 
-    public static HeadLocation getHeadByName(String name) {
+    public HeadLocation getHeadByName(String name) {
         return headLocations.stream().filter(h -> h.getRawNameOrUuid().equals(name))
                 .findFirst()
                 .orElse(null);
     }
 
-    public static HeadLocation getHeadAt(Location location) {
+    public HeadLocation getHeadAt(Location location) {
         return headLocations.stream().filter(h -> LocationUtils.areEquals(h.getLocation(), location))
                 .findFirst()
                 .orElse(null);
     }
 
-    private static void loadHeads() {
+    private void doLoadHeads() {
         List<String> headsConfig;
 
-        if (ConfigService.isHeadsThemeEnabled()) {
-            var selectedTheme = ConfigService.getHeadsThemeSelected().trim();
-            var themeHeads = ConfigService.getHeadsTheme().get(selectedTheme);
+        if (configService.headsThemeEnabled()) {
+            var selectedTheme = configService.headsThemeSelected().trim();
+            var themeHeads = configService.headsTheme().get(selectedTheme);
 
             if (selectedTheme.isEmpty() || themeHeads == null) {
                 LogUtil.error("Error when trying to use heads theme, selected theme is empty or don't match any theme.");
@@ -304,7 +339,7 @@ public class HeadService {
 
             headsConfig = themeHeads;
         } else {
-            headsConfig = ConfigService.getHeads();
+            headsConfig = configService.heads();
         }
 
         for (int i = 0; i < headsConfig.size(); i++) {
@@ -329,8 +364,8 @@ public class HeadService {
                 continue;
             }
 
-            headMeta.setDisplayName(LanguageService.getMessage("Head.Name"));
-            headMeta.setLore(LanguageService.getMessages("Head.Lore"));
+            headMeta.setDisplayName(languageService.message("Head.Name"));
+            headMeta.setLore(languageService.messageList("Head.Lore"));
             headMeta.getPersistentDataContainer().set(new NamespacedKey(HeadBlocks.getInstance(), HB_KEY), PersistentDataType.STRING, "");
 
             switch (parts[0]) {
@@ -355,7 +390,7 @@ public class HeadService {
                     heads.add(HeadUtils.createHead(new HBHeadDefault(head), parts[1]));
                     break;
                 case "hdb":
-                    if (!HeadBlocks.isHeadDatabaseActive) {
+                    if (!pluginProvider.isHeadDatabaseActive()) {
                         LogUtil.error("Cannot load hdb head {0} without HeadDatabase installed", configHead);
                         continue;
                     }
@@ -374,33 +409,33 @@ public class HeadService {
         LogUtil.info("Loaded {0} (+{1} HeadDatabase heads) configuration heads!", Math.abs(heads.size() - headsHdb), headsHdb);
     }
 
-    public static ArrayList<HBHead> getHeads() {
+    public ArrayList<HBHead> getHeads() {
         return heads;
     }
 
-    public static ArrayList<HeadLocation> getChargedHeadLocations() {
+    public ArrayList<HeadLocation> getChargedHeadLocations() {
         return headLocations.stream().filter(HeadLocation::isCharged).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static ArrayList<HeadLocation> getHeadLocations() {
+    public ArrayList<HeadLocation> getHeadLocations() {
         return headLocations;
     }
 
-    public static ArrayList<HeadLocation> getHeadLocationsForHunt(Hunt hunt) {
+    public ArrayList<HeadLocation> getHeadLocationsForHunt(Hunt hunt) {
         return headLocations.stream()
                 .filter(h -> hunt.containsHead(h.getUuid()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static ArrayList<String> getHeadRawNameOrUuid() {
+    public ArrayList<String> getHeadRawNameOrUuid() {
         return headLocations.stream().map(HeadLocation::getRawNameOrUuid).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static HashMap<UUID, HeadMove> getHeadMoves() {
+    public HashMap<UUID, HeadMove> getHeadMoves() {
         return headMoves;
     }
 
-    public static void clearHeadMoves() {
+    public void clearHeadMoves() {
         if (headMoves == null) {
             return;
         }
@@ -408,7 +443,7 @@ public class HeadService {
         headMoves.clear();
     }
 
-    public static HeadLocation resolveHeadIdentifier(String headIdentifier) {
+    public HeadLocation resolveHeadIdentifier(String headIdentifier) {
         try {
             var headUuid = UUID.fromString(headIdentifier);
             return getHeadByUUID(headUuid);
@@ -417,7 +452,7 @@ public class HeadService {
         }
     }
 
-    public static void changeHeadLocation(UUID hUuid, @NotNull Block oldBlock, Block newBlock) {
+    public void changeHeadLocation(UUID hUuid, @NotNull Block oldBlock, Block newBlock) {
         Skull oldSkull = (Skull) oldBlock.getState();
         Rotatable skullRotation = (Rotatable) oldSkull.getBlockData();
 
@@ -452,13 +487,15 @@ public class HeadService {
 
         headLocations.set(indexOfOld, headLocation);
 
-        HologramService.removeHolograms(oldBlock.getLocation());
-        HologramService.createHolograms(centeredLoc);
+        if (hologramService != null) {
+            hologramService.removeHolograms(oldBlock.getLocation());
+            hologramService.createHolograms(centeredLoc);
+        }
 
-        addHeadToSpin(headLocation, 1);
+        doAddHeadToSpin(headLocation, 1);
     }
 
-    public static void rotateHead(HeadLocation headLocation) {
+    public void rotateHead(HeadLocation headLocation) {
         var block = headLocation.getLocation().getBlock();
         if (block.getType() != Material.PLAYER_HEAD) {
             return;
@@ -472,4 +509,5 @@ public class HeadService {
         var rotation = HeadUtils.skullRotationList.get((currentRotation + 1) % HeadUtils.skullRotationList.size());
         HeadUtils.rotateHead(block, rotation);
     }
+
 }

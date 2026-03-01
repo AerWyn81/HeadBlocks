@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.commands.list;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import org.bukkit.Bukkit;
@@ -11,6 +12,11 @@ import java.util.ArrayList;
 
 @HBAnnotations(command = "tp", permission = "headblocks.tp", isPlayerCommand = true, isVisible = false)
 public class Tp implements Cmd {
+    private final ServiceRegistry registry;
+
+    public Tp(ServiceRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {

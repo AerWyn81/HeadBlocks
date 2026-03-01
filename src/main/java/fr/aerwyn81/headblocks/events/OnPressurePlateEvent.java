@@ -1,12 +1,10 @@
 package fr.aerwyn81.headblocks.events;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.TimedRunData;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
-import fr.aerwyn81.headblocks.services.HuntService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -22,6 +20,12 @@ import java.util.UUID;
 
 public class OnPressurePlateEvent implements Listener {
 
+    private final ServiceRegistry registry;
+
+    public OnPressurePlateEvent(ServiceRegistry registry) {
+        this.registry = registry;
+    }
+
     @EventHandler
     public void onPressurePlate(PlayerInteractEvent event) {
         if (event.getAction() != Action.PHYSICAL) {
@@ -35,7 +39,7 @@ public class OnPressurePlateEvent implements Listener {
         Player player = event.getPlayer();
         Location blockLoc = event.getClickedBlock().getLocation();
 
-        for (Hunt hunt : HuntService.getAllHunts()) {
+        for (Hunt hunt : registry.getHuntService().getAllHunts()) {
             if (!hunt.isActive()) {
                 continue;
             }
@@ -76,9 +80,9 @@ public class OnPressurePlateEvent implements Listener {
 
         // Check if player already completed all heads for this hunt
         try {
-            ArrayList<UUID> foundHeads = StorageService.getHeadsPlayerForHunt(pUuid, hunt.getId());
+            ArrayList<UUID> foundHeads = registry.getStorageService().getHeadsPlayerForHunt(pUuid, hunt.getId());
             if (foundHeads.size() >= hunt.getHeadCount() && hunt.getHeadCount() > 0) {
-                player.sendMessage(LanguageService.getMessage("Messages.TimedAlreadyCompleted"));
+                player.sendMessage(registry.getLanguageService().message("Messages.TimedAlreadyCompleted"));
                 return;
             }
         } catch (InternalException e) {
@@ -96,7 +100,7 @@ public class OnPressurePlateEvent implements Listener {
         // Reset player progression for this hunt if restarting
         if (isRestart) {
             try {
-                StorageService.resetPlayerHunt(pUuid, hunt.getId());
+                registry.getStorageService().resetPlayerHunt(pUuid, hunt.getId());
             } catch (InternalException e) {
                 LogUtil.error("Error resetting player hunt progression for timed restart: {0}", e.getMessage());
             }
@@ -106,10 +110,10 @@ public class OnPressurePlateEvent implements Listener {
         TimedRunManager.startRun(pUuid, hunt.getId());
 
         if (isRestart) {
-            player.sendMessage(LanguageService.getMessage("Messages.TimedRestarted")
+            player.sendMessage(registry.getLanguageService().message("Messages.TimedRestarted")
                     .replaceAll("%hunt%", hunt.getDisplayName()));
         } else {
-            player.sendMessage(LanguageService.getMessage("Messages.TimedStarted")
+            player.sendMessage(registry.getLanguageService().message("Messages.TimedStarted")
                     .replaceAll("%hunt%", hunt.getDisplayName()));
         }
     }

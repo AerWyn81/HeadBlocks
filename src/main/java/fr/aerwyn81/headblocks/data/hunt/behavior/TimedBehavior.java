@@ -1,9 +1,8 @@
 package fr.aerwyn81.headblocks.data.hunt.behavior;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.Hunt;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -15,7 +14,31 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public record TimedBehavior(Location startPlateLocation, boolean repeatable) implements Behavior {
+public class TimedBehavior implements Behavior {
+
+    private final ServiceRegistry registry;
+    private final Location startPlateLocation;
+    private final boolean repeatable;
+
+    public TimedBehavior(Location startPlateLocation, boolean repeatable) {
+        this.registry = null;
+        this.startPlateLocation = startPlateLocation;
+        this.repeatable = repeatable;
+    }
+
+    public TimedBehavior(ServiceRegistry registry, Location startPlateLocation, boolean repeatable) {
+        this.registry = registry;
+        this.startPlateLocation = startPlateLocation;
+        this.repeatable = repeatable;
+    }
+
+    public Location startPlateLocation() {
+        return startPlateLocation;
+    }
+
+    public boolean repeatable() {
+        return repeatable;
+    }
 
     @Override
     public String getId() {
@@ -25,7 +48,7 @@ public record TimedBehavior(Location startPlateLocation, boolean repeatable) imp
     @Override
     public BehaviorResult canPlayerClick(Player player, HeadLocation head, Hunt hunt) {
         if (!TimedRunManager.isInRun(player.getUniqueId(), hunt.getId())) {
-            return BehaviorResult.deny(LanguageService.getMessage("Messages.TimedNotStarted"));
+            return BehaviorResult.deny(registry.getLanguageService().message("Messages.TimedNotStarted"));
         }
         return BehaviorResult.allow();
     }
@@ -37,7 +60,7 @@ public record TimedBehavior(Location startPlateLocation, boolean repeatable) imp
         }
 
         try {
-            ArrayList<UUID> playerHuntHeads = StorageService.getHeadsPlayerForHunt(
+            ArrayList<UUID> playerHuntHeads = registry.getStorageService().getHeadsPlayerForHunt(
                     player.getUniqueId(), hunt.getId());
 
             // +1 because the current head was just found but may not be persisted yet
@@ -53,7 +76,7 @@ public record TimedBehavior(Location startPlateLocation, boolean repeatable) imp
                 TimedRunManager.leaveRun(player.getUniqueId());
 
                 try {
-                    StorageService.saveTimedRun(player.getUniqueId(), hunt.getId(), elapsed);
+                    registry.getStorageService().saveTimedRun(player.getUniqueId(), hunt.getId(), elapsed);
                 } catch (InternalException e) {
                     LogUtil.error("Error saving timed run for player {0} in hunt {1}: {2}",
                             player.getName(), hunt.getId(), e.getMessage());
@@ -61,20 +84,20 @@ public record TimedBehavior(Location startPlateLocation, boolean repeatable) imp
 
                 int completionCount = 0;
                 try {
-                    completionCount = StorageService.getTimedRunCount(player.getUniqueId(), hunt.getId());
+                    completionCount = registry.getStorageService().getTimedRunCount(player.getUniqueId(), hunt.getId());
                 } catch (InternalException e) {
                     LogUtil.error("Error getting timed run count for player {0} in hunt {1}: {2}",
                             player.getName(), hunt.getId(), e.getMessage());
                 }
 
-                player.sendMessage(LanguageService.getMessage("Messages.TimedCompleted")
+                player.sendMessage(registry.getLanguageService().message("Messages.TimedCompleted")
                         .replaceAll("%time%", TimedRunManager.formatTime(elapsed))
                         .replaceAll("%hunt%", hunt.getDisplayName())
                         .replaceAll("%count%", String.valueOf(completionCount)));
 
                 if (repeatable) {
                     try {
-                        StorageService.resetPlayerHunt(player.getUniqueId(), hunt.getId());
+                        registry.getStorageService().resetPlayerHunt(player.getUniqueId(), hunt.getId());
                     } catch (InternalException e) {
                         LogUtil.error("Error resetting player hunt for repeatable timed run: {0}", e.getMessage());
                     }
@@ -88,10 +111,10 @@ public record TimedBehavior(Location startPlateLocation, boolean repeatable) imp
 
     @Override
     public String getDisplayInfo(Player player, Hunt hunt) {
-        return LanguageService.getMessage("Hunt.Behavior.Timed");
+        return registry.getLanguageService().message("Hunt.Behavior.Timed");
     }
 
-    public static TimedBehavior fromConfig(ConfigurationSection section) {
+    public static TimedBehavior fromConfig(ServiceRegistry registry, ConfigurationSection section) {
         Location loc = null;
         boolean repeatable = true;
 
@@ -111,6 +134,6 @@ public record TimedBehavior(Location startPlateLocation, boolean repeatable) imp
             repeatable = section.getBoolean("repeatable", true);
         }
 
-        return new TimedBehavior(loc, repeatable);
+        return new TimedBehavior(registry, loc, repeatable);
     }
 }

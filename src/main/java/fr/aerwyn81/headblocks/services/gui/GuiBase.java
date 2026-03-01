@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.services.gui;
 
+import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import org.bukkit.Material;
@@ -14,12 +14,18 @@ public abstract class GuiBase {
 
     private static final HashMap<UUID, ItemStack> headItemCache = new HashMap<>();
 
+    protected final ServiceRegistry registry;
+
+    protected GuiBase(ServiceRegistry registry) {
+        this.registry = registry;
+    }
+
     protected ItemStack getHeadItemStackFromCache(HeadLocation headLocation) {
         var headUuid = headLocation.getUuid();
 
         if (!headItemCache.containsKey(headUuid)) {
             try {
-                var texture = StorageService.getHeadTexture(headUuid);
+                var texture = registry.getStorageService().getHeadTexture(headUuid);
                 headItemCache.put(headUuid, HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), texture));
             } catch (InternalException ignored) {
             }
