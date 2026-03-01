@@ -46,8 +46,8 @@ public class TimedRunManager {
         long totalSeconds = millis / 1000;
         long minutes = totalSeconds / 60;
         long seconds = totalSeconds % 60;
-        long centis = (millis % 1000) / 10;
-        return String.format("%02d:%02d.%02d", minutes, seconds, centis);
+        long ms = millis % 1000;
+        return String.format("%02d:%02d.%03d", minutes, seconds, ms);
     }
 
     public static void clearAll() {

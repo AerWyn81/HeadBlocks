@@ -2,6 +2,7 @@ import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
 
 plugins {
     java
+    jacoco
     alias(libs.plugins.shadow)
     alias(libs.plugins.plugin.yml)
     alias(libs.plugins.run.paper)
@@ -17,6 +18,7 @@ repositories {
     maven("https://repo.codemc.org/repository/maven-public")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://jitpack.io")
+    maven("https://repo.papermc.io/repository/maven-public/")
 }
 
 dependencies {
@@ -33,6 +35,14 @@ dependencies {
     implementation(libs.nbt.api)
     implementation(libs.holoeasy)
     implementation(libs.bstats)
+
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.platform.launcher)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.junit)
+    testImplementation(libs.assertj)
+    testImplementation(libs.mockbukkit)
 }
 
 tasks {
@@ -41,6 +51,19 @@ tasks {
 
         systemProperty("com.mojang.eula.agree", "true")
         systemProperty("terminal.ansi", true)
+    }
+
+    test {
+        useJUnitPlatform()
+        jvmArgs("-XX:+EnableDynamicAgentLoading")
+        finalizedBy(jacocoTestReport)
+    }
+
+    jacocoTestReport {
+        dependsOn(test)
+        reports {
+            csv.required.set(true)
+        }
     }
 
     compileJava {
