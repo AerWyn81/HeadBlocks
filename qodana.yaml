@@ -1,0 +1,15 @@
+version: "1.0"
+
+linter: jetbrains/qodana-jvm:2024.3
+
+projectJDK: "21"
+
+include:
+  - name: All
+
+exclude:
+  - name: All
+    paths:
+      - .gradle
+      - build
+      - .idea
