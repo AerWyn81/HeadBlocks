@@ -67,7 +67,6 @@ public class ServiceRegistry {
         Requests.init(configService);
 
         this.storageService = new StorageService(configService, pluginProvider.getDataFolder());
-        storageService.initialize();
 
         this.huntService = new HuntService(configService, huntConfigService, storageService);
 

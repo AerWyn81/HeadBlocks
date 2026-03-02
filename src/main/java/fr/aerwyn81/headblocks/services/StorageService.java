@@ -31,7 +31,7 @@ public class StorageService {
 
     private Storage storage;
     private Database database;
-    private boolean storageError;
+    private volatile boolean storageError;
     private String serverIdentifier = "";
 
     // --- Constructor ---
@@ -137,11 +137,9 @@ public class StorageService {
             return;
         }
 
-        try {
-            var writer = new FileWriter(file);
+        try (var writer = new FileWriter(file)) {
             serverIdentifier = UUID.randomUUID().toString().split("-")[0];
             writer.write(serverIdentifier);
-            writer.close();
         } catch (Exception ex) {
             storageError = true;
             LogUtil.error("Error generating server identifier file. Storage disabled. {0}", ex.getMessage());
@@ -243,7 +241,6 @@ public class StorageService {
             int lengthRead;
             while ((lengthRead = in.read(buffer)) > 0) {
                 out.write(buffer, 0, lengthRead);
-                out.flush();
             }
         } catch (Exception e) {
             LogUtil.error("Error backuping database: {0}", e.getMessage());

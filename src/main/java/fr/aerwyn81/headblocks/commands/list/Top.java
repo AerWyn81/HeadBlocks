@@ -60,8 +60,8 @@ public class Top implements Cmd {
             Map.Entry<PlayerProfileLight, Integer> currentScore = top.get(i);
 
             message = registry.getLanguageService().message("Chat.LineTop", currentScore.getKey().name())
-                    .replaceAll("%pos%", String.valueOf(pos))
-                    .replaceAll("%count%", String.valueOf(currentScore.getValue()));
+                    .replace("%pos%", String.valueOf(pos))
+                    .replace("%count%", String.valueOf(currentScore.getValue()));
 
             if (sender instanceof Player) {
                 TextComponent msg = new TextComponent(message);

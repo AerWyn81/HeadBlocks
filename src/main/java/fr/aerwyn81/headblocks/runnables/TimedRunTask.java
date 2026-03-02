@@ -47,10 +47,10 @@ public class TimedRunTask extends BukkitRunnable {
             }
 
             String message = registry.getLanguageService().message("Gui.TimedActionBar")
-                    .replaceAll("%time%", time)
-                    .replaceAll("%hunt%", huntName)
-                    .replaceAll("%found%", String.valueOf(foundHeads))
-                    .replaceAll("%total%", String.valueOf(totalHeads));
+                    .replace("%time%", time)
+                    .replace("%hunt%", huntName)
+                    .replace("%found%", String.valueOf(foundHeads))
+                    .replace("%total%", String.valueOf(totalHeads));
 
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
         }

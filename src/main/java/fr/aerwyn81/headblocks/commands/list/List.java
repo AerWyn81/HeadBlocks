@@ -76,7 +76,7 @@ public class List implements Cmd {
             } else {
                 if (sender instanceof Player) {
                     String hover = MessageUtils.colorize(registry.getLanguageService().message("Chat.LineWorldNotFound")
-                            .replaceAll("%world%", headLocation.getConfigWorldName()));
+                            .replace("%world%", headLocation.getConfigWorldName()));
 
                     msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
                     cpu.addLine(msg, space);

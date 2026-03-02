@@ -111,10 +111,10 @@ public class OnPressurePlateEvent implements Listener {
 
         if (isRestart) {
             player.sendMessage(registry.getLanguageService().message("Messages.TimedRestarted")
-                    .replaceAll("%hunt%", hunt.getDisplayName()));
+                    .replace("%hunt%", hunt.getDisplayName()));
         } else {
             player.sendMessage(registry.getLanguageService().message("Messages.TimedStarted")
-                    .replaceAll("%hunt%", hunt.getDisplayName()));
+                    .replace("%hunt%", hunt.getDisplayName()));
         }
     }
 }

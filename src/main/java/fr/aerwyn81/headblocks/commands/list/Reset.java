@@ -58,7 +58,7 @@ public class Reset extends ResetBase {
                 registry.getStorageService().resetPlayerHead(profile.uuid(), headUuid);
                 String headName = getHeadDisplayName(headUuid);
                 sender.sendMessage(registry.getLanguageService().message("Messages.PlayerHeadReset", args[1])
-                        .replaceAll("%headName%", headName));
+                        .replace("%headName%", headName));
 
                 if (targetPlayer != null) {
                     var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();

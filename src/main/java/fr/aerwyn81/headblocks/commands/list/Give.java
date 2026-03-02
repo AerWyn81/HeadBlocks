@@ -80,7 +80,7 @@ public class Give implements Cmd {
             if (head instanceof HBHeadHDB headHDB) {
                 if (!headHDB.isLoaded()) {
                     player.sendMessage(registry.getLanguageService().message("Messages.HeadNotYetLoaded")
-                            .replaceAll("%id%", String.valueOf(headHDB.getId())));
+                            .replace("%id%", String.valueOf(headHDB.getId())));
                     continue;
                 }
             }
@@ -102,7 +102,7 @@ public class Give implements Cmd {
         if (args.length == 2) {
             return Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
-                    .filter(p -> p.toLowerCase().startsWith(args[1]))
+                    .filter(p -> p.toLowerCase().startsWith(args[1].toLowerCase()))
                     .collect(Collectors.toCollection(ArrayList::new));
         }
 

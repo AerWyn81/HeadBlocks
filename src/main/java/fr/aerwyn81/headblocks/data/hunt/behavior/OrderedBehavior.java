@@ -48,7 +48,7 @@ public class OrderedBehavior implements Behavior {
 
             if (hasUnfoundPrior) {
                 return BehaviorResult.deny(registry.getLanguageService().message("Messages.OrderClickError")
-                        .replaceAll("%name%", head.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))));
+                        .replace("%name%", head.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))));
             }
         } catch (InternalException e) {
             LogUtil.error("Error checking ordered behavior for player {0} in hunt {1}: {2}",

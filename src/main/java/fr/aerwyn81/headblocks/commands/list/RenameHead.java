@@ -43,7 +43,7 @@ public class RenameHead implements Cmd {
         registry.getHeadService().saveHeadInConfig(headLocation);
 
         player.sendMessage(registry.getLanguageService().message("Messages.HeadRenamed")
-                .replaceAll("%name%", MessageUtils.colorize(name)));
+                .replace("%name%", MessageUtils.colorize(name)));
         return true;
     }
 

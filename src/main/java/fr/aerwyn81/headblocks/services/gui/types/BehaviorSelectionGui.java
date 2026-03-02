@@ -167,11 +167,11 @@ public class BehaviorSelectionGui {
         player.closeInventory();
 
         player.sendMessage(registry.getLanguageService().message("Messages.HuntCreated")
-                .replaceAll("%hunt%", hunt.getId()));
+                .replace("%hunt%", hunt.getId()));
 
         registry.getHuntService().setSelectedHunt(player.getUniqueId(), hunt.getId());
         player.sendMessage(registry.getLanguageService().message("Messages.HuntSelected")
-                .replaceAll("%hunt%", hunt.getId()));
+                .replace("%hunt%", hunt.getId()));
     }
 
     public String getPendingHuntName(UUID playerUuid) {

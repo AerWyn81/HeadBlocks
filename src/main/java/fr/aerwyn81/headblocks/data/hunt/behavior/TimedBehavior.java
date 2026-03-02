@@ -91,9 +91,9 @@ public class TimedBehavior implements Behavior {
                 }
 
                 player.sendMessage(registry.getLanguageService().message("Messages.TimedCompleted")
-                        .replaceAll("%time%", TimedRunManager.formatTime(elapsed))
-                        .replaceAll("%hunt%", hunt.getDisplayName())
-                        .replaceAll("%count%", String.valueOf(completionCount)));
+                        .replace("%time%", TimedRunManager.formatTime(elapsed))
+                        .replace("%hunt%", hunt.getDisplayName())
+                        .replace("%count%", String.valueOf(completionCount)));
 
                 if (repeatable) {
                     try {

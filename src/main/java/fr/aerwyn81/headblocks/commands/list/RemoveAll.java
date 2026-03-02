@@ -30,24 +30,24 @@ public class RemoveAll implements Cmd {
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
             sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllInProgress")
-                    .replaceAll("%headCount%", String.valueOf(headCount)));
+                    .replace("%headCount%", String.valueOf(headCount)));
 
             registry.getHeadService().removeAllHeadLocationsAsync(headLocations, registry.getConfigService().resetPlayerData(), (headRemoved) -> {
                 if (headRemoved == 0) {
                     sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllError")
-                            .replaceAll("%headCount%", String.valueOf(headCount)));
+                            .replace("%headCount%", String.valueOf(headCount)));
                     return;
                 }
 
                 sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllSuccess")
-                        .replaceAll("%headCount%", String.valueOf(headRemoved)));
+                        .replace("%headCount%", String.valueOf(headRemoved)));
             });
 
             return true;
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllConfirm")
-                .replaceAll("%headCount%", String.valueOf(headCount)));
+                .replace("%headCount%", String.valueOf(headCount)));
 
         return true;
     }

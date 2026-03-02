@@ -296,8 +296,8 @@ public class Debug implements Cmd {
                 if (distinctServerIds.size() > 1 && !force) {
                     sender.sendMessage(registry.getLanguageService().message("Messages.ResyncMultiServerDetected"));
                     sender.sendMessage(registry.getLanguageService().message("Messages.ResyncMultiServerCount")
-                            .replaceAll("%count%", String.valueOf(distinctServerIds.size()))
-                            .replaceAll("%serverIds%", String.join(", ", distinctServerIds)));
+                            .replace("%count%", String.valueOf(distinctServerIds.size()))
+                            .replace("%serverIds%", String.join(", ", distinctServerIds)));
                     sender.sendMessage(registry.getLanguageService().message("Messages.ResyncMultiServerWarningDb"));
                     sender.sendMessage(registry.getLanguageService().message("Messages.ResyncOperationCancelled"));
                     return;
@@ -306,7 +306,7 @@ public class Debug implements Cmd {
                 var currentServerId = registry.getStorageService().getServerIdentifier();
                 if (!currentServerId.isEmpty()) {
                     sender.sendMessage(registry.getLanguageService().message("Messages.ResyncCurrentServerId")
-                            .replaceAll("%serverId%", currentServerId));
+                            .replace("%serverId%", currentServerId));
                 }
 
                 // Get heads from database for current server
@@ -326,14 +326,14 @@ public class Debug implements Cmd {
                 }
 
                 sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseFoundHeads")
-                        .replaceAll("%count%", String.valueOf(headsToRemove.size())));
+                        .replace("%count%", String.valueOf(headsToRemove.size())));
 
                 // Backup database before making changes (SQLite only, MySQL users already backed up manually)
                 if (!registry.getConfigService().databaseEnabled()) {
                     var backupResult = registry.getStorageService().backupDatabase("save-resync-");
                     if (backupResult != null) {
                         sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseBackupSuccess")
-                                .replaceAll("%fileName%", backupResult));
+                                .replace("%fileName%", backupResult));
                     } else {
                         sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseBackupError"));
                         return;
@@ -352,11 +352,11 @@ public class Debug implements Cmd {
                 }
 
                 sender.sendMessage(registry.getLanguageService().message("Messages.ResyncDatabaseSuccess")
-                        .replaceAll("%count%", String.valueOf(removed)));
+                        .replace("%count%", String.valueOf(removed)));
 
             } catch (InternalException e) {
                 sender.sendMessage(registry.getLanguageService().message("Messages.ResyncError")
-                        .replaceAll("%error%", e.getMessage()));
+                        .replace("%error%", e.getMessage()));
                 LogUtil.error("Resync database error: {0}", e.getMessage());
             }
         });
@@ -373,7 +373,7 @@ public class Debug implements Cmd {
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.ResyncLocationsStarting")
-                .replaceAll("%count%", String.valueOf(headLocations.size())));
+                .replace("%count%", String.valueOf(headLocations.size())));
 
         // Run on main thread since we're modifying blocks
         Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> {
@@ -428,10 +428,10 @@ public class Debug implements Cmd {
             }
 
             sender.sendMessage(registry.getLanguageService().message("Messages.ResyncLocationsSuccess")
-                    .replaceAll("%restored%", String.valueOf(restored))
-                    .replaceAll("%textureApplied%", String.valueOf(textureApplied))
-                    .replaceAll("%skipped%", String.valueOf(skipped))
-                    .replaceAll("%failed%", String.valueOf(failed)));
+                    .replace("%restored%", String.valueOf(restored))
+                    .replace("%textureApplied%", String.valueOf(textureApplied))
+                    .replace("%skipped%", String.valueOf(skipped))
+                    .replace("%failed%", String.valueOf(failed)));
         });
     }
 

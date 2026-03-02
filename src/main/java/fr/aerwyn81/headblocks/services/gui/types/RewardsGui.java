@@ -64,9 +64,9 @@ public class RewardsGui extends GuiBase {
                 var rewardCount = headLocation.getRewards().size();
                 var rewardsItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
                         .setName(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Gui.RewardsSelectionItemName")
-                                .replaceAll("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
+                                .replace("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
                         .setLore(registry.getLanguageService().messageList("Gui.RewardsSelectionItemLore").stream().map(s ->
-                                        s.replaceAll("%count%", String.valueOf(rewardCount)))
+                                        s.replace("%count%", String.valueOf(rewardCount)))
                                 .collect(Collectors.toList())).toItemStack(), true)
                         .addOnClickEvent(event -> openRewardsGui((Player) event.getWhoClicked(), headLocation));
 
@@ -93,7 +93,7 @@ public class RewardsGui extends GuiBase {
 
     public void openRewardsGui(Player player, HeadLocation headLocation) {
         var rewardsMenu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
-                registry.getLanguageService().message("Gui.TitleRewards").replaceAll("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))),
+                registry.getLanguageService().message("Gui.TitleRewards").replace("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))),
                 true, 5);
 
         var rewards = headLocation.getRewards();
@@ -111,7 +111,7 @@ public class RewardsGui extends GuiBase {
 
             List<String> lore = new ArrayList<>();
             lore.add(registry.getLanguageService().message("Gui.RewardType")
-                    .replaceAll("%type%", reward.type().name()));
+                    .replace("%type%", reward.type().name()));
 
             var valueLabel = switch (reward.type()) {
                 case MESSAGE, BROADCAST -> registry.getLanguageService().message("Gui.RewardMessage");
@@ -123,15 +123,15 @@ public class RewardsGui extends GuiBase {
                 displayValue = MessageUtils.colorize(displayValue);
             }
 
-            lore.add(valueLabel.replaceAll("%value%", displayValue)
-                    .replaceAll("%command%", displayValue)
-                    .replaceAll("%message%", displayValue)
-                    .replaceAll("%broadcast%", displayValue));
+            lore.add(valueLabel.replace("%value%", displayValue)
+                    .replace("%command%", displayValue)
+                    .replace("%message%", displayValue)
+                    .replace("%broadcast%", displayValue));
             lore.add("");
             lore.addAll(registry.getLanguageService().messageList("Gui.RewardItemLore"));
 
             var rewardItemGui = new ItemGUI(new ItemBuilder(rewardMaterial)
-                    .setName(registry.getLanguageService().message("Gui.RewardItemName").replaceAll("%index%", String.valueOf(i + 1)))
+                    .setName(registry.getLanguageService().message("Gui.RewardItemName").replace("%index%", String.valueOf(i + 1)))
                     .setLore(lore)
                     .toItemStack(), true)
                     .addOnClickEvent(event -> {

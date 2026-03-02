@@ -66,7 +66,7 @@ public class AdvancedHologram implements IHologram {
                             }
 
                             return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), head, l
-                                    .replaceAll("%state%", hasHeadFormatted));
+                                    .replace("%state%", hasHeadFormatted));
                         } catch (InternalException e) {
                             throw new RuntimeException(e);
                         }

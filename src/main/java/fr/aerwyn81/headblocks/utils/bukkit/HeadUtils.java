@@ -86,13 +86,18 @@ public class HeadUtils {
 
     public static void rotateHead(Block block, BlockFace face) {
         var blockData = block.getBlockData();
-        ((Rotatable) blockData).setRotation(face);
-        block.setBlockData(blockData);
+        if (blockData instanceof Rotatable rotatable) {
+            rotatable.setRotation(face);
+            block.setBlockData(blockData);
+        }
     }
 
     public static BlockFace getRotation(Block block) {
         var blockData = block.getBlockData();
-        return ((Rotatable) blockData).getRotation();
+        if (blockData instanceof Rotatable rotatable) {
+            return rotatable.getRotation();
+        }
+        return BlockFace.NORTH;
     }
 
     public static boolean isPlayerHead(ItemStack i) {

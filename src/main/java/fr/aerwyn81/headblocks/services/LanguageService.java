@@ -59,12 +59,12 @@ public class LanguageService {
 
     public String message(String message) {
         return MessageUtils.colorize(messageMap.get(message).toString()
-                .replaceAll("%prefix%", prefix()));
+                .replace("%prefix%", prefix()));
     }
 
     public String message(String message, String playerName) {
         return message(message)
-                .replaceAll("%player%", playerName);
+                .replace("%player%", playerName);
     }
 
     public List<String> messageList(String message) {
@@ -115,8 +115,13 @@ public class LanguageService {
 
         Map<String, Object> msgDefaults = new LinkedHashMap<>();
 
-        InputStreamReader input = new InputStreamReader(pluginProvider.getResource("language/messages_" + lang + ".yml"), StandardCharsets.UTF_8);
-        FileConfiguration data = YamlConfiguration.loadConfiguration(input);
+        FileConfiguration data;
+        try (InputStreamReader input = new InputStreamReader(pluginProvider.getResource("language/messages_" + lang + ".yml"), StandardCharsets.UTF_8)) {
+            data = YamlConfiguration.loadConfiguration(input);
+        } catch (IOException e) {
+            LogUtil.error("Error reading default language resource: {0}", e.getMessage());
+            return;
+        }
 
         for (String key : data.getKeys(true)) {
             if (!(data.get(key) instanceof MemorySection)) {

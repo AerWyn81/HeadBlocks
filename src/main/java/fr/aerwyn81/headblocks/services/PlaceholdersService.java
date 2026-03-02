@@ -35,8 +35,8 @@ public class PlaceholdersService {
     }
 
     public String parse(String pName, UUID pUuid, HeadLocation headLocation, String message) {
-        message = message.replaceAll("%player%", pName)
-                .replaceAll("%prefix%", languageService.prefix());
+        message = message.replace("%player%", pName)
+                .replace("%prefix%", languageService.prefix());
 
         if (message.contains("%progress%") || message.contains("%current%") || message.contains("%max%") || message.contains("%left%") || message.contains("%headName%")) {
             message = parseInternal(pUuid, message, headLocation);
@@ -69,8 +69,8 @@ public class PlaceholdersService {
 
             int total = storageService.getHeads().size();
 
-            message = message.replaceAll("%current%", String.valueOf(current))
-                    .replaceAll("%max%", String.valueOf(total));
+            message = message.replace("%current%", String.valueOf(current))
+                    .replace("%max%", String.valueOf(total));
 
             if (message.contains("%progress%")) {
                 progress = MessageUtils.createProgressBar(current, total,
@@ -79,11 +79,11 @@ public class PlaceholdersService {
                         configService.progressBarCompletedColor(),
                         configService.progressBarNotCompletedColor());
 
-                message = message.replaceAll("%progress%", progress);
+                message = message.replace("%progress%", progress);
             }
 
             if (message.contains("%left%")) {
-                message = message.replaceAll("%left%", String.valueOf(total - current));
+                message = message.replace("%left%", String.valueOf(total - current));
             }
         } catch (Exception ignored) {
             LogUtil.error("Error retrieving heads from storage, cannot parse all HeadBlocks placeholders");
@@ -97,7 +97,7 @@ public class PlaceholdersService {
                 headName = headLocation.getName().isEmpty() ? headLocation.getUuid().toString() : headLocation.getName();
             }
 
-            message = message.replaceAll("%headName%", headName);
+            message = message.replace("%headName%", headName);
         }
 
         return MessageUtils.colorize(message);

@@ -59,22 +59,24 @@ public class HeadLocation {
     }
 
     public String getNameOrUnnamed(String unnamedLabel) {
-        if (name.isEmpty()) {
+        if (name == null || name.isEmpty()) {
             return unnamedLabel;
         }
         return MessageUtils.colorize(name);
     }
 
     public String getRawNameOrUuid() {
-        if (name.isEmpty())
+        if (name == null || name.isEmpty()) {
             return headUUID.toString();
+        }
 
         return MessageUtils.unColorize(name);
     }
 
     public String getNameOrUuid() {
-        if (name.isEmpty())
+        if (name == null || name.isEmpty()) {
             return headUUID.toString();
+        }
 
         return MessageUtils.colorize(name);
     }
@@ -121,10 +123,10 @@ public class HeadLocation {
     public void setLocation(Location location) {
         this.location = location;
 
-        this.x = -1;
-        this.y = -1;
-        this.z = -1;
-        this.configWorldName = "";
+        this.x = location.getX();
+        this.y = location.getY();
+        this.z = location.getZ();
+        this.configWorldName = location.getWorld() != null ? location.getWorld().getName() : "";
     }
 
     public boolean isCharged() {
@@ -162,13 +164,20 @@ public class HeadLocation {
     public void saveInConfig(YamlConfiguration section) {
         var hUUID = headUUID.toString();
 
-        var world = location.getWorld();
-
         section.set("locations." + hUUID + ".name", name);
-        section.set("locations." + hUUID + ".location.x", location.getX());
-        section.set("locations." + hUUID + ".location.y", location.getY());
-        section.set("locations." + hUUID + ".location.z", location.getZ());
-        section.set("locations." + hUUID + ".location.world", world == null ? "" : world.getName());
+
+        if (location != null) {
+            var world = location.getWorld();
+            section.set("locations." + hUUID + ".location.x", location.getX());
+            section.set("locations." + hUUID + ".location.y", location.getY());
+            section.set("locations." + hUUID + ".location.z", location.getZ());
+            section.set("locations." + hUUID + ".location.world", world == null ? "" : world.getName());
+        } else {
+            section.set("locations." + hUUID + ".location.x", x);
+            section.set("locations." + hUUID + ".location.y", y);
+            section.set("locations." + hUUID + ".location.z", z);
+            section.set("locations." + hUUID + ".location.world", configWorldName);
+        }
 
         section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
         section.set("locations." + hUUID + ".hintSound", !hintSound ? null : true);

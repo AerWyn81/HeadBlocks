@@ -36,7 +36,7 @@ public class Options implements Cmd {
                         head = registry.getHeadService().resolveHeadIdentifier(argHead);
                         if (head == null) {
                             sender.sendMessage(registry.getLanguageService().message("Messages.HeadNameNotFound")
-                                    .replaceAll("%headName%", argHead));
+                                    .replace("%headName%", argHead));
                             return true;
                         }
                     }

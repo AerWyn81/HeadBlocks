@@ -100,11 +100,11 @@ public class GuiService {
 
             var huntItemGui = new ItemGUI(new ItemBuilder(iconMaterial)
                     .setName(languageService.message("Gui.HuntSelectionItemName")
-                            .replaceAll("%huntName%", hunt.getDisplayName()))
+                            .replace("%huntName%", hunt.getDisplayName()))
                     .setLore(languageService.messageList("Gui.HuntSelectionItemLore").stream().map(s -> s
-                                    .replaceAll("%huntName%", hunt.getDisplayName())
-                                    .replaceAll("%headCount%", String.valueOf(headCount))
-                                    .replaceAll("%state%", hunt.getState().getLocalizedName(languageService)))
+                                    .replace("%huntName%", hunt.getDisplayName())
+                                    .replace("%headCount%", String.valueOf(headCount))
+                                    .replace("%state%", hunt.getState().getLocalizedName(languageService)))
                             .collect(Collectors.toList()))
                     .toItemStack(), true)
                     .addOnClickEvent(event -> callback.accept((Player) event.getWhoClicked(), hunt));
@@ -156,7 +156,7 @@ public class GuiService {
                     return new ItemGUI(configService.guiPreviousIcon()
                             .setName(languageService.message("Gui.Previous"))
                             .setLore(languageService.messageList("Gui.PreviousLore")
-                                    .stream().map(s -> s.replaceAll("%page%", String.valueOf(inventory.getCurrentPage()))).collect(Collectors.toList()))
+                                    .stream().map(s -> s.replace("%page%", String.valueOf(inventory.getCurrentPage()))).collect(Collectors.toList()))
                             .toItemStack()
                     ).addOnClickEvent(event -> inventory.previousPage(event.getWhoClicked()));
                 } else {
@@ -167,7 +167,7 @@ public class GuiService {
                     return new ItemGUI(configService.guiNextIcon()
                             .setName(languageService.message("Gui.Next"))
                             .setLore(languageService.messageList("Gui.NextLore")
-                                    .stream().map(s -> s.replaceAll("%page%", String.valueOf((inventory.getCurrentPage() + 2)))).collect(Collectors.toList()))
+                                    .stream().map(s -> s.replace("%page%", String.valueOf((inventory.getCurrentPage() + 2)))).collect(Collectors.toList()))
                             .toItemStack()
                     ).addOnClickEvent(event -> inventory.nextPage(event.getWhoClicked()));
                 } else {

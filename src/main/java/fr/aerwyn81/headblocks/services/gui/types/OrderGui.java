@@ -46,9 +46,9 @@ public class OrderGui extends GuiBase {
 
                 var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
                         .setName(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Gui.OrderItemName")
-                                .replaceAll("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
+                                .replace("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
                         .setLore(registry.getLanguageService().messageList("Gui.OrderItemLore").stream().map(s ->
-                                        s.replaceAll("%position%", headLocation.getDisplayedOrderIndex(registry.getLanguageService().message("Gui.NoOrder"))))
+                                        s.replace("%position%", headLocation.getDisplayedOrderIndex(registry.getLanguageService().message("Gui.NoOrder"))))
                                 .collect(Collectors.toList())).toItemStack(), true)
                         .addOnClickEvent(event -> {
                             if (event.getClick() == ClickType.LEFT) {

@@ -28,11 +28,11 @@ public class LocationUtils {
      * @return parsed string
      */
     public static String parseLocationPlaceholders(String message, Location location) {
-        return message.replaceAll("%x%", String.valueOf(location.getX()))
-                .replaceAll("%y%", String.valueOf(location.getY()))
-                .replaceAll("%z%", String.valueOf(location.getZ()))
-                .replaceAll("%world%", parseWorld(location))
-                .replaceAll("%worldName%", parseWorld(location));
+        return message.replace("%x%", String.valueOf(location.getX()))
+                .replace("%y%", String.valueOf(location.getY()))
+                .replace("%z%", String.valueOf(location.getZ()))
+                .replace("%world%", parseWorld(location))
+                .replace("%worldName%", parseWorld(location));
     }
 
     private static String parseWorld(Location location) {

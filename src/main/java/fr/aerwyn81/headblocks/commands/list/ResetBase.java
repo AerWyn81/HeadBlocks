@@ -23,7 +23,7 @@ public abstract class ResetBase implements Cmd {
                     var head = registry.getHeadService().resolveHeadIdentifier(headIdentifier);
                     if (head == null) {
                         player.sendMessage(registry.getLanguageService().message("Messages.HeadNameNotFound")
-                                .replaceAll("%headName%", headIdentifier));
+                                .replace("%headName%", headIdentifier));
                         return null;
                     }
 

@@ -64,7 +64,7 @@ public class Stats implements Cmd {
             String message = registry.getLanguageService().message("Chat.LineTitle");
             if (sender instanceof Player) {
                 TextComponent titleComponent = new TextComponent(registry.getPlaceholdersService().parse(playerProfileLight.name(), playerProfileLight.uuid(), registry.getLanguageService().message("Chat.StatsTitleLine")
-                        .replaceAll("%headCount%", String.valueOf(playerHeads.size()))));
+                        .replace("%headCount%", String.valueOf(playerHeads.size()))));
                 cpu.addTitleLine(titleComponent);
             } else {
                 sender.sendMessage(message);

@@ -16,7 +16,6 @@ import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.Collections;
 import java.util.Random;
 
 public class GlobalTask extends BukkitRunnable {
@@ -103,35 +102,37 @@ public class GlobalTask extends BukkitRunnable {
     private void handleHologramAndParticles(HeadLocation headLocation, HuntConfig huntConfig) {
         int rangeParticles = registry.getConfigService().hologramParticlePlayerViewDistance();
         int rangeHint = huntConfig.getHintDistance();
+        double rangeParticlesSq = (double) rangeParticles * rangeParticles;
+        double rangeHintSq = (double) rangeHint * rangeHint;
 
         var location = headLocation.getLocation();
         if (location.getWorld() == null) {
             return;
         }
 
-        var hologramChunkX = location.getBlockX() / CHUNK_SIZE;
-        var hologramChunkZ = location.getBlockZ() / CHUNK_SIZE;
+        var hologramChunkX = location.getBlockX() >> 4;
+        var hologramChunkZ = location.getBlockZ() >> 4;
 
-        for (var player : Collections.synchronizedCollection(Bukkit.getOnlinePlayers())) {
+        for (var player : new java.util.ArrayList<>(Bukkit.getOnlinePlayers())) {
             var playerLoc = player.getLocation();
             if (playerLoc.getWorld() != location.getWorld()) {
                 continue;
             }
 
-            var playerChunkX = playerLoc.getBlockX() / CHUNK_SIZE;
-            var playerChunkZ = playerLoc.getBlockZ() / CHUNK_SIZE;
+            var playerChunkX = playerLoc.getBlockX() >> 4;
+            var playerChunkZ = playerLoc.getBlockZ() >> 4;
 
             var chunkDistanceX = Math.abs(hologramChunkX - playerChunkX);
             var chunkDistanceZ = Math.abs(hologramChunkZ - playerChunkZ);
 
             if (chunkDistanceX <= VIEW_RADIUS_CHUNKS && chunkDistanceZ <= VIEW_RADIUS_CHUNKS) {
-                var distance = location.distance(playerLoc);
+                var distanceSq = location.distanceSquared(playerLoc);
 
-                if (distance <= rangeParticles || distance <= rangeHint) {
+                if (distanceSq <= rangeParticlesSq || distanceSq <= rangeHintSq) {
                     try {
                         var hasHead = registry.getStorageService().hasHead(player.getUniqueId(), headLocation.getUuid());
 
-                        if (distance <= rangeParticles) {
+                        if (distanceSq <= rangeParticlesSq) {
                             if (hasHead) {
                                 spawnParticles(location, true, player, huntConfig);
                                 registry.getHologramService().showFoundTo(player, location, huntConfig);
@@ -143,7 +144,7 @@ public class GlobalTask extends BukkitRunnable {
                             registry.getHologramService().refresh(player, location);
                         }
 
-                        if (distance <= rangeHint && (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled())) {
+                        if (distanceSq <= rangeHintSq && (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled())) {
                             // Resolve per-player hint config: use the highest-priority active hunt where the player hasn't found this head
                             HuntConfig hintConfig = null;
                             if (!hasHead) {
@@ -183,12 +184,12 @@ public class GlobalTask extends BukkitRunnable {
                                 }
 
                                 if (headLocation.isHintActionBarEnabled() && shouldTriggerHintActionBar) {
-                                    int hintRange = hintConfig.getHintDistance();
+                                    var distance = Math.sqrt(distanceSq);
                                     var message = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), headLocation, registry.getConfigService().hintActionBarMessage());
                                     message = message
-                                            .replaceAll("%distance%", String.valueOf(distance))
-                                            .replaceAll("%position%", String.valueOf(hintRange - distance))
-                                            .replaceAll("%arrow%", getHintDirectionArrow(player.getLocation(), location));
+                                            .replace("%distance%", String.valueOf(distance))
+                                            .replace("%position%", String.valueOf(rangeHint - distance))
+                                            .replace("%arrow%", getHintDirectionArrow(player.getLocation(), location));
 
                                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
                                 }
@@ -196,7 +197,6 @@ public class GlobalTask extends BukkitRunnable {
                         }
                     } catch (InternalException ex) {
                         LogUtil.error("Error while trying to communicate with the storage : {0}", ex.getMessage());
-                        this.cancel();
                     }
                     continue;
                 }

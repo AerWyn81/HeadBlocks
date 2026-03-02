@@ -5,9 +5,11 @@ public enum EnumTypeDatabase {
 
     static public EnumTypeDatabase of(String t) {
         EnumTypeDatabase[] types = EnumTypeDatabase.values();
-        for (EnumTypeDatabase type : types)
-            if (type.name().equals(t))
+        for (EnumTypeDatabase type : types) {
+            if (type.name().equals(t)) {
                 return type;
+            }
+        }
         return null;
     }
 }

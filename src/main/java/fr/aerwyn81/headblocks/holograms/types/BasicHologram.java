@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BasicHologram implements IHologram {
     TextDisplay hologram;
@@ -46,7 +47,7 @@ public class BasicHologram implements IHologram {
         }
 
         hologram = world.spawn(location, TextDisplay.class, entity -> {
-            lines.forEach(l -> entity.setText(MessageUtils.colorize(l)));
+            entity.setText(lines.stream().map(MessageUtils::colorize).collect(Collectors.joining("\n")));
             entity.setVisibleByDefault(false);
             entity.setPersistent(false);
             entity.setBillboard(Display.Billboard.CENTER);

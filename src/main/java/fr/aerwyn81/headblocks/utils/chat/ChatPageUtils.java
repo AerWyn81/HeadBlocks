@@ -115,7 +115,7 @@ public class ChatPageUtils {
                 c2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks " + command + " " + (pageNumber + 1)));
                 c2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(languageService.message("Chat.Hover.NextPage"))));
 
-                player.spigot().sendMessage(c1, new TextComponent(languageService.message("Chat.PageFooter").replaceAll("%pageNumber%", String.valueOf(pageNumber)).replaceAll("%totalPage%", String.valueOf(totalPage))), c2);
+                player.spigot().sendMessage(c1, new TextComponent(languageService.message("Chat.PageFooter").replace("%pageNumber%", String.valueOf(pageNumber)).replace("%totalPage%", String.valueOf(totalPage))), c2);
             }
         }
     }

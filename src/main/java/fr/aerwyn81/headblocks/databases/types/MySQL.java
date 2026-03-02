@@ -1196,7 +1196,7 @@ public final class MySQL implements Database {
             ps.setString(2, columnName);
 
             try (var rs = ps.executeQuery()) {
-                return !rs.next() || rs.getInt(1) != 0;
+                return rs.next() && rs.getInt(1) > 0;
             }
         }
     }

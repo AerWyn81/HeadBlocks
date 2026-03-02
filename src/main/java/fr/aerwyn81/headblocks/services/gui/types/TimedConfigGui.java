@@ -50,16 +50,16 @@ public class TimedConfigGui {
         String locationText;
         if (plateLoc != null) {
             locationText = MessageUtils.colorize(registry.getLanguageService().message("Gui.TimedConfigPlateLocation")
-                    .replaceAll("%world%", plateLoc.getWorld() != null ? plateLoc.getWorld().getName() : "?")
-                    .replaceAll("%x%", String.valueOf(plateLoc.getBlockX()))
-                    .replaceAll("%y%", String.valueOf(plateLoc.getBlockY()))
-                    .replaceAll("%z%", String.valueOf(plateLoc.getBlockZ())));
+                    .replace("%world%", plateLoc.getWorld() != null ? plateLoc.getWorld().getName() : "?")
+                    .replace("%x%", String.valueOf(plateLoc.getBlockX()))
+                    .replace("%y%", String.valueOf(plateLoc.getBlockY()))
+                    .replace("%z%", String.valueOf(plateLoc.getBlockZ())));
         } else {
             locationText = registry.getLanguageService().message("Gui.TimedConfigPlateNotDefined");
         }
 
         List<String> plateLore = registry.getLanguageService().messageList("Gui.TimedConfigPlateLore").stream()
-                .map(s -> s.replaceAll("%location%", locationText))
+                .map(s -> s.replace("%location%", locationText))
                 .collect(Collectors.toList());
 
         menu.setItem(0, 11, new ItemGUI(new ItemBuilder(Material.HEAVY_WEIGHTED_PRESSURE_PLATE)
@@ -81,7 +81,7 @@ public class TimedConfigGui {
                 : registry.getLanguageService().message("Gui.BehaviorDisabled");
 
         List<String> repeatableLore = registry.getLanguageService().messageList("Gui.TimedConfigRepeatableLore").stream()
-                .map(s -> s.replaceAll("%status%", statusText))
+                .map(s -> s.replace("%status%", statusText))
                 .collect(Collectors.toList());
 
         menu.setItem(0, 13, new ItemGUI(new ItemBuilder(repeatableMat)

@@ -15,7 +15,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -130,7 +129,9 @@ public class HeadHidingPacketListener implements PacketListener {
 
         registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(foundHeads -> {
             if (foundHeads != null) {
-                playerFoundHeadsCache.put(player.getUniqueId(), foundHeads);
+                Set<UUID> safeSet = ConcurrentHashMap.newKeySet();
+                safeSet.addAll(foundHeads);
+                playerFoundHeadsCache.put(player.getUniqueId(), safeSet);
 
                 var chunkHeadsMap = new ConcurrentHashMap<Long, Set<UUID>>();
                 for (var headUuid : foundHeads) {
@@ -170,7 +171,7 @@ public class HeadHidingPacketListener implements PacketListener {
             return;
         }
 
-        var foundHeads = playerFoundHeadsCache.computeIfAbsent(player.getUniqueId(), k -> new HashSet<>());
+        var foundHeads = playerFoundHeadsCache.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet());
         foundHeads.add(headUuid);
 
         var headLocation = registry.getHeadService().getHeadByUUID(headUuid);

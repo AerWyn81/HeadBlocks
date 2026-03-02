@@ -52,7 +52,7 @@ public class Export implements Cmd {
             }
 
             sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportSuccess"))
-                    .replaceAll("%fileName%", fileName));
+                    .replace("%fileName%", fileName));
         });
 
         return true;

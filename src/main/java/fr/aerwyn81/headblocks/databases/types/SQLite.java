@@ -363,69 +363,80 @@ public class SQLite implements Database {
     @Override
     public void migrate() throws InternalException {
         try (var conn = dataSource.getConnection()) {
-            // Create of the archive table
-            try (var ps = conn.prepareStatement(Requests.migArchiveTable())) {
-                ps.executeUpdate();
-            }
+            conn.setAutoCommit(false);
 
-            // Copy old data into the archive table
-            try (var ps = conn.prepareStatement(Requests.migCopyOldToArchive())) {
-                ps.executeUpdate();
-            }
+            try {
+                // Create of the archive table
+                try (var ps = conn.prepareStatement(Requests.migArchiveTable())) {
+                    ps.executeUpdate();
+                }
 
-            // Delete old table
-            try (var ps = conn.prepareStatement(Requests.migDeleteOld())) {
-                ps.executeUpdate();
-            }
+                // Copy old data into the archive table
+                try (var ps = conn.prepareStatement(Requests.migCopyOldToArchive())) {
+                    ps.executeUpdate();
+                }
 
-            // Creation of new v2 tables
-            createTables(conn);
+                // Delete old table
+                try (var ps = conn.prepareStatement(Requests.migDeleteOld())) {
+                    ps.executeUpdate();
+                }
 
-            if (checkVersion(conn) == 0) {
-                insertVersion(conn);
-            }
+                // Creation of new v2 tables
+                createTables(conn);
 
-            // Import old users
-            try (var psSelect = conn.prepareStatement(Requests.migImportOldUsers());
-                 var rs = psSelect.executeQuery();
-                 var psInsert = conn.prepareStatement(Requests.migInsertPlayer())) {
+                if (checkVersion(conn) == 0) {
+                    insertVersion(conn);
+                }
 
-                int batchSize = 0;
+                // Import old users
+                try (var psSelect = conn.prepareStatement(Requests.migImportOldUsers());
+                     var rs = psSelect.executeQuery();
+                     var psInsert = conn.prepareStatement(Requests.migInsertPlayer())) {
 
-                while (rs.next()) {
-                    String pUUID = rs.getString("pUUID");
-                    String pName = PlayerUtils.getPseudoFromSession(pUUID);
+                    int batchSize = 0;
 
-                    psInsert.setString(1, pUUID);
-                    psInsert.setString(2, pName);
-                    psInsert.addBatch();
+                    while (rs.next()) {
+                        String pUUID = rs.getString("pUUID");
+                        String pName = PlayerUtils.getPseudoFromSession(pUUID);
 
-                    if (++batchSize % 500 == 0) {
-                        psInsert.executeBatch();
-                        batchSize = 0;
+                        psInsert.setString(1, pUUID);
+                        psInsert.setString(2, pName);
+                        psInsert.addBatch();
+
+                        if (++batchSize % 500 == 0) {
+                            psInsert.executeBatch();
+                            batchSize = 0;
+                        }
                     }
+
+                    if (batchSize > 0) {
+                        psInsert.executeBatch();
+                    }
+                } catch (SQLException e) {
+                    throw new InternalException(e);
                 }
 
-                if (batchSize > 0) {
-                    psInsert.executeBatch();
+                // Import old heads
+                try (var ps = conn.prepareStatement(Requests.migImportOldHeads())) {
+                    ps.executeUpdate();
                 }
-            } catch (SQLException e) {
-                throw new InternalException(e);
-            }
 
-            // Import old heads
-            try (var ps = conn.prepareStatement(Requests.migImportOldHeads())) {
-                ps.executeUpdate();
-            }
+                // Remap
+                try (var ps = conn.prepareStatement(Requests.migRemap())) {
+                    ps.executeUpdate();
+                }
 
-            // Remap
-            try (var ps = conn.prepareStatement(Requests.migRemap())) {
-                ps.executeUpdate();
-            }
+                // Delete archive table
+                try (var ps = conn.prepareStatement(Requests.migDelArchive())) {
+                    ps.executeUpdate();
+                }
 
-            // Delete archive table
-            try (var ps = conn.prepareStatement(Requests.migDelArchive())) {
-                ps.executeUpdate();
+                conn.commit();
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
             }
 
         } catch (Exception ex) {
@@ -652,8 +663,8 @@ public class SQLite implements Database {
     @Override
     public boolean isDefaultTablesExist() {
         try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.getIsTablePlayersExistSQLite())) {
-            ps.executeQuery();
+             var ps = conn.prepareStatement(Requests.getIsTablePlayersExistSQLite());
+             var rs = ps.executeQuery()) {
             return true;
         } catch (Exception ex) {
             return false;
@@ -1128,18 +1139,19 @@ public class SQLite implements Database {
     }
 
     private int checkVersion(Connection conn) {
-        try (var statement = conn.prepareStatement(Requests.getContainsTableHeads())) {
-            statement.executeQuery();
+        try (var statement = conn.prepareStatement(Requests.getContainsTableHeads());
+             var ignored = statement.executeQuery()) {
+            // Table exists
         } catch (Exception ex) {
             return -1;
         }
 
-        try (var statement = conn.prepareStatement(Requests.getTableVersionData())) {
-            try (var rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("current");
-                } else
-                    return 0;
+        try (var statement = conn.prepareStatement(Requests.getTableVersionData());
+             var rs = statement.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("current");
+            } else {
+                return 0;
             }
         } catch (Exception ex) {
             return 0;

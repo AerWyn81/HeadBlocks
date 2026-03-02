@@ -27,10 +27,15 @@ public class PlayerUtils {
         try {
             URL url = URI.create("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid).toURL();
             URLConnection request = url.openConnection();
+            request.setConnectTimeout(5000);
+            request.setReadTimeout(5000);
             request.connect();
 
-            JsonObject jsonObject = JsonParser.parseReader(new InputStreamReader((InputStream) request.getContent())).getAsJsonObject();
-            return jsonObject.get("name").getAsString();
+            try (var stream = (InputStream) request.getContent();
+                 var reader = new InputStreamReader(stream)) {
+                JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
+                return jsonObject.get("name").getAsString();
+            }
         } catch (Exception ex) {
             return "";
         }
@@ -42,8 +47,9 @@ public class PlayerUtils {
         ItemStack[] items = player.getInventory().getStorageContents();
 
         for (ItemStack is : items) {
-            if (is != null && is.getType() != Material.AIR)
+            if (is != null && is.getType() != Material.AIR) {
                 continue;
+            }
             i++;
         }
         return i;

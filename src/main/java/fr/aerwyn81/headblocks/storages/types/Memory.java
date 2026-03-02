@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Memory implements Storage {
 
-    private HashMap<UUID, ArrayList<UUID>> headsFound;
+    private ConcurrentHashMap<UUID, java.util.List<UUID>> headsFound;
     private ConcurrentHashMap<UUID, Set<UUID>> cachePlayerHeads;
     private LinkedHashMap<PlayerProfileLight, Integer> cacheTopPlayers;
     private Set<UUID> cacheHeads;
@@ -26,7 +26,7 @@ public class Memory implements Storage {
 
     @Override
     public void init() {
-        headsFound = new HashMap<>();
+        headsFound = new ConcurrentHashMap<>();
         cachePlayerHeads = new ConcurrentHashMap<>();
         cacheTopPlayers = new LinkedHashMap<>();
         cacheHeads = ConcurrentHashMap.newKeySet();
@@ -54,22 +54,18 @@ public class Memory implements Storage {
 
     @Override
     public boolean hasHead(UUID playerUuid, UUID headUuid) {
-        return containsPlayer(playerUuid) && headsFound.get(playerUuid).contains(headUuid);
+        var heads = headsFound.get(playerUuid);
+        return heads != null && heads.contains(headUuid);
     }
 
     @Override
     public boolean containsPlayer(UUID playerUuid) {
-        return headsFound.get(playerUuid) != null;
+        return headsFound.containsKey(playerUuid);
     }
 
     @Override
     public void addHead(UUID playerUuid, UUID headUuid) {
-        if (!containsPlayer(playerUuid)) {
-            headsFound.put(playerUuid, new ArrayList<>(Collections.singletonList(headUuid)));
-            return;
-        }
-
-        headsFound.get(playerUuid).add(headUuid);
+        headsFound.computeIfAbsent(playerUuid, k -> Collections.synchronizedList(new ArrayList<>())).add(headUuid);
     }
 
     @Override
@@ -91,7 +87,8 @@ public class Memory implements Storage {
 
     @Override
     public ArrayList<UUID> getHeadsPlayer(UUID pUuid) throws InternalException {
-        return containsPlayer(pUuid) ? headsFound.get(pUuid) : new ArrayList<>();
+        var heads = headsFound.get(pUuid);
+        return heads != null ? new ArrayList<>(heads) : new ArrayList<>();
     }
 
     @Override
@@ -106,10 +103,7 @@ public class Memory implements Storage {
 
     @Override
     public void addCachedPlayerHead(UUID playerUuid, UUID headUuid) {
-        if (!cachePlayerHeads.containsKey(playerUuid)) {
-            cachePlayerHeads.put(playerUuid, ConcurrentHashMap.newKeySet());
-        }
-        cachePlayerHeads.get(playerUuid).add(headUuid);
+        cachePlayerHeads.computeIfAbsent(playerUuid, k -> ConcurrentHashMap.newKeySet()).add(headUuid);
     }
 
     @Override

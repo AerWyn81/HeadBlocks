@@ -89,12 +89,12 @@ public class ResetAll extends ResetBase {
             }
 
             player.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadSuccess")
-                    .replaceAll("%playerCount%", String.valueOf(playersWithHead.size()))
-                    .replaceAll("%headName%", headName));
+                    .replace("%playerCount%", String.valueOf(playersWithHead.size()))
+                    .replace("%headName%", headName));
         } else {
             player.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadConfirm")
-                    .replaceAll("%playerCount%", String.valueOf(playersWithHead.size()))
-                    .replaceAll("%headName%", headName));
+                    .replace("%playerCount%", String.valueOf(playersWithHead.size()))
+                    .replace("%headName%", headName));
         }
 
     }
@@ -135,10 +135,10 @@ public class ResetAll extends ResetBase {
             }
 
             player.sendMessage(registry.getLanguageService().message("Messages.ResetAllSuccess")
-                    .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
+                    .replace("%playerCount%", String.valueOf(allPlayers.size())));
         } else {
             player.sendMessage(registry.getLanguageService().message("Messages.ResetAllConfirm")
-                    .replaceAll("%playerCount%", String.valueOf(allPlayers.size())));
+                    .replace("%playerCount%", String.valueOf(allPlayers.size())));
         }
 
     }

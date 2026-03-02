@@ -14,6 +14,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 
@@ -25,7 +26,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
         this.registry = registry;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void OnBlockBreakEvent(BlockBreakEvent e) {
         var player = e.getPlayer();
         var block = e.getBlock();
@@ -66,6 +67,9 @@ public class OnPlayerBreakBlockEvent implements Listener {
             return;
         }
 
+        // Admin with creative+sneaking: un-cancel from the protection handler
+        e.setCancelled(false);
+
         // Check if there is a storage issue
         if (registry.getStorageService().isStorageError()) {
             e.setCancelled(true);
@@ -76,17 +80,18 @@ public class OnPlayerBreakBlockEvent implements Listener {
         // Remove the head
         try {
             registry.getHeadService().removeHeadLocation(headLocation, registry.getConfigService().resetPlayerData());
+
+            // Send player success message
+            player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadRemoved"), blockLocation));
+
+            // Trigger the event HeadDeleted
+            Hunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(headLocation.getUuid());
+            String huntId = primaryHunt != null ? primaryHunt.getId() : null;
+            Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation, huntId));
         } catch (InternalException ex) {
+            e.setCancelled(true);
             player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while trying to remove a head \"{0}\" from the storage: {1}", headLocation.getNameOrUuid(), ex.getMessage());
         }
-
-        // Send player success message
-        player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadRemoved"), blockLocation));
-
-        // Trigger the event HeadDeleted
-        Hunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(headLocation.getUuid());
-        String huntId = primaryHunt != null ? primaryHunt.getId() : null;
-        Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation, huntId));
     }
 }

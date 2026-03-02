@@ -54,7 +54,7 @@ public class Move implements Cmd {
             }
 
             String message = registry.getLanguageService().message("Messages.TargetBlockInfo")
-                    .replaceAll("%uuid%", headLocation.getNameOrUuid());
+                    .replace("%uuid%", headLocation.getNameOrUuid());
 
             registry.getHeadService().getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), targetLoc));
 

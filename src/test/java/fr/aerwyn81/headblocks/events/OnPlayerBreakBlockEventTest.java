@@ -250,7 +250,7 @@ class OnPlayerBreakBlockEventTest {
             handler.OnBlockBreakEvent(event);
 
             verify(headService).removeHeadLocation(headLocation, true);
-            verify(event, never()).setCancelled(anyBoolean());
+            verify(event).setCancelled(false);
         }
     }
 }

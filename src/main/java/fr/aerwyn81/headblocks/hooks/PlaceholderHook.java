@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.UUID;
 
 public class PlaceholderHook extends PlaceholderExpansion {
@@ -176,13 +177,45 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         // %headblocks_hunt_<huntId>_found% | %headblocks_hunt_<huntId>_total% | %headblocks_hunt_<huntId>_progress% | %headblocks_hunt_<huntId>_left%
         if (identifier.startsWith("hunt_")) {
-            var parts = identifier.split("_", 3); // hunt, <huntId>, <type>
-            if (parts.length < 3) {
-                return "";
+            var knownSuffixes = Set.of("found", "total", "left", "progress", "name", "state",
+                    "besttime", "timedcount", "timeposition", "timetop");
+
+            // Strip leading "hunt_"
+            String remainder = identifier.substring("hunt_".length());
+
+            // Scan left-to-right for the first known suffix keyword
+            String huntId = null;
+            String subType = null;
+            int searchFrom = 0;
+            while (searchFrom < remainder.length()) {
+                int underscorePos = remainder.indexOf('_', searchFrom);
+                if (underscorePos < 0) {
+                    break;
+                }
+                String afterUnderscore = remainder.substring(underscorePos + 1);
+                int nextUnderscore = afterUnderscore.indexOf('_');
+                String firstWord = nextUnderscore >= 0 ? afterUnderscore.substring(0, nextUnderscore) : afterUnderscore;
+
+                if (knownSuffixes.contains(firstWord)) {
+                    huntId = remainder.substring(0, underscorePos).toLowerCase();
+                    subType = afterUnderscore;
+                    break;
+                }
+                searchFrom = underscorePos + 1;
             }
 
-            String huntId = parts[1].toLowerCase();
-            String subType = parts[2];
+            // Fallback: if no known suffix found, use simple split (first segment = huntId)
+            if (huntId == null) {
+                int firstUnderscore = remainder.indexOf('_');
+                if (firstUnderscore > 0) {
+                    huntId = remainder.substring(0, firstUnderscore).toLowerCase();
+                    subType = remainder.substring(firstUnderscore + 1);
+                }
+            }
+
+            if (huntId == null || subType == null || huntId.isEmpty()) {
+                return "";
+            }
 
             Hunt hunt = registry.getHuntService().getHuntById(huntId);
             if (hunt == null) {

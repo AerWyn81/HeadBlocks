@@ -68,10 +68,10 @@ public class HintGui extends GuiBase {
 
                 var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
                         .setName(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Gui.HintItemName")
-                                .replaceAll("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
+                                .replace("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
                         .setLore(registry.getLanguageService().messageList("Gui.HintItemLore").stream().map(s -> s
-                                        .replaceAll("%mode%", currentModeFormatted)
-                                        .replaceAll("%state%", isHintEnabled
+                                        .replace("%mode%", currentModeFormatted)
+                                        .replace("%state%", isHintEnabled
                                                 ? registry.getLanguageService().message("Gui.Enabled")
                                                 : registry.getLanguageService().message("Gui.Disabled")))
                                 .collect(Collectors.toList())).toItemStack(), true)

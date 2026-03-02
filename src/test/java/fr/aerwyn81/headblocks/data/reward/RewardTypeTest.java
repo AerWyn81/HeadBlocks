@@ -27,12 +27,12 @@ class RewardTypeTest {
     }
 
     @Test
-    void of_invalidString_returnsNull() {
-        assertThat(RewardType.of("invalid")).isNull();
+    void of_invalidString_returnsUnknown() {
+        assertThat(RewardType.of("invalid")).isEqualTo(RewardType.UNKNOWN);
     }
 
     @Test
-    void of_lowercaseMessage_returnsNull_becauseExactMatch() {
-        assertThat(RewardType.of("message")).isNull();
+    void of_lowercaseMessage_returnsUnknown_becauseExactMatch() {
+        assertThat(RewardType.of("message")).isEqualTo(RewardType.UNKNOWN);
     }
 }

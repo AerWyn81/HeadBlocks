@@ -75,7 +75,7 @@ public class Hunt implements Cmd {
 
         if (registry.getHuntService().getHuntNames().stream().anyMatch(n -> n.equalsIgnoreCase(name))) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntAlreadyExists")
-                    .replaceAll("%hunt%", name));
+                    .replace("%hunt%", name));
             return;
         }
 
@@ -108,7 +108,7 @@ public class Hunt implements Cmd {
         registry.getStorageService().incrementHuntVersion();
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntCreated")
-                .replaceAll("%hunt%", hunt.getId()));
+                .replace("%hunt%", hunt.getId()));
     }
 
     private void handleDelete(CommandSender sender, String[] args) {
@@ -127,7 +127,7 @@ public class Hunt implements Cmd {
         fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -162,7 +162,7 @@ public class Hunt implements Cmd {
             fr.aerwyn81.headblocks.data.hunt.Hunt fb = registry.getHuntService().getHuntById(fallbackHuntId);
             if (fb == null) {
                 sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleteFallbackNotFound")
-                        .replaceAll("%hunt%", fallbackHuntId));
+                        .replace("%hunt%", fallbackHuntId));
                 return;
             }
         }
@@ -171,13 +171,13 @@ public class Hunt implements Cmd {
         if (!hasConfirm) {
             if (keepHeads) {
                 sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleteKeepHeadsConfirm")
-                        .replaceAll("%hunt%", huntId)
-                        .replaceAll("%headCount%", String.valueOf(hunt.getHeadCount()))
-                        .replaceAll("%fallback%", resolvedFallback));
+                        .replace("%hunt%", huntId)
+                        .replace("%headCount%", String.valueOf(hunt.getHeadCount()))
+                        .replace("%fallback%", resolvedFallback));
             } else {
                 sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleteConfirm")
-                        .replaceAll("%hunt%", huntId)
-                        .replaceAll("%headCount%", String.valueOf(hunt.getHeadCount())));
+                        .replace("%hunt%", huntId)
+                        .replace("%headCount%", String.valueOf(hunt.getHeadCount())));
             }
             return;
         }
@@ -199,7 +199,7 @@ public class Hunt implements Cmd {
 
     private void handleDeleteWithHeads(CommandSender sender, fr.aerwyn81.headblocks.data.hunt.Hunt hunt, String huntId) {
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleteInProgress")
-                .replaceAll("%hunt%", huntId));
+                .replace("%hunt%", huntId));
 
         // Collect HeadLocation objects for this hunt
         var headsToRemove = new ArrayList<HeadLocation>();
@@ -227,7 +227,7 @@ public class Hunt implements Cmd {
             registry.getStorageService().incrementHuntVersion();
 
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleted")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
         });
     }
 
@@ -259,7 +259,7 @@ public class Hunt implements Cmd {
         registry.getStorageService().incrementHuntVersion();
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleted")
-                .replaceAll("%hunt%", huntId));
+                .replace("%hunt%", huntId));
     }
 
     private void handleEnable(CommandSender sender, String[] args) {
@@ -273,13 +273,13 @@ public class Hunt implements Cmd {
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
         if (hunt.isActive()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntAlreadyActive")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -302,7 +302,7 @@ public class Hunt implements Cmd {
         registry.getStorageService().incrementHuntVersion();
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntEnabled")
-                .replaceAll("%hunt%", huntId));
+                .replace("%hunt%", huntId));
     }
 
     private void handleDisable(CommandSender sender, String[] args) {
@@ -316,13 +316,13 @@ public class Hunt implements Cmd {
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
         if (!hunt.isActive()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntAlreadyInactive")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -345,7 +345,7 @@ public class Hunt implements Cmd {
         registry.getStorageService().incrementHuntVersion();
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntDisabled")
-                .replaceAll("%hunt%", huntId));
+                .replace("%hunt%", huntId));
     }
 
     private void handleList(CommandSender sender) {
@@ -357,14 +357,14 @@ public class Hunt implements Cmd {
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntListHeader")
-                .replaceAll("%count%", String.valueOf(hunts.size())));
+                .replace("%count%", String.valueOf(hunts.size())));
 
         for (fr.aerwyn81.headblocks.data.hunt.Hunt hunt : hunts) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntListEntry")
-                    .replaceAll("%hunt%", hunt.getId())
-                    .replaceAll("%displayName%", hunt.getDisplayName())
-                    .replaceAll("%state%", hunt.getState().getLocalizedName(registry.getLanguageService()))
-                    .replaceAll("%headCount%", String.valueOf(hunt.getHeadCount())));
+                    .replace("%hunt%", hunt.getId())
+                    .replace("%displayName%", hunt.getDisplayName())
+                    .replace("%state%", hunt.getState().getLocalizedName(registry.getLanguageService()))
+                    .replace("%headCount%", String.valueOf(hunt.getHeadCount())));
         }
     }
 
@@ -379,31 +379,31 @@ public class Hunt implements Cmd {
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoHeader")
-                .replaceAll("%hunt%", hunt.getId()));
+                .replace("%hunt%", hunt.getId()));
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoName")
-                .replaceAll("%displayName%", hunt.getDisplayName()));
+                .replace("%displayName%", hunt.getDisplayName()));
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoState")
-                .replaceAll("%state%", hunt.getState().getLocalizedName(registry.getLanguageService())));
+                .replace("%state%", hunt.getState().getLocalizedName(registry.getLanguageService())));
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoPriority")
-                .replaceAll("%priority%", String.valueOf(hunt.getPriority())));
+                .replace("%priority%", String.valueOf(hunt.getPriority())));
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoHeads")
-                .replaceAll("%headCount%", String.valueOf(hunt.getHeadCount())));
+                .replace("%headCount%", String.valueOf(hunt.getHeadCount())));
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoBehaviors")
-                .replaceAll("%behaviors%", hunt.getBehaviors().stream()
+                .replace("%behaviors%", hunt.getBehaviors().stream()
                         .map(Behavior::getId).collect(Collectors.joining(", "))));
 
         try {
             int playerCount = registry.getStorageService().getTopPlayersForHunt(huntId).size();
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoPlayers")
-                    .replaceAll("%playerCount%", String.valueOf(playerCount)));
+                    .replace("%playerCount%", String.valueOf(playerCount)));
         } catch (InternalException e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoPlayers")
-                    .replaceAll("%playerCount%", "?"));
+                    .replace("%playerCount%", "?"));
         }
     }
 
@@ -426,13 +426,13 @@ public class Hunt implements Cmd {
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
         registry.getHuntService().setSelectedHunt(player.getUniqueId(), huntId);
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntSelected")
-                .replaceAll("%hunt%", huntId));
+                .replace("%hunt%", huntId));
     }
 
     private void handleActive(CommandSender sender) {
@@ -443,7 +443,7 @@ public class Hunt implements Cmd {
 
         String huntId = registry.getHuntService().getSelectedHunt(player.getUniqueId());
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntActiveSelection")
-                .replaceAll("%hunt%", huntId));
+                .replace("%hunt%", huntId));
     }
 
     private void handleSet(CommandSender sender, String[] args) {
@@ -461,7 +461,7 @@ public class Hunt implements Cmd {
 
         if (!registry.getHuntService().huntExists(huntId)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -481,8 +481,8 @@ public class Hunt implements Cmd {
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntHeadTransferred")
-                .replaceAll("%head%", headLocation.getNameOrUuid())
-                .replaceAll("%hunt%", huntId));
+                .replace("%head%", headLocation.getNameOrUuid())
+                .replace("%hunt%", huntId));
     }
 
     private void handleAssign(CommandSender sender, String[] args) {
@@ -495,7 +495,7 @@ public class Hunt implements Cmd {
 
         if (!registry.getHuntService().huntExists(huntId)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -562,13 +562,13 @@ public class Hunt implements Cmd {
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntAssignSuccess")
-                .replaceAll("%count%", String.valueOf(count))
-                .replaceAll("%hunt%", huntId));
+                .replace("%count%", String.valueOf(count))
+                .replace("%hunt%", huntId));
 
         if (sender instanceof Player player) {
             registry.getHuntService().setSelectedHunt(player.getUniqueId(), huntId);
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntSelected")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
         }
     }
 
@@ -583,14 +583,14 @@ public class Hunt implements Cmd {
             headUUID = UUID.fromString(args[2]);
         } catch (IllegalArgumentException e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntHeadNotFound")
-                    .replaceAll("%uuid%", args[2]));
+                    .replace("%uuid%", args[2]));
             return;
         }
 
         HeadLocation headLocation = registry.getHeadService().getHeadByUUID(headUUID);
         if (headLocation == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntHeadNotFound")
-                    .replaceAll("%uuid%", args[2]));
+                    .replace("%uuid%", args[2]));
             return;
         }
 
@@ -598,7 +598,7 @@ public class Hunt implements Cmd {
 
         if (!registry.getHuntService().huntExists(huntId)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -611,8 +611,8 @@ public class Hunt implements Cmd {
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntHeadTransferred")
-                .replaceAll("%head%", headLocation.getNameOrUuid())
-                .replaceAll("%hunt%", huntId));
+                .replace("%head%", headLocation.getNameOrUuid())
+                .replace("%hunt%", huntId));
     }
 
     // --- E7: Per-hunt commands ---
@@ -628,7 +628,7 @@ public class Hunt implements Cmd {
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -665,12 +665,12 @@ public class Hunt implements Cmd {
                     registry.getConfigService().progressBarNotCompletedColor());
 
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntProgressDetail")
-                    .replaceAll("%player%", profile.name())
-                    .replaceAll("%hunt%", hunt.getId())
-                    .replaceAll("%displayName%", hunt.getDisplayName())
-                    .replaceAll("%current%", String.valueOf(current))
-                    .replaceAll("%max%", String.valueOf(total))
-                    .replaceAll("%progress%", progress));
+                    .replace("%player%", profile.name())
+                    .replace("%hunt%", hunt.getId())
+                    .replace("%displayName%", hunt.getDisplayName())
+                    .replace("%current%", String.valueOf(current))
+                    .replace("%max%", String.valueOf(total))
+                    .replace("%progress%", progress));
         } catch (InternalException e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error retrieving hunt progress: {0}", e.getMessage());
@@ -688,7 +688,7 @@ public class Hunt implements Cmd {
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -709,16 +709,16 @@ public class Hunt implements Cmd {
             }
 
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntTopHeader")
-                    .replaceAll("%hunt%", hunt.getId())
-                    .replaceAll("%displayName%", hunt.getDisplayName()));
+                    .replace("%hunt%", hunt.getId())
+                    .replace("%displayName%", hunt.getDisplayName()));
 
             int count = Math.min(limit, topPlayers.size());
             for (int i = 0; i < count; i++) {
                 Map.Entry<PlayerProfileLight, Integer> entry = topPlayers.get(i);
                 sender.sendMessage(MessageUtils.colorize(
                         registry.getLanguageService().message("Chat.LineTop", entry.getKey().name())
-                                .replaceAll("%pos%", String.valueOf(i + 1))
-                                .replaceAll("%count%", String.valueOf(entry.getValue()))));
+                                .replace("%pos%", String.valueOf(i + 1))
+                                .replace("%count%", String.valueOf(entry.getValue()))));
             }
         } catch (InternalException e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
@@ -737,7 +737,7 @@ public class Hunt implements Cmd {
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replaceAll("%hunt%", huntId));
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -774,8 +774,8 @@ public class Hunt implements Cmd {
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntPlayerReset")
-                .replaceAll("%player%", playerName)
-                .replaceAll("%hunt%", huntId));
+                .replace("%player%", playerName)
+                .replace("%hunt%", huntId));
     }
 
     // --- Tab completion ---

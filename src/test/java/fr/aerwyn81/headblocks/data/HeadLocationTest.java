@@ -146,18 +146,19 @@ class HeadLocationTest {
     // --- Setters ---
 
     @Test
-    void setLocation_resetsCoordinatesAndWorldName() {
+    void setLocation_preservesCoordinatesAndWorldName() {
         UUID uuid = UUID.randomUUID();
         HeadLocation hl = new HeadLocation("H", uuid, "world", 10.5, 64.0, 20.5, -1, false, false, new ArrayList<>());
+        when(world.getName()).thenReturn("newWorld");
         Location newLoc = new Location(world, 99, 99, 99);
 
         hl.setLocation(newLoc);
 
         assertThat(hl.getLocation()).isSameAs(newLoc);
-        assertThat(hl.getX()).isEqualTo(-1);
-        assertThat(hl.getY()).isEqualTo(-1);
-        assertThat(hl.getZ()).isEqualTo(-1);
-        assertThat(hl.getConfigWorldName()).isEmpty();
+        assertThat(hl.getX()).isEqualTo(99);
+        assertThat(hl.getY()).isEqualTo(99);
+        assertThat(hl.getZ()).isEqualTo(99);
+        assertThat(hl.getConfigWorldName()).isEqualTo("newWorld");
     }
 
     @Test

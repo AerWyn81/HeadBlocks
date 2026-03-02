@@ -52,7 +52,7 @@ public class Progress implements Cmd {
 
     private void showMultiHuntProgress(CommandSender sender, PlayerProfileLight profile) {
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntProgressHeader")
-                .replaceAll("%player%", profile.name()));
+                .replace("%player%", profile.name()));
 
         for (Hunt hunt : registry.getHuntService().getAllHunts()) {
             try {
@@ -69,12 +69,12 @@ public class Progress implements Cmd {
 
                 sender.sendMessage(MessageUtils.colorize(
                         registry.getLanguageService().message("Messages.HuntProgressEntry")
-                                .replaceAll("%hunt%", hunt.getId())
-                                .replaceAll("%displayName%", hunt.getDisplayName())
-                                .replaceAll("%state%", hunt.getState().getLocalizedName(registry.getLanguageService()))
-                                .replaceAll("%current%", String.valueOf(current))
-                                .replaceAll("%max%", String.valueOf(total))
-                                .replaceAll("%progress%", progress)));
+                                .replace("%hunt%", hunt.getId())
+                                .replace("%displayName%", hunt.getDisplayName())
+                                .replace("%state%", hunt.getState().getLocalizedName(registry.getLanguageService()))
+                                .replace("%current%", String.valueOf(current))
+                                .replace("%max%", String.valueOf(total))
+                                .replace("%progress%", progress)));
             } catch (InternalException e) {
                 LogUtil.error("Error retrieving hunt progress for {0} in hunt {1}: {2}",
                         profile.name(), hunt.getId(), e.getMessage());

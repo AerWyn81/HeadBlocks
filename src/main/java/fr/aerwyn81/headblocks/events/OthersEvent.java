@@ -10,8 +10,8 @@ import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockFromToEvent;
@@ -29,8 +29,12 @@ public class OthersEvent implements Listener {
         this.registry = registry;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerInteract(BlockBreakEvent e) {
+        if (e.isCancelled()) {
+            return;
+        }
+
         Block block = e.getBlock();
 
         // Check if block is a head
@@ -77,6 +81,7 @@ public class OthersEvent implements Listener {
         TimedRunManager.leaveRun(e.getPlayer().getUniqueId());
         registry.getGuiService().getBehaviorSelectionManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getTimedConfigManager().clearState(e.getPlayer().getUniqueId());
+        registry.getGuiService().getRewardsManager().cancelPendingRewardInput(e.getPlayer());
 
         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
         if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
@@ -127,10 +132,4 @@ public class OthersEvent implements Listener {
         });
     }
 
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-
-        registry.getGuiService().getRewardsManager().cancelPendingRewardInput(player);
-    }
 }
