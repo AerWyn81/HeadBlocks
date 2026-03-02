@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.nbt.api)
     implementation(libs.holoeasy)
     implementation(libs.bstats)
+    implementation(libs.xseries)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
@@ -72,7 +73,6 @@ tasks {
                 fileTree(it) {
                     exclude(
                         // Third-party shaded libraries
-                        "**/utils/bukkit/XSeries/**",
                         "**/utils/message/color/IridiumColorAPI*",
                         "**/utils/message/color/patterns/**",
                         "**/utils/message/DefaultFont*",
@@ -147,6 +147,21 @@ tasks {
         relocate("org.slf4j", "fr.aerwyn81.libs.slf4j")
         relocate("com.zaxxer.hikari", "fr.aerwyn81.libs.hikari")
         relocate("org.bstats", "fr.aerwyn81.libs.bstats")
+        relocate("com.cryptomorin.xseries", "fr.aerwyn81.libs.xseries")
+
+        // Exclude unused XSeries modules (only XSound is used)
+        exclude("com/cryptomorin/xseries/XAttribute*")
+        exclude("com/cryptomorin/xseries/XBiome*")
+        exclude("com/cryptomorin/xseries/XBlock*")
+        exclude("com/cryptomorin/xseries/XEnchantment*")
+        exclude("com/cryptomorin/xseries/XEntityType*")
+        exclude("com/cryptomorin/xseries/XItemFlag*")
+        exclude("com/cryptomorin/xseries/XMaterial*")
+        exclude("com/cryptomorin/xseries/XParticle*")
+        exclude("com/cryptomorin/xseries/XPotion*")
+        exclude("com/cryptomorin/xseries/XTag*")
+        exclude("com/cryptomorin/xseries/XWorldBorder*")
+        exclude("com/cryptomorin/xseries/particles/**")
 
         if (project.hasProperty("cd"))
             archiveFileName.set("HeadBlocks.jar")

@@ -1,9 +1,9 @@
 package fr.aerwyn81.headblocks.services;
 
+import com.cryptomorin.xseries.XSound;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
-import fr.aerwyn81.headblocks.utils.bukkit.XSeries.XSound;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Color;
 import org.bukkit.Material;

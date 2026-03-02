@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.events;
 
+import com.cryptomorin.xseries.XSound;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
@@ -10,7 +11,6 @@ import fr.aerwyn81.headblocks.utils.bukkit.FireworkUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.XSeries.XSound;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.*;
