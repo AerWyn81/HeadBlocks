@@ -43,6 +43,9 @@ dependencies {
     testImplementation(libs.mockito.junit)
     testImplementation(libs.assertj)
     testImplementation(libs.mockbukkit)
+    testImplementation(libs.sqlite.jdbc)
+    testImplementation(libs.placeholderapi)
+    testImplementation(libs.packetevents)
 }
 
 tasks {
@@ -64,6 +67,61 @@ tasks {
         reports {
             csv.required.set(true)
         }
+        classDirectories.setFrom(
+            files(classDirectories.files.map {
+                fileTree(it) {
+                    exclude(
+                        // Third-party shaded libraries
+                        "**/utils/bukkit/XSeries/**",
+                        "**/utils/message/color/IridiumColorAPI*",
+                        "**/utils/message/color/patterns/**",
+                        "**/utils/message/DefaultFont*",
+
+                        // NMS-dependent (NBTAPI requires Minecraft server internals)
+                        "**/utils/bukkit/HeadAdapterNbtApi*",
+                        "**/databases/types/MySQL*",
+
+                        // Plugin main class & Bukkit infrastructure
+                        "**/HeadBlocks.class",
+                        "**/utils/bukkit/BukkitSchedulerAdapter*",
+                        "**/utils/bukkit/HeadBlocksPluginProvider*",
+                        "**/utils/bukkit/BukkitCommandDispatcher*",
+                        "**/utils/bukkit/FireworkUtils*",
+                        "**/utils/bukkit/ParticlesUtils*",
+                        "**/utils/bukkit/ItemBuilder*",
+
+                        // GUI (Bukkit inventory API)
+                        "**/services/gui/**",
+                        "**/services/GuiService*",
+                        "**/utils/gui/**",
+
+                        // Holograms (external plugin dependency)
+                        "**/services/HologramService*",
+                        "**/holograms/types/**",
+                        "**/holograms/InternalHologram*",
+
+                        // Hooks (external plugin dependencies)
+                        "**/hooks/HeadHidingPacketListener*",
+                        "**/hooks/PacketEventsHook*",
+                        "**/hooks/HeadDatabaseHook*",
+
+                        // Events (Bukkit-bound, not unit-testable)
+                        "**/events/OnHeadDatabaseLoaded*",
+                        "**/events/OnPlayerClickInventoryEvent*",
+                        "**/events/OnPlayerChatEvent*",
+                        "**/events/OthersEvent*",
+
+                        // Runnables & misc
+                        "**/runnables/**",
+                        "**/utils/chat/**",
+                        "**/utils/config/ConfigUpdater*",
+                        "**/utils/internal/DebugLog*",
+                        "**/commands/list/Debug*",
+                        "**/api/events/**"
+                    )
+                }
+            })
+        )
     }
 
     compileJava {

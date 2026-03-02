@@ -327,4 +327,367 @@ class HuntConfigTest {
 
         assertThat(config.hasHintsConfig()).isFalse();
     }
+
+    // ---- Title strings ----
+
+    @Test
+    void getHeadClickTitleFirstLine_override() {
+        HuntConfig config = newConfig();
+        config.setHeadClickTitleFirstLine("Custom Title");
+
+        assertThat(config.getHeadClickTitleFirstLine()).isEqualTo("Custom Title");
+    }
+
+    @Test
+    void getHeadClickTitleFirstLine_fallback() {
+        when(configService.headClickTitleFirstLine()).thenReturn("Default Title");
+
+        assertThat(newConfig().getHeadClickTitleFirstLine()).isEqualTo("Default Title");
+    }
+
+    @Test
+    void getHeadClickTitleSubTitle_override() {
+        HuntConfig config = newConfig();
+        config.setHeadClickTitleSubTitle("Custom Sub");
+
+        assertThat(config.getHeadClickTitleSubTitle()).isEqualTo("Custom Sub");
+    }
+
+    @Test
+    void getHeadClickTitleSubTitle_fallback() {
+        when(configService.headClickTitleSubTitle()).thenReturn("Default Sub");
+
+        assertThat(newConfig().getHeadClickTitleSubTitle()).isEqualTo("Default Sub");
+    }
+
+    // ---- Title timing ----
+
+    @Test
+    void getHeadClickTitleFadeIn_override() {
+        HuntConfig config = newConfig();
+        config.setHeadClickTitleFadeIn(10);
+
+        assertThat(config.getHeadClickTitleFadeIn()).isEqualTo(10);
+    }
+
+    @Test
+    void getHeadClickTitleFadeIn_fallback() {
+        when(configService.headClickTitleFadeIn()).thenReturn(5);
+
+        assertThat(newConfig().getHeadClickTitleFadeIn()).isEqualTo(5);
+    }
+
+    @Test
+    void getHeadClickTitleStay_override() {
+        HuntConfig config = newConfig();
+        config.setHeadClickTitleStay(20);
+
+        assertThat(config.getHeadClickTitleStay()).isEqualTo(20);
+    }
+
+    @Test
+    void getHeadClickTitleStay_fallback() {
+        when(configService.headClickTitleStay()).thenReturn(15);
+
+        assertThat(newConfig().getHeadClickTitleStay()).isEqualTo(15);
+    }
+
+    @Test
+    void getHeadClickTitleFadeOut_override() {
+        HuntConfig config = newConfig();
+        config.setHeadClickTitleFadeOut(8);
+
+        assertThat(config.getHeadClickTitleFadeOut()).isEqualTo(8);
+    }
+
+    @Test
+    void getHeadClickTitleFadeOut_fallback() {
+        when(configService.headClickTitleFadeOut()).thenReturn(3);
+
+        assertThat(newConfig().getHeadClickTitleFadeOut()).isEqualTo(3);
+    }
+
+    // ---- Firework ----
+
+    @Test
+    void isFireworkEnabled_override() {
+        HuntConfig config = newConfig();
+        config.setFireworkEnabled(true);
+
+        assertThat(config.isFireworkEnabled()).isTrue();
+    }
+
+    @Test
+    void isFireworkEnabled_fallback() {
+        when(configService.fireworkEnabled()).thenReturn(false);
+
+        assertThat(newConfig().isFireworkEnabled()).isFalse();
+    }
+
+    // ---- HeadClick commands ----
+
+    @Test
+    void getHeadClickCommands_override() {
+        HuntConfig config = newConfig();
+        config.setHeadClickCommands(List.of("cmd1", "cmd2"));
+
+        assertThat(config.getHeadClickCommands()).containsExactly("cmd1", "cmd2");
+    }
+
+    @Test
+    void getHeadClickCommands_fallback() {
+        when(configService.headClickCommands()).thenReturn(List.of("globalCmd"));
+
+        assertThat(newConfig().getHeadClickCommands()).containsExactly("globalCmd");
+    }
+
+    // ---- Eject ----
+
+    @Test
+    void isHeadClickEjectEnabled_override() {
+        HuntConfig config = newConfig();
+        config.setHeadClickEjectEnabled(true);
+
+        assertThat(config.isHeadClickEjectEnabled()).isTrue();
+    }
+
+    @Test
+    void isHeadClickEjectEnabled_fallback() {
+        when(configService.headClickEjectEnabled()).thenReturn(false);
+
+        assertThat(newConfig().isHeadClickEjectEnabled()).isFalse();
+    }
+
+    @Test
+    void getHeadClickEjectPower_override() {
+        HuntConfig config = newConfig();
+        config.setHeadClickEjectPower(2.5);
+
+        assertThat(config.getHeadClickEjectPower()).isEqualTo(2.5);
+    }
+
+    @Test
+    void getHeadClickEjectPower_fallback() {
+        when(configService.headClickEjectPower()).thenReturn(1.0);
+
+        assertThat(newConfig().getHeadClickEjectPower()).isEqualTo(1.0);
+    }
+
+    // ---- Holograms found/notFound individual ----
+
+    @Test
+    void isHologramsFoundEnabled_override() {
+        HuntConfig config = newConfig();
+        config.setHologramsFoundEnabled(true);
+
+        assertThat(config.isHologramsFoundEnabled()).isTrue();
+    }
+
+    @Test
+    void isHologramsFoundEnabled_fallback() {
+        when(configService.hologramsFoundEnabled()).thenReturn(false);
+
+        assertThat(newConfig().isHologramsFoundEnabled()).isFalse();
+    }
+
+    @Test
+    void isHologramsNotFoundEnabled_override() {
+        HuntConfig config = newConfig();
+        config.setHologramsNotFoundEnabled(true);
+
+        assertThat(config.isHologramsNotFoundEnabled()).isTrue();
+    }
+
+    @Test
+    void isHologramsNotFoundEnabled_fallback() {
+        when(configService.hologramsNotFoundEnabled()).thenReturn(false);
+
+        assertThat(newConfig().isHologramsNotFoundEnabled()).isFalse();
+    }
+
+    // ---- Hint distance/frequency ----
+
+    @Test
+    void getHintDistance_override() {
+        HuntConfig config = newConfig();
+        config.setHintDistance(50);
+
+        assertThat(config.getHintDistance()).isEqualTo(50);
+    }
+
+    @Test
+    void getHintDistance_fallback() {
+        when(configService.hintDistanceBlocks()).thenReturn(30);
+
+        assertThat(newConfig().getHintDistance()).isEqualTo(30);
+    }
+
+    @Test
+    void getHintFrequency_override() {
+        HuntConfig config = newConfig();
+        config.setHintFrequency(5);
+
+        assertThat(config.getHintFrequency()).isEqualTo(5);
+    }
+
+    @Test
+    void getHintFrequency_fallback() {
+        when(configService.hintFrequency()).thenReturn(10);
+
+        assertThat(newConfig().getHintFrequency()).isEqualTo(10);
+    }
+
+    // ---- Spin speed/linked ----
+
+    @Test
+    void getSpinSpeed_override() {
+        HuntConfig config = newConfig();
+        config.setSpinSpeed(3);
+
+        assertThat(config.getSpinSpeed()).isEqualTo(3);
+    }
+
+    @Test
+    void getSpinSpeed_fallback() {
+        when(configService.spinSpeed()).thenReturn(2);
+
+        assertThat(newConfig().getSpinSpeed()).isEqualTo(2);
+    }
+
+    @Test
+    void isSpinLinked_override() {
+        HuntConfig config = newConfig();
+        config.setSpinLinked(true);
+
+        assertThat(config.isSpinLinked()).isTrue();
+    }
+
+    @Test
+    void isSpinLinked_fallback() {
+        when(configService.spinLinked()).thenReturn(false);
+
+        assertThat(newConfig().isSpinLinked()).isFalse();
+    }
+
+    // ---- Particles remaining ----
+
+    @Test
+    void isParticlesFoundEnabled_override() {
+        HuntConfig config = newConfig();
+        config.setParticlesFoundEnabled(true);
+
+        assertThat(config.isParticlesFoundEnabled()).isTrue();
+    }
+
+    @Test
+    void isParticlesFoundEnabled_fallback() {
+        when(configService.particlesFoundEnabled()).thenReturn(false);
+
+        assertThat(newConfig().isParticlesFoundEnabled()).isFalse();
+    }
+
+    @Test
+    void isParticlesNotFoundEnabled_override() {
+        HuntConfig config = newConfig();
+        config.setParticlesNotFoundEnabled(true);
+
+        assertThat(config.isParticlesNotFoundEnabled()).isTrue();
+    }
+
+    @Test
+    void isParticlesNotFoundEnabled_fallback() {
+        when(configService.particlesNotFoundEnabled()).thenReturn(false);
+
+        assertThat(newConfig().isParticlesNotFoundEnabled()).isFalse();
+    }
+
+    @Test
+    void getParticlesNotFoundType_override() {
+        HuntConfig config = newConfig();
+        config.setParticlesNotFoundType("SMOKE");
+
+        assertThat(config.getParticlesNotFoundType()).isEqualTo("SMOKE");
+    }
+
+    @Test
+    void getParticlesNotFoundType_fallback() {
+        when(configService.particlesNotFoundType()).thenReturn("VILLAGER_HAPPY");
+
+        assertThat(newConfig().getParticlesNotFoundType()).isEqualTo("VILLAGER_HAPPY");
+    }
+
+    @Test
+    void getParticlesNotFoundAmount_override() {
+        HuntConfig config = newConfig();
+        config.setParticlesNotFoundAmount(5);
+
+        assertThat(config.getParticlesNotFoundAmount()).isEqualTo(5);
+    }
+
+    @Test
+    void getParticlesNotFoundAmount_fallback() {
+        when(configService.particlesNotFoundAmount()).thenReturn(3);
+
+        assertThat(newConfig().getParticlesNotFoundAmount()).isEqualTo(3);
+    }
+
+    @Test
+    void getParticlesFoundAmount_override() {
+        HuntConfig config = newConfig();
+        config.setParticlesFoundAmount(10);
+
+        assertThat(config.getParticlesFoundAmount()).isEqualTo(10);
+    }
+
+    @Test
+    void getParticlesFoundAmount_fallback() {
+        when(configService.particlesFoundAmount()).thenReturn(7);
+
+        assertThat(newConfig().getParticlesFoundAmount()).isEqualTo(7);
+    }
+
+    // ---- hasParticlesConfig with NotFound ----
+
+    @Test
+    void hasParticlesConfig_true_whenNotFoundSet() {
+        HuntConfig config = newConfig();
+        config.setParticlesNotFoundEnabled(true);
+
+        assertThat(config.hasParticlesConfig()).isTrue();
+    }
+
+    @Test
+    void hasParticlesConfig_false_whenNoneSet() {
+        HuntConfig config = newConfig();
+
+        assertThat(config.hasParticlesConfig()).isFalse();
+    }
+
+    // ---- hasHologramsFoundLines / hasHologramsNotFoundLines ----
+
+    @Test
+    void hasHologramsFoundLines_true_whenSet() {
+        HuntConfig config = newConfig();
+        config.setHologramsFoundLines(new ArrayList<>(List.of("line")));
+
+        assertThat(config.hasHologramsFoundLines()).isTrue();
+    }
+
+    @Test
+    void hasHologramsFoundLines_false_whenNull() {
+        assertThat(newConfig().hasHologramsFoundLines()).isFalse();
+    }
+
+    @Test
+    void hasHologramsNotFoundLines_true_whenSet() {
+        HuntConfig config = newConfig();
+        config.setHologramsNotFoundLines(new ArrayList<>(List.of("line")));
+
+        assertThat(config.hasHologramsNotFoundLines()).isTrue();
+    }
+
+    @Test
+    void hasHologramsNotFoundLines_false_whenNull() {
+        assertThat(newConfig().hasHologramsNotFoundLines()).isFalse();
+    }
 }

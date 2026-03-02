@@ -6,19 +6,22 @@ import fr.aerwyn81.headblocks.data.hunt.Hunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ScheduledBehaviorTest {
@@ -155,5 +158,75 @@ class ScheduledBehaviorTest {
     void getId_returnsScheduled() {
         ScheduledBehavior behavior = new ScheduledBehavior(registry, null, null);
         assertThat(behavior.getId()).isEqualTo("scheduled");
+    }
+
+    @Test
+    void onHeadFound_doesNothing() {
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, null, null);
+
+        behavior.onHeadFound(player, headLocation, hunt);
+        // No-op, no exception = pass
+    }
+
+    // --- fromConfig ---
+
+    @Test
+    void fromConfig_nullSection_returnsNullDates() {
+        ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, null);
+
+        assertThat(behavior.start()).isNull();
+        assertThat(behavior.end()).isNull();
+    }
+
+    @Test
+    void fromConfig_validDates_parsesBoth() {
+        ConfigurationSection section = mock(ConfigurationSection.class);
+        when(section.getString("start")).thenReturn("2025-06-01");
+        when(section.getString("end")).thenReturn("2025-12-31");
+
+        ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
+
+        assertThat(behavior.start()).isEqualTo(LocalDate.of(2025, 6, 1));
+        assertThat(behavior.end()).isEqualTo(LocalDate.of(2025, 12, 31));
+    }
+
+    @Test
+    void fromConfig_missingStartKey_startIsNull() {
+        ConfigurationSection section = mock(ConfigurationSection.class);
+        when(section.getString("start")).thenReturn(null);
+        when(section.getString("end")).thenReturn("2025-12-31");
+
+        ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
+
+        assertThat(behavior.start()).isNull();
+        assertThat(behavior.end()).isEqualTo(LocalDate.of(2025, 12, 31));
+    }
+
+    @Test
+    void fromConfig_invalidStartDate_logsErrorAndStartIsNull() {
+        try (MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class)) {
+            ConfigurationSection section = mock(ConfigurationSection.class);
+            when(section.getString("start")).thenReturn("not-a-date");
+            when(section.getString("end")).thenReturn(null);
+
+            ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
+
+            assertThat(behavior.start()).isNull();
+            logUtil.verify(() -> LogUtil.error(anyString(), eq("not-a-date"), anyString()));
+        }
+    }
+
+    @Test
+    void fromConfig_invalidEndDate_logsErrorAndEndIsNull() {
+        try (MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class)) {
+            ConfigurationSection section = mock(ConfigurationSection.class);
+            when(section.getString("start")).thenReturn(null);
+            when(section.getString("end")).thenReturn("bad-end");
+
+            ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
+
+            assertThat(behavior.end()).isNull();
+            logUtil.verify(() -> LogUtil.error(anyString(), eq("bad-end"), anyString()));
+        }
     }
 }

@@ -9,6 +9,10 @@ import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -284,5 +288,185 @@ class TimedBehaviorTest {
     void getId_returnsTimed() {
         TimedBehavior behavior = new TimedBehavior(registry, null, true);
         assertThat(behavior.getId()).isEqualTo("timed");
+    }
+
+    @Test
+    void startPlateLocation_returnsLocation() {
+        Location loc = mock(Location.class);
+        TimedBehavior behavior = new TimedBehavior(registry, loc, true);
+
+        assertThat(behavior.startPlateLocation()).isEqualTo(loc);
+    }
+
+    @Test
+    void repeatable_returnsValue() {
+        TimedBehavior repeatable = new TimedBehavior(registry, null, true);
+        TimedBehavior nonRepeatable = new TimedBehavior(registry, null, false);
+
+        assertThat(repeatable.repeatable()).isTrue();
+        assertThat(nonRepeatable.repeatable()).isFalse();
+    }
+
+    @Test
+    void getDisplayInfo_returnsLanguageMessage() {
+        TimedBehavior behavior = new TimedBehavior(registry, null, true);
+        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        when(languageService.message("Hunt.Behavior.Timed")).thenReturn("Timed Mode");
+
+        String result = behavior.getDisplayInfo(player, hunt);
+
+        assertThat(result).isEqualTo("Timed Mode");
+    }
+
+    @Test
+    void fromConfig_nullSection_returnsDefaultBehavior() {
+        TimedBehavior result = TimedBehavior.fromConfig(registry, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.startPlateLocation()).isNull();
+        assertThat(result.repeatable()).isTrue();
+    }
+
+    @Test
+    void fromConfig_sectionWithoutStartPlate_returnsNullLocation() {
+        ConfigurationSection section = mock(ConfigurationSection.class);
+        when(section.contains("startPlate.world")).thenReturn(false);
+        when(section.getBoolean("repeatable", true)).thenReturn(false);
+
+        TimedBehavior result = TimedBehavior.fromConfig(registry, section);
+
+        assertThat(result.startPlateLocation()).isNull();
+        assertThat(result.repeatable()).isFalse();
+    }
+
+    @Test
+    void fromConfig_sectionWithStartPlate_worldNotFound_returnsNullLocation() {
+        ConfigurationSection section = mock(ConfigurationSection.class);
+        when(section.contains("startPlate.world")).thenReturn(true);
+        when(section.getString("startPlate.world", "")).thenReturn("missing_world");
+        when(section.getDouble("startPlate.x")).thenReturn(10.0);
+        when(section.getDouble("startPlate.y")).thenReturn(64.0);
+        when(section.getDouble("startPlate.z")).thenReturn(20.0);
+        when(section.getBoolean("repeatable", true)).thenReturn(true);
+
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld("missing_world")).thenReturn(null);
+
+            TimedBehavior result = TimedBehavior.fromConfig(registry, section);
+
+            assertThat(result.startPlateLocation()).isNull();
+        }
+    }
+
+    @Test
+    void fromConfig_sectionWithStartPlate_worldFound_returnsLocation() {
+        ConfigurationSection section = mock(ConfigurationSection.class);
+        when(section.contains("startPlate.world")).thenReturn(true);
+        when(section.getString("startPlate.world", "")).thenReturn("world");
+        when(section.getDouble("startPlate.x")).thenReturn(10.0);
+        when(section.getDouble("startPlate.y")).thenReturn(64.0);
+        when(section.getDouble("startPlate.z")).thenReturn(20.0);
+        when(section.getBoolean("repeatable", true)).thenReturn(true);
+
+        World world = mock(World.class);
+
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+
+            TimedBehavior result = TimedBehavior.fromConfig(registry, section);
+
+            assertThat(result.startPlateLocation()).isNotNull();
+            assertThat(result.startPlateLocation().getWorld()).isEqualTo(world);
+            assertThat(result.startPlateLocation().getX()).isEqualTo(10.0);
+            assertThat(result.startPlateLocation().getY()).isEqualTo(64.0);
+            assertThat(result.startPlateLocation().getZ()).isEqualTo(20.0);
+        }
+    }
+
+    @Test
+    void onHeadFound_getTimedRunCountThrows_stillSendsMessage() throws InternalException {
+        TimedBehavior behavior = new TimedBehavior(registry, null, false);
+        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        UUID h1 = UUID.randomUUID();
+        hunt.addHead(h1);
+
+        UUID playerUuid = UUID.randomUUID();
+        when(player.getUniqueId()).thenReturn(playerUuid);
+        lenient().when(player.getName()).thenReturn("Steve");
+        when(headLocation.getUuid()).thenReturn(h1);
+
+        try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
+            trm.when(() -> TimedRunManager.isInRun(playerUuid, "hunt1")).thenReturn(true);
+            trm.when(() -> TimedRunManager.getElapsedMillis(playerUuid)).thenReturn(1000L);
+            trm.when(() -> TimedRunManager.formatTime(1000L)).thenReturn("00:01.000");
+
+            ArrayList<UUID> found = new ArrayList<>();
+            when(storageService.getHeadsPlayerForHunt(playerUuid, "hunt1")).thenReturn(found);
+            when(storageService.getTimedRunCount(playerUuid, "hunt1"))
+                    .thenThrow(new InternalException("count error"));
+
+            when(languageService.message("Messages.TimedCompleted")).thenReturn("Done %time% %hunt% %count%");
+
+            behavior.onHeadFound(player, headLocation, hunt);
+
+            // Still sends message with count 0
+            verify(player).sendMessage(contains("0"));
+        }
+    }
+
+    @Test
+    void onHeadFound_getHeadsPlayerForHuntThrows_noCompletion() throws InternalException {
+        TimedBehavior behavior = new TimedBehavior(registry, null, true);
+        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        UUID h1 = UUID.randomUUID();
+        hunt.addHead(h1);
+
+        UUID playerUuid = UUID.randomUUID();
+        when(player.getUniqueId()).thenReturn(playerUuid);
+        lenient().when(player.getName()).thenReturn("Steve");
+
+        try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
+            trm.when(() -> TimedRunManager.isInRun(playerUuid, "hunt1")).thenReturn(true);
+
+            when(storageService.getHeadsPlayerForHunt(playerUuid, "hunt1"))
+                    .thenThrow(new InternalException("storage error"));
+
+            behavior.onHeadFound(player, headLocation, hunt);
+
+            // No completion occurs
+            trm.verify(() -> TimedRunManager.leaveRun(any()), never());
+        }
+    }
+
+    @Test
+    void onHeadFound_repeatable_resetThrows_noException() throws InternalException {
+        TimedBehavior behavior = new TimedBehavior(registry, null, true); // repeatable
+        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        UUID h1 = UUID.randomUUID();
+        hunt.addHead(h1);
+
+        UUID playerUuid = UUID.randomUUID();
+        when(player.getUniqueId()).thenReturn(playerUuid);
+        lenient().when(player.getName()).thenReturn("Steve");
+        when(headLocation.getUuid()).thenReturn(h1);
+
+        try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
+            trm.when(() -> TimedRunManager.isInRun(playerUuid, "hunt1")).thenReturn(true);
+            trm.when(() -> TimedRunManager.getElapsedMillis(playerUuid)).thenReturn(500L);
+            trm.when(() -> TimedRunManager.formatTime(500L)).thenReturn("00:00.500");
+
+            ArrayList<UUID> found = new ArrayList<>();
+            when(storageService.getHeadsPlayerForHunt(playerUuid, "hunt1")).thenReturn(found);
+            when(storageService.getTimedRunCount(playerUuid, "hunt1")).thenReturn(1);
+            doThrow(new InternalException("reset error"))
+                    .when(storageService).resetPlayerHunt(playerUuid, "hunt1");
+
+            when(languageService.message("Messages.TimedCompleted")).thenReturn("Done %time% %hunt% %count%");
+
+            // Should not throw
+            behavior.onHeadFound(player, headLocation, hunt);
+
+            verify(storageService).resetPlayerHunt(playerUuid, "hunt1");
+        }
     }
 }

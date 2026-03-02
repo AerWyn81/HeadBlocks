@@ -21,6 +21,7 @@ junit-platform = "1.10.3"
 mockito = "5.21.0"
 assertj = "3.26.3"
 mockbukkit = "3.93.2"
+sqlite-jdbc = "3.49.1.0"
 
 # Build Plugins
 shadow = "9.3.1"
@@ -52,6 +53,7 @@ mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 mockbukkit = { module = "com.github.seeseemelk:MockBukkit-v1.20", version.ref = "mockbukkit" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

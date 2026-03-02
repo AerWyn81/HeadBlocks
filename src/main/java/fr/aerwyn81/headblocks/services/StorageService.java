@@ -43,6 +43,14 @@ public class StorageService {
         initialize();
     }
 
+    StorageService(ConfigService configService, Storage storage, Database database) {
+        this.configService = configService;
+        this.dataFolder = null;
+        this.storage = storage;
+        this.database = database;
+        this.storageError = false;
+    }
+
     // --- Instance methods ---
 
     public void initialize() {
