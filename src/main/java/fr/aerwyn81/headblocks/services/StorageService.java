@@ -410,13 +410,16 @@ public class StorageService {
     }
 
     public void resetPlayer(UUID playerUuid) throws InternalException {
-        invalidateCachePlayer(playerUuid);
-
         storage.resetPlayer(playerUuid);
         database.resetPlayer(playerUuid);
+
+        invalidateCachePlayer(playerUuid);
     }
 
     public void resetPlayerHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        storage.resetPlayerHead(playerUuid, headUuid);
+        database.resetPlayerHead(playerUuid, headUuid);
+
         try {
             Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
             if (cachedHeads != null) {
@@ -428,9 +431,6 @@ public class StorageService {
         } catch (InternalException ex) {
             LogUtil.error("Error while invalidating cache for player {0} and head {1}: {2}", playerUuid, headUuid, ex.getMessage());
         }
-
-        storage.resetPlayerHead(playerUuid, headUuid);
-        database.resetPlayerHead(playerUuid, headUuid);
     }
 
     public void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
@@ -488,8 +488,8 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = database.getTableHeads();
         for (AbstractMap.SimpleEntry<String, Boolean> head : heads) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + head.getKey() +
-                    "', " + (head.getValue() ? 1 : 0) + ", '', '" + serverIdentifier + "');");
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + escapeSql(head.getKey()) +
+                    "', " + (head.getValue() ? 1 : 0) + ", '', '" + escapeSql(serverIdentifier) + "');");
         }
 
         instructions.add("");
@@ -504,8 +504,8 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = database.getTablePlayerHeads();
         for (AbstractMap.SimpleEntry<String, String> pHead : playerHeads) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + pHead.getKey() +
-                    "', '" + pHead.getValue() + "');");
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + escapeSql(pHead.getKey()) +
+                    "', '" + escapeSql(pHead.getValue()) + "');");
         }
 
         instructions.add("");
@@ -520,7 +520,7 @@ public class StorageService {
 
         ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getTablePlayers();
         for (AbstractMap.SimpleEntry<String, String> player : players) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + player.getKey() + "', '" + player.getValue() + "', '');");
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + escapeSql(player.getKey()) + "', '" + escapeSql(player.getValue()) + "', '');");
         }
 
         instructions.add("");
@@ -530,6 +530,13 @@ public class StorageService {
         instructions.add(Requests.upsertVersion().replaceAll("\\?", String.valueOf(Database.version)) + ";");
 
         return instructions;
+    }
+
+    private static String escapeSql(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("'", "''");
     }
 
     public String getHeadTexture(UUID headUuid) throws InternalException {

@@ -186,32 +186,15 @@ class MoveCommandTest {
         }
 
         @Test
-        void invalidTargetBlock_sendsInvalidMessage() {
-            UUID playerUuid = UUID.randomUUID();
-            Location oldLoc = mock(Location.class);
-            when(player.getUniqueId()).thenReturn(playerUuid);
-            headMoves.put(playerUuid, new HeadMove(UUID.randomUUID(), oldLoc));
-
+        void emptyTargetBlock_sendsNoTargetMessage() {
             Block targetBlock = mock(Block.class);
-            Location targetLoc = mock(Location.class);
-            Location newLoc = mock(Location.class);
-            Block newBlock = mock(Block.class);
             when(player.getTargetBlock(null, 100)).thenReturn(targetBlock);
-            when(targetBlock.getLocation()).thenReturn(targetLoc);
-            when(targetLoc.clone()).thenReturn(newLoc);
-            when(newLoc.add(0, 1, 0)).thenReturn(newLoc);
-            when(targetLoc.getBlock()).thenReturn(targetBlock);
-            when(targetBlock.isEmpty()).thenReturn(true); // empty block is invalid target
+            when(targetBlock.isEmpty()).thenReturn(true);
 
-            try (MockedStatic<LocationUtils> lu = mockStatic(LocationUtils.class);
-                 MockedStatic<HeadUtils> hu = mockStatic(HeadUtils.class)) {
-                lu.when(() -> LocationUtils.areEquals(newLoc, oldLoc)).thenReturn(false);
+            boolean result = command.perform(player, new String[]{"move", "--confirm"});
 
-                boolean result = command.perform(player, new String[]{"move", "--confirm"});
-
-                assertThat(result).isTrue();
-                verify(languageService).message("Messages.TargetBlockInvalid");
-            }
+            assertThat(result).isTrue();
+            verify(languageService).message("Messages.NoTargetHeadBlock");
         }
 
         @Test

@@ -14,6 +14,7 @@ Messages:
   NoPermission: "%prefix% &cVous n'avez pas la permission d'exécuter cette commande."
   NoPermissionBlock: "%prefix% &cVous n'avez pas la permission d'interagir avec cette tête."
   ErrorCommand: "%prefix% &cErreur dans la commande. Vérifiez avec /hb help."
+  DebugUsage: "%prefix% &cCeci est une commande avancée. Veuillez consulter le wiki pour plus de détails."
   PlayerOnly: "%prefix% &cCette commande ne peut être exécutée que par un joueur."
   PlayerNotFound: "%prefix% &cLe joueur n'existe pas."
   PlayerNotConnected: "%prefix% &cLe joueur n'est pas connecté."

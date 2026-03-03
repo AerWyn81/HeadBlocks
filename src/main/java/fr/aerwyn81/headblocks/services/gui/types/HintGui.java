@@ -31,6 +31,10 @@ public class HintGui extends GuiBase {
         guiViewHint.clear();
     }
 
+    public void clearCache(UUID playerUuid) {
+        guiViewHint.remove(playerUuid);
+    }
+
     public void openHintGui(Player player) {
         registry.getGuiService().openHuntSelectionOrDirect(player, this::openHintGuiForHunt);
     }

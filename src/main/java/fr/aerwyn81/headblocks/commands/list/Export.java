@@ -46,9 +46,9 @@ public class Export implements Cmd {
         Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
             try {
                 ExportSQLHelper.generateFile(registry, typeDatabase, fileName);
-                Thread.sleep(10000);
             } catch (Exception ex) {
                 sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportError") + ex.getMessage()));
+                return;
             }
 
             sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportSuccess"))

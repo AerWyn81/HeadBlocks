@@ -50,7 +50,11 @@ public class LanguageService {
     }
 
     public String prefix() {
-        return MessageUtils.colorize(messageMap.get("Prefix").toString());
+        Object raw = messageMap.get("Prefix");
+        if (raw == null) {
+            return "[HeadBlocks]";
+        }
+        return MessageUtils.colorize(raw.toString());
     }
 
     public boolean containsMessage(String message) {
@@ -58,7 +62,12 @@ public class LanguageService {
     }
 
     public String message(String message) {
-        return MessageUtils.colorize(messageMap.get(message).toString()
+        Object raw = messageMap.get(message);
+        if (raw == null) {
+            LogUtil.warning("Missing translation key: {0}", message);
+            return prefix() + " " + message;
+        }
+        return MessageUtils.colorize(raw.toString()
                 .replace("%prefix%", prefix()));
     }
 
@@ -67,8 +76,17 @@ public class LanguageService {
                 .replace("%player%", playerName);
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> messageList(String message) {
-        return ((List<String>) messageMap.get(message)).stream().map(MessageUtils::colorize).collect(Collectors.toList());
+        Object raw = messageMap.get(message);
+        if (raw == null) {
+            LogUtil.warning("Missing translation list key: {0}", message);
+            return Collections.emptyList();
+        }
+        if (!(raw instanceof List)) {
+            return Collections.singletonList(MessageUtils.colorize(raw.toString()));
+        }
+        return ((List<String>) raw).stream().map(MessageUtils::colorize).collect(Collectors.toList());
     }
 
     public String checkLanguage(String lang) {

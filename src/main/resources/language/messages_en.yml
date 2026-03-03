@@ -14,6 +14,7 @@ Messages:
   NoPermission: "%prefix% &cYou do not have permission to run this command."
   NoPermissionBlock: "%prefix% &cYou do not have permission to interact with this head."
   ErrorCommand: "%prefix% &cError in the command. See usage in /hb help."
+  DebugUsage: "%prefix% &cThis is an advanced command. Please consult the wiki for details."
   PlayerOnly: "%prefix% &cThis command can only be executed by a player."
   PlayerNotFound: "%prefix% &cThe player %player% does not exist."
   PlayerNotConnected: "%prefix% &cThe player %player% is not connected."

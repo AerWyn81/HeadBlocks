@@ -141,7 +141,12 @@ public class Memory implements Storage {
     public void removeCachedHead(UUID headUuid) {
         cacheHeads.remove(headUuid);
 
-        cachePlayerHeads.values().forEach(playerHeads -> playerHeads.remove(headUuid));
+        for (Map.Entry<UUID, Set<UUID>> entry : cachePlayerHeads.entrySet()) {
+            Set<UUID> playerHeads = entry.getValue();
+            if (playerHeads != null) {
+                playerHeads.remove(headUuid);
+            }
+        }
 
         clearCachedTopPlayers();
     }

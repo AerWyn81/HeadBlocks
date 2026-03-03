@@ -82,6 +82,7 @@ public class OthersEvent implements Listener {
         registry.getGuiService().getBehaviorSelectionManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getTimedConfigManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getRewardsManager().cancelPendingRewardInput(e.getPlayer());
+        registry.getGuiService().getHintManager().clearCache(e.getPlayer().getUniqueId());
 
         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
         if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {

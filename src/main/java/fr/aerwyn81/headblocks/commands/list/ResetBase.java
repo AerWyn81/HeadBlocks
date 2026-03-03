@@ -47,7 +47,13 @@ public abstract class ResetBase implements Cmd {
     }
 
     private UUID resolveTargetedHead(Player player) {
-        var targetLoc = player.getTargetBlock(null, 100).getLocation();
+        var targetBlock = player.getTargetBlock(null, 100);
+        if (targetBlock.isEmpty()) {
+            player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
+            return null;
+        }
+
+        var targetLoc = targetBlock.getLocation();
         var headLocation = registry.getHeadService().getHeadAt(targetLoc);
 
         if (headLocation == null) {

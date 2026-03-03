@@ -32,6 +32,11 @@ public class Debug implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.DebugUsage"));
+            return true;
+        }
+
         switch (args[1]) {
             case "texture" -> {
                 if (!(sender instanceof Player)) {
@@ -40,6 +45,11 @@ public class Debug implements Cmd {
                 }
 
                 var blockView = ((Player) sender).getTargetBlock(null, 50);
+                if (blockView.isEmpty()) {
+                    sender.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
+                    return true;
+                }
+
                 var blockLocation = blockView.getLocation();
                 var block = blockLocation.getBlock();
 

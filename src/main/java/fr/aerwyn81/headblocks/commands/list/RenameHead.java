@@ -22,7 +22,13 @@ public class RenameHead implements Cmd {
     public boolean perform(CommandSender sender, String[] args) {
         var player = (Player) sender;
 
-        var targetLoc = player.getTargetBlock(null, 100).getLocation();
+        var targetBlock = player.getTargetBlock(null, 100);
+        if (targetBlock.isEmpty()) {
+            player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
+            return true;
+        }
+
+        var targetLoc = targetBlock.getLocation();
 
         var headLocation = registry.getHeadService().getHeadAt(targetLoc);
 

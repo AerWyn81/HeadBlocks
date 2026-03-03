@@ -465,7 +465,13 @@ public class Hunt implements Cmd {
             return;
         }
 
-        HeadLocation headLocation = registry.getHeadService().getHeadAt(player.getTargetBlock(null, 100).getLocation());
+        var targetBlock = player.getTargetBlock(null, 100);
+        if (targetBlock.isEmpty()) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
+            return;
+        }
+
+        HeadLocation headLocation = registry.getHeadService().getHeadAt(targetBlock.getLocation());
 
         if (headLocation == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));

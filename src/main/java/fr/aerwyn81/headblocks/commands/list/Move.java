@@ -43,7 +43,13 @@ public class Move implements Cmd {
             return true;
         }
 
-        Location targetLoc = player.getTargetBlock(null, 100).getLocation();
+        Block targetBlock = player.getTargetBlock(null, 100);
+        if (targetBlock.isEmpty()) {
+            player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
+            return true;
+        }
+
+        Location targetLoc = targetBlock.getLocation();
 
         if (!hasConfirmInCommand) {
             HeadLocation headLocation = registry.getHeadService().getHeadAt(targetLoc);

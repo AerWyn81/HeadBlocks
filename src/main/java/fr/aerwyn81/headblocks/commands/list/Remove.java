@@ -40,7 +40,13 @@ public class Remove implements Cmd {
 
             Player player = (Player) sender;
 
-            var targetHead = registry.getHeadService().getHeadAt(player.getTargetBlock(null, 25).getLocation());
+            var targetBlock = player.getTargetBlock(null, 25);
+            if (targetBlock.isEmpty()) {
+                player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockNotHead"));
+                return true;
+            }
+
+            var targetHead = registry.getHeadService().getHeadAt(targetBlock.getLocation());
 
             if (targetHead == null) {
                 player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockNotHead"));
