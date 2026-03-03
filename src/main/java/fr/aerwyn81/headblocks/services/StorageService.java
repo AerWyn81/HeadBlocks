@@ -17,7 +17,8 @@ import fr.aerwyn81.headblocks.utils.runnables.CompletableBukkitFuture;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.entity.Player;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -72,11 +73,11 @@ public class StorageService {
             storage = new Memory();
         }
 
-        String pathToDatabase = dataFolder + File.separator + "headblocks.db";
-        var isFileExist = new File(pathToDatabase).exists();
+        var databasePath = dataFolder.toPath().resolve("headblocks.db");
+        var isFileExist = Files.exists(databasePath);
 
         if (configService.databaseEnabled()) {
-            doGenerateServerIdentifier();
+            generateServerIdentifier();
 
             database = new MySQL(
                     configService.databaseUsername(),
@@ -87,7 +88,7 @@ public class StorageService {
                     configService.databaseSsl(),
                     configService);
         } else {
-            database = new SQLite(pathToDatabase);
+            database = new SQLite(databasePath.toString());
         }
 
         try {
@@ -124,8 +125,8 @@ public class StorageService {
         }
     }
 
-    private void doGenerateServerIdentifier() {
-        var file = new File(dataFolder + File.separator + "server.identifier");
+    private void generateServerIdentifier() {
+        var file = dataFolder.toPath().resolve("server.identifier").toFile();
         if (configService.databaseEnabled() && file.exists()) {
             try {
                 serverIdentifier = Files.readAllLines(file.toPath()).get(0);
@@ -225,25 +226,18 @@ public class StorageService {
     }
 
     public String backupDatabase(String suffix) {
-        var pathToDatabase = dataFolder + File.separator + "headblocks.db";
-        var databaseFile = new File(pathToDatabase);
+        var databasePath = dataFolder.toPath().resolve("headblocks.db");
 
-        if (!databaseFile.exists()) {
+        if (!Files.exists(databasePath)) {
             return null;
         }
 
         var backupFileName = "headblocks.db." + suffix + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"));
-        var copied = new File(dataFolder + File.separator + backupFileName);
-        try (var in = new BufferedInputStream(new FileInputStream(databaseFile));
-             var out = new BufferedOutputStream(new FileOutputStream(copied))) {
-
-            var buffer = new byte[1024];
-            int lengthRead;
-            while ((lengthRead = in.read(buffer)) > 0) {
-                out.write(buffer, 0, lengthRead);
-            }
+        var backupPath = dataFolder.toPath().resolve(backupFileName);
+        try {
+            Files.copy(databasePath, backupPath);
         } catch (Exception e) {
-            LogUtil.error("Error backuping database: {0}", e.getMessage());
+            LogUtil.error("Error backing up database: {0}", e.getMessage());
             return null;
         }
 
@@ -296,14 +290,16 @@ public class StorageService {
             customName = player.getDisplayName();
         }
 
-        var prefix = configService.placeholdersLeaderboardPrefix();
-        if (!prefix.isEmpty()) {
-            customName = PlaceholderAPI.setPlaceholders(player, prefix) + customName;
-        }
+        if (HeadBlocks.isPlaceholderApiActive) {
+            var prefix = configService.placeholdersLeaderboardPrefix();
+            if (!prefix.isEmpty()) {
+                customName = PlaceholderAPI.setPlaceholders(player, prefix) + customName;
+            }
 
-        var suffix = configService.placeholdersLeaderboardSuffix();
-        if (!suffix.isEmpty()) {
-            customName = customName + PlaceholderAPI.setPlaceholders(player, suffix);
+            var suffix = configService.placeholdersLeaderboardSuffix();
+            if (!suffix.isEmpty()) {
+                customName = customName + PlaceholderAPI.setPlaceholders(player, suffix);
+            }
         }
 
         return customName;
@@ -376,7 +372,7 @@ public class StorageService {
         storage.clearCachedTopPlayers();
     }
 
-    public Boolean containsPlayer(UUID playerUuid) throws InternalException {
+    public boolean containsPlayer(UUID playerUuid) throws InternalException {
         return storage.containsPlayer(playerUuid) || database.containsPlayer(playerUuid);
     }
 
@@ -486,10 +482,10 @@ public class StorageService {
             instructions.add(Requests.createTableHeads() + ";");
         }
 
-        ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = database.getTableHeads();
-        for (AbstractMap.SimpleEntry<String, Boolean> head : heads) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + escapeSql(head.getKey()) +
-                    "', " + (head.getValue() ? 1 : 0) + ", '', '" + escapeSql(serverIdentifier) + "');");
+        ArrayList<Database.HeadExportRow> heads = database.getTableHeads();
+        for (Database.HeadExportRow head : heads) {
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + escapeSql(head.uuid()) +
+                    "', " + (head.exists() ? 1 : 0) + ", '', '" + escapeSql(serverIdentifier) + "');");
         }
 
         instructions.add("");
@@ -502,10 +498,10 @@ public class StorageService {
             instructions.add(Requests.createTablePlayerHeads() + ";");
         }
 
-        ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = database.getTablePlayerHeads();
-        for (AbstractMap.SimpleEntry<String, String> pHead : playerHeads) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + escapeSql(pHead.getKey()) +
-                    "', '" + escapeSql(pHead.getValue()) + "');");
+        ArrayList<Database.PlayerHeadExportRow> playerHeads = database.getTablePlayerHeads();
+        for (Database.PlayerHeadExportRow pHead : playerHeads) {
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + escapeSql(pHead.playerUuid()) +
+                    "', '" + escapeSql(pHead.headUuid()) + "');");
         }
 
         instructions.add("");
@@ -518,9 +514,9 @@ public class StorageService {
             instructions.add(Requests.createTablePlayers() + ";");
         }
 
-        ArrayList<AbstractMap.SimpleEntry<String, String>> players = database.getTablePlayers();
-        for (AbstractMap.SimpleEntry<String, String> player : players) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + escapeSql(player.getKey()) + "', '" + escapeSql(player.getValue()) + "', '');");
+        ArrayList<Database.PlayerExportRow> players = database.getTablePlayers();
+        for (Database.PlayerExportRow player : players) {
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + escapeSql(player.uuid()) + "', '" + escapeSql(player.name()) + "', '');");
         }
 
         instructions.add("");

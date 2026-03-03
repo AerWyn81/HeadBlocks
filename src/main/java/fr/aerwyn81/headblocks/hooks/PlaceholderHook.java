@@ -157,7 +157,10 @@ public class PlaceholderHook extends PlaceholderExpansion {
             try {
                 var hUUID = UUID.fromString(str[str.length - 1]);
                 return String.valueOf(registry.getStorageService().hasHead(player.getUniqueId(), hUUID));
-            } catch (Exception ignored) {
+            } catch (IllegalArgumentException ignored) {
+                // Not a valid UUID, try name-based lookup below
+            } catch (Exception ex) {
+                return "Storage error retrieving heads";
             }
 
             try {
@@ -171,7 +174,8 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 }
 
                 return String.valueOf(registry.getStorageService().hasHead(player.getUniqueId(), head.getUuid()));
-            } catch (Exception ignored) {
+            } catch (Exception ex) {
+                return "Storage error retrieving heads";
             }
         }
 

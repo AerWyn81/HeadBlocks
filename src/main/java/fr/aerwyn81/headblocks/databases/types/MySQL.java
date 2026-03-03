@@ -11,7 +11,6 @@ import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.UUID;
@@ -550,14 +549,14 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException {
-        ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = new ArrayList<>();
+    public ArrayList<Database.HeadExportRow> getTableHeads() throws InternalException {
+        ArrayList<Database.HeadExportRow> heads = new ArrayList<>();
 
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(Requests.getTableHeadsData())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    heads.add(new AbstractMap.SimpleEntry<>(rs.getString("hUUID"), rs.getBoolean("hExist")));
+                    heads.add(new Database.HeadExportRow(rs.getString("hUUID"), rs.getBoolean("hExist")));
                 }
             }
         } catch (Exception ex) {
@@ -568,14 +567,14 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayerHeads() throws InternalException {
-        ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
+    public ArrayList<Database.PlayerHeadExportRow> getTablePlayerHeads() throws InternalException {
+        ArrayList<Database.PlayerHeadExportRow> playerHeads = new ArrayList<>();
 
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(Requests.getTablePlayerHeadsData())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    playerHeads.add(new AbstractMap.SimpleEntry<>(rs.getString("pUUID"), rs.getString("hUUID")));
+                    playerHeads.add(new Database.PlayerHeadExportRow(rs.getString("pUUID"), rs.getString("hUUID")));
                 }
             }
         } catch (Exception ex) {
@@ -586,14 +585,14 @@ public final class MySQL implements Database {
     }
 
     @Override
-    public ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayers() throws InternalException {
-        ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
+    public ArrayList<Database.PlayerExportRow> getTablePlayers() throws InternalException {
+        ArrayList<Database.PlayerExportRow> playerHeads = new ArrayList<>();
 
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(Requests.getTablePlayer())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    playerHeads.add(new AbstractMap.SimpleEntry<>(rs.getString("pUUID"), rs.getString("pName")));
+                    playerHeads.add(new Database.PlayerExportRow(rs.getString("pUUID"), rs.getString("pName")));
                 }
             }
         } catch (Exception ex) {

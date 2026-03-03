@@ -3,13 +3,21 @@ package fr.aerwyn81.headblocks.databases;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
 public interface Database {
     int version = 5;
+
+    record HeadExportRow(String uuid, boolean exists) {
+    }
+
+    record PlayerHeadExportRow(String playerUuid, String headUuid) {
+    }
+
+    record PlayerExportRow(String uuid, String name) {
+    }
 
     void close() throws InternalException;
 
@@ -47,11 +55,11 @@ public interface Database {
 
     void upsertTableVersion(int oldVersion) throws InternalException;
 
-    ArrayList<AbstractMap.SimpleEntry<String, Boolean>> getTableHeads() throws InternalException;
+    ArrayList<HeadExportRow> getTableHeads() throws InternalException;
 
-    ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayerHeads() throws InternalException;
+    ArrayList<PlayerHeadExportRow> getTablePlayerHeads() throws InternalException;
 
-    ArrayList<AbstractMap.SimpleEntry<String, String>> getTablePlayers() throws InternalException;
+    ArrayList<PlayerExportRow> getTablePlayers() throws InternalException;
 
     void addColumnHeadTexture() throws InternalException;
 

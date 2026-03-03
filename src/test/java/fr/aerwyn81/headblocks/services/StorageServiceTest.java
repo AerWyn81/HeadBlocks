@@ -990,17 +990,17 @@ class StorageServiceTest {
 
                 lenient().when(configService.databasePrefix()).thenReturn("");
 
-                ArrayList<AbstractMap.SimpleEntry<String, Boolean>> heads = new ArrayList<>();
-                heads.add(new AbstractMap.SimpleEntry<>("head-uuid-1", true));
-                heads.add(new AbstractMap.SimpleEntry<>("head-uuid-2", false));
+                ArrayList<Database.HeadExportRow> heads = new ArrayList<>();
+                heads.add(new Database.HeadExportRow("head-uuid-1", true));
+                heads.add(new Database.HeadExportRow("head-uuid-2", false));
                 when(database.getTableHeads()).thenReturn(heads);
 
-                ArrayList<AbstractMap.SimpleEntry<String, String>> playerHeads = new ArrayList<>();
-                playerHeads.add(new AbstractMap.SimpleEntry<>("player-uuid-1", "head-uuid-1"));
+                ArrayList<Database.PlayerHeadExportRow> playerHeads = new ArrayList<>();
+                playerHeads.add(new Database.PlayerHeadExportRow("player-uuid-1", "head-uuid-1"));
                 when(database.getTablePlayerHeads()).thenReturn(playerHeads);
 
-                ArrayList<AbstractMap.SimpleEntry<String, String>> players = new ArrayList<>();
-                players.add(new AbstractMap.SimpleEntry<>("player-uuid-1", "Steve"));
+                ArrayList<Database.PlayerExportRow> players = new ArrayList<>();
+                players.add(new Database.PlayerExportRow("player-uuid-1", "Steve"));
                 when(database.getTablePlayers()).thenReturn(players);
 
                 ArrayList<String> result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
