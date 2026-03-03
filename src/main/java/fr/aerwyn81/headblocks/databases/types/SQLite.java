@@ -661,10 +661,8 @@ public class SQLite implements Database {
 
     @Override
     public boolean isDefaultTablesExist() {
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.getIsTablePlayersExistSQLite());
-             var rs = ps.executeQuery()) {
-            return true;
+        try (var conn = dataSource.getConnection()) {
+            return tableExists(conn, Requests.getIsTablePlayersExistSQLite());
         } catch (Exception ex) {
             return false;
         }
@@ -1138,10 +1136,7 @@ public class SQLite implements Database {
     }
 
     private int checkVersion(Connection conn) {
-        try (var statement = conn.prepareStatement(Requests.getContainsTableHeads());
-             var ignored = statement.executeQuery()) {
-            // Table exists
-        } catch (Exception ex) {
+        if (!tableExists(conn, Requests.getContainsTableHeads())) {
             return -1;
         }
 
@@ -1154,6 +1149,15 @@ public class SQLite implements Database {
             }
         } catch (Exception ex) {
             return 0;
+        }
+    }
+
+    private boolean tableExists(Connection conn, String query) {
+        try (var ps = conn.prepareStatement(query);
+             var rs = ps.executeQuery()) {
+            return rs.next() || rs.getMetaData().getColumnCount() >= 0;
+        } catch (Exception ex) {
+            return false;
         }
     }
 

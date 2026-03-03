@@ -118,7 +118,6 @@ class MoveCommandTest {
         @Test
         void targetIsHead_storesHeadMoveAndSendsInfo() {
             UUID playerUuid = UUID.randomUUID();
-            UUID headUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
             Block block = mock(Block.class);

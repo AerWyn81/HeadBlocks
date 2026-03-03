@@ -18,15 +18,13 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored", "ConstantConditions"})
 public class LanguageService {
     private final PluginProvider pluginProvider;
-    private final ConfigService configService;
     private String lang;
-    private HashMap<String, Object> messageMap;
+    private final HashMap<String, Object> messageMap;
 
     // --- Constructor ---
 
     public LanguageService(PluginProvider pluginProvider, ConfigService configService) {
         this.pluginProvider = pluginProvider;
-        this.configService = configService;
         this.messageMap = new HashMap<>();
 
         var langDir = new File(pluginProvider.getDataFolder() + "/language");

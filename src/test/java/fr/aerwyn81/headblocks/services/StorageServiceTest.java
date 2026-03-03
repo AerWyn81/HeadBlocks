@@ -1046,7 +1046,7 @@ class StorageServiceTest {
 
                 ArrayList<String> result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
 
-                assertThat(result.get(0)).contains("myprefix_hb_heads");
+                assertThat(result.getFirst()).contains("myprefix_hb_heads");
             }
         }
 

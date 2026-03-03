@@ -217,7 +217,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 }
             }
 
-            if (huntId == null || subType == null || huntId.isEmpty()) {
+            if (huntId == null || huntId.isEmpty()) {
                 return "";
             }
 
