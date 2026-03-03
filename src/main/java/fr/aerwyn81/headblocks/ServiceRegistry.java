@@ -8,6 +8,7 @@ import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import org.holoeasy.HoloEasy;
 
 import java.io.File;
+import java.util.Objects;
 
 public class ServiceRegistry {
     private final PluginProvider pluginProvider;
@@ -51,11 +52,7 @@ public class ServiceRegistry {
     }
 
     private void initializeAll() {
-        if (existingConfigService != null) {
-            this.configService = existingConfigService;
-        } else {
-            this.configService = new ConfigService(configFile);
-        }
+        this.configService = Objects.requireNonNullElseGet(existingConfigService, () -> new ConfigService(configFile));
 
         this.languageService = new LanguageService(pluginProvider, configService);
         languageService.setLang(configService.language());
