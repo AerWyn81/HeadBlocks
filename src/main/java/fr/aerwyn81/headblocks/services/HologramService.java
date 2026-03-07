@@ -358,6 +358,7 @@ public class HologramService {
         holograms.deleteAll();
 
         if (hologramPool != null) {
+            //noinspection UnstableApiUsage
             hologramPool.destroy();
         }
     }

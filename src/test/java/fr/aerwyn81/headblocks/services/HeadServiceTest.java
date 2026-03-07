@@ -947,7 +947,7 @@ class HeadServiceTest {
                 headService.saveHeadLocation(loc, "tex");
 
                 assertThat(headLocations()).hasSize(1);
-                assertThat(headLocations().get(0).getUuid()).isEqualTo(generatedUuid);
+                assertThat(headLocations().getFirst().getUuid()).isEqualTo(generatedUuid);
             }
         }
 
@@ -1476,7 +1476,7 @@ class HeadServiceTest {
 
                 // uuid1 is skipped due to exception, uuid2 loaded successfully
                 assertThat(headService.getHeadLocations()).hasSize(1);
-                assertThat(headService.getHeadLocations().get(0).getUuid()).isEqualTo(uuid2);
+                assertThat(headService.getHeadLocations().getFirst().getUuid()).isEqualTo(uuid2);
             }
         }
 
@@ -1517,7 +1517,7 @@ class HeadServiceTest {
                 headService.loadLocations();
 
                 assertThat(headService.getHeadLocations()).hasSize(1);
-                assertThat(headService.getHeadLocations().get(0).getUuid()).isEqualTo(uuid2);
+                assertThat(headService.getHeadLocations().getFirst().getUuid()).isEqualTo(uuid2);
             }
         }
 
@@ -2829,7 +2829,7 @@ class HeadServiceTest {
 
                 headService.saveHeadLocation(loc, "tex");
 
-                HeadLocation added = headLocations().get(0);
+                HeadLocation added = headLocations().getFirst();
                 // The HeadLocation is created with empty name ""
                 assertThat(added.getName()).isEmpty();
             }
