@@ -38,7 +38,7 @@ public class HuntService {
 
         boolean hasDefault = fileHunts.stream().anyMatch(h -> "default".equals(h.getId()));
         if (!hasDefault) {
-            Hunt defaultHunt = doCreateDefaultHunt();
+            Hunt defaultHunt = createDefaultHunt();
             fileHunts.add(0, defaultHunt);
         }
 
@@ -46,8 +46,8 @@ public class HuntService {
             huntsById.put(hunt.getId(), hunt);
         }
 
-        doSyncHuntsWithDb();
-        doLoadHeadMappingsFromDb();
+        syncHuntsWithDb();
+        loadHeadMappingsFromDb();
         rebuildHeadToHuntsCache();
 
         knownHuntVersion = storageService.getHuntVersion();
@@ -56,13 +56,13 @@ public class HuntService {
                 huntsById.values().stream().map(Hunt::getId).collect(Collectors.joining(", ")));
     }
 
-    private Hunt doCreateDefaultHunt() {
+    private Hunt createDefaultHunt() {
         Hunt hunt = new Hunt(configService, "default", "Default", HuntState.ACTIVE, 0, "PLAYER_HEAD");
         huntConfigService.saveHunt(hunt);
         return hunt;
     }
 
-    private void doSyncHuntsWithDb() {
+    private void syncHuntsWithDb() {
         try {
             Set<String> dbHuntIds = new HashSet<>();
             for (String[] row : storageService.getHuntsFromDb()) {
@@ -79,7 +79,7 @@ public class HuntService {
         }
     }
 
-    private void doLoadHeadMappingsFromDb() {
+    private void loadHeadMappingsFromDb() {
         for (Hunt hunt : huntsById.values()) {
             try {
                 ArrayList<UUID> heads = storageService.getHeadsForHunt(hunt.getId());

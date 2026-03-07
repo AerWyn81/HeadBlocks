@@ -237,5 +237,4 @@ public class RewardService {
         return tieredReward == null ||
                 tieredReward.slotsRequired() == -1 || PlayerUtils.getEmptySlots(player) >= tieredReward.slotsRequired();
     }
-
 }

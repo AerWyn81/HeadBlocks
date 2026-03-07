@@ -107,7 +107,7 @@ public class StorageService {
             database.open();
 
             if (database instanceof MySQL || isFileExist) {
-                doVerifyDatabaseMigration();
+                verifyDatabaseMigration();
             }
 
             database.load();
@@ -159,7 +159,7 @@ public class StorageService {
         return configService.databaseType().name();
     }
 
-    private void doVerifyDatabaseMigration() throws InternalException {
+    private void verifyDatabaseMigration() throws InternalException {
         if (!database.isDefaultTablesExist()) {
             return;
         }
@@ -253,7 +253,7 @@ public class StorageService {
                 try {
                     boolean isExist = containsPlayer(pUuid);
 
-                    String playerDisplayName = doGetCustomDisplay(player);
+                    String playerDisplayName = getCustomDisplay(player);
 
                     var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
 
@@ -283,7 +283,7 @@ public class StorageService {
         });
     }
 
-    private String doGetCustomDisplay(Player player) {
+    private String getCustomDisplay(Player player) {
         var customName = player.getName();
 
         if (configService.placeholdersLeaderboardUseNickname()) {

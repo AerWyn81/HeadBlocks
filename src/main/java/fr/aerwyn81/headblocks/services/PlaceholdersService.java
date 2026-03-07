@@ -102,5 +102,4 @@ public class PlaceholdersService {
 
         return MessageUtils.colorize(message);
     }
-
 }

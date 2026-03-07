@@ -96,7 +96,7 @@ public class HeadService {
         headMoves.clear();
         cancelAllSpinTasks();
 
-        doLoadHeads();
+        loadHeads();
         loadLocations();
     }
 
@@ -152,7 +152,7 @@ public class HeadService {
                         continue;
                     }
 
-                    doAddHeadToSpin(headLoc, i);
+                    addHeadToSpin(headLoc, i);
 
                     headLocations.add(headLoc);
                 } catch (Exception e) {
@@ -192,7 +192,7 @@ public class HeadService {
         LogUtil.info("Loaded {0} locations!", headLocations.size());
     }
 
-    private void doAddHeadToSpin(HeadLocation headLoc, int offset) {
+    private void addHeadToSpin(HeadLocation headLoc, int offset) {
         if (!configService.spinEnabled() || configService.spinLinked()) {
             return;
         }
@@ -215,7 +215,7 @@ public class HeadService {
         saveHeadInConfig(headLocation);
 
         headLocations.add(headLocation);
-        doAddHeadToSpin(headLocation, 1);
+        addHeadToSpin(headLocation, 1);
 
         return uniqueUuid;
     }
@@ -325,7 +325,7 @@ public class HeadService {
                 .orElse(null);
     }
 
-    private void doLoadHeads() {
+    private void loadHeads() {
         List<String> headsConfig;
 
         if (configService.headsThemeEnabled()) {
@@ -492,7 +492,7 @@ public class HeadService {
             hologramService.createHolograms(centeredLoc);
         }
 
-        doAddHeadToSpin(headLocation, 1);
+        addHeadToSpin(headLocation, 1);
     }
 
     public void rotateHead(HeadLocation headLocation) {

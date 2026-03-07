@@ -175,5 +175,4 @@ public class LanguageService {
             LogUtil.error("Error loading translation file: {0}", e.getMessage());
         }
     }
-
 }

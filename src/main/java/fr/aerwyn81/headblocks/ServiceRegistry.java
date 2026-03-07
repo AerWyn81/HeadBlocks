@@ -72,7 +72,6 @@ public class ServiceRegistry {
         this.headService = new HeadService(configService, storageService, languageService, scheduler, pluginProvider);
         headService.setHuntService(huntService);
         headService.initialize(locationFile);
-        headService.load();
 
         this.rewardService = new RewardService(configService, placeholdersService, scheduler, commandDispatcher);
 
