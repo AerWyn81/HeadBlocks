@@ -68,6 +68,19 @@ class HeadServiceTest {
         setField("headLocations", new ArrayList<HeadLocation>());
         setField("headMoves", new HashMap<UUID, HeadMove>());
         setField("tasksHeadSpin", new HashMap<UUID, Integer>());
+
+        // saveConfig uses runTaskLater + runTaskAsync — execute immediately in tests
+        lenient().doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(0);
+            task.run();
+            return null;
+        }).when(scheduler).runTaskLater(any(Runnable.class), anyLong());
+
+        lenient().doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(0);
+            task.run();
+            return null;
+        }).when(scheduler).runTaskAsync(any(Runnable.class));
     }
 
     // --- Helpers ---
@@ -614,25 +627,24 @@ class HeadServiceTest {
             headService.saveHeadInConfig(hl);
 
             verify(hl).saveInConfig(yamlConfig);
-            verify(yamlConfig).save(configFile);
+            verify(yamlConfig).saveToString();
         }
 
         @Test
-        void io_exception_during_save_does_not_propagate() throws Exception {
+        void save_calls_saveToString_and_does_not_propagate_exceptions() throws Exception {
             YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
             java.io.File configFile = mock(java.io.File.class);
             lenient().when(configFile.getName()).thenReturn("heads.yml");
             setField("config", yamlConfig);
             setField("configFile", configFile);
 
-            doThrow(new java.io.IOException("disk full")).when(yamlConfig).save(configFile);
-
             HeadLocation hl = mock(HeadLocation.class);
 
-            // Should not throw -- error is logged internally
+            // Should not throw -- IO errors are caught internally
             headService.saveHeadInConfig(hl);
 
             verify(hl).saveInConfig(yamlConfig);
+            verify(yamlConfig).saveToString();
         }
     }
 
@@ -839,7 +851,7 @@ class HeadServiceTest {
             headService.removeHeadLocation(hl, true);
 
             verify(hl).removeFromConfig(yamlConfig);
-            verify(yamlConfig).save(configFile);
+            verify(yamlConfig).saveToString();
         }
 
         @Test
@@ -1064,7 +1076,7 @@ class HeadServiceTest {
 
             verify(hl1).saveInConfig(yamlConfig);
             verify(hl2).saveInConfig(yamlConfig);
-            verify(yamlConfig).save(configFile);
+            verify(yamlConfig).saveToString();
         }
 
         @Test
@@ -1076,7 +1088,7 @@ class HeadServiceTest {
 
             headService.saveAllHeadsInConfig();
 
-            verify(yamlConfig).save(configFile);
+            verify(yamlConfig).saveToString();
         }
     }
 
@@ -2256,6 +2268,8 @@ class HeadServiceTest {
                 return null;
             }).when(scheduler).runTask(any(Runnable.class));
 
+            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
+
             @SuppressWarnings("unchecked")
             Consumer<Integer> onComplete = mock(Consumer.class);
 
@@ -2263,7 +2277,7 @@ class HeadServiceTest {
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
 
             verify(hl).removeFromConfig(yamlConfig);
-            verify(yamlConfig).save(configFile);
+            verify(yamlConfig).saveToString();
         }
     }
 
@@ -2547,13 +2561,11 @@ class HeadServiceTest {
             setField("config", yamlConfig);
             setField("configFile", configFile);
 
-            doThrow(new java.io.IOException("disk error")).when(yamlConfig).save(configFile);
-
-            // Trigger doSaveConfig through saveAllHeadsInConfig
+            // Trigger saveConfig through saveAllHeadsInConfig
             headService.saveAllHeadsInConfig();
 
             // No exception should propagate
-            verify(yamlConfig).save(configFile);
+            verify(yamlConfig).saveToString();
         }
     }
 
@@ -2796,7 +2808,7 @@ class HeadServiceTest {
                 headService.saveHeadLocation(loc, "tex");
 
                 // Verify that config is saved (the new HeadLocation's saveInConfig is called)
-                verify(yamlConfig).save(configFile);
+                verify(yamlConfig).saveToString();
             }
         }
 

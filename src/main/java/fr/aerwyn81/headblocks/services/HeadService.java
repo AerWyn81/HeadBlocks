@@ -29,7 +29,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -119,8 +118,8 @@ public class HeadService {
             scheduler.runTaskAsync(() -> {
                 try {
                     Files.writeString(configFile.toPath(), yamlContent);
-                } catch (IOException e) {
-                    LogUtil.error("Cannot save the config file to {0}", configFile.getName());
+                } catch (Exception e) {
+                    LogUtil.error("Cannot save the config file to {0}: {1}", configFile.getName(), e.getMessage());
                 }
             });
         }, 1L);
@@ -315,7 +314,18 @@ public class HeadService {
             saveConfig();
 
             final int finalRemoved = removed;
-            scheduler.runTask(() -> onComplete.accept(finalRemoved));
+            scheduler.runTask(() -> {
+                for (Hunt hunt : huntService.getAllHunts()) {
+                    for (HeadLocation hl : headsToRemove) {
+                        if (hl != null) {
+                            hunt.removeHead(hl.getUuid());
+                        }
+                    }
+                }
+                huntService.rebuildHeadToHuntsCache();
+
+                onComplete.accept(finalRemoved);
+            });
         });
     }
 
