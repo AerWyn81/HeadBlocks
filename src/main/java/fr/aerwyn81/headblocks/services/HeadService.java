@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +53,7 @@ public class HeadService {
     private HashMap<UUID, HeadMove> headMoves;
     private ArrayList<HeadLocation> headLocations;
     private HashMap<UUID, Integer> tasksHeadSpin;
+    private boolean savePending;
 
     public static String HB_KEY = "HB_HEAD";
 
@@ -106,12 +108,22 @@ public class HeadService {
         }
     }
 
-    private void doSaveConfig() {
-        try {
-            config.save(configFile);
-        } catch (IOException e) {
-            LogUtil.error("Cannot save the config file to {0}", configFile.getName());
+    private void saveConfig() {
+        if (savePending) {
+            return;
         }
+        savePending = true;
+        scheduler.runTaskLater(() -> {
+            savePending = false;
+            String yamlContent = config.saveToString();
+            scheduler.runTaskAsync(() -> {
+                try {
+                    Files.writeString(configFile.toPath(), yamlContent);
+                } catch (IOException e) {
+                    LogUtil.error("Cannot save the config file to {0}", configFile.getName());
+                }
+            });
+        }, 1L);
     }
 
     public void loadLocations() {
@@ -222,7 +234,7 @@ public class HeadService {
 
     public void saveHeadInConfig(HeadLocation headLocation) {
         headLocation.saveInConfig(config);
-        doSaveConfig();
+        saveConfig();
     }
 
     public void saveAllHeadsInConfig() {
@@ -230,7 +242,7 @@ public class HeadService {
             headLocation.saveInConfig(config);
         }
 
-        doSaveConfig();
+        saveConfig();
     }
 
     public void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
@@ -251,7 +263,7 @@ public class HeadService {
             headLocations.remove(headLocation);
 
             headLocation.removeFromConfig(config);
-            doSaveConfig();
+            saveConfig();
 
             headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
             var spinTaskId = tasksHeadSpin.get(headLocation.getUuid());
@@ -300,7 +312,7 @@ public class HeadService {
                 removed++;
             }
 
-            doSaveConfig();
+            saveConfig();
 
             final int finalRemoved = removed;
             scheduler.runTask(() -> onComplete.accept(finalRemoved));
