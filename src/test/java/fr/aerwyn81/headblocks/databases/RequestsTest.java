@@ -50,7 +50,6 @@ class RequestsTest {
             assertThat(Requests.getTablePlayerHeads()).isEqualTo("hb_playerHeads");
             assertThat(Requests.getTableVersion()).isEqualTo("hb_version");
             assertThat(Requests.getTableHunts()).isEqualTo("hb_hunts");
-            assertThat(Requests.getTableHeadHunts()).isEqualTo("hb_head_hunts");
             assertThat(Requests.getTableTimedRuns()).isEqualTo("hb_timed_runs");
         }
     }
@@ -71,7 +70,6 @@ class RequestsTest {
             assertThat(Requests.getTablePlayerHeads()).isEqualTo("test_hb_playerHeads");
             assertThat(Requests.getTableVersion()).isEqualTo("test_hb_version");
             assertThat(Requests.getTableHunts()).isEqualTo("test_hb_hunts");
-            assertThat(Requests.getTableHeadHunts()).isEqualTo("test_hb_head_hunts");
             assertThat(Requests.getTableTimedRuns()).isEqualTo("test_hb_timed_runs");
         }
     }
@@ -271,25 +269,6 @@ class RequestsTest {
     }
 
     // =========================================================================
-    // 7. SQL creation: head hunts
-    // =========================================================================
-
-    @Nested
-    class CreateTableHeadHunts {
-
-        @Test
-        void createTableHeadHunts_contains_composite_primary_key() {
-            initWithPrefix("");
-
-            String sql = Requests.createTableHeadHunts();
-
-            assertThat(sql).contains("PRIMARY KEY");
-            assertThat(sql).contains("headUUID");
-            assertThat(sql).contains("huntId");
-            assertThat(sql).contains("hb_head_hunts");
-        }
-    }
-
     // =========================================================================
     // 8. SQL creation: version
     // =========================================================================
@@ -376,7 +355,6 @@ class RequestsTest {
             assertThat(Requests.createTableHeads()).contains("test_hb_heads");
             assertThat(Requests.createTablePlayerHeads()).contains("test_hb_playerHeads");
             assertThat(Requests.createTableHunts()).contains("test_hb_hunts");
-            assertThat(Requests.createTableHeadHunts()).contains("test_hb_head_hunts");
             assertThat(Requests.createTableTimedRuns()).contains("test_hb_timed_runs");
         }
 
@@ -821,17 +799,7 @@ class RequestsTest {
     // 18. Head-Hunt linking queries
     // =========================================================================
 
-    @Nested
-    class HeadHBHuntLinkQueries {
 
-        @Test
-        void getHuntsForHead_selects_huntId_by_headUUID() {
-            initWithPrefix("");
-
-            assertThat(Requests.getHuntsForHead()).isEqualTo("SELECT huntId FROM hb_head_hunts WHERE headUUID = ?");
-        }
-
-    }
 
     // =========================================================================
     // 19. Hunt-aware player progression queries
@@ -1200,17 +1168,6 @@ class RequestsTest {
             assertThat(sql).contains("'default'");
             assertThat(sql).contains("'Default'");
             assertThat(sql).contains("'ACTIVE'");
-        }
-
-        @Test
-        void migV5LinkAllHeadsToDefault_links_existing_heads() {
-            initWithPrefix("");
-
-            String sql = Requests.migV5LinkAllHeadsToDefault();
-
-            assertThat(sql).contains("INSERT INTO hb_head_hunts");
-            assertThat(sql).contains("SELECT hUUID, 'default' FROM hb_heads");
-            assertThat(sql).contains("hExist = True");
         }
 
         @Test

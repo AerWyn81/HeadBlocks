@@ -771,25 +771,6 @@ public class SQLite implements Database {
         return null;
     }
 
-    @Override
-    public ArrayList<String> getHuntsForHead(UUID headUUID) throws InternalException {
-        var huntIds = new ArrayList<String>();
-
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.getHuntsForHead())) {
-            ps.setString(1, headUUID.toString());
-            try (var rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    huntIds.add(rs.getString("huntId"));
-                }
-            }
-        } catch (Exception ex) {
-            throw new InternalException(ex);
-        }
-
-        return huntIds;
-    }
-
     // --- Hunt-aware player progression (v5) ---
 
     @Override
@@ -925,21 +906,12 @@ public class SQLite implements Database {
                 try (var ps = conn.prepareStatement(Requests.createTableHunts())) {
                     ps.execute();
                 }
-                try (var ps = conn.prepareStatement(Requests.createTableHeadHunts())) {
-                    ps.execute();
-                }
-
                 // 2. Insert "default" hunt
                 try (var ps = conn.prepareStatement(Requests.migV5InsertDefaultHunt())) {
                     ps.executeUpdate();
                 }
 
-                // 3. Link all existing heads to "default"
-                try (var ps = conn.prepareStatement(Requests.migV5LinkAllHeadsToDefault())) {
-                    ps.executeUpdate();
-                }
-
-                // 4. Recreate hb_playerHeads with huntId in PK
+                // 3. Recreate hb_playerHeads with huntId in PK
                 //    SQLite doesn't support ALTER TABLE to change PK,
                 //    so we create temp → copy → drop → rename
                 try (var ps = conn.prepareStatement(Requests.migV5CreateTempPlayerHeadsSQLite())) {
@@ -1067,10 +1039,6 @@ public class SQLite implements Database {
         }
 
         try (var statement = conn.prepareStatement(Requests.createTableHunts())) {
-            statement.execute();
-        }
-
-        try (var statement = conn.prepareStatement(Requests.createTableHeadHunts())) {
             statement.execute();
         }
 

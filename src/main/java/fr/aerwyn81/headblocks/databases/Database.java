@@ -97,8 +97,6 @@ public interface Database {
 
     String[] getHuntById(String huntId) throws InternalException;
 
-    ArrayList<String> getHuntsForHead(UUID headUUID) throws InternalException;
-
     void addHeadForHunt(UUID pUUID, UUID hUUID, String huntId) throws InternalException;
 
     ArrayList<UUID> getHeadsPlayerForHunt(UUID pUUID, String huntId) throws InternalException;

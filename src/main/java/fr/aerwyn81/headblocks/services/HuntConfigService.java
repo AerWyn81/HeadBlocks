@@ -135,12 +135,12 @@ public class HuntConfigService {
         }
     }
 
-    public void migrateLocationsFromLegacy(File locationFile, StorageService storageService) {
+    public void migrateLocationsFromLegacy(File locationFile) {
         if (locationFile == null || !locationFile.exists()) {
             return;
         }
 
-        LogUtil.info("Migrating locations.yml to per-hunt YAML files...");
+        LogUtil.info("Migrating locations.yml to default hunt YAML file...");
 
         YamlConfiguration legacyYaml = YamlConfiguration.loadConfiguration(locationFile);
         var locationsSection = legacyYaml.getConfigurationSection("locations");
@@ -150,45 +150,30 @@ public class HuntConfigService {
             return;
         }
 
+        File huntFile = new File(huntsDir, "default.yml");
+        YamlConfiguration huntYaml = YamlConfiguration.loadConfiguration(huntFile);
+
         int migrated = 0;
         for (String uuidStr : locationsSection.getKeys(false)) {
             try {
                 UUID headUuid = UUID.fromString(uuidStr);
-
-                // Query DB for hunt assignment
-                String huntId = "default";
-                try {
-                    ArrayList<String> huntIds = storageService.getHuntsForHeadFromDb(headUuid);
-                    if (!huntIds.isEmpty()) {
-                        huntId = huntIds.get(0);
-                    }
-                } catch (Exception e) {
-                    LogUtil.warning("Could not query hunt for head {0}, defaulting: {1}", uuidStr, e.getMessage());
-                }
-
-                // Ensure hunt file exists
-                if (!huntFileExists(huntId)) {
-                    LogUtil.warning("Hunt file {0}.yml not found for head {1}, using default.", huntId, uuidStr);
-                    huntId = "default";
-                }
-
-                // Read from legacy and write to hunt YAML
-                var headLocation = HeadLocation.fromConfig(legacyYaml, headUuid, huntId);
-
-                File huntFile = new File(huntsDir, huntId + ".yml");
-                YamlConfiguration huntYaml = YamlConfiguration.loadConfiguration(huntFile);
+                var headLocation = HeadLocation.fromConfig(legacyYaml, headUuid, "default");
                 headLocation.saveInConfig(huntYaml);
-                huntYaml.save(huntFile);
-
                 migrated++;
             } catch (Exception e) {
                 LogUtil.error("Failed to migrate head {0}: {1}", uuidStr, e.getMessage());
             }
         }
 
+        try {
+            huntYaml.save(huntFile);
+        } catch (IOException e) {
+            LogUtil.error("Failed to save default hunt file after migration: {0}", e.getMessage());
+        }
+
         renameLegacyFile(locationFile);
         invalidateAllYamlCaches();
-        LogUtil.info("Migration complete: {0} head(s) migrated to per-hunt files.", migrated);
+        LogUtil.info("Migration complete: {0} head(s) migrated to default hunt.", migrated);
     }
 
     private void renameLegacyFile(File locationFile) {

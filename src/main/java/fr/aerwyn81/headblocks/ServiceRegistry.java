@@ -65,8 +65,8 @@ public class ServiceRegistry {
 
         this.storageService = new StorageService(configService, pluginProvider.getDataFolder());
 
-        // Migrate locations.yml → per-hunt YAML files (idempotent, runs once)
-        huntConfigService.migrateLocationsFromLegacy(locationFile, storageService);
+        // Migrate locations.yml → default hunt YAML (idempotent, runs once)
+        huntConfigService.migrateLocationsFromLegacy(locationFile);
 
         this.huntService = new HuntService(configService, huntConfigService, storageService);
 

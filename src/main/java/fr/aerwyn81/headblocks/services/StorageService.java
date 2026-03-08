@@ -639,10 +639,6 @@ public class StorageService {
         database.createHunt(huntId, name, state);
     }
 
-    public ArrayList<String> getHuntsForHeadFromDb(UUID headUUID) throws InternalException {
-        return database.getHuntsForHead(headUUID);
-    }
-
     public void updateHuntStateInDb(String huntId, String state) throws InternalException {
         database.updateHuntState(huntId, state);
     }

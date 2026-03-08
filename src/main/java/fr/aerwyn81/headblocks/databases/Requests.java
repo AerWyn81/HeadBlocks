@@ -278,10 +278,6 @@ public class Requests {
         return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` VARCHAR(64) PRIMARY KEY, `hName` VARCHAR(128) NOT NULL, `hState` VARCHAR(16) NOT NULL DEFAULT 'ACTIVE')", getTableHunts());
     }
 
-    public static String createTableHeadHunts() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`headUUID` VARCHAR(36) NOT NULL, `huntId` VARCHAR(64) NOT NULL, PRIMARY KEY (`headUUID`, `huntId`))", getTableHeadHunts());
-    }
-
     // --- Hunt CRUD ---
 
     public static String insertHunt() {
@@ -306,12 +302,6 @@ public class Requests {
 
     public static String getHuntById() {
         return String.format("SELECT hId, hName, hState FROM %s WHERE hId = ?", getTableHunts());
-    }
-
-    // --- Head-Hunt linking ---
-
-    public static String getHuntsForHead() {
-        return String.format("SELECT huntId FROM %s WHERE headUUID = ?", getTableHeadHunts());
     }
 
     // --- Hunt-aware player progression ---
@@ -364,10 +354,6 @@ public class Requests {
 
     public static String migV5InsertDefaultHunt() {
         return String.format("INSERT INTO %s (hId, hName, hState) VALUES ('default', 'Default', 'ACTIVE')", getTableHunts());
-    }
-
-    public static String migV5LinkAllHeadsToDefault() {
-        return String.format("INSERT INTO %s (headUUID, huntId) SELECT hUUID, 'default' FROM %s WHERE hExist = True", getTableHeadHunts(), getTableHeads());
     }
 
     public static String migV5CreateTempPlayerHeadsSQLite() {
