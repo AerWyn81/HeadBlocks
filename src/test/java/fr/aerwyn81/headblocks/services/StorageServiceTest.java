@@ -370,13 +370,15 @@ class StorageServiceTest {
     @Test
     void resetPlayer_invalidatesCacheThenDelegates() throws InternalException {
         UUID player = UUID.randomUUID();
-        when(storage.getCachedPlayerHeads(player)).thenReturn(null);
+        when(database.getHeadsPlayer(player)).thenReturn(new ArrayList<>());
 
         service.resetPlayer(player);
 
-        verify(storage).clearCachedTopPlayers();
         verify(storage).resetPlayer(player);
         verify(database).resetPlayer(player);
+        verify(database).getHeadsPlayer(player);
+        verify(storage).setCachedPlayerHeads(eq(player), argThat(Set::isEmpty));
+        verify(storage).clearCachedTopPlayers();
     }
 
     // --- addHeadForHunt ---
@@ -504,13 +506,16 @@ class StorageServiceTest {
     // --- resetPlayerHunt ---
 
     @Test
-    void resetPlayerHunt_delegatesAndInvalidatesCaches() throws InternalException {
+    void resetPlayerHunt_delegatesAndRebuildsCaches() throws InternalException {
         UUID player = UUID.randomUUID();
-        when(storage.getCachedPlayerHeads(player)).thenReturn(null);
+        UUID remainingHead = UUID.randomUUID();
+        when(database.getHeadsPlayer(player)).thenReturn(new ArrayList<>(List.of(remainingHead)));
 
         service.resetPlayerHunt(player, "hunt1");
 
         verify(database).resetPlayerHunt(player, "hunt1");
+        verify(database).getHeadsPlayer(player);
+        verify(storage).setCachedPlayerHeads(eq(player), argThat(set -> set.size() == 1 && set.contains(remainingHead)));
         verify(storage).clearCachedTopPlayers();
         verify(storage).removeCachedPlayerHeadsForHunt(player, "hunt1");
         verify(storage).clearCachedTopPlayersForHunt("hunt1");
@@ -632,41 +637,22 @@ class StorageServiceTest {
     class InvalidateCachePlayerTests {
 
         @Test
-        void invalidateCachePlayer_withCachedHeads_clearsAndSets() throws InternalException {
+        void invalidateCachePlayer_rebuildsFromDbAndClearsTopPlayers() throws InternalException {
             UUID player = UUID.randomUUID();
-            Set<UUID> cached = new HashSet<>(Set.of(UUID.randomUUID(), UUID.randomUUID()));
-            when(storage.getCachedPlayerHeads(player)).thenReturn(cached);
+            UUID head1 = UUID.randomUUID();
+            when(database.getHeadsPlayer(player)).thenReturn(new ArrayList<>(List.of(head1)));
 
             service.invalidateCachePlayer(player);
 
-            assertThat(cached).isEmpty();
+            verify(database).getHeadsPlayer(player);
+            verify(storage).setCachedPlayerHeads(eq(player), argThat(set -> set.size() == 1 && set.contains(head1)));
             verify(storage).clearCachedTopPlayers();
-            verify(storage).setCachedPlayerHeads(player, cached);
         }
 
         @Test
-        void invalidateCachePlayer_withNullCache_onlyClearsTopPlayers() throws InternalException {
+        void invalidateCachePlayer_dbThrows_doesNotPropagate() throws InternalException {
             UUID player = UUID.randomUUID();
-            when(storage.getCachedPlayerHeads(player)).thenReturn(null);
-
-            service.invalidateCachePlayer(player);
-
-            verify(storage).clearCachedTopPlayers();
-            verify(storage, never()).setCachedPlayerHeads(any(), anySet());
-        }
-
-        @Test
-        void invalidateCachePlayer_storageThrows_doesNotPropagate() throws InternalException {
-            UUID player = UUID.randomUUID();
-            when(storage.getCachedPlayerHeads(player)).thenThrow(new InternalException("cache error"));
-
-            service.invalidateCachePlayer(player); // should not throw
-        }
-
-        @Test
-        void invalidateCachePlayer_clearTopPlayersThrows_doesNotPropagate() throws InternalException {
-            UUID player = UUID.randomUUID();
-            doThrow(new InternalException("clear error")).when(storage).clearCachedTopPlayers();
+            when(database.getHeadsPlayer(player)).thenThrow(new InternalException("db error"));
 
             service.invalidateCachePlayer(player); // should not throw
         }
@@ -678,18 +664,17 @@ class StorageServiceTest {
     class ResetPlayerTests {
 
         @Test
-        void resetPlayer_withCachedHeads_clearsHeadsCacheThenDelegates() throws InternalException {
+        void resetPlayer_delegatesAndRebuildsCache() throws InternalException {
             UUID player = UUID.randomUUID();
-            Set<UUID> cached = new HashSet<>(Set.of(UUID.randomUUID()));
-            when(storage.getCachedPlayerHeads(player)).thenReturn(cached);
+            when(database.getHeadsPlayer(player)).thenReturn(new ArrayList<>());
 
             service.resetPlayer(player);
 
-            assertThat(cached).isEmpty();
-            verify(storage).setCachedPlayerHeads(player, cached);
-            verify(storage).clearCachedTopPlayers();
             verify(storage).resetPlayer(player);
             verify(database).resetPlayer(player);
+            verify(database).getHeadsPlayer(player);
+            verify(storage).setCachedPlayerHeads(eq(player), argThat(Set::isEmpty));
+            verify(storage).clearCachedTopPlayers();
         }
     }
 
@@ -748,16 +733,17 @@ class StorageServiceTest {
     class ResetPlayerHBHuntTests {
 
         @Test
-        void resetPlayerHunt_withCachedHeads_clearsAndDelegates() throws InternalException {
+        void resetPlayerHunt_rebuildsGlobalCacheFromDb() throws InternalException {
             UUID player = UUID.randomUUID();
-            Set<UUID> cached = new HashSet<>(Set.of(UUID.randomUUID()));
-            when(storage.getCachedPlayerHeads(player)).thenReturn(cached);
+            UUID headFromOtherHunt = UUID.randomUUID();
+            when(database.getHeadsPlayer(player)).thenReturn(new ArrayList<>(List.of(headFromOtherHunt)));
 
             service.resetPlayerHunt(player, "hunt1");
 
-            assertThat(cached).isEmpty();
-            verify(storage).setCachedPlayerHeads(player, cached);
             verify(database).resetPlayerHunt(player, "hunt1");
+            verify(database).getHeadsPlayer(player);
+            verify(storage).setCachedPlayerHeads(eq(player), argThat(set -> set.contains(headFromOtherHunt)));
+            verify(storage).clearCachedTopPlayers();
             verify(storage).removeCachedPlayerHeadsForHunt(player, "hunt1");
             verify(storage).clearCachedTopPlayersForHunt("hunt1");
         }

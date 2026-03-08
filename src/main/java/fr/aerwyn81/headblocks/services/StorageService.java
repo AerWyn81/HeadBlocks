@@ -549,13 +549,11 @@ public class StorageService {
 
     public void invalidateCachePlayer(UUID playerUuid) {
         try {
+            // Rebuild cache from DB instead of just removing it.
+            // If we only remove, hasHead() falls through to storage.hasHead() which reads stale headsFound.
+            var dbHeads = database.getHeadsPlayer(playerUuid);
+            storage.setCachedPlayerHeads(playerUuid, new HashSet<>(dbHeads));
             storage.clearCachedTopPlayers();
-
-            Set<UUID> cachedHeads = storage.getCachedPlayerHeads(playerUuid);
-            if (cachedHeads != null) {
-                cachedHeads.clear();
-                storage.setCachedPlayerHeads(playerUuid, cachedHeads);
-            }
         } catch (InternalException ex) {
             LogUtil.error("Error while invalidating cache for player {0}: {1}", playerUuid, ex.getMessage());
         }
@@ -620,7 +618,12 @@ public class StorageService {
 
     public void resetPlayerHunt(UUID playerUuid, String huntId) throws InternalException {
         database.resetPlayerHunt(playerUuid, huntId);
-        invalidateCachePlayer(playerUuid);
+
+        // Rebuild global cache from DB instead of just removing it.
+        // If we only remove, hasHead() falls through to storage.hasHead() which reads stale headsFound.
+        var dbHeads = database.getHeadsPlayer(playerUuid);
+        storage.setCachedPlayerHeads(playerUuid, new HashSet<>(dbHeads));
+        storage.clearCachedTopPlayers();
 
         storage.removeCachedPlayerHeadsForHunt(playerUuid, huntId);
         storage.clearCachedTopPlayersForHunt(huntId);
