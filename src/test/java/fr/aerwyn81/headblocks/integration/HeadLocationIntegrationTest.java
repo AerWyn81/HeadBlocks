@@ -45,7 +45,7 @@ class HeadLocationIntegrationTest {
         config.set(key + ".location.z", 200.5);
         config.set(key + ".location.world", "overworld");
 
-        HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+        HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
         assertThat(hl.isCharged()).isTrue();
         assertThat(hl.getLocation()).isNotNull();
@@ -67,7 +67,7 @@ class HeadLocationIntegrationTest {
         config.set(key + ".location.z", 0.5);
         config.set(key + ".location.world", "deleted_world");
 
-        HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+        HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
         assertThat(hl.isCharged()).isFalse();
         assertThat(hl.getLocation()).isNull();
@@ -85,7 +85,7 @@ class HeadLocationIntegrationTest {
         config.set(key + ".location.z", 20.0);
         config.set(key + ".location.world", "overworld");
 
-        HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+        HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
         // Integer x and z get +0.5 for centering
         assertThat(hl.getLocation().getX()).isEqualTo(10.5);
@@ -101,7 +101,7 @@ class HeadLocationIntegrationTest {
         // returns List, not ArrayList, causing the instanceof check in fromConfig to fail;
         // reward serialization is tested separately in Tier 2)
         Location loc = new Location(world, 50.5, 80.0, -30.5);
-        HeadLocation original = new HeadLocation("&aGreenHead", uuid, loc);
+        HeadLocation original = new HeadLocation("&aGreenHead", uuid, loc, "default");
         original.setOrderIndex(5);
         original.setHintSound(true);
         original.setHintActionBar(true);
@@ -111,7 +111,7 @@ class HeadLocationIntegrationTest {
         original.saveInConfig(config);
 
         // Load back from config
-        HeadLocation loaded = HeadLocation.fromConfig(config, uuid);
+        HeadLocation loaded = HeadLocation.fromConfig(config, uuid, "default");
 
         assertThat(loaded.getName()).isEqualTo("&aGreenHead");
         assertThat(loaded.getUuid()).isEqualTo(uuid);
@@ -132,12 +132,12 @@ class HeadLocationIntegrationTest {
 
         // Integer coordinates → saveInConfig stores them as-is
         Location loc = new Location(world, 10.0, 64.0, 20.0);
-        HeadLocation original = new HeadLocation("IntHead", uuid, loc);
+        HeadLocation original = new HeadLocation("IntHead", uuid, loc, "default");
 
         YamlConfiguration config = new YamlConfiguration();
         original.saveInConfig(config);
 
-        HeadLocation loaded = HeadLocation.fromConfig(config, uuid);
+        HeadLocation loaded = HeadLocation.fromConfig(config, uuid, "default");
 
         // fromConfig applies centering to integer x and z
         assertThat(loaded.getLocation().getX()).isEqualTo(10.5);
@@ -156,7 +156,7 @@ class HeadLocationIntegrationTest {
         config.set(key + ".z", 15.5);
         config.set(key + ".world", "overworld");
 
-        HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+        HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
         assertThat(hl.getName()).isNull();
         assertThat(hl.isCharged()).isTrue();
@@ -186,8 +186,8 @@ class HeadLocationIntegrationTest {
         config.set("locations." + uuid2 + ".location.z", 0.5);
         config.set("locations." + uuid2 + ".location.world", "world_the_end");
 
-        HeadLocation hl1 = HeadLocation.fromConfig(config, uuid1);
-        HeadLocation hl2 = HeadLocation.fromConfig(config, uuid2);
+        HeadLocation hl1 = HeadLocation.fromConfig(config, uuid1, "default");
+        HeadLocation hl2 = HeadLocation.fromConfig(config, uuid2, "default");
 
         assertThat(hl1.getLocation().getWorld()).isSameAs(nether);
         assertThat(hl2.getLocation().getWorld()).isSameAs(end);
@@ -215,7 +215,7 @@ class HeadLocationIntegrationTest {
         // Verify the rewards list is stored in config
         assertThat(config.contains(key + ".rewards")).isTrue();
         // The actual reward deserialization depends on the Bukkit YAML implementation
-        HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+        HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
         assertThat(hl).isNotNull();
     }
 
@@ -224,7 +224,7 @@ class HeadLocationIntegrationTest {
         UUID uuid = UUID.randomUUID();
         Location loc = new Location(world, 10.5, 64.0, 20.5);
 
-        HeadLocation hl = new HeadLocation("Test", uuid, loc);
+        HeadLocation hl = new HeadLocation("Test", uuid, loc, "default");
 
         assertThat(hl.getConfigWorldName()).isEqualTo("overworld");
         assertThat(hl.isCharged()).isTrue();
@@ -242,7 +242,7 @@ class HeadLocationIntegrationTest {
         config.set(key + ".location.z", 3.0);
         config.set(key + ".location.world", "overworld");
 
-        HeadLocation hl = new HeadLocation("ToRemove", uuid, "overworld", 1, 2, 3, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("ToRemove", uuid, "default", "overworld", 1, 2, 3, -1, false, false, new ArrayList<>());
         hl.removeFromConfig(config);
 
         assertThat(config.contains("locations." + uuid)).isFalse();

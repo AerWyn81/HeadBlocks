@@ -35,10 +35,6 @@ public class Requests {
         return addPrefix() + "hb_hunts";
     }
 
-    public static String getTableHeadHunts() {
-        return addPrefix() + "hb_head_hunts";
-    }
-
     private static String addPrefix() {
         return tablePrefix;
     }
@@ -314,28 +310,8 @@ public class Requests {
 
     // --- Head-Hunt linking ---
 
-    public static String linkHeadToHunt() {
-        return String.format("INSERT INTO %s (headUUID, huntId) VALUES (?, ?)", getTableHeadHunts());
-    }
-
-    public static String linkHeadToHuntMySQL() {
-        return String.format("REPLACE INTO %s (headUUID, huntId) VALUES (?, ?)", getTableHeadHunts());
-    }
-
-    public static String unlinkHeadFromHunt() {
-        return String.format("DELETE FROM %s WHERE headUUID = ? AND huntId = ?", getTableHeadHunts());
-    }
-
-    public static String unlinkAllHeadsFromHunt() {
-        return String.format("DELETE FROM %s WHERE huntId = ?", getTableHeadHunts());
-    }
-
     public static String getHuntsForHead() {
         return String.format("SELECT huntId FROM %s WHERE headUUID = ?", getTableHeadHunts());
-    }
-
-    public static String getHeadsForHunt() {
-        return String.format("SELECT headUUID FROM %s hh INNER JOIN %s h ON hh.headUUID = h.hUUID WHERE hh.huntId = ? AND h.hExist = True", getTableHeadHunts(), getTableHeads());
     }
 
     // --- Hunt-aware player progression ---

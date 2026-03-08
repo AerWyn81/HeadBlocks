@@ -804,43 +804,6 @@ public final class MySQL implements Database {
         return null;
     }
 
-    // --- Head-Hunt linking (v5) ---
-
-    @Override
-    public void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException {
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.linkHeadToHuntMySQL())) {
-            ps.setString(1, headUUID.toString());
-            ps.setString(2, huntId);
-            ps.executeUpdate();
-        } catch (Exception ex) {
-            throw new InternalException(ex);
-        }
-    }
-
-    @Override
-    public void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException {
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.unlinkHeadFromHunt())) {
-            ps.setString(1, headUUID.toString());
-            ps.setString(2, huntId);
-            ps.executeUpdate();
-        } catch (Exception ex) {
-            throw new InternalException(ex);
-        }
-    }
-
-    @Override
-    public void unlinkAllHeadsFromHunt(String huntId) throws InternalException {
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.unlinkAllHeadsFromHunt())) {
-            ps.setString(1, huntId);
-            ps.executeUpdate();
-        } catch (Exception ex) {
-            throw new InternalException(ex);
-        }
-    }
-
     @Override
     public ArrayList<String> getHuntsForHead(UUID headUUID) throws InternalException {
         var huntIds = new ArrayList<String>();
@@ -858,25 +821,6 @@ public final class MySQL implements Database {
         }
 
         return huntIds;
-    }
-
-    @Override
-    public ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException {
-        var heads = new ArrayList<UUID>();
-
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.getHeadsForHunt())) {
-            ps.setString(1, huntId);
-            try (var rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    heads.add(UUID.fromString(rs.getString("headUUID")));
-                }
-            }
-        } catch (Exception ex) {
-            throw new InternalException(ex);
-        }
-
-        return heads;
     }
 
     // --- Hunt-aware player progression (v5) ---

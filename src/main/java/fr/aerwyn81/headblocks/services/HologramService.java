@@ -147,8 +147,8 @@ public class HologramService {
                 continue;
             }
 
-            HBHunt primaryHunt = huntService.getHighestPriorityHuntForHead(loc.getUuid());
-            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig(configService);
+            HBHunt hunt = huntService.getHuntById(loc.getHuntId());
+            HuntConfig huntConfig = hunt != null ? hunt.getConfig() : new HuntConfig(configService);
             createHolograms(headLoc, huntConfig);
         }
     }

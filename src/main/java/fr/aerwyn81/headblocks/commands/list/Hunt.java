@@ -211,10 +211,9 @@ public class Hunt implements Cmd {
             }
         }
 
-        // Remove heads physically (world + DB + locations.yml) async
+        // Remove heads physically (world + DB + hunt YAML) async
         registry.getHeadService().removeAllHeadLocationsAsync(headsToRemove, true, (headRemoved) -> {
             try {
-                registry.getStorageService().unlinkAllHeadsFromHuntInDb(huntId);
                 registry.getStorageService().deletePlayerProgressForHunt(huntId);
                 registry.getStorageService().deleteHuntFromDb(huntId);
             } catch (Exception e) {
@@ -234,20 +233,17 @@ public class Hunt implements Cmd {
 
     private void handleDeleteKeepHeads(CommandSender sender, HBHunt hunt, String huntId, String fallbackHuntId) {
         try {
-            HBHunt fallbackHunt = registry.getHuntService().getHuntById(fallbackHuntId);
-
-            // Reassign heads to fallback hunt
-            for (UUID headUUID : hunt.getHeadUUIDs()) {
-                if (fallbackHunt != null && !fallbackHunt.containsHead(headUUID)) {
-                    fallbackHunt.addHead(headUUID);
-                    registry.getStorageService().linkHeadToHunt(headUUID, fallbackHuntId);
+            // Transfer heads to fallback hunt via YAML
+            for (UUID headUUID : new ArrayList<>(hunt.getHeadUUIDs())) {
+                HeadLocation hl = registry.getHeadService().getHeadByUUID(headUUID);
+                if (hl != null) {
+                    registry.getHuntService().transferHead(hl, fallbackHuntId);
                 }
             }
 
             // Transfer player progress to fallback
             registry.getStorageService().transferPlayerProgress(huntId, fallbackHuntId);
 
-            registry.getStorageService().unlinkAllHeadsFromHuntInDb(huntId);
             registry.getStorageService().deleteHuntFromDb(huntId);
         } catch (Exception e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
@@ -480,7 +476,7 @@ public class Hunt implements Cmd {
         }
 
         try {
-            registry.getHuntService().transferHead(headLocation.getUuid(), huntId);
+            registry.getHuntService().transferHead(headLocation, huntId);
         } catch (Exception e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error transferring head to hunt: {0}", e.getMessage());
@@ -567,7 +563,7 @@ public class Hunt implements Cmd {
         int count = 0;
         for (HeadLocation head : headsToAssign) {
             try {
-                registry.getHuntService().transferHead(head.getUuid(), huntId);
+                registry.getHuntService().transferHead(head, huntId);
                 count++;
             } catch (Exception e) {
                 LogUtil.error("Error assigning head {0} to hunt {1}: {2}", head.getUuid(), huntId, e.getMessage());
@@ -617,7 +613,7 @@ public class Hunt implements Cmd {
         }
 
         try {
-            registry.getHuntService().transferHead(headUUID, huntId);
+            registry.getHuntService().transferHead(headLocation, huntId);
         } catch (Exception e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error transferring head to hunt: {0}", e.getMessage());

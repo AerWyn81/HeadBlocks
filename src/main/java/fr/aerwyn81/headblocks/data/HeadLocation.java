@@ -14,6 +14,7 @@ import java.util.UUID;
 public class HeadLocation {
     private final UUID headUUID;
     private String name;
+    private String huntId;
 
     private String configWorldName;
     private double x;
@@ -28,16 +29,17 @@ public class HeadLocation {
 
     private final ArrayList<Reward> rewards;
 
-    public HeadLocation(String name, UUID headUUID, Location location) {
-        this(name, headUUID, location.getWorld() == null ? "" : location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), -1, false, false, new ArrayList<>());
+    public HeadLocation(String name, UUID headUUID, Location location, String huntId) {
+        this(name, headUUID, huntId, location.getWorld() == null ? "" : location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), -1, false, false, new ArrayList<>());
 
         this.location = location;
         this.isCharged = true;
     }
 
-    public HeadLocation(String name, UUID headUUID, String configWorldName, double x, double y, double z, int orderIndex, boolean hintSound, boolean hintActionBar, ArrayList<Reward> rewards) {
+    public HeadLocation(String name, UUID headUUID, String huntId, String configWorldName, double x, double y, double z, int orderIndex, boolean hintSound, boolean hintActionBar, ArrayList<Reward> rewards) {
         this.name = name;
         this.headUUID = headUUID;
+        this.huntId = huntId;
         this.orderIndex = orderIndex;
         this.hintSound = hintSound;
         this.hintActionBar = hintActionBar;
@@ -83,6 +85,14 @@ public class HeadLocation {
 
     public UUID getUuid() {
         return headUUID;
+    }
+
+    public String getHuntId() {
+        return huntId;
+    }
+
+    public void setHuntId(String huntId) {
+        this.huntId = huntId;
     }
 
     public boolean isHintSoundEnabled() {
@@ -197,7 +207,7 @@ public class HeadLocation {
         section.set("locations." + headUUID, null);
     }
 
-    public static HeadLocation fromConfig(YamlConfiguration section, UUID headUUID) {
+    public static HeadLocation fromConfig(YamlConfiguration section, UUID headUUID, String huntId) {
         var hUUID = headUUID.toString();
 
         String name = section.getString("locations." + hUUID + ".name");
@@ -257,7 +267,7 @@ public class HeadLocation {
             }
         }
 
-        var headLocation = new HeadLocation(name, headUUID, worldName, x, y, z, orderIndex, hintSound, hintActionBar, rewards);
+        var headLocation = new HeadLocation(name, headUUID, huntId, worldName, x, y, z, orderIndex, hintSound, hintActionBar, rewards);
 
         World world = Bukkit.getWorld(worldName);
         if (world != null) {

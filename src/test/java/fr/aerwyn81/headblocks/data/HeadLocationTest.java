@@ -33,7 +33,7 @@ class HeadLocationTest {
         var rewards = new ArrayList<Reward>();
         rewards.add(new Reward(RewardType.COMMAND, "give %player% diamond"));
 
-        HeadLocation hl = new HeadLocation("MyHead", uuid, "world", 10.5, 64.0, 20.5, 3, true, false, rewards);
+        HeadLocation hl = new HeadLocation("MyHead", uuid, "default", "world", 10.5, 64.0, 20.5, 3, true, false, rewards);
 
         assertThat(hl.getName()).isEqualTo("MyHead");
         assertThat(hl.getUuid()).isEqualTo(uuid);
@@ -55,7 +55,7 @@ class HeadLocationTest {
         Location loc = new Location(world, 10.5, 64.0, 20.5);
         when(world.getName()).thenReturn("world");
 
-        HeadLocation hl = new HeadLocation("Head", uuid, loc);
+        HeadLocation hl = new HeadLocation("Head", uuid, loc, "default");
 
         assertThat(hl.getLocation()).isSameAs(loc);
         assertThat(hl.isCharged()).isTrue();
@@ -68,7 +68,7 @@ class HeadLocationTest {
     @Test
     void getNameOrUnnamed_emptyName_returnsFallbackLabel() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         assertThat(hl.getNameOrUnnamed("Sans nom")).isEqualTo("Sans nom");
     }
@@ -76,7 +76,7 @@ class HeadLocationTest {
     @Test
     void getNameOrUnnamed_hasName_colorizesName() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("&aGreen", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("&aGreen", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
             mu.when(() -> MessageUtils.colorize("&aGreen")).thenReturn("§aGreen");
@@ -88,7 +88,7 @@ class HeadLocationTest {
     @Test
     void getRawNameOrUuid_emptyName_returnsUuidString() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         assertThat(hl.getRawNameOrUuid()).isEqualTo(uuid.toString());
     }
@@ -96,7 +96,7 @@ class HeadLocationTest {
     @Test
     void getRawNameOrUuid_hasName_uncolorizesName() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("§aGreen", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("§aGreen", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
             mu.when(() -> MessageUtils.unColorize("§aGreen")).thenReturn("Green");
@@ -108,7 +108,7 @@ class HeadLocationTest {
     @Test
     void getNameOrUuid_emptyName_returnsUuidString() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         assertThat(hl.getNameOrUuid()).isEqualTo(uuid.toString());
     }
@@ -116,7 +116,7 @@ class HeadLocationTest {
     @Test
     void getNameOrUuid_hasName_colorizesName() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("&bBlue", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("&bBlue", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
             mu.when(() -> MessageUtils.colorize("&bBlue")).thenReturn("§bBlue");
@@ -130,7 +130,7 @@ class HeadLocationTest {
     @Test
     void getDisplayedOrderIndex_minusOne_returnsFallbackLabel() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         assertThat(hl.getDisplayedOrderIndex("Aucun")).isEqualTo("Aucun");
     }
@@ -138,7 +138,7 @@ class HeadLocationTest {
     @Test
     void getDisplayedOrderIndex_positiveValue_returnsStringValue() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, 5, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, 5, false, false, new ArrayList<>());
 
         assertThat(hl.getDisplayedOrderIndex("None")).isEqualTo("5");
     }
@@ -148,7 +148,7 @@ class HeadLocationTest {
     @Test
     void setLocation_preservesCoordinatesAndWorldName() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "world", 10.5, 64.0, 20.5, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "world", 10.5, 64.0, 20.5, -1, false, false, new ArrayList<>());
         when(world.getName()).thenReturn("newWorld");
         Location newLoc = new Location(world, 99, 99, 99);
 
@@ -164,7 +164,7 @@ class HeadLocationTest {
     @Test
     void addReward_appendsToList() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         hl.addReward(new Reward(RewardType.MESSAGE, "Hi"));
         hl.addReward(new Reward(RewardType.COMMAND, "cmd"));
@@ -189,7 +189,7 @@ class HeadLocationTest {
         try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
             bk.when(() -> Bukkit.getWorld("world")).thenReturn(null);
 
-            HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             // x and z were integers → +0.5, y is not centered
             assertThat(hl.getX()).isEqualTo(10.5);
@@ -213,7 +213,7 @@ class HeadLocationTest {
         try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
             bk.when(() -> Bukkit.getWorld("world")).thenReturn(null);
 
-            HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             assertThat(hl.getX()).isEqualTo(10.3);
             assertThat(hl.getZ()).isEqualTo(20.7);
@@ -235,7 +235,7 @@ class HeadLocationTest {
         try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
             bk.when(() -> Bukkit.getWorld("nether")).thenReturn(null);
 
-            HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             assertThat(hl.getX()).isEqualTo(5.5);
             assertThat(hl.getY()).isEqualTo(70.0);
@@ -260,7 +260,7 @@ class HeadLocationTest {
         try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
             bk.when(() -> Bukkit.getWorld("")).thenReturn(null);
 
-            HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             assertThat(hl.getOrderIndex()).isEqualTo(7);
         }
@@ -281,7 +281,7 @@ class HeadLocationTest {
         try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
             bk.when(() -> Bukkit.getWorld("")).thenReturn(null);
 
-            HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             assertThat(hl.getOrderIndex()).isEqualTo(-1);
         }
@@ -304,7 +304,7 @@ class HeadLocationTest {
         try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
             bk.when(() -> Bukkit.getWorld("")).thenReturn(null);
 
-            HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             assertThat(hl.isHintSoundEnabled()).isTrue();
             assertThat(hl.isHintActionBarEnabled()).isTrue();
@@ -326,7 +326,7 @@ class HeadLocationTest {
         try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
             bk.when(() -> Bukkit.getWorld("overworld")).thenReturn(world);
 
-            HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             assertThat(hl.isCharged()).isTrue();
             assertThat(hl.getLocation()).isNotNull();
@@ -349,7 +349,7 @@ class HeadLocationTest {
         try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
             bk.when(() -> Bukkit.getWorld("deleted_world")).thenReturn(null);
 
-            HeadLocation hl = HeadLocation.fromConfig(config, uuid);
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             assertThat(hl.isCharged()).isFalse();
             assertThat(hl.getLocation()).isNull();
@@ -364,7 +364,7 @@ class HeadLocationTest {
         Location loc = new Location(world, 10.5, 64.0, 20.5);
         when(world.getName()).thenReturn("overworld");
 
-        HeadLocation hl = new HeadLocation("TestHead", uuid, loc);
+        HeadLocation hl = new HeadLocation("TestHead", uuid, loc, "default");
         hl.setOrderIndex(3);
         hl.setHintSound(true);
         hl.addReward(new Reward(RewardType.COMMAND, "give %player% diamond"));
@@ -390,7 +390,7 @@ class HeadLocationTest {
         Location loc = new Location(world, 0, 0, 0);
         lenient().when(world.getName()).thenReturn("w");
 
-        HeadLocation hl = new HeadLocation("H", uuid, loc);
+        HeadLocation hl = new HeadLocation("H", uuid, loc, "default");
         // orderIndex is -1 by default
 
         YamlConfiguration config = new YamlConfiguration();
@@ -405,7 +405,7 @@ class HeadLocationTest {
         Location loc = new Location(world, 0, 0, 0);
         lenient().when(world.getName()).thenReturn("w");
 
-        HeadLocation hl = new HeadLocation("H", uuid, loc);
+        HeadLocation hl = new HeadLocation("H", uuid, loc, "default");
 
         YamlConfiguration config = new YamlConfiguration();
         hl.saveInConfig(config);
@@ -418,7 +418,7 @@ class HeadLocationTest {
     @Test
     void removeFromConfig_removesSection() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         YamlConfiguration config = new YamlConfiguration();
         config.set("locations." + uuid + ".name", "Test");
@@ -433,7 +433,7 @@ class HeadLocationTest {
     @Test
     void setName_updatesName() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("Old", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("Old", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         hl.setName("New");
 
@@ -443,7 +443,7 @@ class HeadLocationTest {
     @Test
     void setCharged_updatesCharged() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         assertThat(hl.isCharged()).isFalse();
         hl.setCharged(true);
@@ -453,7 +453,7 @@ class HeadLocationTest {
     @Test
     void setHintSound_updatesFlag() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         hl.setHintSound(true);
         assertThat(hl.isHintSoundEnabled()).isTrue();
@@ -462,7 +462,7 @@ class HeadLocationTest {
     @Test
     void setHintActionBar_updatesFlag() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         hl.setHintActionBar(true);
         assertThat(hl.isHintActionBarEnabled()).isTrue();
@@ -471,7 +471,7 @@ class HeadLocationTest {
     @Test
     void setOrderIndex_updatesOrderIndex() {
         UUID uuid = UUID.randomUUID();
-        HeadLocation hl = new HeadLocation("H", uuid, "w", 0, 0, 0, -1, false, false, new ArrayList<>());
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         hl.setOrderIndex(10);
         assertThat(hl.getOrderIndex()).isEqualTo(10);

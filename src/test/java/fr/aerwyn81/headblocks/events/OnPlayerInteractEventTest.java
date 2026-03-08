@@ -163,8 +163,7 @@ class OnPlayerInteractEventTest {
         @Test
         void creativeRightClick_notIgnored() {
             HeadLocation headLocation = mock(HeadLocation.class);
-            UUID headUuid = UUID.randomUUID();
-            when(headLocation.getUuid()).thenReturn(headUuid);
+            when(headLocation.getHuntId()).thenReturn(null);
 
             when(event.getClickedBlock()).thenReturn(block);
             when(event.getHand()).thenReturn(EquipmentSlot.HAND);
@@ -174,7 +173,6 @@ class OnPlayerInteractEventTest {
             when(block.getLocation()).thenReturn(location);
             when(headService.getHeadAt(location)).thenReturn(headLocation);
             when(storageService.isStorageError()).thenReturn(false);
-            when(huntService.getHuntsForHead(headUuid)).thenReturn(Collections.emptyList());
 
             try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
                  MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
@@ -183,15 +181,14 @@ class OnPlayerInteractEventTest {
 
                 handler.onPlayerInteract(event);
 
-                verify(huntService).getHuntsForHead(headUuid);
+                verify(headLocation).getHuntId();
             }
         }
 
         @Test
         void survivalLeftClick_notIgnored() {
             HeadLocation headLocation = mock(HeadLocation.class);
-            UUID headUuid = UUID.randomUUID();
-            when(headLocation.getUuid()).thenReturn(headUuid);
+            when(headLocation.getHuntId()).thenReturn(null);
 
             when(event.getClickedBlock()).thenReturn(block);
             when(event.getHand()).thenReturn(EquipmentSlot.HAND);
@@ -200,7 +197,6 @@ class OnPlayerInteractEventTest {
             when(block.getLocation()).thenReturn(location);
             when(headService.getHeadAt(location)).thenReturn(headLocation);
             when(storageService.isStorageError()).thenReturn(false);
-            when(huntService.getHuntsForHead(headUuid)).thenReturn(Collections.emptyList());
 
             try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
                  MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
@@ -209,7 +205,7 @@ class OnPlayerInteractEventTest {
 
                 handler.onPlayerInteract(event);
 
-                verify(huntService).getHuntsForHead(headUuid);
+                verify(headLocation).getHuntId();
             }
         }
     }
@@ -326,7 +322,7 @@ class OnPlayerInteractEventTest {
 
                 handler.onPlayerInteract(event);
 
-                verify(huntService, never()).getHuntsForHead(any());
+                verify(headLocation, never()).getHuntId();
             }
         }
 
@@ -389,11 +385,11 @@ class OnPlayerInteractEventTest {
         @Test
         void noActiveHunts_allInactive_sendMessage() {
             HeadLocation headLocation = mock(HeadLocation.class);
-            UUID headUuid = UUID.randomUUID();
-            when(headLocation.getUuid()).thenReturn(headUuid);
+            when(headLocation.getHuntId()).thenReturn("myhunt");
 
             HBHunt inactiveHunt = mock(HBHunt.class);
             when(inactiveHunt.isActive()).thenReturn(false);
+            when(huntService.getHuntById("myhunt")).thenReturn(inactiveHunt);
 
             when(event.getClickedBlock()).thenReturn(block);
             when(event.getHand()).thenReturn(EquipmentSlot.HAND);
@@ -402,7 +398,6 @@ class OnPlayerInteractEventTest {
             when(block.getLocation()).thenReturn(location);
             when(headService.getHeadAt(location)).thenReturn(headLocation);
             when(storageService.isStorageError()).thenReturn(false);
-            when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(inactiveHunt));
 
             try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
                  MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
@@ -420,11 +415,11 @@ class OnPlayerInteractEventTest {
         @Test
         void noActiveHunts_emptyInactiveMessage_doesNotSend() {
             HeadLocation headLocation = mock(HeadLocation.class);
-            UUID headUuid = UUID.randomUUID();
-            when(headLocation.getUuid()).thenReturn(headUuid);
+            when(headLocation.getHuntId()).thenReturn("myhunt");
 
             HBHunt inactiveHunt = mock(HBHunt.class);
             when(inactiveHunt.isActive()).thenReturn(false);
+            when(huntService.getHuntById("myhunt")).thenReturn(inactiveHunt);
 
             when(event.getClickedBlock()).thenReturn(block);
             when(event.getHand()).thenReturn(EquipmentSlot.HAND);
@@ -433,7 +428,6 @@ class OnPlayerInteractEventTest {
             when(block.getLocation()).thenReturn(location);
             when(headService.getHeadAt(location)).thenReturn(headLocation);
             when(storageService.isStorageError()).thenReturn(false);
-            when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(inactiveHunt));
             when(languageService.message("Messages.HuntHeadInactive")).thenReturn("   ");
 
             try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
@@ -450,8 +444,7 @@ class OnPlayerInteractEventTest {
         @Test
         void noHuntsAssigned_ignored() {
             HeadLocation headLocation = mock(HeadLocation.class);
-            UUID headUuid = UUID.randomUUID();
-            when(headLocation.getUuid()).thenReturn(headUuid);
+            when(headLocation.getHuntId()).thenReturn(null);
 
             when(event.getClickedBlock()).thenReturn(block);
             when(event.getHand()).thenReturn(EquipmentSlot.HAND);
@@ -460,7 +453,6 @@ class OnPlayerInteractEventTest {
             when(block.getLocation()).thenReturn(location);
             when(headService.getHeadAt(location)).thenReturn(headLocation);
             when(storageService.isStorageError()).thenReturn(false);
-            when(huntService.getHuntsForHead(headUuid)).thenReturn(Collections.emptyList());
 
             try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
                  MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
@@ -477,11 +469,11 @@ class OnPlayerInteractEventTest {
         @Test
         void activeHunts_startProcessing() {
             HeadLocation headLocation = mock(HeadLocation.class);
-            UUID headUuid = UUID.randomUUID();
-            when(headLocation.getUuid()).thenReturn(headUuid);
+            when(headLocation.getHuntId()).thenReturn("default");
 
             HBHunt activeHunt = mock(HBHunt.class);
             when(activeHunt.isActive()).thenReturn(true);
+            when(huntService.getHuntById("default")).thenReturn(activeHunt);
 
             UUID playerUuid = UUID.randomUUID();
 
@@ -493,7 +485,6 @@ class OnPlayerInteractEventTest {
             when(block.getLocation()).thenReturn(location);
             when(headService.getHeadAt(location)).thenReturn(headLocation);
             when(storageService.isStorageError()).thenReturn(false);
-            when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt));
 
             BukkitFutureResult<Set<UUID>> futureResult = mock(BukkitFutureResult.class);
             when(storageService.getHeadsPlayer(playerUuid)).thenReturn(futureResult);
@@ -549,7 +540,8 @@ class OnPlayerInteractEventTest {
             lenient().when(block.getLocation()).thenReturn(location);
             lenient().when(headService.getHeadAt(location)).thenReturn(headLocation);
             lenient().when(storageService.isStorageError()).thenReturn(false);
-            lenient().when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt));
+            lenient().when(headLocation.getHuntId()).thenReturn("default");
+            lenient().when(huntService.getHuntById("default")).thenReturn(activeHunt);
 
             // Default HuntConfig stubs for the "already claimed" path
             lenient().when(huntConfig.getHeadClickSoundFound()).thenReturn("");
@@ -951,139 +943,6 @@ class OnPlayerInteractEventTest {
             }
         }
 
-        // --- Multi-hunt scenarios ---
-
-        @Nested
-        class MultiHBHuntScenarios {
-
-            @Test
-            void multipleActiveHunts_findsInBoth() throws InternalException {
-                HBHunt secondHunt = mock(HBHunt.class);
-                when(secondHunt.isActive()).thenReturn(true);
-                when(secondHunt.getId()).thenReturn("special");
-                HuntConfig secondConfig = mock(HuntConfig.class);
-                when(secondHunt.getConfig()).thenReturn(secondConfig);
-                when(secondHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-
-                when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt, secondHunt));
-
-                ArrayList<UUID> defaultHuntHeads = new ArrayList<>();
-                ArrayList<UUID> specialHuntHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(defaultHuntHeads);
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "special")).thenReturn(specialHuntHeads);
-                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(secondConfig))).thenReturn(true);
-
-                triggerHandleHuntClick(new HashSet<>());
-
-                verify(storageService).addHeadForHunt(playerUuid, headUuid, "default");
-                verify(storageService).addHeadForHunt(playerUuid, headUuid, "special");
-            }
-
-            @Test
-            void multipleActiveHunts_oneAlreadyFound_findsOther() throws InternalException {
-                HBHunt secondHunt = mock(HBHunt.class);
-                when(secondHunt.isActive()).thenReturn(true);
-                when(secondHunt.getId()).thenReturn("special");
-                HuntConfig secondConfig = mock(HuntConfig.class);
-                when(secondHunt.getConfig()).thenReturn(secondConfig);
-                when(secondHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-
-                when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt, secondHunt));
-
-                // Already found in default, not yet in special
-                ArrayList<UUID> defaultHuntHeads = new ArrayList<>(List.of(headUuid));
-                ArrayList<UUID> specialHuntHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(defaultHuntHeads);
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "special")).thenReturn(specialHuntHeads);
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(secondConfig))).thenReturn(true);
-
-                triggerHandleHuntClick(Set.of(headUuid));
-
-                verify(storageService, never()).addHeadForHunt(playerUuid, headUuid, "default");
-                verify(storageService).addHeadForHunt(playerUuid, headUuid, "special");
-            }
-
-            @Test
-            void multipleActiveHunts_headRewardsOnlyOnFirstNewFind() throws InternalException {
-                Reward headReward = mock(Reward.class);
-                when(headLocation.getRewards()).thenReturn(new ArrayList<>(List.of(headReward)));
-
-                HBHunt secondHunt = mock(HBHunt.class);
-                when(secondHunt.isActive()).thenReturn(true);
-                when(secondHunt.getId()).thenReturn("special");
-                HuntConfig secondConfig = mock(HuntConfig.class);
-                when(secondHunt.getConfig()).thenReturn(secondConfig);
-                when(secondHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-
-                when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt, secondHunt));
-
-                ArrayList<UUID> defaultHuntHeads = new ArrayList<>();
-                ArrayList<UUID> specialHuntHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(defaultHuntHeads);
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "special")).thenReturn(specialHuntHeads);
-                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(secondConfig))).thenReturn(true);
-
-                triggerHandleHuntClick(new HashSet<>());
-
-                // Head rewards should only execute once (on first new find), not per hunt
-                verify(headReward, times(1)).execute(player, headLocation, registry);
-            }
-
-            @Test
-            void multipleActiveHunts_eachHuntGetsOwnReward() throws InternalException {
-                HBHunt secondHunt = mock(HBHunt.class);
-                when(secondHunt.isActive()).thenReturn(true);
-                when(secondHunt.getId()).thenReturn("special");
-                HuntConfig secondConfig = mock(HuntConfig.class);
-                when(secondHunt.getConfig()).thenReturn(secondConfig);
-                when(secondHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-
-                when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt, secondHunt));
-
-                ArrayList<UUID> defaultHuntHeads = new ArrayList<>();
-                ArrayList<UUID> specialHuntHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(defaultHuntHeads);
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "special")).thenReturn(specialHuntHeads);
-                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(secondConfig))).thenReturn(true);
-
-                triggerHandleHuntClick(new HashSet<>());
-
-                verify(rewardService).giveReward(eq(player), any(), eq(headLocation), eq(huntConfig), eq("default"));
-                verify(rewardService).giveReward(eq(player), any(), eq(headLocation), eq(secondConfig), eq("special"));
-            }
-
-            @Test
-            void multipleActiveHunts_eachHuntNotifiesBehaviors() throws InternalException {
-                HBHunt secondHunt = mock(HBHunt.class);
-                when(secondHunt.isActive()).thenReturn(true);
-                when(secondHunt.getId()).thenReturn("special");
-                HuntConfig secondConfig = mock(HuntConfig.class);
-                when(secondHunt.getConfig()).thenReturn(secondConfig);
-                when(secondHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-
-                when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt, secondHunt));
-
-                ArrayList<UUID> defaultHuntHeads = new ArrayList<>();
-                ArrayList<UUID> specialHuntHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(defaultHuntHeads);
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "special")).thenReturn(specialHuntHeads);
-                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(secondConfig))).thenReturn(true);
-
-                triggerHandleHuntClick(new HashSet<>());
-
-                verify(activeHunt).notifyHeadFound(player, headLocation);
-                verify(secondHunt).notifyHeadFound(player, headLocation);
-            }
-        }
-
         // --- InternalException handling ---
 
         @Nested
@@ -1096,31 +955,8 @@ class OnPlayerInteractEventTest {
 
                 triggerHandleHuntClick(new HashSet<>());
 
-                // Should not crash; shows "already claimed" since anyNewFind stays false
-                verify(languageService).message("Messages.AlreadyClaimHead");
-            }
-
-            @Test
-            void internalException_onSecondHunt_firstHuntStillProcessed() throws InternalException {
-                HBHunt secondHunt = mock(HBHunt.class);
-                lenient().when(secondHunt.isActive()).thenReturn(true);
-                lenient().when(secondHunt.getId()).thenReturn("broken");
-                HuntConfig secondConfig = mock(HuntConfig.class);
-                lenient().when(secondHunt.getConfig()).thenReturn(secondConfig);
-
-                when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt, secondHunt));
-
-                ArrayList<UUID> defaultHuntHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(defaultHuntHeads);
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "broken"))
-                        .thenThrow(new InternalException("DB error"));
-                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
-
-                triggerHandleHuntClick(new HashSet<>());
-
-                // First hunt should still process successfully
-                verify(storageService).addHeadForHunt(playerUuid, headUuid, "default");
+                // Should not crash; exception is caught and logged
+                verify(storageService).getHeadsPlayerForHunt(playerUuid, "default");
             }
 
             @Test
@@ -1136,64 +972,6 @@ class OnPlayerInteractEventTest {
 
                 // Should not crash, the exception is caught
                 verify(storageService).addHeadForHunt(playerUuid, headUuid, "default");
-            }
-        }
-
-        // --- Mixed scenarios ---
-
-        @Nested
-        class MixedScenarios {
-
-            @Test
-            void behaviorDeniedOnFirst_secondHuntSucceeds() throws InternalException {
-                HBHunt secondHunt = mock(HBHunt.class);
-                when(secondHunt.isActive()).thenReturn(true);
-                when(secondHunt.getId()).thenReturn("special");
-                HuntConfig secondConfig = mock(HuntConfig.class);
-                when(secondHunt.getConfig()).thenReturn(secondConfig);
-                when(secondHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-
-                when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt, secondHunt));
-
-                ArrayList<UUID> defaultHuntHeads = new ArrayList<>();
-                ArrayList<UUID> specialHuntHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(defaultHuntHeads);
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "special")).thenReturn(specialHuntHeads);
-                when(activeHunt.evaluateBehaviors(player, headLocation))
-                        .thenReturn(BehaviorResult.deny("Not allowed"));
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(secondConfig))).thenReturn(true);
-
-                triggerHandleHuntClick(new HashSet<>());
-
-                // First hunt denied, second succeeds
-                verify(storageService, never()).addHeadForHunt(playerUuid, headUuid, "default");
-                verify(storageService).addHeadForHunt(playerUuid, headUuid, "special");
-            }
-
-            @Test
-            void insufficientSlotsOnFirst_secondHuntSucceeds() throws InternalException {
-                HBHunt secondHunt = mock(HBHunt.class);
-                when(secondHunt.isActive()).thenReturn(true);
-                when(secondHunt.getId()).thenReturn("special");
-                HuntConfig secondConfig = mock(HuntConfig.class);
-                when(secondHunt.getConfig()).thenReturn(secondConfig);
-                when(secondHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-
-                when(huntService.getHuntsForHead(headUuid)).thenReturn(List.of(activeHunt, secondHunt));
-
-                ArrayList<UUID> defaultHuntHeads = new ArrayList<>();
-                ArrayList<UUID> specialHuntHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(defaultHuntHeads);
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "special")).thenReturn(specialHuntHeads);
-                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(false);
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(secondConfig))).thenReturn(true);
-
-                triggerHandleHuntClick(new HashSet<>());
-
-                // First hunt: insufficient slots, second succeeds
-                verify(storageService, never()).addHeadForHunt(playerUuid, headUuid, "default");
-                verify(storageService).addHeadForHunt(playerUuid, headUuid, "special");
             }
         }
     }

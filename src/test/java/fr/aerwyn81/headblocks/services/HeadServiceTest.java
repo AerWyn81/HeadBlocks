@@ -15,8 +15,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -57,6 +55,9 @@ class HeadServiceTest {
     @Mock
     private HuntService huntService;
 
+    @Mock
+    private HuntConfigService huntConfigService;
+
     private HeadService headService;
 
     @BeforeEach
@@ -64,6 +65,7 @@ class HeadServiceTest {
         headService = new HeadService(configService, storageService, languageService, scheduler, pluginProvider);
         headService.setHologramService(hologramService);
         headService.setHuntService(huntService);
+        headService.setHuntConfigService(huntConfigService);
 
         setField("headLocations", new ArrayList<HeadLocation>());
         setField("headMoves", new HashMap<UUID, HeadMove>());
@@ -451,16 +453,17 @@ class HeadServiceTest {
             UUID uuid3 = UUID.randomUUID();
 
             HeadLocation hl1 = createHeadLocation(uuid1, "H1", null, true);
+            lenient().when(hl1.getHuntId()).thenReturn("hunt1");
             HeadLocation hl2 = createHeadLocation(uuid2, "H2", null, true);
+            lenient().when(hl2.getHuntId()).thenReturn("other");
             HeadLocation hl3 = createHeadLocation(uuid3, "H3", null, true);
+            lenient().when(hl3.getHuntId()).thenReturn("hunt1");
 
             headLocations().add(hl1);
             headLocations().add(hl2);
             headLocations().add(hl3);
 
             HBHunt hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
-            hunt.addHead(uuid1);
-            hunt.addHead(uuid3);
 
             ArrayList<HeadLocation> result = headService.getHeadLocationsForHunt(hunt);
 
@@ -470,6 +473,7 @@ class HeadServiceTest {
         @Test
         void empty_hunt_returns_empty() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "H", null, true);
+            lenient().when(hl.getHuntId()).thenReturn("other");
             headLocations().add(hl);
 
             HBHunt hunt = new HBHunt(configService, "empty", "Empty", HuntState.ACTIVE, 1, "D");
@@ -480,7 +484,6 @@ class HeadServiceTest {
         @Test
         void empty_headLocations_returns_empty() {
             HBHunt hunt = new HBHunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
-            hunt.addHead(UUID.randomUUID());
 
             assertThat(headService.getHeadLocationsForHunt(hunt)).isEmpty();
         }
@@ -615,36 +618,23 @@ class HeadServiceTest {
     class SaveHeadInConfig {
 
         @Test
-        void calls_saveInConfig_on_headLocation_and_saves_config() throws Exception {
-            // Set up the config and configFile fields
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
+        void delegates_to_huntConfigService_saveLocationInHunt() {
             HeadLocation hl = mock(HeadLocation.class);
+            when(hl.getHuntId()).thenReturn("default");
 
             headService.saveHeadInConfig(hl);
 
-            verify(hl).saveInConfig(yamlConfig);
-            verify(yamlConfig).saveToString();
+            verify(huntConfigService).saveLocationInHunt("default", hl);
         }
 
         @Test
-        void save_calls_saveToString_and_does_not_propagate_exceptions() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            lenient().when(configFile.getName()).thenReturn("heads.yml");
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
+        void passes_correct_huntId_from_headLocation() {
             HeadLocation hl = mock(HeadLocation.class);
+            when(hl.getHuntId()).thenReturn("custom-hunt");
 
-            // Should not throw -- IO errors are caught internally
             headService.saveHeadInConfig(hl);
 
-            verify(hl).saveInConfig(yamlConfig);
-            verify(yamlConfig).saveToString();
+            verify(huntConfigService).saveLocationInHunt("custom-hunt", hl);
         }
     }
 
@@ -663,15 +653,10 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "ToRemove", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
@@ -681,30 +666,24 @@ class HeadServiceTest {
         }
 
         @Test
-        void removes_head_from_hunts_and_rebuilds_cache() throws Exception {
+        void removes_head_from_hunt_and_config() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
             Block block = mock(Block.class);
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "HuntHead", loc, true);
+            when(hl.getHuntId()).thenReturn("hunt1");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
-            HBHunt hunt1 = mock(HBHunt.class);
-            HBHunt hunt2 = mock(HBHunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(List.of(hunt1, hunt2));
+            when(huntService.getHuntById("hunt1")).thenReturn(hunt);
 
             headService.removeHeadLocation(hl, false);
 
-            verify(hunt1).removeHead(uuid);
-            verify(hunt2).removeHead(uuid);
-            verify(huntService).rebuildHeadToHuntsCache();
+            verify(hunt).removeHead(uuid);
+            verify(huntConfigService).removeLocationFromHunt("hunt1", uuid);
         }
 
         @Test
@@ -715,15 +694,10 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "HoloHead", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             when(configService.hologramsEnabled()).thenReturn(true);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
@@ -738,15 +712,10 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NoHolo", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
@@ -761,16 +730,11 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "SpinHead", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
             tasksHeadSpin().put(uuid, 42);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
@@ -786,15 +750,10 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NoSpin", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
@@ -809,6 +768,7 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "MovedHead", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
             headMoves().put(uuid, new HeadMove(uuid, mock(Location.class)));
 
@@ -816,13 +776,7 @@ class HeadServiceTest {
             UUID otherUuid = UUID.randomUUID();
             headMoves().put(otherUuid, new HeadMove(otherUuid, mock(Location.class)));
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
@@ -831,27 +785,21 @@ class HeadServiceTest {
         }
 
         @Test
-        void removes_from_config() throws Exception {
+        void removes_from_hunt_config() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
             Block block = mock(Block.class);
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "ConfigHead", loc, true);
+            when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
-            verify(hl).removeFromConfig(yamlConfig);
-            verify(yamlConfig).saveToString();
+            verify(huntConfigService).removeLocationFromHunt("default", uuid);
         }
 
         @Test
@@ -869,15 +817,10 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NoDelete", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, false);
 
@@ -910,10 +853,6 @@ class HeadServiceTest {
         @Test
         void creates_head_in_storage() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
@@ -922,7 +861,7 @@ class HeadServiceTest {
                 UUID generatedUuid = UUID.randomUUID();
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(generatedUuid);
 
-                UUID result = headService.saveHeadLocation(loc, "texture123");
+                UUID result = headService.saveHeadLocation(loc, "texture123", "default");
 
                 assertThat(result).isEqualTo(generatedUuid);
                 verify(storageService).createOrUpdateHead(generatedUuid, "texture123");
@@ -932,10 +871,6 @@ class HeadServiceTest {
         @Test
         void adds_head_to_headLocations_list() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
@@ -944,7 +879,7 @@ class HeadServiceTest {
                 UUID generatedUuid = UUID.randomUUID();
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(generatedUuid);
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 assertThat(headLocations()).hasSize(1);
                 assertThat(headLocations().getFirst().getUuid()).isEqualTo(generatedUuid);
@@ -954,10 +889,6 @@ class HeadServiceTest {
         @Test
         void creates_hologram_when_enabled() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             when(configService.hologramsEnabled()).thenReturn(true);
             lenient().when(configService.spinEnabled()).thenReturn(false);
@@ -965,7 +896,7 @@ class HeadServiceTest {
             try (MockedStatic<InternalUtils> mocked = mockStatic(InternalUtils.class)) {
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(UUID.randomUUID());
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 verify(hologramService).createHolograms(loc);
             }
@@ -974,10 +905,6 @@ class HeadServiceTest {
         @Test
         void does_not_create_hologram_when_disabled() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             when(configService.hologramsEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
@@ -985,7 +912,7 @@ class HeadServiceTest {
             try (MockedStatic<InternalUtils> mocked = mockStatic(InternalUtils.class)) {
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(UUID.randomUUID());
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 verify(hologramService, never()).createHolograms(any(Location.class));
             }
@@ -996,10 +923,6 @@ class HeadServiceTest {
             headService.setHologramService(null);
 
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             when(configService.hologramsEnabled()).thenReturn(true);
             lenient().when(configService.spinEnabled()).thenReturn(false);
@@ -1007,7 +930,7 @@ class HeadServiceTest {
             try (MockedStatic<InternalUtils> mocked = mockStatic(InternalUtils.class)) {
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(UUID.randomUUID());
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 // hologramService is null so createHolograms is never called (no NPE)
             }
@@ -1023,7 +946,7 @@ class HeadServiceTest {
 
                 doThrow(new InternalException("db error")).when(storageService).createOrUpdateHead(generatedUuid, "tex");
 
-                assertThatThrownBy(() -> headService.saveHeadLocation(loc, "tex"))
+                assertThatThrownBy(() -> headService.saveHeadLocation(loc, "tex", "default"))
                         .isInstanceOf(InternalException.class)
                         .hasMessageContaining("db error");
             }
@@ -1032,10 +955,6 @@ class HeadServiceTest {
         @Test
         void returns_unique_uuid() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
@@ -1045,8 +964,8 @@ class HeadServiceTest {
                 UUID uuid2 = UUID.randomUUID();
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(uuid1, uuid2);
 
-                UUID result1 = headService.saveHeadLocation(loc, "t1");
-                UUID result2 = headService.saveHeadLocation(loc, "t2");
+                UUID result1 = headService.saveHeadLocation(loc, "t1", "default");
+                UUID result2 = headService.saveHeadLocation(loc, "t2", "default");
 
                 assertThat(result1).isNotEqualTo(result2);
             }
@@ -1061,34 +980,25 @@ class HeadServiceTest {
     class SaveAllHeadsInConfig {
 
         @Test
-        void saves_all_heads_then_saves_config() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
+        void saves_all_heads_via_huntConfigService() throws Exception {
             HeadLocation hl1 = mock(HeadLocation.class);
+            when(hl1.getHuntId()).thenReturn("hunt1");
             HeadLocation hl2 = mock(HeadLocation.class);
+            when(hl2.getHuntId()).thenReturn("hunt2");
             headLocations().add(hl1);
             headLocations().add(hl2);
 
             headService.saveAllHeadsInConfig();
 
-            verify(hl1).saveInConfig(yamlConfig);
-            verify(hl2).saveInConfig(yamlConfig);
-            verify(yamlConfig).saveToString();
+            verify(huntConfigService).saveLocationInHunt("hunt1", hl1);
+            verify(huntConfigService).saveLocationInHunt("hunt2", hl2);
         }
 
         @Test
-        void empty_list_still_saves_config() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
+        void empty_list_does_not_call_huntConfigService() {
             headService.saveAllHeadsInConfig();
 
-            verify(yamlConfig).saveToString();
+            verify(huntConfigService, never()).saveLocationInHunt(any(), any());
         }
     }
 
@@ -1167,17 +1077,12 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl1 = createHeadLocation(uuid1, "Spin1", loc, true);
+            lenient().when(hl1.getHuntId()).thenReturn("default");
             headLocations().add(hl1);
             tasksHeadSpin().put(uuid1, 10);
             tasksHeadSpin().put(uuid2, 20);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl1, true);
 
@@ -1203,15 +1108,10 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "Removed", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
@@ -1271,18 +1171,15 @@ class HeadServiceTest {
     // loadLocations
     // =========================================================================
 
-    @Nested
     class LoadLocations {
 
         @Test
-        void null_locations_section_resets_to_empty_list() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(null);
-
-            // Pre-populate to ensure it gets cleared
+        void no_hunts_resets_to_empty_list() throws Exception {
             headLocations().add(createHeadLocation(UUID.randomUUID(), "Old", null, true));
+
+            when(storageService.isStorageError()).thenReturn(false);
+            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
+            lenient().when(configService.databaseEnabled()).thenReturn(false);
 
             headService.loadLocations();
 
@@ -1290,145 +1187,78 @@ class HeadServiceTest {
         }
 
         @Test
-        void storage_error_prevents_loading() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+        void storage_error_prevents_loading() {
             when(storageService.isStorageError()).thenReturn(true);
 
             headService.loadLocations();
 
             assertThat(headService.getHeadLocations()).isEmpty();
+            verify(huntService, never()).getAllHunts();
         }
 
         @Test
-        void skips_uuid_when_configSection_is_null() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
+        void loads_head_that_already_exists_in_storage() throws Exception {
             UUID uuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(uuid, "Loaded", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(null);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
             lenient().when(configService.databaseEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
 
             headService.loadLocations();
 
-            assertThat(headService.getHeadLocations()).isEmpty();
-        }
-
-        @Test
-        void loads_head_that_already_exists_in_storage() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
-            UUID uuid = UUID.randomUUID();
-
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
-            when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
-            lenient().when(configService.databaseEnabled()).thenReturn(false);
-            lenient().when(configService.spinEnabled()).thenReturn(false);
-
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL = createHeadLocation(uuid, "Loaded", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
-
-                when(storageService.isHeadExist(uuid)).thenReturn(true);
-
-                headService.loadLocations();
-
-                assertThat(headService.getHeadLocations()).hasSize(1);
-                verify(storageService, never()).createOrUpdateHead(any(), any());
-            }
+            assertThat(headService.getHeadLocations()).hasSize(1);
+            verify(storageService, never()).createOrUpdateHead(any(), any());
         }
 
         @Test
         void creates_head_in_storage_when_not_exists_and_location_is_null() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(uuid, "NoLoc", null, false);
+            lenient().when(mockHL.getLocation()).thenReturn(null);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(false);
             lenient().when(configService.databaseEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL = createHeadLocation(uuid, "NoLoc", null, false);
-                lenient().when(mockHL.getLocation()).thenReturn(null);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
+            headService.loadLocations();
 
-                when(storageService.isHeadExist(uuid)).thenReturn(false);
-
-                headService.loadLocations();
-
-                verify(storageService).createOrUpdateHead(uuid, "");
-                assertThat(headService.getHeadLocations()).hasSize(1);
-            }
+            verify(storageService).createOrUpdateHead(uuid, "");
+            assertThat(headService.getHeadLocations()).hasSize(1);
         }
 
         @Test
         void creates_head_in_storage_when_not_exists_and_location_is_present() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid = UUID.randomUUID();
-
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
-            when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
-            lenient().when(configService.databaseEnabled()).thenReturn(false);
-            lenient().when(configService.spinEnabled()).thenReturn(false);
-
             Location loc = mock(Location.class);
             Block block = mock(Block.class);
             when(loc.getBlock()).thenReturn(block);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class);
-                 MockedStatic<HeadUtils> huStatic = mockStatic(HeadUtils.class)) {
+            HeadLocation mockHL = createHeadLocation(uuid, "WithLoc", loc, true);
 
-                HeadLocation mockHL = createHeadLocation(uuid, "WithLoc", loc, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
 
-                when(storageService.isHeadExist(uuid)).thenReturn(false);
+            when(storageService.isStorageError()).thenReturn(false);
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(false);
+            lenient().when(configService.databaseEnabled()).thenReturn(false);
+            lenient().when(configService.spinEnabled()).thenReturn(false);
+
+            try (MockedStatic<HeadUtils> huStatic = mockStatic(HeadUtils.class)) {
                 huStatic.when(() -> HeadUtils.getHeadTexture(block)).thenReturn("texture123");
 
                 headService.loadLocations();
@@ -1440,247 +1270,132 @@ class HeadServiceTest {
 
         @Test
         void storage_exception_during_isHeadExist_skips_head_and_continues() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid1 = UUID.randomUUID();
             UUID uuid2 = UUID.randomUUID();
+            HeadLocation mockHL1 = createHeadLocation(uuid1, "Fail", null, true);
+            HeadLocation mockHL2 = createHeadLocation(uuid2, "Pass", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid1.toString());
-            keys.add(uuid2.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection1 = mock(ConfigurationSection.class);
-            ConfigurationSection headSection2 = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid1)).thenReturn(headSection1);
-            when(yamlConfig.getConfigurationSection("locations." + uuid2)).thenReturn(headSection2);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL1, mockHL2));
+            when(storageService.isHeadExist(uuid1)).thenThrow(new RuntimeException("storage failure"));
+            when(storageService.isHeadExist(uuid2)).thenReturn(true);
             lenient().when(configService.databaseEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL1 = createHeadLocation(uuid1, "Fail", null, true);
-                HeadLocation mockHL2 = createHeadLocation(uuid2, "Pass", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid1)).thenReturn(mockHL1);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid2)).thenReturn(mockHL2);
+            headService.loadLocations();
 
-                when(storageService.isHeadExist(uuid1)).thenThrow(new RuntimeException("storage failure"));
-                when(storageService.isHeadExist(uuid2)).thenReturn(true);
-
-                headService.loadLocations();
-
-                // uuid1 is skipped due to exception, uuid2 loaded successfully
-                assertThat(headService.getHeadLocations()).hasSize(1);
-                assertThat(headService.getHeadLocations().getFirst().getUuid()).isEqualTo(uuid2);
-            }
-        }
-
-        @Test
-        void deserialization_exception_skips_head_and_continues() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
-            UUID uuid1 = UUID.randomUUID();
-            UUID uuid2 = UUID.randomUUID();
-
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
-            when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid1.toString());
-            keys.add(uuid2.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection1 = mock(ConfigurationSection.class);
-            ConfigurationSection headSection2 = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid1)).thenReturn(headSection1);
-            when(yamlConfig.getConfigurationSection("locations." + uuid2)).thenReturn(headSection2);
-
-            lenient().when(configService.databaseEnabled()).thenReturn(false);
-            lenient().when(configService.spinEnabled()).thenReturn(false);
-
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid1))
-                        .thenThrow(new RuntimeException("bad config data"));
-
-                HeadLocation mockHL2 = createHeadLocation(uuid2, "Good", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid2)).thenReturn(mockHL2);
-
-                when(storageService.isHeadExist(uuid2)).thenReturn(true);
-
-                headService.loadLocations();
-
-                assertThat(headService.getHeadLocations()).hasSize(1);
-                assertThat(headService.getHeadLocations().getFirst().getUuid()).isEqualTo(uuid2);
-            }
+            // uuid1 is skipped due to exception, uuid2 loaded successfully
+            assertThat(headService.getHeadLocations()).hasSize(1);
+            assertThat(headService.getHeadLocations().getFirst().getUuid()).isEqualTo(uuid2);
         }
 
         @Test
         void adds_spin_task_when_spin_enabled_and_not_linked() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(uuid, "SpinHead", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
             lenient().when(configService.databaseEnabled()).thenReturn(false);
             when(configService.spinEnabled()).thenReturn(true);
             when(configService.spinLinked()).thenReturn(false);
             when(configService.spinSpeed()).thenReturn(5);
+            when(scheduler.runTaskTimer(any(Runnable.class), eq(5L), eq(5L))).thenReturn(99);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL = createHeadLocation(uuid, "SpinHead", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
+            headService.loadLocations();
 
-                when(storageService.isHeadExist(uuid)).thenReturn(true);
-                when(scheduler.runTaskTimer(any(Runnable.class), eq(5L), eq(5L))).thenReturn(99);
-
-                headService.loadLocations();
-
-                verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(5L));
-                assertThat(tasksHeadSpin()).containsEntry(uuid, 99);
-            }
+            verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(5L));
+            assertThat(tasksHeadSpin()).containsEntry(uuid, 99);
         }
 
         @Test
         void does_not_add_spin_task_when_spin_disabled() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(uuid, "NoSpin", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
             lenient().when(configService.databaseEnabled()).thenReturn(false);
             when(configService.spinEnabled()).thenReturn(false);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL = createHeadLocation(uuid, "NoSpin", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
+            headService.loadLocations();
 
-                when(storageService.isHeadExist(uuid)).thenReturn(true);
-
-                headService.loadLocations();
-
-                verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
-                assertThat(tasksHeadSpin()).isEmpty();
-            }
+            verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
+            assertThat(tasksHeadSpin()).isEmpty();
         }
 
         @Test
         void does_not_add_spin_task_when_spin_linked() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(uuid, "LinkedSpin", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
             lenient().when(configService.databaseEnabled()).thenReturn(false);
             when(configService.spinEnabled()).thenReturn(true);
             when(configService.spinLinked()).thenReturn(true);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL = createHeadLocation(uuid, "LinkedSpin", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
+            headService.loadLocations();
 
-                when(storageService.isHeadExist(uuid)).thenReturn(true);
-
-                headService.loadLocations();
-
-                verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
-            }
+            verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
         }
 
         @Test
         void multiple_locations_get_incrementing_spin_offsets() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid1 = UUID.randomUUID();
             UUID uuid2 = UUID.randomUUID();
+            HeadLocation mockHL1 = createHeadLocation(uuid1, "S1", null, true);
+            HeadLocation mockHL2 = createHeadLocation(uuid2, "S2", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid1.toString());
-            keys.add(uuid2.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection1 = mock(ConfigurationSection.class);
-            ConfigurationSection headSection2 = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid1)).thenReturn(headSection1);
-            when(yamlConfig.getConfigurationSection("locations." + uuid2)).thenReturn(headSection2);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL1, mockHL2));
+            when(storageService.isHeadExist(uuid1)).thenReturn(true);
+            when(storageService.isHeadExist(uuid2)).thenReturn(true);
             lenient().when(configService.databaseEnabled()).thenReturn(false);
             when(configService.spinEnabled()).thenReturn(true);
             when(configService.spinLinked()).thenReturn(false);
             when(configService.spinSpeed()).thenReturn(3);
+            when(scheduler.runTaskTimer(any(Runnable.class), eq(5L), eq(3L))).thenReturn(10);
+            when(scheduler.runTaskTimer(any(Runnable.class), eq(10L), eq(3L))).thenReturn(20);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL1 = createHeadLocation(uuid1, "S1", null, true);
-                HeadLocation mockHL2 = createHeadLocation(uuid2, "S2", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid1)).thenReturn(mockHL1);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid2)).thenReturn(mockHL2);
+            headService.loadLocations();
 
-                when(storageService.isHeadExist(uuid1)).thenReturn(true);
-                when(storageService.isHeadExist(uuid2)).thenReturn(true);
-                when(scheduler.runTaskTimer(any(Runnable.class), eq(5L), eq(3L))).thenReturn(10);
-                when(scheduler.runTaskTimer(any(Runnable.class), eq(10L), eq(3L))).thenReturn(20);
-
-                headService.loadLocations();
-
-                // offset 1 -> 5L*1 = 5, offset 2 -> 5L*2 = 10
-                verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(3L));
-                verify(scheduler).runTaskTimer(any(Runnable.class), eq(10L), eq(3L));
-            }
+            // offset 1 -> 5L*1 = 5, offset 2 -> 5L*2 = 10
+            verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(3L));
+            verify(scheduler).runTaskTimer(any(Runnable.class), eq(10L), eq(3L));
         }
 
         @Test
         void clears_existing_headLocations_before_loading() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             HeadLocation existing = createHeadLocation(UUID.randomUUID(), "Existing", null, true);
             headLocations().add(existing);
 
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(null);
+            when(storageService.isStorageError()).thenReturn(false);
+            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
+            lenient().when(configService.databaseEnabled()).thenReturn(false);
 
             headService.loadLocations();
 
@@ -1689,106 +1404,65 @@ class HeadServiceTest {
 
         @Test
         void database_purge_removes_out_of_sync_heads() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID inSyncUuid = UUID.randomUUID();
             UUID outOfSyncUuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(inSyncUuid, "InSync", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(inSyncUuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + inSyncUuid)).thenReturn(headSection);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(inSyncUuid)).thenReturn(true);
             when(configService.databaseEnabled()).thenReturn(true);
             lenient().when(configService.spinEnabled()).thenReturn(false);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL = createHeadLocation(inSyncUuid, "InSync", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, inSyncUuid)).thenReturn(mockHL);
+            // Database returns both in-sync and out-of-sync heads
+            ArrayList<UUID> dbHeads = new ArrayList<>(List.of(inSyncUuid, outOfSyncUuid));
+            when(storageService.getHeadsByServerId()).thenReturn(dbHeads);
 
-                when(storageService.isHeadExist(inSyncUuid)).thenReturn(true);
+            headService.loadLocations();
 
-                // Database returns both in-sync and out-of-sync heads
-                ArrayList<UUID> dbHeads = new ArrayList<>(List.of(inSyncUuid, outOfSyncUuid));
-                when(storageService.getHeadsByServerId()).thenReturn(dbHeads);
-
-                headService.loadLocations();
-
-                // The out-of-sync head should be removed
-                verify(storageService).removeHead(outOfSyncUuid, true);
-            }
+            // The out-of-sync head should be removed
+            verify(storageService).removeHead(outOfSyncUuid, true);
         }
 
         @Test
         void database_purge_syncs_all_heads_when_db_returns_empty() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid = UUID.randomUUID();
-
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
-            when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
-            when(configService.databaseEnabled()).thenReturn(true);
-            lenient().when(configService.spinEnabled()).thenReturn(false);
-
             Location loc = mock(Location.class);
             Block block = mock(Block.class);
             when(loc.getBlock()).thenReturn(block);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class);
-                 MockedStatic<HeadUtils> huStatic = mockStatic(HeadUtils.class)) {
+            HeadLocation mockHL = createHeadLocation(uuid, "SyncMe", loc, true);
 
-                HeadLocation mockHL = createHeadLocation(uuid, "SyncMe", loc, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
 
-                when(storageService.isHeadExist(uuid)).thenReturn(true);
+            when(storageService.isStorageError()).thenReturn(false);
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
+            when(configService.databaseEnabled()).thenReturn(true);
+            lenient().when(configService.spinEnabled()).thenReturn(false);
 
-                // DB returns empty -> all heads should be created
-                when(storageService.getHeadsByServerId()).thenReturn(new ArrayList<>());
+            // DB returns empty -> all heads should be created
+            when(storageService.getHeadsByServerId()).thenReturn(new ArrayList<>());
+
+            try (MockedStatic<HeadUtils> huStatic = mockStatic(HeadUtils.class)) {
                 huStatic.when(() -> HeadUtils.getHeadTexture(block)).thenReturn("tex_sync");
 
                 headService.loadLocations();
 
-                // First call in the per-head loop (isExist=true -> no create),
-                // second call in the purge sync
                 verify(storageService).createOrUpdateHead(uuid, "tex_sync");
             }
         }
 
         @Test
         void database_purge_exception_is_caught_silently() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(null);
-            // loadLocations sets headLocations = new ArrayList<>() and returns immediately,
-            // so databaseEnabled check never happens.
-            // Instead, set up a real locations section so the flow reaches the purge.
-            // Actually when locations is null, it returns before the purge.
-            // We need a different approach.
-
-            // Set locations to a non-null section with no keys
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
             when(storageService.isStorageError()).thenReturn(false);
-            when(locationsSection.getKeys(false)).thenReturn(new LinkedHashSet<>());
-
+            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
             when(configService.databaseEnabled()).thenReturn(true);
             when(storageService.getHeadsByServerId()).thenThrow(new InternalException("db down"));
 
@@ -1800,72 +1474,46 @@ class HeadServiceTest {
 
         @Test
         void database_purge_no_out_of_sync_heads_does_not_remove() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(uuid, "Synced", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
             when(configService.databaseEnabled()).thenReturn(true);
             lenient().when(configService.spinEnabled()).thenReturn(false);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL = createHeadLocation(uuid, "Synced", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
+            // DB contains only the same head -- no out-of-sync
+            ArrayList<UUID> dbHeads = new ArrayList<>(List.of(uuid));
+            when(storageService.getHeadsByServerId()).thenReturn(dbHeads);
 
-                when(storageService.isHeadExist(uuid)).thenReturn(true);
+            headService.loadLocations();
 
-                // DB contains only the same head -- no out-of-sync
-                ArrayList<UUID> dbHeads = new ArrayList<>(List.of(uuid));
-                when(storageService.getHeadsByServerId()).thenReturn(dbHeads);
-
-                headService.loadLocations();
-
-                verify(storageService, never()).removeHead(any(), anyBoolean());
-            }
+            verify(storageService, never()).removeHead(any(), anyBoolean());
         }
 
         @Test
         void no_database_purge_when_database_disabled() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
             UUID uuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(uuid, "NoPurge", null, true);
 
-            ConfigurationSection locationsSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(locationsSection);
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
             when(storageService.isStorageError()).thenReturn(false);
-
-            Set<String> keys = new LinkedHashSet<>();
-            keys.add(uuid.toString());
-            when(locationsSection.getKeys(false)).thenReturn(keys);
-
-            ConfigurationSection headSection = mock(ConfigurationSection.class);
-            when(yamlConfig.getConfigurationSection("locations." + uuid)).thenReturn(headSection);
-
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
             when(configService.databaseEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
 
-            try (MockedStatic<HeadLocation> hlStatic = mockStatic(HeadLocation.class)) {
-                HeadLocation mockHL = createHeadLocation(uuid, "NoPurge", null, true);
-                hlStatic.when(() -> HeadLocation.fromConfig(yamlConfig, uuid)).thenReturn(mockHL);
+            headService.loadLocations();
 
-                when(storageService.isHeadExist(uuid)).thenReturn(true);
-
-                headService.loadLocations();
-
-                verify(storageService, never()).getHeadsByServerId();
-            }
+            verify(storageService, never()).getHeadsByServerId();
         }
     }
 
@@ -1888,14 +1536,11 @@ class HeadServiceTest {
             lenient().when(loc2.getBlock()).thenReturn(block2);
 
             HeadLocation hl1 = createHeadLocation(uuid1, "R1", loc1, true);
+            lenient().when(hl1.getHuntId()).thenReturn("default");
             HeadLocation hl2 = createHeadLocation(uuid2, "R2", loc2, true);
+            lenient().when(hl2.getHuntId()).thenReturn("default");
             headLocations().add(hl1);
             headLocations().add(hl2);
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -1932,12 +1577,8 @@ class HeadServiceTest {
             lenient().when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "Valid", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -1979,13 +1620,10 @@ class HeadServiceTest {
             HeadLocation hl1 = createHeadLocation(uuid1, "Fail", loc1, true);
             HeadLocation hl2 = createHeadLocation(uuid2, "Pass", loc2, true);
             lenient().when(hl1.getNameOrUuid()).thenReturn("Fail");
+            lenient().when(hl1.getHuntId()).thenReturn("default");
+            lenient().when(hl2.getHuntId()).thenReturn("default");
             headLocations().add(hl1);
             headLocations().add(hl2);
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -2021,12 +1659,8 @@ class HeadServiceTest {
             lenient().when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "Holo", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             when(configService.hologramsEnabled()).thenReturn(true);
 
@@ -2059,12 +1693,8 @@ class HeadServiceTest {
             lenient().when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NoHolo", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -2099,12 +1729,8 @@ class HeadServiceTest {
             lenient().when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NullHolo", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(true);
 
@@ -2138,13 +1764,9 @@ class HeadServiceTest {
             lenient().when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "SpinRemove", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
             tasksHeadSpin().put(uuid, 77);
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -2179,14 +1801,10 @@ class HeadServiceTest {
             lenient().when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "MoveRemove", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
             headMoves().put(uuid, new HeadMove(uuid, mock(Location.class)));
             headMoves().put(otherUuid, new HeadMove(otherUuid, mock(Location.class)));
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -2214,11 +1832,6 @@ class HeadServiceTest {
 
         @Test
         void empty_list_calls_onComplete_with_zero() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             doAnswer(invocation -> {
                 Runnable asyncTask = invocation.getArgument(0);
                 asyncTask.run();
@@ -2240,19 +1853,15 @@ class HeadServiceTest {
         }
 
         @Test
-        void removes_from_config_and_saves() throws Exception {
+        void removes_from_hunt_config() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
             Block block = mock(Block.class);
             lenient().when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "ConfigRemove", loc, true);
+            when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
-
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -2268,16 +1877,13 @@ class HeadServiceTest {
                 return null;
             }).when(scheduler).runTask(any(Runnable.class));
 
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
-
             @SuppressWarnings("unchecked")
             Consumer<Integer> onComplete = mock(Consumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
 
-            verify(hl).removeFromConfig(yamlConfig);
-            verify(yamlConfig).saveToString();
+            verify(huntConfigService).removeLocationFromHunt("default", uuid);
         }
     }
 
@@ -2291,10 +1897,6 @@ class HeadServiceTest {
         @Test
         void adds_spin_task_when_spin_enabled_and_not_linked() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             when(configService.spinEnabled()).thenReturn(true);
@@ -2306,7 +1908,7 @@ class HeadServiceTest {
                 UUID generatedUuid = UUID.randomUUID();
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(generatedUuid);
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(7L));
                 assertThat(tasksHeadSpin()).containsEntry(generatedUuid, 55);
@@ -2316,10 +1918,6 @@ class HeadServiceTest {
         @Test
         void does_not_add_spin_task_when_spin_disabled() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             when(configService.spinEnabled()).thenReturn(false);
@@ -2328,7 +1926,7 @@ class HeadServiceTest {
                 UUID generatedUuid = UUID.randomUUID();
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(generatedUuid);
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
                 assertThat(tasksHeadSpin()).isEmpty();
@@ -2338,10 +1936,6 @@ class HeadServiceTest {
         @Test
         void does_not_add_spin_task_when_spin_linked() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             when(configService.spinEnabled()).thenReturn(true);
@@ -2351,7 +1945,7 @@ class HeadServiceTest {
                 UUID generatedUuid = UUID.randomUUID();
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(generatedUuid);
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
             }
@@ -2399,15 +1993,10 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NullHolo", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             when(configService.hologramsEnabled()).thenReturn(true);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             // Should not throw NPE
             headService.removeHeadLocation(hl, true);
@@ -2547,29 +2136,6 @@ class HeadServiceTest {
     }
 
     // =========================================================================
-    // doSaveConfig error handling
-    // =========================================================================
-
-    @Nested
-    class DoSaveConfig {
-
-        @Test
-        void io_exception_is_caught_and_does_not_propagate() throws Exception {
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            lenient().when(configFile.getName()).thenReturn("heads.yml");
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
-            // Trigger saveConfig through saveAllHeadsInConfig
-            headService.saveAllHeadsInConfig();
-
-            // No exception should propagate
-            verify(yamlConfig).saveToString();
-        }
-    }
-
-    // =========================================================================
     // doAddHeadToSpin (via saveHeadLocation)
     // =========================================================================
 
@@ -2580,10 +2146,6 @@ class HeadServiceTest {
         void spin_task_uses_correct_delay_formula() throws Exception {
             // Testing that offset is applied: delay = 5L * offset
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             when(configService.spinEnabled()).thenReturn(true);
@@ -2596,7 +2158,7 @@ class HeadServiceTest {
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(generatedUuid);
 
                 // saveHeadLocation calls doAddHeadToSpin with offset=1
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 // delay = 5L * 1 = 5
                 verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(10L));
@@ -2618,17 +2180,17 @@ class HeadServiceTest {
             UUID uuid3 = UUID.randomUUID();
 
             HeadLocation hl1 = createHeadLocation(uuid1, "H1", null, true);
+            lenient().when(hl1.getHuntId()).thenReturn("all");
             HeadLocation hl2 = createHeadLocation(uuid2, "H2", null, true);
+            lenient().when(hl2.getHuntId()).thenReturn("all");
             HeadLocation hl3 = createHeadLocation(uuid3, "H3", null, true);
+            lenient().when(hl3.getHuntId()).thenReturn("all");
 
             headLocations().add(hl1);
             headLocations().add(hl2);
             headLocations().add(hl3);
 
             HBHunt hunt = new HBHunt(configService, "all", "All Heads", HuntState.ACTIVE, 1, "D");
-            hunt.addHead(uuid1);
-            hunt.addHead(uuid2);
-            hunt.addHead(uuid3);
 
             ArrayList<HeadLocation> result = headService.getHeadLocationsForHunt(hunt);
 
@@ -2636,14 +2198,13 @@ class HeadServiceTest {
         }
 
         @Test
-        void hunt_with_unknown_uuids_returns_empty() throws Exception {
+        void hunt_with_no_matching_heads_returns_empty() throws Exception {
             UUID uuid = UUID.randomUUID();
             HeadLocation hl = createHeadLocation(uuid, "H", null, true);
+            lenient().when(hl.getHuntId()).thenReturn("other");
             headLocations().add(hl);
 
             HBHunt hunt = new HBHunt(configService, "unknown", "Unknown", HuntState.ACTIVE, 1, "D");
-            hunt.addHead(UUID.randomUUID());
-            hunt.addHead(UUID.randomUUID());
 
             assertThat(headService.getHeadLocationsForHunt(hunt)).isEmpty();
         }
@@ -2702,16 +2263,11 @@ class HeadServiceTest {
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "MultiMove", loc, true);
+            lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
             headMoves().put(uuid, new HeadMove(uuid, mock(Location.class)));
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
 
             headService.removeHeadLocation(hl, true);
 
@@ -2719,32 +2275,24 @@ class HeadServiceTest {
         }
 
         @Test
-        void removes_from_all_hunts_correctly() throws Exception {
+        void removes_from_hunt_correctly() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
             Block block = mock(Block.class);
             when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "HuntHead", loc, true);
+            when(hl.getHuntId()).thenReturn("hunt1");
             headLocations().add(hl);
 
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
-
-            HBHunt hunt1 = mock(HBHunt.class);
-            HBHunt hunt2 = mock(HBHunt.class);
-            HBHunt hunt3 = mock(HBHunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
-            when(huntService.getAllHunts()).thenReturn(List.of(hunt1, hunt2, hunt3));
+            when(huntService.getHuntById("hunt1")).thenReturn(hunt);
 
             headService.removeHeadLocation(hl, true);
 
-            verify(hunt1).removeHead(uuid);
-            verify(hunt2).removeHead(uuid);
-            verify(hunt3).removeHead(uuid);
-            verify(huntService).rebuildHeadToHuntsCache();
+            verify(hunt).removeHead(uuid);
+            verify(huntConfigService).removeLocationFromHunt("hunt1", uuid);
         }
     }
 
@@ -2791,12 +2339,8 @@ class HeadServiceTest {
     class SaveHeadLocationConfigIntegration {
 
         @Test
-        void saves_head_in_config_after_creation() throws Exception {
+        void saves_head_in_hunt_config_after_creation() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
@@ -2805,20 +2349,16 @@ class HeadServiceTest {
                 UUID generatedUuid = UUID.randomUUID();
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(generatedUuid);
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
-                // Verify that config is saved (the new HeadLocation's saveInConfig is called)
-                verify(yamlConfig).saveToString();
+                // Verify that huntConfigService is called to save the location
+                verify(huntConfigService).saveLocationInHunt(eq("default"), any(HeadLocation.class));
             }
         }
 
         @Test
         void head_location_is_added_with_empty_name() throws Exception {
             Location loc = mock(Location.class);
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            java.io.File configFile = mock(java.io.File.class);
-            setField("config", yamlConfig);
-            setField("configFile", configFile);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             lenient().when(configService.spinEnabled()).thenReturn(false);
@@ -2827,7 +2367,7 @@ class HeadServiceTest {
                 UUID generatedUuid = UUID.randomUUID();
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(generatedUuid);
 
-                headService.saveHeadLocation(loc, "tex");
+                headService.saveHeadLocation(loc, "tex", "default");
 
                 HeadLocation added = headLocations().getFirst();
                 // The HeadLocation is created with empty name ""
@@ -2844,16 +2384,14 @@ class HeadServiceTest {
     class LoadLocationsHeadMovesClear {
 
         @Test
-        void loadLocations_clears_headMoves_implicitly_via_clearing_headLocations() throws Exception {
-            // loadLocations itself only clears headLocations, not headMoves.
-            // headMoves are cleared by load(). This test verifies headLocations clear.
-            YamlConfiguration yamlConfig = mock(YamlConfiguration.class);
-            setField("config", yamlConfig);
-
+        void loadLocations_clears_headLocations() throws Exception {
+            // loadLocations clears headLocations at the start
             UUID existingUuid = UUID.randomUUID();
             headLocations().add(createHeadLocation(existingUuid, "Old", null, true));
 
-            when(yamlConfig.getConfigurationSection("locations")).thenReturn(null);
+            when(storageService.isStorageError()).thenReturn(false);
+            when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
+            lenient().when(configService.databaseEnabled()).thenReturn(false);
 
             headService.loadLocations();
 

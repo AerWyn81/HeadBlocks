@@ -98,7 +98,7 @@ class InfoCommandTest {
         when(headLocation.isHintSoundEnabled()).thenReturn(true);
         when(headLocation.isHintActionBarEnabled()).thenReturn(false);
         when(headLocation.getRewards()).thenReturn(new ArrayList<>());
-        when(huntService.getHuntsForHead(headUuid)).thenReturn(new ArrayList<>());
+        when(headLocation.getHuntId()).thenReturn("default");
         when(player.spigot()).thenReturn(spigot);
 
         try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class);
@@ -139,7 +139,7 @@ class InfoCommandTest {
         when(headLocation.getDisplayedOrderIndex(anyString())).thenReturn("1");
         when(headLocation.isHintSoundEnabled()).thenReturn(true);
         when(headLocation.isHintActionBarEnabled()).thenReturn(false);
-        when(huntService.getHuntsForHead(headUuid)).thenReturn(new ArrayList<>());
+        when(headLocation.getHuntId()).thenReturn("default");
         when(player.spigot()).thenReturn(spigot);
 
         Reward reward = new Reward(RewardType.COMMAND, "give %player% diamond 1");

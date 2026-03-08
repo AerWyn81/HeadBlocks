@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.services;
 
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -13,7 +14,6 @@ public class HuntService {
     private final StorageService storageService;
 
     private final Map<String, HBHunt> huntsById = new LinkedHashMap<>();
-    private final Map<UUID, List<HBHunt>> headToHunts = new HashMap<>();
     private final Map<UUID, String> selectedHunt = new HashMap<>();
     private long knownHuntVersion = 0;
 
@@ -31,7 +31,6 @@ public class HuntService {
 
     public void initialize() {
         huntsById.clear();
-        headToHunts.clear();
         selectedHunt.clear();
 
         List<HBHunt> fileHunts = huntConfigService.loadHunts();
@@ -47,8 +46,6 @@ public class HuntService {
         }
 
         syncHuntsWithDb();
-        loadHeadMappingsFromDb();
-        rebuildHeadToHuntsCache();
 
         knownHuntVersion = storageService.getHuntVersion();
 
@@ -79,31 +76,6 @@ public class HuntService {
         }
     }
 
-    private void loadHeadMappingsFromDb() {
-        for (HBHunt hunt : huntsById.values()) {
-            try {
-                ArrayList<UUID> heads = storageService.getHeadsForHunt(hunt.getId());
-                for (UUID headUUID : heads) {
-                    hunt.addHead(headUUID);
-                }
-            } catch (Exception e) {
-                LogUtil.error("Failed to load head mappings for hunt {0}: {1}", hunt.getId(), e.getMessage());
-            }
-        }
-    }
-
-    public void rebuildHeadToHuntsCache() {
-        headToHunts.clear();
-        for (HBHunt hunt : huntsById.values()) {
-            for (UUID headUUID : hunt.getHeadUUIDs()) {
-                headToHunts.computeIfAbsent(headUUID, k -> new ArrayList<>()).add(hunt);
-            }
-        }
-        for (List<HBHunt> hunts : headToHunts.values()) {
-            hunts.sort(Comparator.comparingInt(HBHunt::getPriority).reversed());
-        }
-    }
-
     // --- Getters ---
 
     public HBHunt getHuntById(String huntId) {
@@ -112,23 +84,6 @@ public class HuntService {
 
     public HBHunt getDefaultHunt() {
         return huntsById.get("default");
-    }
-
-    public List<HBHunt> getHuntsForHead(UUID headUUID) {
-        return headToHunts.getOrDefault(headUUID, Collections.emptyList());
-    }
-
-    public HBHunt getHighestPriorityHuntForHead(UUID headUUID) {
-        List<HBHunt> hunts = headToHunts.get(headUUID);
-        if (hunts == null || hunts.isEmpty()) {
-            return null;
-        }
-        for (HBHunt hunt : hunts) {
-            if (hunt.isActive()) {
-                return hunt;
-            }
-        }
-        return null;
     }
 
     public Collection<HBHunt> getAllHunts() {
@@ -157,14 +112,10 @@ public class HuntService {
 
     public void registerHunt(HBHunt hunt) {
         huntsById.put(hunt.getId(), hunt);
-        rebuildHeadToHuntsCache();
     }
 
     public void unregisterHunt(String huntId) {
-        HBHunt removed = huntsById.remove(huntId);
-        if (removed != null) {
-            rebuildHeadToHuntsCache();
-        }
+        huntsById.remove(huntId);
     }
 
     public List<String> getHuntNames() {
@@ -187,23 +138,25 @@ public class HuntService {
 
     // --- Head transfer ---
 
-    public void transferHead(UUID headUUID, String toHuntId) throws Exception {
+    public void transferHead(HeadLocation headLocation, String toHuntId) {
         HBHunt toHunt = huntsById.get(toHuntId);
         if (toHunt == null) {
             throw new IllegalArgumentException("Target hunt not found: " + toHuntId);
         }
 
-        for (HBHunt hunt : huntsById.values()) {
-            if (hunt.containsHead(headUUID)) {
-                hunt.removeHead(headUUID);
-                storageService.unlinkHeadFromHunt(headUUID, hunt.getId());
-            }
+        // Remove from source hunt
+        String sourceHuntId = headLocation.getHuntId();
+        HBHunt sourceHunt = huntsById.get(sourceHuntId);
+        if (sourceHunt != null) {
+            sourceHunt.removeHead(headLocation.getUuid());
         }
+        huntConfigService.removeLocationFromHunt(sourceHuntId, headLocation.getUuid());
 
-        toHunt.addHead(headUUID);
-        storageService.linkHeadToHunt(headUUID, toHuntId);
+        // Add to target hunt
+        headLocation.setHuntId(toHuntId);
+        toHunt.addHead(headLocation.getUuid());
+        huntConfigService.saveLocationInHunt(toHuntId, headLocation);
 
-        rebuildHeadToHuntsCache();
         storageService.incrementHuntVersion();
     }
 
@@ -217,17 +170,6 @@ public class HuntService {
         } catch (Exception e) {
             LogUtil.error("Failed to check remote hunt version: {0}", e.getMessage());
         }
-    }
-
-    public void assignHeadToHunt(UUID headUUID, String huntId) throws Exception {
-        HBHunt hunt = huntsById.get(huntId);
-        if (hunt == null) {
-            throw new IllegalArgumentException("Hunt not found: " + huntId);
-        }
-
-        hunt.addHead(headUUID);
-        storageService.linkHeadToHunt(headUUID, huntId);
-        rebuildHeadToHuntsCache();
     }
 
 }

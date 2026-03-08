@@ -97,15 +97,7 @@ public interface Database {
 
     String[] getHuntById(String huntId) throws InternalException;
 
-    void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException;
-
-    void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException;
-
-    void unlinkAllHeadsFromHunt(String huntId) throws InternalException;
-
     ArrayList<String> getHuntsForHead(UUID headUUID) throws InternalException;
-
-    ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException;
 
     void addHeadForHunt(UUID pUUID, UUID hUUID, String huntId) throws InternalException;
 

@@ -283,39 +283,6 @@ class SQLiteIntegrationTest {
         assertThat(db.getHuntById("huntDel")).isNull();
     }
 
-    // ---- Head-Hunt link ----
-
-    @Test
-    void linkHeadToHunt_and_getHeadsForHunt_returns_linked_heads() throws InternalException {
-        UUID head = UUID.randomUUID();
-        db.createNewHead(head, "t", "s");
-        db.createHunt("hunt5", "H5", "ACTIVE");
-
-        db.linkHeadToHunt(head, "hunt5");
-
-        var heads = db.getHeadsForHunt("hunt5");
-        assertThat(heads).containsExactly(head);
-    }
-
-    @Test
-    void unlinkHeadFromHunt_removes_link() throws InternalException {
-        UUID head = UUID.randomUUID();
-        db.createNewHead(head, "t", "s");
-        db.createHunt("hunt6", "H6", "ACTIVE");
-        db.linkHeadToHunt(head, "hunt6");
-
-        db.unlinkHeadFromHunt(head, "hunt6");
-
-        assertThat(db.getHeadsForHunt("hunt6")).isEmpty();
-    }
-
-    @Test
-    void getHeadsForHunt_returns_empty_when_no_links() throws InternalException {
-        db.createHunt("huntEmpty", "Empty", "ACTIVE");
-
-        assertThat(db.getHeadsForHunt("huntEmpty")).isEmpty();
-    }
-
     // ---- Hunt player progression ----
 
     @Test

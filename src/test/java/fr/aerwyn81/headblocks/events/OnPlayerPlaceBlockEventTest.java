@@ -302,8 +302,8 @@ class OnPlayerPlaceBlockEventTest {
 
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc")).thenReturn(headUuid);
         when(huntService.getSelectedHunt(playerUuid)).thenReturn("hunt1");
+        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "hunt1")).thenReturn(headUuid);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
@@ -322,8 +322,7 @@ class OnPlayerPlaceBlockEventTest {
 
             handler.onPlayerPlaceBlock(event);
 
-            verify(headService).saveHeadLocation(centeredLoc, "texture-abc");
-            verify(huntService).assignHeadToHunt(headUuid, "hunt1");
+            verify(headService).saveHeadLocation(centeredLoc, "texture-abc", "hunt1");
             verify(event, never()).setCancelled(anyBoolean());
         }
     }
@@ -492,7 +491,7 @@ class OnPlayerPlaceBlockEventTest {
             verify(player).sendMessage("mock-message");
             logUtil.verify(() -> LogUtil.error(eq("Error, head texture not resolved when trying to save the head for player {0}"), eq("TestPlayer")));
             // Should NOT proceed to saveHeadLocation
-            verify(headService, never()).saveHeadLocation(any(), anyString());
+            verify(headService, never()).saveHeadLocation(any(), anyString(), anyString());
         }
     }
 
@@ -521,7 +520,8 @@ class OnPlayerPlaceBlockEventTest {
 
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc"))
+        when(huntService.getSelectedHunt(playerUuid)).thenReturn("default");
+        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "default"))
                 .thenThrow(new InternalException("DB connection failed"));
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
@@ -538,8 +538,8 @@ class OnPlayerPlaceBlockEventTest {
             logUtil.verify(() -> LogUtil.error(
                     eq("Error while trying to create new HeadBlocks from the storage: {0}"),
                     eq("DB connection failed")));
-            // Should NOT proceed to particles or hunt assignment
-            verify(huntService, never()).getSelectedHunt(any());
+            // getSelectedHunt is called before save, but should not proceed to particles
+            verify(huntService).getSelectedHunt(playerUuid);
         }
     }
 
@@ -569,8 +569,8 @@ class OnPlayerPlaceBlockEventTest {
 
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc")).thenReturn(headUuid);
         when(huntService.getSelectedHunt(playerUuid)).thenReturn("default");
+        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "default")).thenReturn(headUuid);
         when(languageService.prefix()).thenReturn("[HB]");
 
         Player.Spigot spigot = mock(Player.Spigot.class);
@@ -595,8 +595,7 @@ class OnPlayerPlaceBlockEventTest {
 
             handler.onPlayerPlaceBlock(event);
 
-            verify(headService).saveHeadLocation(centeredLoc, "texture-abc");
-            verify(huntService).assignHeadToHunt(headUuid, "default");
+            verify(headService).saveHeadLocation(centeredLoc, "texture-abc", "default");
             // Default hunt sends a reassign message via spigot
             verify(spigot).sendMessage(any(net.md_5.bungee.api.chat.TextComponent.class));
         }
@@ -656,16 +655,14 @@ class OnPlayerPlaceBlockEventTest {
 
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc")).thenReturn(headUuid);
         when(huntService.getSelectedHunt(playerUuid)).thenReturn("hunt1");
-        doThrow(new RuntimeException("Hunt error")).when(huntService).assignHeadToHunt(headUuid, "hunt1");
+        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "hunt1")).thenReturn(headUuid);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
              MockedStatic<LocationUtils> locationUtils = mockStatic(LocationUtils.class);
              MockedStatic<VersionUtils> versionUtils = mockStatic(VersionUtils.class);
              MockedStatic<ParticlesUtils> ignored = mockStatic(ParticlesUtils.class);
-             MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class);
              MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
             headUtils.when(() -> HeadUtils.getHeadTexture(eventItemInHand)).thenReturn("texture-abc");
@@ -678,12 +675,7 @@ class OnPlayerPlaceBlockEventTest {
 
             handler.onPlayerPlaceBlock(event);
 
-            // Error is logged but execution continues
-            logUtil.verify(() -> LogUtil.error(
-                    eq("Error assigning head to hunt {0}: {1}"),
-                    eq("hunt1"),
-                    eq("Hunt error")));
-            // Still fires the HeadCreatedEvent
+            // Hunt assignment now happens inside saveHeadLocation, so just verify the event fires
             verify(pm).callEvent(any());
         }
     }

@@ -639,16 +639,8 @@ public class StorageService {
         database.createHunt(huntId, name, state);
     }
 
-    public ArrayList<UUID> getHeadsForHunt(String huntId) throws InternalException {
-        return database.getHeadsForHunt(huntId);
-    }
-
-    public void linkHeadToHunt(UUID headUUID, String huntId) throws InternalException {
-        database.linkHeadToHunt(headUUID, huntId);
-    }
-
-    public void unlinkHeadFromHunt(UUID headUUID, String huntId) throws InternalException {
-        database.unlinkHeadFromHunt(headUUID, huntId);
+    public ArrayList<String> getHuntsForHeadFromDb(UUID headUUID) throws InternalException {
+        return database.getHuntsForHead(headUUID);
     }
 
     public void updateHuntStateInDb(String huntId, String state) throws InternalException {
@@ -661,10 +653,6 @@ public class StorageService {
 
     public void deleteHuntFromDb(String huntId) throws InternalException {
         database.deleteHunt(huntId);
-    }
-
-    public void unlinkAllHeadsFromHuntInDb(String huntId) throws InternalException {
-        database.unlinkAllHeadsFromHunt(huntId);
     }
 
     public void resetAllPlayersForHunt(String huntId) throws InternalException {

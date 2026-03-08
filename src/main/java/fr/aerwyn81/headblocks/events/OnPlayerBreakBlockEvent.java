@@ -4,7 +4,6 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -85,9 +84,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
             player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadRemoved"), blockLocation));
 
             // Trigger the event HeadDeleted
-            HBHunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(headLocation.getUuid());
-            String huntId = primaryHunt != null ? primaryHunt.getId() : null;
-            Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation, huntId));
+            Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation, headLocation.getHuntId()));
         } catch (InternalException ex) {
             e.setCancelled(true);
             player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));

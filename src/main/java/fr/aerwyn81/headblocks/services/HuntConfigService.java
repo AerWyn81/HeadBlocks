@@ -1,33 +1,41 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
+import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Files;
+import java.util.*;
 
 public class HuntConfigService {
     private final PluginProvider pluginProvider;
     private final ConfigService configService;
     private final ServiceRegistry registry;
+    private final SchedulerAdapter scheduler;
     private File huntsDir;
+
+    private final Map<String, YamlConfiguration> yamlCache = new HashMap<>();
+    private final Set<String> savePendingHunts = new HashSet<>();
 
     // --- Constructor ---
 
-    public HuntConfigService(PluginProvider pluginProvider, ConfigService configService, ServiceRegistry registry) {
+    public HuntConfigService(PluginProvider pluginProvider, ConfigService configService,
+                             ServiceRegistry registry, SchedulerAdapter scheduler) {
         this.pluginProvider = pluginProvider;
         this.configService = configService;
         this.registry = registry;
+        this.scheduler = scheduler;
 
         initialize();
     }
@@ -93,7 +101,14 @@ public class HuntConfigService {
 
     public void saveHunt(HBHunt hunt) {
         File file = new File(huntsDir, hunt.getId() + ".yml");
-        YamlConfiguration yaml = new YamlConfiguration();
+        YamlConfiguration yaml;
+
+        // Load existing file to preserve locations section
+        if (file.exists()) {
+            yaml = YamlConfiguration.loadConfiguration(file);
+        } else {
+            yaml = new YamlConfiguration();
+        }
 
         yaml.set("id", hunt.getId());
         yaml.set("displayName", hunt.getDisplayName());
@@ -104,11 +119,7 @@ public class HuntConfigService {
         saveBehaviors(yaml, hunt.getBehaviors());
         saveHuntConfig(yaml, hunt.getConfig());
 
-        try {
-            yaml.save(file);
-        } catch (IOException e) {
-            LogUtil.error("Failed to save hunt file {0}: {1}", file.getName(), e.getMessage());
-        }
+        saveYamlFile(yaml, file);
     }
 
     public boolean huntFileExists(String huntId) {
@@ -121,6 +132,69 @@ public class HuntConfigService {
             if (!file.delete()) {
                 LogUtil.error("Failed to delete hunt file {0}", file.getName());
             }
+        }
+    }
+
+    public void migrateLocationsFromLegacy(File locationFile, StorageService storageService) {
+        if (locationFile == null || !locationFile.exists()) {
+            return;
+        }
+
+        LogUtil.info("Migrating locations.yml to per-hunt YAML files...");
+
+        YamlConfiguration legacyYaml = YamlConfiguration.loadConfiguration(locationFile);
+        var locationsSection = legacyYaml.getConfigurationSection("locations");
+        if (locationsSection == null) {
+            LogUtil.info("No locations found in locations.yml, skipping migration.");
+            renameLegacyFile(locationFile);
+            return;
+        }
+
+        int migrated = 0;
+        for (String uuidStr : locationsSection.getKeys(false)) {
+            try {
+                UUID headUuid = UUID.fromString(uuidStr);
+
+                // Query DB for hunt assignment
+                String huntId = "default";
+                try {
+                    ArrayList<String> huntIds = storageService.getHuntsForHeadFromDb(headUuid);
+                    if (!huntIds.isEmpty()) {
+                        huntId = huntIds.get(0);
+                    }
+                } catch (Exception e) {
+                    LogUtil.warning("Could not query hunt for head {0}, defaulting: {1}", uuidStr, e.getMessage());
+                }
+
+                // Ensure hunt file exists
+                if (!huntFileExists(huntId)) {
+                    LogUtil.warning("Hunt file {0}.yml not found for head {1}, using default.", huntId, uuidStr);
+                    huntId = "default";
+                }
+
+                // Read from legacy and write to hunt YAML
+                var headLocation = HeadLocation.fromConfig(legacyYaml, headUuid, huntId);
+
+                File huntFile = new File(huntsDir, huntId + ".yml");
+                YamlConfiguration huntYaml = YamlConfiguration.loadConfiguration(huntFile);
+                headLocation.saveInConfig(huntYaml);
+                huntYaml.save(huntFile);
+
+                migrated++;
+            } catch (Exception e) {
+                LogUtil.error("Failed to migrate head {0}: {1}", uuidStr, e.getMessage());
+            }
+        }
+
+        renameLegacyFile(locationFile);
+        invalidateAllYamlCaches();
+        LogUtil.info("Migration complete: {0} head(s) migrated to per-hunt files.", migrated);
+    }
+
+    private void renameLegacyFile(File locationFile) {
+        File migrated = new File(locationFile.getParent(), "locations.yml.migrated");
+        if (!locationFile.renameTo(migrated)) {
+            LogUtil.error("Failed to rename locations.yml to locations.yml.migrated");
         }
     }
 
@@ -237,6 +311,100 @@ public class HuntConfigService {
             LogUtil.info("hunts/default.yml generated successfully.");
         } catch (IOException e) {
             LogUtil.error("Failed to generate hunts/default.yml: {0}", e.getMessage());
+        }
+    }
+
+    // --- Location management ---
+
+    public List<HeadLocation> loadLocationsFromHunt(String huntId) {
+        List<HeadLocation> locations = new ArrayList<>();
+        YamlConfiguration yaml = getOrLoadHuntYaml(huntId);
+        if (yaml == null) {
+            return locations;
+        }
+
+        ConfigurationSection section = yaml.getConfigurationSection("locations");
+        if (section == null) {
+            return locations;
+        }
+
+        for (String uuid : section.getKeys(false)) {
+            try {
+                UUID headUuid = UUID.fromString(uuid);
+                HeadLocation headLoc = HeadLocation.fromConfig(yaml, headUuid, huntId);
+                locations.add(headLoc);
+            } catch (Exception e) {
+                LogUtil.error("Cannot deserialize location {0} in hunt {1}: {2}", uuid, huntId, e.getMessage());
+            }
+        }
+
+        return locations;
+    }
+
+    public void saveLocationInHunt(String huntId, HeadLocation headLocation) {
+        YamlConfiguration yaml = getOrLoadHuntYaml(huntId);
+        if (yaml == null) {
+            LogUtil.error("Cannot save location in hunt {0}: hunt file not found.", huntId);
+            return;
+        }
+
+        headLocation.saveInConfig(yaml);
+        debouncedSave(huntId, yaml);
+    }
+
+    public void removeLocationFromHunt(String huntId, UUID headUuid) {
+        YamlConfiguration yaml = getOrLoadHuntYaml(huntId);
+        if (yaml == null) {
+            return;
+        }
+
+        yaml.set("locations." + headUuid, null);
+        debouncedSave(huntId, yaml);
+    }
+
+    private YamlConfiguration getOrLoadHuntYaml(String huntId) {
+        return yamlCache.computeIfAbsent(huntId, id -> {
+            File file = new File(huntsDir, id + ".yml");
+            if (!file.exists()) {
+                return null;
+            }
+            return YamlConfiguration.loadConfiguration(file);
+        });
+    }
+
+    public void invalidateYamlCache(String huntId) {
+        yamlCache.remove(huntId);
+    }
+
+    public void invalidateAllYamlCaches() {
+        yamlCache.clear();
+    }
+
+    private void debouncedSave(String huntId, YamlConfiguration yaml) {
+        if (savePendingHunts.contains(huntId)) {
+            return;
+        }
+        savePendingHunts.add(huntId);
+
+        scheduler.runTaskLater(() -> {
+            savePendingHunts.remove(huntId);
+            String content = yaml.saveToString();
+            File file = new File(huntsDir, huntId + ".yml");
+            scheduler.runTaskAsync(() -> {
+                try {
+                    Files.writeString(file.toPath(), content);
+                } catch (Exception e) {
+                    LogUtil.error("Cannot save hunt file {0}: {1}", file.getName(), e.getMessage());
+                }
+            });
+        }, 1L);
+    }
+
+    private void saveYamlFile(YamlConfiguration yaml, File file) {
+        try {
+            yaml.save(file);
+        } catch (IOException e) {
+            LogUtil.error("Failed to save hunt file {0}: {1}", file.getName(), e.getMessage());
         }
     }
 

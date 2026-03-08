@@ -95,9 +95,12 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
+        // Assign head to selected hunt directly during save
+        String selectedHuntId = registry.getHuntService().getSelectedHunt(player.getUniqueId());
+
         UUID headUuid;
         try {
-            headUuid = registry.getHeadService().saveHeadLocation(headLocation, headTexture);
+            headUuid = registry.getHeadService().saveHeadLocation(headLocation, headTexture, selectedHuntId);
         } catch (InternalException ex) {
             player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while trying to create new HeadBlocks from the storage: {0}", ex.getMessage());
@@ -111,14 +114,6 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         }
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadPlaced"), headLocation));
-
-        // Auto-assign head to selected hunt
-        String selectedHuntId = registry.getHuntService().getSelectedHunt(player.getUniqueId());
-        try {
-            registry.getHuntService().assignHeadToHunt(headUuid, selectedHuntId);
-        } catch (Exception ex) {
-            LogUtil.error("Error assigning head to hunt {0}: {1}", selectedHuntId, ex.getMessage());
-        }
 
         if ("default".equals(selectedHuntId)) {
             TextComponent msg = new TextComponent(MessageUtils.colorize(

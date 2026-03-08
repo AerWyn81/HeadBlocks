@@ -101,8 +101,8 @@ public class OthersEvent implements Listener {
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));
             head.setCharged(true);
 
-            HBHunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(head.getUuid());
-            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig(registry.getConfigService());
+            HBHunt hunt = registry.getHuntService().getHuntById(head.getHuntId());
+            HuntConfig huntConfig = hunt != null ? hunt.getConfig() : new HuntConfig(registry.getConfigService());
             registry.getHologramService().createHolograms(head.getLocation(), huntConfig);
         }
     }

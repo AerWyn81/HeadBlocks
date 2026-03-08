@@ -58,12 +58,15 @@ public class ServiceRegistry {
         languageService.setLang(configService.language());
         languageService.pushMessages();
 
-        this.huntConfigService = new HuntConfigService(pluginProvider, configService, this);
+        this.huntConfigService = new HuntConfigService(pluginProvider, configService, this, scheduler);
         huntConfigService.initialize();
 
         Requests.init(configService);
 
         this.storageService = new StorageService(configService, pluginProvider.getDataFolder());
+
+        // Migrate locations.yml → per-hunt YAML files (idempotent, runs once)
+        huntConfigService.migrateLocationsFromLegacy(locationFile, storageService);
 
         this.huntService = new HuntService(configService, huntConfigService, storageService);
 
@@ -71,7 +74,8 @@ public class ServiceRegistry {
 
         this.headService = new HeadService(configService, storageService, languageService, scheduler, pluginProvider);
         headService.setHuntService(huntService);
-        headService.initialize(locationFile);
+        headService.setHuntConfigService(huntConfigService);
+        headService.initialize();
 
         this.rewardService = new RewardService(configService, placeholdersService, scheduler, commandDispatcher);
 

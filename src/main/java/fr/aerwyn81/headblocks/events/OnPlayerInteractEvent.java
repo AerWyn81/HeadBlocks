@@ -25,7 +25,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class OnPlayerInteractEvent implements Listener {
 
@@ -87,106 +86,80 @@ public class OnPlayerInteractEvent implements Listener {
             return;
         }
 
-        // Get hunts for this head
-        List<HBHunt> allHunts = registry.getHuntService().getHuntsForHead(headLocation.getUuid());
-        List<HBHunt> activeHunts = allHunts.stream()
-                .filter(HBHunt::isActive)
-                .collect(Collectors.toList());
+        // Get hunt for this head (1:1 relationship)
+        HBHunt hunt = registry.getHuntService().getHuntById(headLocation.getHuntId());
 
-        if (activeHunts.isEmpty()) {
-            if (!allHunts.isEmpty()) {
-                // Head has hunts but all are inactive
-                String msg = registry.getLanguageService().message("Messages.HuntHeadInactive");
-                if (!msg.trim().isEmpty()) {
-                    player.sendMessage(msg);
-                }
-                return;
-            }
-
-            // No hunts assigned — data inconsistency (migration should have assigned all heads to default)
+        if (hunt == null) {
             LogUtil.warning("Head {0} at {1} has no hunt assigned. Ignoring click.",
                     headLocation.getUuid(), headLocation.getLocation());
             return;
         }
 
-        // Multi-hunt aware click handling
-        handleHuntClick(player, headLocation, clickedLocation, block, activeHunts);
+        if (!hunt.isActive()) {
+            String msg = registry.getLanguageService().message("Messages.HuntHeadInactive");
+            if (!msg.trim().isEmpty()) {
+                player.sendMessage(msg);
+            }
+            return;
+        }
+
+        // Single-hunt click handling
+        handleHuntClick(player, headLocation, clickedLocation, block, hunt);
     }
 
     private void handleHuntClick(Player player, HeadLocation headLocation, Location clickedLocation,
-                                 Block block, List<HBHunt> activeHunts) {
-        HBHunt primaryHunt = activeHunts.get(0); // highest priority (list is sorted)
-        HuntConfig primaryConfig = primaryHunt.getConfig();
+                                 Block block, HBHunt hunt) {
+        HuntConfig huntConfig = hunt.getConfig();
 
         registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(allPlayerHeads -> {
-            var playerHeads = new ArrayList<>(allPlayerHeads);
-            boolean globallyFound = playerHeads.contains(headLocation.getUuid());
-            boolean anyNewFind = false;
-            boolean anyBehaviorDenied = false;
-            List<String> foundHuntIds = new ArrayList<>();
+            try {
+                ArrayList<UUID> huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
+                        player.getUniqueId(), hunt.getId());
 
-            for (HBHunt hunt : activeHunts) {
-                try {
-                    ArrayList<UUID> huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
-                            player.getUniqueId(), hunt.getId());
+                if (huntPlayerHeads.contains(headLocation.getUuid())) {
+                    // Already found in this hunt
+                    showAlreadyClaimed(player, headLocation, clickedLocation, huntConfig, hunt.getId());
 
-                    if (huntPlayerHeads.contains(headLocation.getUuid())) {
-                        continue; // Already found in this hunt
-                    }
-
-                    // Check behaviors
-                    var behaviorResult = hunt.evaluateBehaviors(player, headLocation);
-                    if (!behaviorResult.allowed()) {
-                        if (behaviorResult.denyMessage() != null && !behaviorResult.denyMessage().isEmpty()) {
-                            player.sendMessage(behaviorResult.denyMessage());
-                        }
-                        anyBehaviorDenied = true;
-                        continue;
-                    }
-
-                    // Prepare updated hunt heads for reward calculation
-                    huntPlayerHeads.add(headLocation.getUuid());
-
-                    // Check inventory slots
-                    if (!registry.getRewardService().hasPlayerSlotsRequired(player, huntPlayerHeads, hunt.getConfig())) {
-                        var message = registry.getLanguageService().message("Messages.InventoryFullReward");
-                        if (!message.trim().isEmpty()) {
-                            player.sendMessage(message);
-                        }
-                        continue;
-                    }
-
-                    // Register find for this hunt (also updates storage cache globally)
-                    registry.getStorageService().addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
-
-                    // Update local tracking for subsequent iterations
-                    if (!globallyFound) {
-                        playerHeads.add(headLocation.getUuid());
-                        globallyFound = true;
-                    }
-
-                    // Notify behaviors
-                    hunt.notifyHeadFound(player, headLocation);
-
-                    // Give hunt-specific rewards
-                    registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, hunt.getConfig(), hunt.getId());
-
-                    // Give special head rewards only on first new find
-                    if (!anyNewFind) {
-                        for (var reward : headLocation.getRewards()) {
-                            reward.execute(player, headLocation, registry);
-                        }
-                    }
-
-                    foundHuntIds.add(hunt.getId());
-                    anyNewFind = true;
-                } catch (InternalException ex) {
-                    LogUtil.error("Error processing hunt {0} click for player {1}: {2}",
-                            hunt.getId(), player.getName(), ex.getMessage());
+                    Bukkit.getPluginManager().callEvent(
+                            new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, false, List.of(hunt.getId())));
+                    return;
                 }
-            }
 
-            if (anyNewFind) {
+                // Check behaviors
+                var behaviorResult = hunt.evaluateBehaviors(player, headLocation);
+                if (!behaviorResult.allowed()) {
+                    if (behaviorResult.denyMessage() != null && !behaviorResult.denyMessage().isEmpty()) {
+                        player.sendMessage(behaviorResult.denyMessage());
+                    }
+                    return;
+                }
+
+                // Prepare updated hunt heads for reward calculation
+                huntPlayerHeads.add(headLocation.getUuid());
+
+                // Check inventory slots
+                if (!registry.getRewardService().hasPlayerSlotsRequired(player, huntPlayerHeads, huntConfig)) {
+                    var message = registry.getLanguageService().message("Messages.InventoryFullReward");
+                    if (!message.trim().isEmpty()) {
+                        player.sendMessage(message);
+                    }
+                    return;
+                }
+
+                // Register find for this hunt
+                registry.getStorageService().addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
+
+                // Notify behaviors
+                hunt.notifyHeadFound(player, headLocation);
+
+                // Give hunt-specific rewards
+                registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, huntConfig, hunt.getId());
+
+                // Give special head rewards
+                for (var reward : headLocation.getRewards()) {
+                    reward.execute(player, headLocation, registry);
+                }
+
                 // Hide the head for this player if enabled
                 var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
                 if (packetEventsHook != null && packetEventsHook.isEnabled()
@@ -194,8 +167,8 @@ public class OnPlayerInteractEvent implements Listener {
                     packetEventsHook.getHeadHidingListener().addFoundHead(player, headLocation.getUuid());
                 }
 
-                // Success sound using primary hunt config
-                String songName = primaryConfig.getHeadClickSoundFound();
+                // Success sound
+                String songName = huntConfig.getHeadClickSoundFound();
                 if (!songName.trim().isEmpty()) {
                     try {
                         XSound.play(songName, s -> s.forPlayers(player));
@@ -204,20 +177,20 @@ public class OnPlayerInteractEvent implements Listener {
                     }
                 }
 
-                // Title using primary hunt config
-                if (primaryConfig.isHeadClickTitleEnabled()) {
+                // Title
+                if (huntConfig.isHeadClickTitleEnabled()) {
                     String firstLine = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
-                            headLocation, primaryConfig.getHeadClickTitleFirstLine(), primaryHunt.getId());
+                            headLocation, huntConfig.getHeadClickTitleFirstLine(), hunt.getId());
                     String subTitle = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
-                            headLocation, primaryConfig.getHeadClickTitleSubTitle(), primaryHunt.getId());
-                    int fadeIn = primaryConfig.getHeadClickTitleFadeIn();
-                    int stay = primaryConfig.getHeadClickTitleStay();
-                    int fadeOut = primaryConfig.getHeadClickTitleFadeOut();
+                            headLocation, huntConfig.getHeadClickTitleSubTitle(), hunt.getId());
+                    int fadeIn = huntConfig.getHeadClickTitleFadeIn();
+                    int stay = huntConfig.getHeadClickTitleStay();
+                    int fadeOut = huntConfig.getHeadClickTitleFadeOut();
                     player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
                 }
 
-                // Firework using primary hunt config
-                if (primaryConfig.isFireworkEnabled()) {
+                // Firework
+                if (huntConfig.isFireworkEnabled()) {
                     List<Color> colors = registry.getConfigService().headClickFireworkColors();
                     List<Color> fadeColors = registry.getConfigService().headClickFireworkFadeColors();
                     boolean isFlickering = registry.getConfigService().fireworkFlickerEnabled();
@@ -230,14 +203,10 @@ public class OnPlayerInteractEvent implements Listener {
                 }
 
                 Bukkit.getPluginManager().callEvent(
-                        new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true, foundHuntIds));
-            } else if (!anyBehaviorDenied) {
-                // All hunts already found — show "already claimed" with primary config
-                showAlreadyClaimed(player, headLocation, clickedLocation, primaryConfig, primaryHunt.getId());
-
-                var allHuntIds = activeHunts.stream().map(HBHunt::getId).collect(java.util.stream.Collectors.toList());
-                Bukkit.getPluginManager().callEvent(
-                        new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, false, allHuntIds));
+                        new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true, List.of(hunt.getId())));
+            } catch (InternalException ex) {
+                LogUtil.error("Error processing hunt {0} click for player {1}: {2}",
+                        hunt.getId(), player.getName(), ex.getMessage());
             }
         });
     }

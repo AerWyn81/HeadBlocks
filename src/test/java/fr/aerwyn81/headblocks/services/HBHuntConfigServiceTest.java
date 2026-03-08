@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
+import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,9 @@ class HBHuntConfigServiceTest {
 
     @Mock
     private ServiceRegistry registry;
+
+    @Mock
+    private SchedulerAdapter scheduler;
 
     private HuntConfigService huntConfigService;
 
@@ -75,7 +79,7 @@ class HBHuntConfigServiceTest {
         lenient().when(configService.particlesNotFoundAmount()).thenReturn(3);
         lenient().when(configService.tieredRewards()).thenReturn(new ArrayList<>());
 
-        huntConfigService = new HuntConfigService(pluginProvider, configService, registry);
+        huntConfigService = new HuntConfigService(pluginProvider, configService, registry, scheduler);
     }
 
     // --- Constructor / initialize ---

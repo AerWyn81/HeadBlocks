@@ -388,7 +388,6 @@ class RequestsTest {
             assertThat(Requests.updateHead()).contains("p_hb_heads");
             assertThat(Requests.savePlayerHead()).contains("p_hb_playerHeads");
             assertThat(Requests.insertHunt()).contains("p_hb_hunts");
-            assertThat(Requests.linkHeadToHunt()).contains("p_hb_head_hunts");
             assertThat(Requests.insertTimedRun()).contains("p_hb_timed_runs");
         }
     }
@@ -826,57 +825,12 @@ class RequestsTest {
     class HeadHBHuntLinkQueries {
 
         @Test
-        void linkHeadToHunt_inserts_two_placeholders() {
-            initWithPrefix("");
-
-            String sql = Requests.linkHeadToHunt();
-
-            assertThat(sql).contains("INSERT INTO hb_head_hunts (headUUID, huntId) VALUES (?, ?)");
-        }
-
-        @Test
-        void linkHeadToHuntMySQL_uses_replace_into() {
-            initWithPrefix("");
-
-            String sql = Requests.linkHeadToHuntMySQL();
-
-            assertThat(sql).startsWith("REPLACE INTO");
-            assertThat(sql).contains("hb_head_hunts");
-            assertThat(sql).contains("(?, ?)");
-        }
-
-        @Test
-        void unlinkHeadFromHunt_deletes_by_headUUID_and_huntId() {
-            initWithPrefix("");
-
-            assertThat(Requests.unlinkHeadFromHunt()).isEqualTo("DELETE FROM hb_head_hunts WHERE headUUID = ? AND huntId = ?");
-        }
-
-        @Test
-        void unlinkAllHeadsFromHunt_deletes_by_huntId() {
-            initWithPrefix("");
-
-            assertThat(Requests.unlinkAllHeadsFromHunt()).isEqualTo("DELETE FROM hb_head_hunts WHERE huntId = ?");
-        }
-
-        @Test
         void getHuntsForHead_selects_huntId_by_headUUID() {
             initWithPrefix("");
 
             assertThat(Requests.getHuntsForHead()).isEqualTo("SELECT huntId FROM hb_head_hunts WHERE headUUID = ?");
         }
 
-        @Test
-        void getHeadsForHunt_joins_with_heads_table() {
-            initWithPrefix("");
-
-            String sql = Requests.getHeadsForHunt();
-
-            assertThat(sql).contains("SELECT headUUID FROM hb_head_hunts");
-            assertThat(sql).contains("INNER JOIN hb_heads");
-            assertThat(sql).contains("hh.huntId = ?");
-            assertThat(sql).contains("h.hExist = True");
-        }
     }
 
     // =========================================================================

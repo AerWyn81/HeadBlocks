@@ -486,7 +486,7 @@ class HBHuntCommandTest {
 
             huntCommand.perform(consoleSender, new String[]{"hunt", "transfer", headUuid.toString(), "myhunt"});
 
-            verify(huntService).transferHead(headUuid, "myhunt");
+            verify(huntService).transferHead(hl, "myhunt");
         }
     }
 

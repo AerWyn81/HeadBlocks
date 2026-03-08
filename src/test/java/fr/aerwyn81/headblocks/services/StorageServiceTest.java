@@ -820,33 +820,6 @@ class StorageServiceTest {
         }
 
         @Test
-        void getHeadsForHunt_delegatesToDatabase() throws InternalException {
-            UUID head = UUID.randomUUID();
-            ArrayList<UUID> heads = new ArrayList<>(List.of(head));
-            when(database.getHeadsForHunt("hunt1")).thenReturn(heads);
-
-            assertThat(service.getHeadsForHunt("hunt1")).isSameAs(heads);
-        }
-
-        @Test
-        void linkHeadToHunt_delegatesToDatabase() throws InternalException {
-            UUID head = UUID.randomUUID();
-
-            service.linkHeadToHunt(head, "hunt1");
-
-            verify(database).linkHeadToHunt(head, "hunt1");
-        }
-
-        @Test
-        void unlinkHeadFromHunt_delegatesToDatabase() throws InternalException {
-            UUID head = UUID.randomUUID();
-
-            service.unlinkHeadFromHunt(head, "hunt1");
-
-            verify(database).unlinkHeadFromHunt(head, "hunt1");
-        }
-
-        @Test
         void updateHuntStateInDb_delegatesToDatabase() throws InternalException {
             service.updateHuntStateInDb("hunt1", "PAUSED");
 
@@ -867,12 +840,6 @@ class StorageServiceTest {
             verify(database).deleteHunt("hunt1");
         }
 
-        @Test
-        void unlinkAllHeadsFromHuntInDb_delegatesToDatabase() throws InternalException {
-            service.unlinkAllHeadsFromHuntInDb("hunt1");
-
-            verify(database).unlinkAllHeadsFromHunt("hunt1");
-        }
     }
 
     // --- getHeadsByServerId ---
@@ -1606,32 +1573,6 @@ class StorageServiceTest {
         }
 
         @Test
-        void getHeadsForHunt_databaseThrows_propagates() throws InternalException {
-            when(database.getHeadsForHunt("hunt1")).thenThrow(new InternalException("heads error"));
-
-            assertThatThrownBy(() -> service.getHeadsForHunt("hunt1"))
-                    .isInstanceOf(InternalException.class);
-        }
-
-        @Test
-        void linkHeadToHunt_databaseThrows_propagates() throws InternalException {
-            UUID head = UUID.randomUUID();
-            doThrow(new InternalException("link error")).when(database).linkHeadToHunt(head, "hunt1");
-
-            assertThatThrownBy(() -> service.linkHeadToHunt(head, "hunt1"))
-                    .isInstanceOf(InternalException.class);
-        }
-
-        @Test
-        void unlinkHeadFromHunt_databaseThrows_propagates() throws InternalException {
-            UUID head = UUID.randomUUID();
-            doThrow(new InternalException("unlink error")).when(database).unlinkHeadFromHunt(head, "hunt1");
-
-            assertThatThrownBy(() -> service.unlinkHeadFromHunt(head, "hunt1"))
-                    .isInstanceOf(InternalException.class);
-        }
-
-        @Test
         void updateHuntStateInDb_databaseThrows_propagates() throws InternalException {
             doThrow(new InternalException("state error")).when(database).updateHuntState("hunt1", "PAUSED");
 
@@ -1655,13 +1596,6 @@ class StorageServiceTest {
                     .isInstanceOf(InternalException.class);
         }
 
-        @Test
-        void unlinkAllHeadsFromHuntInDb_databaseThrows_propagates() throws InternalException {
-            doThrow(new InternalException("unlink all error")).when(database).unlinkAllHeadsFromHunt("hunt1");
-
-            assertThatThrownBy(() -> service.unlinkAllHeadsFromHuntInDb("hunt1"))
-                    .isInstanceOf(InternalException.class);
-        }
     }
 
     // --- addHeadForHunt: error path ---

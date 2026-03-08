@@ -54,9 +54,9 @@ public class GlobalTask extends BukkitRunnable {
                 return;
             }
 
-            // Resolve primary display hunt for this head
-            HBHunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(headLocation.getUuid());
-            HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig(registry.getConfigService());
+            // Resolve hunt config for this head (1:1)
+            HBHunt hunt = registry.getHuntService().getHuntById(headLocation.getHuntId());
+            HuntConfig huntConfig = hunt != null ? hunt.getConfig() : new HuntConfig(registry.getConfigService());
 
             if (huntConfig.isSpinEnabled() && huntConfig.isSpinLinked()) {
                 registry.getHeadService().rotateHead(headLocation);
@@ -145,25 +145,18 @@ public class GlobalTask extends BukkitRunnable {
                         }
 
                         if (distanceSq <= rangeHintSq && (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled())) {
-                            // Resolve per-player hint config: use the highest-priority active hunt where the player hasn't found this head
+                            // Resolve per-player hint config using the head's hunt (1:1)
                             HuntConfig hintConfig = null;
                             if (!hasHead) {
-                                // Fast path: player hasn't found it globally -> primary hunt config
                                 hintConfig = huntConfig;
                             } else {
-                                // Player found it globally -- check per-hunt for one they haven't completed
-                                for (HBHunt h : registry.getHuntService().getHuntsForHead(headLocation.getUuid())) {
-                                    if (!h.isActive()) {
-                                        continue;
+                                // Check if player hasn't found it in the head's hunt
+                                try {
+                                    if (!registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), headLocation.getHuntId())
+                                            .contains(headLocation.getUuid())) {
+                                        hintConfig = huntConfig;
                                     }
-                                    try {
-                                        if (!registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), h.getId())
-                                                .contains(headLocation.getUuid())) {
-                                            hintConfig = h.getConfig();
-                                            break;
-                                        }
-                                    } catch (InternalException ignored) {
-                                    }
+                                } catch (InternalException ignored) {
                                 }
                             }
 
