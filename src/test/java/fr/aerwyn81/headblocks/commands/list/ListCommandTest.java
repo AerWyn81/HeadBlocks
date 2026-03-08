@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HuntService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -34,6 +35,9 @@ class ListCommandTest {
     private HeadService headService;
 
     @Mock
+    private HuntService huntService;
+
+    @Mock
     private LanguageService languageService;
 
     @Mock
@@ -47,9 +51,12 @@ class ListCommandTest {
     @BeforeEach
     void setUp() {
         lenient().when(registry.getHeadService()).thenReturn(headService);
+        lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
         lenient().when(languageService.message(anyString(), anyString())).thenReturn("mock-message");
+        lenient().when(huntService.isMultiHunt()).thenReturn(false);
+        lenient().when(huntService.getHuntNames()).thenReturn(new ArrayList<>());
         command = new List(registry);
     }
 
@@ -284,10 +291,12 @@ class ListCommandTest {
         }
 
         @Test
-        void withSecondArg_returnsEmptyList() {
+        void withSecondArg_returnsHuntNames() {
+            when(huntService.getHuntNames()).thenReturn(new ArrayList<>(java.util.List.of("default", "easter")));
+
             ArrayList<String> result = command.tabComplete(playerSender, new String[]{"list", ""});
 
-            assertThat(result).isEmpty();
+            assertThat(result).containsExactly("default", "easter");
         }
     }
 }

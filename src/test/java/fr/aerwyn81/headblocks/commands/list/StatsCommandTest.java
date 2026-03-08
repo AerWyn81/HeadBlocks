@@ -3,10 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.services.PlaceholdersService;
-import fr.aerwyn81.headblocks.services.StorageService;
+import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.CommandsUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -46,6 +43,9 @@ class StatsCommandTest {
     private HeadService headService;
 
     @Mock
+    private HuntService huntService;
+
+    @Mock
     private PlaceholdersService placeholdersService;
 
     @Mock
@@ -61,9 +61,12 @@ class StatsCommandTest {
         lenient().when(registry.getStorageService()).thenReturn(storageService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         lenient().when(registry.getHeadService()).thenReturn(headService);
+        lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(registry.getPlaceholdersService()).thenReturn(placeholdersService);
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
         lenient().when(languageService.message(anyString(), anyString())).thenReturn("mock-message");
+        lenient().when(huntService.isMultiHunt()).thenReturn(false);
+        lenient().when(huntService.getHuntNames()).thenReturn(new ArrayList<>());
         command = new Stats(registry);
     }
 
@@ -469,10 +472,12 @@ class StatsCommandTest {
         }
 
         @Test
-        void thirdArg_returnsEmpty() {
-            ArrayList<String> result = command.tabComplete(playerSender, new String[]{"stats", "player", "3"});
+        void thirdArg_returnsHuntNames() {
+            when(huntService.getHuntNames()).thenReturn(new ArrayList<>(java.util.List.of("default", "easter")));
 
-            assertThat(result).isEmpty();
+            ArrayList<String> result = command.tabComplete(playerSender, new String[]{"stats", "player", ""});
+
+            assertThat(result).containsExactly("default", "easter");
         }
     }
 }
