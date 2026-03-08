@@ -28,6 +28,7 @@ sqlite-jdbc = "3.49.1.0"
 shadow = "9.3.1"
 plugin-yml = "0.6.0"
 run-paper = "3.0.2"
+hangar-publish = "0.1.4"
 
 [libraries]
 # Compile Only Dependencies
@@ -61,3 +62,4 @@ sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 plugin-yml = { id = "net.minecrell.plugin-yml.bukkit", version.ref = "plugin-yml" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }
+hangar-publish = { id = "io.papermc.hangar-publish-plugin", version.ref = "hangar-publish" }

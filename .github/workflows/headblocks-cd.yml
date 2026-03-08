@@ -19,6 +19,7 @@ on:
           - all
           - discord
           - modrinth
+          - hangar
           - bbcode
 
 jobs:
@@ -177,6 +178,46 @@ jobs:
 
           # Java version
           java: 17
+
+  publish-hangar:
+    needs: release
+    if: always() && (needs.release.result == 'success' || inputs.jobs == 'all' || inputs.jobs == 'hangar')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=${{ inputs.version || github.ref_name }}" >> $GITHUB_OUTPUT
+
+      - name: Get changelog from changelog.md
+        id: changelog
+        run: |
+          if [ -f "changelog.md" ]; then
+            delimiter="$(openssl rand -hex 16)"
+            echo "CHANGELOG<<${delimiter}" >> $GITHUB_OUTPUT
+            cat changelog.md >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "${delimiter}" >> $GITHUB_OUTPUT
+          else
+            echo "CHANGELOG=No changelog provided." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to Hangar
+        run: ./gradlew publishPluginPublicationToHangar --no-daemon
+        env:
+          HANGAR_API_TOKEN: ${{ secrets.HANGAR_API_TOKEN }}
+          HANGAR_CHANGELOG: ${{ steps.changelog.outputs.CHANGELOG }}
 
   generate-bbcode:
     needs: release
