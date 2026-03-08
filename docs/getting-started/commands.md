@@ -20,6 +20,7 @@
 | **/hb export**    |     e     |    Any     | `<database> <MySQL or SQLite>`     | headblocks.admin                                                      | Export database to SQL file with player data                |
 | **/hb rename**    |     r     |   Player   | `(name)`                           | headblocks.admin                                                      | Rename targeted head                                        |
 | **/hb options**   |     o     |   Player   | `counter / hint / order / rewards` | headblocks.admin                                                      | Configure head mechanics                                    |
+| **/hb leave**     |           |   Player   |                                    | headblocks.use                                                        | Leave the current timed run                                 |
 
 ## Hunt Commands
 

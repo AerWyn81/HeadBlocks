@@ -1,15 +1,19 @@
-# Locations
+# Head Locations
 
-This is an automatically generated file created when heads are placed.
-Do not modify this file unless you know what you're doing.
+Head locations are stored inside each hunt's YAML file, under the `locations` section. When you place a head in the world, it is automatically saved in the corresponding hunt file (e.g., `hunts/default.yml`).
 
-Default file:
-```
-locations: []
-```
+There is no separate `locations.yml` file — each hunt manages its own heads.
 
-Example with one head:
-```
+## Example
+
+In `hunts/default.yml`:
+
+```yaml
+id: default
+displayName: "Default"
+state: ACTIVE
+# ... hunt config ...
+
 locations:
   4848fbff-3002-46e6-98c2-14145ccb4ecb:
     name: ''
@@ -29,7 +33,7 @@ locations:
     hitCount: 12
 ```
 
-Each head has a UUID as its key identifier (line 9).
+Each head has a UUID as its key identifier.
 Each head has the following properties:
 
 - **name**: The head's name, displayed in GUIs (options menu, chat for order/clicks). Supports hex colors.

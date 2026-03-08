@@ -137,6 +137,18 @@ behaviors:
   free:
 ```
 
+### Ordered
+
+Players must find heads in a specific order. Heads with a lower `orderIndex` must be found before heads with a higher one. Configure the order via `/hb options order`.
+
+```yaml
+behaviors:
+  ordered:
+```
+
+- Heads with `orderIndex <= 0` are always clickable
+- If a player tries to click a head while there are unfound heads with a lower order, the click is denied with the `Messages.OrderClickError` message
+
 ### Scheduled
 
 The hunt is only active within a date range. Outside the range, clicks are denied with a configurable message.
@@ -152,7 +164,28 @@ behaviors:
 - Between `start` and `end`: click allowed
 - After `end`: click denied with `Hunt.Behavior.ScheduledEnded` message
 
-?> Behaviors can be combined. For example, `scheduled` + `free` means the hunt is date-restricted but within the active period there are no additional constraints.
+### Timed
+
+Players race against the clock to find all heads. A pressure plate acts as the start trigger — stepping on it begins the timer. An action bar displays elapsed time and progress.
+
+```yaml
+behaviors:
+  timed:
+    startPlate:
+      world: default
+      x: 100
+      y: 64
+      z: 200
+    repeatable: true
+```
+
+- `startPlate`: the location of the pressure plate that starts the timed run. Can be configured via the GUI (`/hb hunt create` or the timed config GUI).
+- `repeatable`: if `true`, players can replay the hunt after completion (their progress is reset). Defaults to `true`.
+- Players must step on the plate to start — clicking a head without an active run shows `Messages.TimedNotStarted`
+- On completion, the time is saved and the `Messages.TimedCompleted` message is shown
+- Players can leave a run with `/hb leave`
+
+?> Behaviors can be combined. For example, `scheduled` + `ordered` means the hunt is date-restricted and heads must be found in order.
 
 ## Per-Hunt Configuration
 
@@ -263,9 +296,7 @@ config:
 
 ## Priority and Display Conflicts
 
-When a head belongs to multiple active hunts (future feature), the hunt with the **lowest priority number** determines which holograms, particles, and spin config are displayed.
-
-Example: Hunt A (priority 1) and Hunt B (priority 2) both have a head — Hunt A's display config is used.
+Each head belongs to exactly one hunt. The priority determines display order in GUIs and messages when multiple hunts exist.
 
 ## Default Hunt
 

@@ -60,14 +60,14 @@ Force holograms to reappear.
 
 ### Resync
 
-Synchronize the database with the `locations.yml` file.  
+Synchronize the database with the head locations stored in hunt files.
 Useful when heads are out of sync (e.g., heads exist in the database but not in the world).
 
 Full command: `/hb debug resync <database|locations> [--force]`
 
 #### resync database
 
-Removes head entries from the database that no longer exist in `locations.yml`.
+Removes head entries from the database that no longer exist in the hunt files.
 
 - **SQLite**: Automatically creates a backup before making changes (`headblocks.db.save-resync-<date>`)
 - **MySQL**: Requires `--force` flag. You must backup your database manually before running this command.
@@ -85,7 +85,7 @@ Examples:
 
 #### resync locations
 
-Restores head blocks in the world based on `locations.yml`. For each location:
+Restores head blocks in the world based on the locations stored in hunt files. For each location:
 
 - If the block is already a head → applies the texture from the database
 - If the block is not a head → creates the head block and applies the texture
@@ -93,6 +93,6 @@ Restores head blocks in the world based on `locations.yml`. For each location:
 This is useful when heads have been broken or lost their texture.
 
 Example:
-> Restore all heads from locations.yml
+> Restore all heads from hunt files
 
 `/hb debug resync locations`
