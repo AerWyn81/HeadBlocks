@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.services.gui.types;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.data.reward.RewardType;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
@@ -47,7 +47,7 @@ public class RewardsGui extends GuiBase {
         registry.getGuiService().openHuntSelectionOrDirect(player, this::openRewardsSelectionGuiForHunt);
     }
 
-    public void openRewardsSelectionGuiForHunt(Player player, Hunt hunt) {
+    public void openRewardsSelectionGuiForHunt(Player player, HBHunt hunt) {
         var rewardsSelectionMenu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
                 registry.getLanguageService().message("Gui.TitleRewardsSelection"), true, 5);
 

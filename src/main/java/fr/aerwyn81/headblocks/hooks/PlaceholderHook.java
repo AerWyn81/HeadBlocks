@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -66,7 +66,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // %headblocks_current% | %headblocks_left%
         if (identifier.equals("current") || identifier.equals("left")) {
             if (registry.getHuntService().isMultiHunt()) {
-                return "Use %headblocks_hunt_<id>_found%";
+                return "Use %headblocks_hunt_<name>_found% or %headblocks_hunt_<name>_left%";
             }
 
             var future = registry.getStorageService().getHeadsPlayer(player.getUniqueId()).asFuture();
@@ -143,6 +143,10 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
         // %headblocks_max%
         if (identifier.equals("max")) {
+            if (registry.getHuntService().isMultiHunt()) {
+                return "Use %headblocks_hunt_<name>_total%";
+            }
+
             try {
                 return "" + registry.getStorageService().getHeads().size();
             } catch (InternalException e) {
@@ -221,7 +225,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 return "";
             }
 
-            Hunt hunt = registry.getHuntService().getHuntById(huntId);
+            HBHunt hunt = registry.getHuntService().getHuntById(huntId);
             if (hunt == null) {
                 return "";
             }

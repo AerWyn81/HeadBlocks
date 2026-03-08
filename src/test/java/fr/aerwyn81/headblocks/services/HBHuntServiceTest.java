@@ -1,6 +1,6 @@
 package fr.aerwyn81.headblocks.services;
 
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class HuntServiceTest {
+class HBHuntServiceTest {
 
     @Mock
     private ConfigService configService;
@@ -48,7 +48,7 @@ class HuntServiceTest {
 
     @Test
     void registerHunt_addsToRegistry() {
-        Hunt hunt = new Hunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
 
         huntService.registerHunt(hunt);
 
@@ -59,8 +59,8 @@ class HuntServiceTest {
 
     @Test
     void registerHunt_replacesExistingWithSameId() {
-        Hunt hunt1 = new Hunt(configService, "hunt1", "Original", HuntState.ACTIVE, 1, "D");
-        Hunt hunt2 = new Hunt(configService, "hunt1", "Replaced", HuntState.ACTIVE, 2, "D");
+        HBHunt hunt1 = new HBHunt(configService, "hunt1", "Original", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt2 = new HBHunt(configService, "hunt1", "Replaced", HuntState.ACTIVE, 2, "D");
 
         huntService.registerHunt(hunt1);
         huntService.registerHunt(hunt2);
@@ -70,7 +70,7 @@ class HuntServiceTest {
 
     @Test
     void unregisterHunt_removesFromRegistry() {
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         huntService.registerHunt(hunt);
 
         huntService.unregisterHunt("hunt1");
@@ -105,27 +105,27 @@ class HuntServiceTest {
 
     @Test
     void getActiveHunts_filtersInactive() {
-        Hunt active = new Hunt(configService, "a", "Active", HuntState.ACTIVE, 1, "D");
-        Hunt inactive = new Hunt(configService, "b", "Inactive", HuntState.INACTIVE, 2, "D");
-        Hunt archived = new Hunt(configService, "c", "Archived", HuntState.ARCHIVED, 3, "D");
+        HBHunt active = new HBHunt(configService, "a", "Active", HuntState.ACTIVE, 1, "D");
+        HBHunt inactive = new HBHunt(configService, "b", "Inactive", HuntState.INACTIVE, 2, "D");
+        HBHunt archived = new HBHunt(configService, "c", "Archived", HuntState.ARCHIVED, 3, "D");
 
         huntService.registerHunt(active);
         huntService.registerHunt(inactive);
         huntService.registerHunt(archived);
 
-        List<Hunt> activeHunts = huntService.getActiveHunts();
+        List<HBHunt> activeHunts = huntService.getActiveHunts();
         assertThat(activeHunts).contains(active);
         assertThat(activeHunts).doesNotContain(inactive, archived);
     }
 
     @Test
     void getAllHunts_returnsUnmodifiableCollection() {
-        Hunt hunt = new Hunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
         huntService.registerHunt(hunt);
 
-        Collection<Hunt> all = huntService.getAllHunts();
+        Collection<HBHunt> all = huntService.getAllHunts();
         assertThat(all).hasSizeGreaterThanOrEqualTo(1);
-        assertThatThrownBy(() -> all.add(new Hunt(configService, "h2", "X", HuntState.ACTIVE, 1, "D")))
+        assertThatThrownBy(() -> all.add(new HBHunt(configService, "h2", "X", HuntState.ACTIVE, 1, "D")))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
@@ -138,14 +138,14 @@ class HuntServiceTest {
 
     @Test
     void isMultiHunt_twoHunts_true() {
-        huntService.registerHunt(new Hunt(configService, "h2", "T", HuntState.ACTIVE, 1, "D"));
+        huntService.registerHunt(new HBHunt(configService, "h2", "T", HuntState.ACTIVE, 1, "D"));
         assertThat(huntService.isMultiHunt()).isTrue();
     }
 
     @Test
     void getHuntNames_returnsAllIds() {
-        huntService.registerHunt(new Hunt(configService, "alpha", "A", HuntState.ACTIVE, 1, "D"));
-        huntService.registerHunt(new Hunt(configService, "beta", "B", HuntState.INACTIVE, 2, "D"));
+        huntService.registerHunt(new HBHunt(configService, "alpha", "A", HuntState.ACTIVE, 1, "D"));
+        huntService.registerHunt(new HBHunt(configService, "beta", "B", HuntState.INACTIVE, 2, "D"));
 
         assertThat(huntService.getHuntNames()).contains("alpha", "beta", "default");
     }
@@ -155,7 +155,7 @@ class HuntServiceTest {
     @Test
     void rebuildHeadToHuntsCache_mapsHeadsToHunts() {
         UUID head1 = UUID.randomUUID();
-        Hunt hunt = new Hunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
         hunt.addHead(head1);
 
         huntService.registerHunt(hunt); // registerHunt calls rebuildHeadToHuntsCache
@@ -166,9 +166,9 @@ class HuntServiceTest {
     @Test
     void rebuildHeadToHuntsCache_sortsByPriorityDesc() {
         UUID head = UUID.randomUUID();
-        Hunt low = new Hunt(configService, "low", "Low", HuntState.ACTIVE, 1, "D");
-        Hunt high = new Hunt(configService, "high", "High", HuntState.ACTIVE, 10, "D");
-        Hunt mid = new Hunt(configService, "mid", "Mid", HuntState.ACTIVE, 5, "D");
+        HBHunt low = new HBHunt(configService, "low", "Low", HuntState.ACTIVE, 1, "D");
+        HBHunt high = new HBHunt(configService, "high", "High", HuntState.ACTIVE, 10, "D");
+        HBHunt mid = new HBHunt(configService, "mid", "Mid", HuntState.ACTIVE, 5, "D");
 
         low.addHead(head);
         high.addHead(head);
@@ -178,8 +178,8 @@ class HuntServiceTest {
         huntService.registerHunt(high);
         huntService.registerHunt(mid);
 
-        List<Hunt> hunts = huntService.getHuntsForHead(head);
-        assertThat(hunts).extracting(Hunt::getId).containsSubsequence("high", "mid", "low");
+        List<HBHunt> hunts = huntService.getHuntsForHead(head);
+        assertThat(hunts).extracting(HBHunt::getId).containsSubsequence("high", "mid", "low");
     }
 
     @Test
@@ -190,8 +190,8 @@ class HuntServiceTest {
     @Test
     void getHighestPriorityHuntForHead_returnsFirstActive() {
         UUID head = UUID.randomUUID();
-        Hunt inactive = new Hunt(configService, "inactive", "I", HuntState.INACTIVE, 10, "D");
-        Hunt active = new Hunt(configService, "active", "A", HuntState.ACTIVE, 5, "D");
+        HBHunt inactive = new HBHunt(configService, "inactive", "I", HuntState.INACTIVE, 10, "D");
+        HBHunt active = new HBHunt(configService, "active", "A", HuntState.ACTIVE, 5, "D");
 
         inactive.addHead(head);
         active.addHead(head);
@@ -205,7 +205,7 @@ class HuntServiceTest {
     @Test
     void getHighestPriorityHuntForHead_allInactive_returnsNull() {
         UUID head = UUID.randomUUID();
-        Hunt inactive = new Hunt(configService, "i1", "I", HuntState.INACTIVE, 10, "D");
+        HBHunt inactive = new HBHunt(configService, "i1", "I", HuntState.INACTIVE, 10, "D");
         inactive.addHead(head);
 
         huntService.registerHunt(inactive);
@@ -246,8 +246,8 @@ class HuntServiceTest {
     @Test
     void transferHead_movesHeadToTargetHunt() throws Exception {
         UUID head = UUID.randomUUID();
-        Hunt source = new Hunt(configService, "source", "Source", HuntState.ACTIVE, 1, "D");
-        Hunt target = new Hunt(configService, "target", "Target", HuntState.ACTIVE, 2, "D");
+        HBHunt source = new HBHunt(configService, "source", "Source", HuntState.ACTIVE, 1, "D");
+        HBHunt target = new HBHunt(configService, "target", "Target", HuntState.ACTIVE, 2, "D");
         source.addHead(head);
 
         huntService.registerHunt(source);
@@ -265,7 +265,7 @@ class HuntServiceTest {
 
     @Test
     void transferHead_targetNotFound_throwsIllegalArgument() {
-        huntService.registerHunt(new Hunt(configService, "source", "S", HuntState.ACTIVE, 1, "D"));
+        huntService.registerHunt(new HBHunt(configService, "source", "S", HuntState.ACTIVE, 1, "D"));
 
         assertThatThrownBy(() -> huntService.transferHead(UUID.randomUUID(), "nonexistent"))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -275,9 +275,9 @@ class HuntServiceTest {
     @Test
     void transferHead_headInMultipleHunts_removedFromAll() throws Exception {
         UUID head = UUID.randomUUID();
-        Hunt h1 = new Hunt(configService, "h1", "H1", HuntState.ACTIVE, 1, "D");
-        Hunt h2 = new Hunt(configService, "h2", "H2", HuntState.ACTIVE, 2, "D");
-        Hunt target = new Hunt(configService, "target", "T", HuntState.ACTIVE, 3, "D");
+        HBHunt h1 = new HBHunt(configService, "h1", "H1", HuntState.ACTIVE, 1, "D");
+        HBHunt h2 = new HBHunt(configService, "h2", "H2", HuntState.ACTIVE, 2, "D");
+        HBHunt target = new HBHunt(configService, "target", "T", HuntState.ACTIVE, 3, "D");
 
         h1.addHead(head);
         h2.addHead(head);
@@ -301,7 +301,7 @@ class HuntServiceTest {
     @Test
     void assignHeadToHunt_addsHeadAndRebuildsCache() throws Exception {
         UUID head = UUID.randomUUID();
-        Hunt hunt = new Hunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
         huntService.registerHunt(hunt);
 
         huntService.assignHeadToHunt(head, "h1");

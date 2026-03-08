@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.runnables;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.TimedRunData;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import net.md_5.bungee.api.ChatMessageType;
@@ -36,7 +36,7 @@ public class TimedRunTask extends BukkitRunnable {
             long elapsed = System.currentTimeMillis() - data.startTimeMillis();
             String time = TimedRunManager.formatTime(elapsed);
 
-            Hunt hunt = registry.getHuntService().getHuntById(data.huntId());
+            HBHunt hunt = registry.getHuntService().getHuntById(data.huntId());
             String huntName = hunt != null ? hunt.getDisplayName() : data.huntId();
             int totalHeads = hunt != null ? hunt.getHeadCount() : 0;
 

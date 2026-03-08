@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.CommandsUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -54,7 +54,7 @@ public class Progress implements Cmd {
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntProgressHeader")
                 .replace("%player%", profile.name()));
 
-        for (Hunt hunt : registry.getHuntService().getAllHunts()) {
+        for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
             try {
                 ArrayList<java.util.UUID> huntHeads = registry.getStorageService().getHeadsPlayerForHunt(
                         profile.uuid(), hunt.getId());

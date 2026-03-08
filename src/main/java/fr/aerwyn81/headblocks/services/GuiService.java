@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
 import fr.aerwyn81.headblocks.services.gui.types.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
@@ -76,7 +76,7 @@ public class GuiService {
         return timedConfigManager;
     }
 
-    public void openHuntSelectionOrDirect(Player player, BiConsumer<Player, Hunt> callback) {
+    public void openHuntSelectionOrDirect(Player player, BiConsumer<Player, HBHunt> callback) {
         var hunts = huntService.getAllHunts();
 
         if (!huntService.isMultiHunt()) {
@@ -88,7 +88,7 @@ public class GuiService {
                 languageService.message("Gui.TitleHuntSelection"), true, 5);
 
         int index = 0;
-        for (Hunt hunt : hunts) {
+        for (HBHunt hunt : hunts) {
             Material iconMaterial;
             try {
                 iconMaterial = Material.valueOf(hunt.getIcon().toUpperCase());
@@ -119,19 +119,25 @@ public class GuiService {
     public void openOptionsGui(Player p) {
         var optionsMenu = new HBMenu(pluginProvider.getJavaPlugin(), this, languageService.message("Gui.TitleOptions"), false, 2);
 
-        optionsMenu.setItem(0, 12, new ItemGUI(new ItemBuilder(Material.ENDER_EYE)
+        optionsMenu.setItem(0, 11, new ItemGUI(new ItemBuilder(Material.ENDER_EYE)
                 .setName(languageService.message("Gui.HintName"))
                 .setLore(languageService.messageList("Gui.HintLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> hintManager.openHintGui((Player) event.getWhoClicked())));
 
-        optionsMenu.setItem(0, 14, new ItemGUI(new ItemBuilder(Material.DIAMOND)
+        optionsMenu.setItem(0, 13, new ItemGUI(new ItemBuilder(Material.CLOCK)
+                .setName(languageService.message("Gui.OrderName"))
+                .setLore(languageService.messageList("Gui.OrderLore"))
+                .toItemStack(), true)
+                .addOnClickEvent(event -> orderManager.openOrderGui((Player) event.getWhoClicked())));
+
+        optionsMenu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
                 .setName(languageService.message("Gui.RewardsName"))
                 .setLore(languageService.messageList("Gui.RewardsLore"))
                 .toItemStack(), true)
                 .addOnClickEvent(event -> rewardsManager.openRewardsSelectionGui((Player) event.getWhoClicked(), null)));
 
-        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17};
+        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> optionsMenu.setItem(0, borders[index], new ItemGUI(configService.guiBorderIcon().setName("§7").toItemStack()))
         );

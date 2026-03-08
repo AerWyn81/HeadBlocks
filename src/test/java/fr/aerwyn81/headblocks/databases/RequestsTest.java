@@ -765,7 +765,7 @@ class RequestsTest {
     // =========================================================================
 
     @Nested
-    class HuntCrudQueries {
+    class HBHuntCrudQueries {
 
         @Test
         void insertHunt_uses_three_placeholders() {
@@ -823,7 +823,7 @@ class RequestsTest {
     // =========================================================================
 
     @Nested
-    class HeadHuntLinkQueries {
+    class HeadHBHuntLinkQueries {
 
         @Test
         void linkHeadToHunt_inserts_two_placeholders() {
@@ -884,7 +884,7 @@ class RequestsTest {
     // =========================================================================
 
     @Nested
-    class HuntAwareProgressionQueries {
+    class HBHuntAwareProgressionQueries {
 
         @Test
         void savePlayerHeadHunt_contains_three_placeholders() {

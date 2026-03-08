@@ -36,6 +36,9 @@ class PlaceholdersServiceTest {
     private PluginProvider pluginProvider;
 
     @Mock
+    private HuntService huntService;
+
+    @Mock
     private Plugin plugin;
 
     private PlaceholdersService placeholdersService;
@@ -43,7 +46,7 @@ class PlaceholdersServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(pluginProvider.isPlaceholderApiActive()).thenReturn(false);
-        placeholdersService = new PlaceholdersService(storageService, configService, languageService, pluginProvider);
+        placeholdersService = new PlaceholdersService(storageService, configService, languageService, pluginProvider, huntService);
     }
 
     // --- Helpers ---

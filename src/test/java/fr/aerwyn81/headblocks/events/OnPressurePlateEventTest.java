@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.TimedRunData;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
@@ -107,7 +107,7 @@ class OnPressurePlateEventTest {
         when(clickedBlock.getLocation()).thenReturn(blockLoc);
 
         // Hunt has no timed behavior
-        Hunt hunt = mock(Hunt.class);
+        HBHunt hunt = mock(HBHunt.class);
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.of(new FreeBehavior()));
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -136,7 +136,7 @@ class OnPressurePlateEventTest {
         TimedBehavior timed = mock(TimedBehavior.class);
         when(timed.startPlateLocation()).thenReturn(plateLoc);
 
-        Hunt hunt = mock(Hunt.class);
+        HBHunt hunt = mock(HBHunt.class);
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -164,7 +164,7 @@ class OnPressurePlateEventTest {
         TimedBehavior timed = mock(TimedBehavior.class);
         when(timed.startPlateLocation()).thenReturn(plateLoc);
 
-        Hunt hunt = mock(Hunt.class);
+        HBHunt hunt = mock(HBHunt.class);
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -193,7 +193,7 @@ class OnPressurePlateEventTest {
         TimedBehavior timed = mock(TimedBehavior.class);
         when(timed.startPlateLocation()).thenReturn(plateLoc);
 
-        Hunt hunt = mock(Hunt.class);
+        HBHunt hunt = mock(HBHunt.class);
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
@@ -232,7 +232,7 @@ class OnPressurePlateEventTest {
         TimedBehavior timed = mock(TimedBehavior.class);
         when(timed.startPlateLocation()).thenReturn(plateLoc);
 
-        Hunt hunt = mock(Hunt.class);
+        HBHunt hunt = mock(HBHunt.class);
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
@@ -275,7 +275,7 @@ class OnPressurePlateEventTest {
         TimedBehavior timed = mock(TimedBehavior.class);
         when(timed.startPlateLocation()).thenReturn(plateLoc);
 
-        Hunt hunt = mock(Hunt.class);
+        HBHunt hunt = mock(HBHunt.class);
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
@@ -309,7 +309,7 @@ class OnPressurePlateEventTest {
         Location blockLoc = mockLocation(mock(World.class), 10, 20, 30);
         when(clickedBlock.getLocation()).thenReturn(blockLoc);
 
-        Hunt hunt = mock(Hunt.class);
+        HBHunt hunt = mock(HBHunt.class);
         when(hunt.isActive()).thenReturn(false);
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
 
@@ -337,7 +337,7 @@ class OnPressurePlateEventTest {
         TimedBehavior timed = mock(TimedBehavior.class);
         when(timed.startPlateLocation()).thenReturn(plateLoc);
 
-        Hunt hunt = mock(Hunt.class);
+        HBHunt hunt = mock(HBHunt.class);
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt2");

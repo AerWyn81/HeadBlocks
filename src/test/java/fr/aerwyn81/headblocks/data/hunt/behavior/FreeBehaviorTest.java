@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.data.hunt.behavior;
 
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import org.bukkit.entity.Player;
@@ -27,11 +27,11 @@ class FreeBehaviorTest {
     ConfigService configService;
 
     private final FreeBehavior behavior = new FreeBehavior();
-    private Hunt hunt;
+    private HBHunt hunt;
 
     @BeforeEach
     void setUp() {
-        hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
     }
 
     @Test

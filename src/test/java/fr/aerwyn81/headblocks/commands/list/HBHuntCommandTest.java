@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.services.*;
@@ -29,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class HuntCommandTest {
+class HBHuntCommandTest {
 
     @Mock
     private ServiceRegistry registry;
@@ -182,7 +183,7 @@ class HuntCommandTest {
 
         @Test
         void noConfirmFlag_sendsConfirmMessage() {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getHeadCount()).thenReturn(5);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
@@ -193,7 +194,7 @@ class HuntCommandTest {
 
         @Test
         void fallbackWithoutKeepHeads_sendsError() {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             huntCommand.perform(consoleSender, new String[]{"hunt", "delete", "myhunt", "--fallback", "other"});
@@ -203,7 +204,7 @@ class HuntCommandTest {
 
         @Test
         void keepHeadsConfirm_withFallbackNotFound_sendsError() {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(huntService.getHuntById("nonexistent")).thenReturn(null);
 
@@ -235,7 +236,7 @@ class HuntCommandTest {
 
         @Test
         void enableAlreadyActive_sendsError() {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.isActive()).thenReturn(true);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
@@ -246,7 +247,7 @@ class HuntCommandTest {
 
         @Test
         void enableSuccess() throws InternalException {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.isActive()).thenReturn(false);
             when(hunt.getState()).thenReturn(HuntState.INACTIVE);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
@@ -273,7 +274,7 @@ class HuntCommandTest {
 
         @Test
         void disableAlreadyInactive_sendsError() {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.isActive()).thenReturn(false);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
@@ -284,7 +285,7 @@ class HuntCommandTest {
 
         @Test
         void disableSuccess() throws InternalException {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.isActive()).thenReturn(true);
             when(hunt.getState()).thenReturn(HuntState.ACTIVE);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
@@ -317,7 +318,7 @@ class HuntCommandTest {
 
         @Test
         void nonEmptyList_sendsEntries() {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getId()).thenReturn("myhunt");
             when(hunt.getDisplayName()).thenReturn("My Hunt");
             when(hunt.getState()).thenReturn(HuntState.ACTIVE);
@@ -353,7 +354,7 @@ class HuntCommandTest {
 
         @Test
         void success_sendsInfo() throws InternalException {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getId()).thenReturn("myhunt");
             when(hunt.getDisplayName()).thenReturn("My Hunt");
             when(hunt.getState()).thenReturn(HuntState.ACTIVE);
@@ -404,7 +405,7 @@ class HuntCommandTest {
         void success_setsSelection() {
             UUID playerUuid = UUID.randomUUID();
             when(playerSender.getUniqueId()).thenReturn(playerUuid);
-            when(huntService.getHuntById("myhunt")).thenReturn(mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class));
+            when(huntService.getHuntById("myhunt")).thenReturn(mock(HBHunt.class));
 
             huntCommand.perform(playerSender, new String[]{"hunt", "select", "myhunt"});
 
@@ -511,7 +512,7 @@ class HuntCommandTest {
 
         @Test
         void consoleWithoutPlayerName_refused() {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             huntCommand.perform(consoleSender, new String[]{"hunt", "progress", "myhunt"});
@@ -521,7 +522,7 @@ class HuntCommandTest {
 
         @Test
         void success_withPlayerName() throws InternalException {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getId()).thenReturn("myhunt");
             when(hunt.getDisplayName()).thenReturn("My Hunt");
             when(hunt.getHeadCount()).thenReturn(5);
@@ -570,7 +571,7 @@ class HuntCommandTest {
 
         @Test
         void emptyTop_sendsMessage() throws InternalException {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getTopPlayersForHunt("myhunt")).thenReturn(new LinkedHashMap<>());
 
@@ -581,7 +582,7 @@ class HuntCommandTest {
 
         @Test
         void success_showsEntries() throws InternalException {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getId()).thenReturn("myhunt");
             when(hunt.getDisplayName()).thenReturn("My Hunt");
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
@@ -624,7 +625,7 @@ class HuntCommandTest {
 
         @Test
         void playerNotFound_sendsError() throws InternalException {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getPlayerByName("Nobody")).thenReturn(null);
 
@@ -635,7 +636,7 @@ class HuntCommandTest {
 
         @Test
         void success_resetsPlayer() throws InternalException {
-            fr.aerwyn81.headblocks.data.hunt.Hunt hunt = mock(fr.aerwyn81.headblocks.data.hunt.Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             UUID playerUuid = UUID.randomUUID();

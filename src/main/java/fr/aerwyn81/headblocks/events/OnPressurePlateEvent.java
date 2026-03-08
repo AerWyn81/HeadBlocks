@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.TimedRunData;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
@@ -39,7 +39,7 @@ public class OnPressurePlateEvent implements Listener {
         Player player = event.getPlayer();
         Location blockLoc = event.getClickedBlock().getLocation();
 
-        for (Hunt hunt : registry.getHuntService().getAllHunts()) {
+        for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
             if (!hunt.isActive()) {
                 continue;
             }
@@ -75,7 +75,7 @@ public class OnPressurePlateEvent implements Listener {
         }
     }
 
-    private void handleStartPlate(Player player, Hunt hunt) {
+    private void handleStartPlate(Player player, HBHunt hunt) {
         UUID pUuid = player.getUniqueId();
 
         // Check if player already completed all heads for this hunt

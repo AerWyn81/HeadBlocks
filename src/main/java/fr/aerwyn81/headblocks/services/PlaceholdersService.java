@@ -17,29 +17,36 @@ public class PlaceholdersService {
     private final ConfigService configService;
     private final LanguageService languageService;
     private final PluginProvider pluginProvider;
+    private final HuntService huntService;
 
     // --- Constructor ---
 
     public PlaceholdersService(StorageService storageService, ConfigService configService,
-                               LanguageService languageService, PluginProvider pluginProvider) {
+                               LanguageService languageService, PluginProvider pluginProvider,
+                               HuntService huntService) {
         this.storageService = storageService;
         this.configService = configService;
         this.languageService = languageService;
         this.pluginProvider = pluginProvider;
+        this.huntService = huntService;
     }
 
     // --- Instance methods ---
 
     public String parse(String pName, UUID pUuid, String message) {
-        return parse(pName, pUuid, null, message);
+        return parse(pName, pUuid, null, message, null);
     }
 
     public String parse(String pName, UUID pUuid, HeadLocation headLocation, String message) {
+        return parse(pName, pUuid, headLocation, message, null);
+    }
+
+    public String parse(String pName, UUID pUuid, HeadLocation headLocation, String message, String huntId) {
         message = message.replace("%player%", pName)
                 .replace("%prefix%", languageService.prefix());
 
         if (message.contains("%progress%") || message.contains("%current%") || message.contains("%max%") || message.contains("%left%") || message.contains("%headName%")) {
-            message = parseInternal(pUuid, message, headLocation);
+            message = parseInternal(pUuid, message, headLocation, huntId);
         } else {
             message = MessageUtils.colorize(message);
         }
@@ -52,22 +59,33 @@ public class PlaceholdersService {
     }
 
     public String[] parse(Player player, HeadLocation headLocation, List<String> messages) {
+        return parse(player, headLocation, messages, null);
+    }
+
+    public String[] parse(Player player, HeadLocation headLocation, List<String> messages, String huntId) {
         List<String> msgs = new ArrayList<>();
 
-        messages.forEach(message -> msgs.add(parse(player.getName(), player.getUniqueId(), headLocation, message)));
+        messages.forEach(message -> msgs.add(parse(player.getName(), player.getUniqueId(), headLocation, message, huntId)));
 
         return msgs.toArray(new String[0]);
     }
 
-    public String parseInternal(UUID pUuid, String message, HeadLocation headLocation) {
+    public String parseInternal(UUID pUuid, String message, HeadLocation headLocation, String huntId) {
         String progress;
 
-        var future = storageService.getHeadsPlayer(pUuid).asFuture();
-
         try {
-            var current = future.get().size();
+            int current;
+            int total;
 
-            int total = storageService.getHeads().size();
+            if (huntId != null) {
+                var hunt = huntService.getHuntById(huntId);
+                current = storageService.getHeadsPlayerForHunt(pUuid, huntId).size();
+                total = hunt != null ? hunt.getHeadCount() : 0;
+            } else {
+                var future = storageService.getHeadsPlayer(pUuid).asFuture();
+                current = future.get().size();
+                total = storageService.getHeads().size();
+            }
 
             message = message.replace("%current%", String.valueOf(current))
                     .replace("%max%", String.valueOf(total));

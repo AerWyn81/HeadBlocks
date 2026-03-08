@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.data.hunt.behavior;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
@@ -50,7 +50,7 @@ class OrderedBehaviorTest {
     ConfigService configService;
 
     private OrderedBehavior behavior;
-    private Hunt hunt;
+    private HBHunt hunt;
 
     @BeforeEach
     void setUp() {
@@ -58,7 +58,7 @@ class OrderedBehaviorTest {
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         behavior = new OrderedBehavior(registry);
-        hunt = new Hunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "DIAMOND");
+        hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "DIAMOND");
     }
 
     @Test

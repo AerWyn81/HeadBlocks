@@ -145,6 +145,7 @@ Messages:
   HuntInfoHeads: " &aHeads: &e%headCount%"
   HuntInfoBehaviors: " &aBehaviors: &e%behaviors%"
   HuntSelected: "%prefix% &aActive hunt set to &e%hunt%&a."
+  HuntOrderedHint: "%prefix% &7Use &e/hb options order &7to define the head order once placed."
   HuntSelectReset: "%prefix% &aActive hunt reset to &edefault&a."
   HuntActiveSelection: "%prefix% &7Your active hunt is: &e%hunt%"
   HuntHeadTransferred: "%prefix% &aHead &e%head% &atransferred to hunt &e%hunt%&a."
@@ -157,7 +158,7 @@ Messages:
   HuntProgressDetail: "%prefix% &aPlayer: &e%player% &8| &aHunt: &e%displayName% &8| &e%current%&7/&e%max% &7[%progress%&7]"
   HuntTopHeader: "%prefix% &7-----[ &6Top &8- &e%displayName% &7]-----"
   HuntPlayerReset: "%prefix% &aPlayer &e%player% &aprogress in hunt &e%hunt% &ahas been reset."
-  HuntResetRequireHunt: "%prefix% &cMultiple hunts detected. Use &7/hb hunt <name> reset <player> &cto reset a specific hunt."
+  HuntResetRequireHunt: "%prefix% &cMultiple hunts detected. Use &7/hb hunt reset <name> <player> &cto reset a specific hunt."
   HuntHeadInactive: "%prefix% &cThis head is part of an inactive hunt."
   HuntInfoPlayers: " &aPlayers with progress: &e%playerCount%"
   ProgressCommand:

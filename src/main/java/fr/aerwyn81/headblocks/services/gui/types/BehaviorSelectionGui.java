@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.services.gui.types;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HuntCreateEvent;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.*;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
@@ -126,7 +126,7 @@ public class BehaviorSelectionGui {
         }
 
         String huntId = huntName.toLowerCase();
-        Hunt hunt = new Hunt(registry.getConfigService(), huntId, huntName, HuntState.ACTIVE, 1, "PLAYER_HEAD");
+        HBHunt hunt = new HBHunt(registry.getConfigService(), huntId, huntName, HuntState.ACTIVE, 1, "PLAYER_HEAD");
 
         // Build behaviors list
         List<Behavior> behaviors = new ArrayList<>();
@@ -172,6 +172,10 @@ public class BehaviorSelectionGui {
         registry.getHuntService().setSelectedHunt(player.getUniqueId(), hunt.getId());
         player.sendMessage(registry.getLanguageService().message("Messages.HuntSelected")
                 .replace("%hunt%", hunt.getId()));
+
+        if (selected != null && selected.contains("ordered")) {
+            player.sendMessage(registry.getLanguageService().message("Messages.HuntOrderedHint"));
+        }
     }
 
     public String getPendingHuntName(UUID playerUuid) {

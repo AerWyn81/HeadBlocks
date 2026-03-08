@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.TieredReward;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
@@ -45,8 +45,8 @@ public class HuntConfigService {
         }
     }
 
-    public List<Hunt> loadHunts() {
-        List<Hunt> hunts = new ArrayList<>();
+    public List<HBHunt> loadHunts() {
+        List<HBHunt> hunts = new ArrayList<>();
         File[] files = huntsDir.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null) {
             return hunts;
@@ -54,7 +54,7 @@ public class HuntConfigService {
 
         for (File file : files) {
             try {
-                Hunt hunt = loadHunt(file);
+                HBHunt hunt = loadHunt(file);
                 if (hunt != null) {
                     hunts.add(hunt);
                 }
@@ -66,7 +66,7 @@ public class HuntConfigService {
         return hunts;
     }
 
-    public Hunt loadHunt(File file) {
+    public HBHunt loadHunt(File file) {
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
 
         String id = yaml.getString("id");
@@ -80,7 +80,7 @@ public class HuntConfigService {
         int priority = yaml.getInt("priority", 1);
         String icon = yaml.getString("icon", "CHEST_MINECART");
 
-        Hunt hunt = new Hunt(configService, id, displayName, state, priority, icon);
+        HBHunt hunt = new HBHunt(configService, id, displayName, state, priority, icon);
 
         List<Behavior> behaviors = loadBehaviors(yaml);
         hunt.setBehaviors(behaviors);
@@ -91,7 +91,7 @@ public class HuntConfigService {
         return hunt;
     }
 
-    public void saveHunt(Hunt hunt) {
+    public void saveHunt(HBHunt hunt) {
         File file = new File(huntsDir, hunt.getId() + ".yml");
         YamlConfiguration yaml = new YamlConfiguration();
 

@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.data.hunt.behavior;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.LanguageService;
@@ -58,7 +58,7 @@ class TimedBehaviorTest {
     @Test
     void canPlayerClick_playerNotInRun_returnsDeny() {
         TimedBehavior behavior = new TimedBehavior(registry, null, true);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         UUID playerUuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUuid);
 
@@ -76,7 +76,7 @@ class TimedBehaviorTest {
     @Test
     void canPlayerClick_playerInRunForThisHunt_returnsAllow() {
         TimedBehavior behavior = new TimedBehavior(registry, null, true);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         UUID playerUuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUuid);
 
@@ -92,7 +92,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_playerNotInRun_earlyReturn() {
         TimedBehavior behavior = new TimedBehavior(registry, null, true);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         UUID playerUuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUuid);
 
@@ -109,7 +109,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_notAllHeadsFound_noCompletion() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, true);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         hunt.addHead(UUID.randomUUID());
         hunt.addHead(UUID.randomUUID());
         hunt.addHead(UUID.randomUUID()); // 3 total
@@ -137,7 +137,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_allHeadsFound_completesRun() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, false); // not repeatable
-        Hunt hunt = new Hunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
         UUID h1 = UUID.randomUUID();
         hunt.addHead(h1); // 1 total head
 
@@ -169,7 +169,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_completed_repeatable_resetsPlayerHunt() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, true); // repeatable
-        Hunt hunt = new Hunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
         UUID h1 = UUID.randomUUID();
         hunt.addHead(h1);
 
@@ -198,7 +198,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_completed_notRepeatable_doesNotReset() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, false); // not repeatable
-        Hunt hunt = new Hunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
         UUID h1 = UUID.randomUUID();
         hunt.addHead(h1);
 
@@ -227,7 +227,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_headAlreadyInPlayerList_doesNotDoubleCount() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, false);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         UUID h1 = UUID.randomUUID();
         UUID h2 = UUID.randomUUID();
         hunt.addHead(h1);
@@ -255,7 +255,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_saveTimedRunThrows_runStillLeft() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, false);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         UUID h1 = UUID.randomUUID();
         hunt.addHead(h1);
 
@@ -310,7 +310,7 @@ class TimedBehaviorTest {
     @Test
     void getDisplayInfo_returnsLanguageMessage() {
         TimedBehavior behavior = new TimedBehavior(registry, null, true);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         when(languageService.message("Hunt.Behavior.Timed")).thenReturn("Timed Mode");
 
         String result = behavior.getDisplayInfo(player, hunt);
@@ -386,7 +386,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_getTimedRunCountThrows_stillSendsMessage() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, false);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         UUID h1 = UUID.randomUUID();
         hunt.addHead(h1);
 
@@ -417,7 +417,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_getHeadsPlayerForHuntThrows_noCompletion() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, true);
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         UUID h1 = UUID.randomUUID();
         hunt.addHead(h1);
 
@@ -441,7 +441,7 @@ class TimedBehaviorTest {
     @Test
     void onHeadFound_repeatable_resetThrows_noException() throws InternalException {
         TimedBehavior behavior = new TimedBehavior(registry, null, true); // repeatable
-        Hunt hunt = new Hunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Test", HuntState.ACTIVE, 1, "D");
         UUID h1 = UUID.randomUUID();
         hunt.addHead(h1);
 

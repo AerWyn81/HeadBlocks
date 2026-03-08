@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.data.hunt.behavior;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -20,7 +20,7 @@ public record ScheduledBehavior(ServiceRegistry registry, LocalDate start, Local
     }
 
     @Override
-    public BehaviorResult canPlayerClick(Player player, HeadLocation head, Hunt hunt) {
+    public BehaviorResult canPlayerClick(Player player, HeadLocation head, HBHunt hunt) {
         LocalDate now = LocalDate.now();
 
         if (start != null && now.isBefore(start)) {
@@ -35,12 +35,12 @@ public record ScheduledBehavior(ServiceRegistry registry, LocalDate start, Local
     }
 
     @Override
-    public void onHeadFound(Player player, HeadLocation head, Hunt hunt) {
+    public void onHeadFound(Player player, HeadLocation head, HBHunt hunt) {
         // No-op
     }
 
     @Override
-    public String getDisplayInfo(Player player, Hunt hunt) {
+    public String getDisplayInfo(Player player, HBHunt hunt) {
         String startStr = start != null ? start.format(DATE_FORMAT) : "∞";
         String endStr = end != null ? end.format(DATE_FORMAT) : "∞";
         return startStr + " → " + endStr;

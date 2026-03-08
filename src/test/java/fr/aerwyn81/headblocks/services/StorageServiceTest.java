@@ -745,7 +745,7 @@ class StorageServiceTest {
     // --- resetPlayerHunt: with cached heads ---
 
     @Nested
-    class ResetPlayerHuntTests {
+    class ResetPlayerHBHuntTests {
 
         @Test
         void resetPlayerHunt_withCachedHeads_clearsAndDelegates() throws InternalException {
@@ -766,7 +766,7 @@ class StorageServiceTest {
     // --- resetAllPlayersForHunt ---
 
     @Nested
-    class ResetAllPlayersForHuntTests {
+    class ResetAllPlayersForHBHuntTests {
 
         @Test
         void resetAllPlayersForHunt_resetsEachPlayerAndClearsCaches() throws InternalException {
@@ -797,7 +797,7 @@ class StorageServiceTest {
     // --- getTopPlayersForHunt: defensive copy ---
 
     @Nested
-    class GetTopPlayersForHuntTests {
+    class GetTopPlayersForHBHuntTests {
 
         @Test
         void getTopPlayersForHunt_cacheHit_returnsDefensiveCopy() throws InternalException {
@@ -815,7 +815,7 @@ class StorageServiceTest {
     // --- Hunt DB delegation methods ---
 
     @Nested
-    class HuntDbDelegationTests {
+    class HBHuntDbDelegationTests {
 
         @Test
         void getHuntsFromDb_delegatesToDatabase() throws InternalException {
@@ -1601,7 +1601,7 @@ class StorageServiceTest {
     // --- Hunt DB delegation error paths ---
 
     @Nested
-    class HuntDbErrorTests {
+    class HBHuntDbErrorTests {
 
         @Test
         void getHuntsFromDb_databaseThrows_propagates() throws InternalException {
@@ -1681,7 +1681,7 @@ class StorageServiceTest {
     // --- addHeadForHunt: error path ---
 
     @Nested
-    class AddHeadForHuntErrorTests {
+    class AddHeadForHBHuntErrorTests {
 
         @Test
         void addHeadForHunt_storageAddHeadThrows_propagates() throws InternalException {
@@ -1731,7 +1731,7 @@ class StorageServiceTest {
     // --- getHeadsPlayerForHunt: edge cases ---
 
     @Nested
-    class GetHeadsPlayerForHuntEdgeCaseTests {
+    class GetHeadsPlayerForHBHuntEdgeCaseTests {
 
         @Test
         void getHeadsPlayerForHunt_cacheHit_emptySet_returnsEmptyList() throws InternalException {
@@ -1771,7 +1771,7 @@ class StorageServiceTest {
     // --- deletePlayerProgressForHunt: verify both caches cleared ---
 
     @Nested
-    class DeletePlayerProgressForHuntTests {
+    class DeletePlayerProgressForHBHuntTests {
 
         @Test
         void deletePlayerProgressForHunt_verifiesExactCacheClears() throws InternalException {
@@ -1787,7 +1787,7 @@ class StorageServiceTest {
     // --- resetAllPlayersForHunt: with multiple players ---
 
     @Nested
-    class ResetAllPlayersForHuntMultipleTests {
+    class ResetAllPlayersForHBHuntMultipleTests {
 
         @Test
         void resetAllPlayersForHunt_singlePlayer_resetsAndClearsCaches() throws InternalException {

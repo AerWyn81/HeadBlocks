@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.data.hunt.behavior;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -46,7 +46,7 @@ public class TimedBehavior implements Behavior {
     }
 
     @Override
-    public BehaviorResult canPlayerClick(Player player, HeadLocation head, Hunt hunt) {
+    public BehaviorResult canPlayerClick(Player player, HeadLocation head, HBHunt hunt) {
         if (!TimedRunManager.isInRun(player.getUniqueId(), hunt.getId())) {
             return BehaviorResult.deny(registry.getLanguageService().message("Messages.TimedNotStarted"));
         }
@@ -54,7 +54,7 @@ public class TimedBehavior implements Behavior {
     }
 
     @Override
-    public void onHeadFound(Player player, HeadLocation head, Hunt hunt) {
+    public void onHeadFound(Player player, HeadLocation head, HBHunt hunt) {
         if (!TimedRunManager.isInRun(player.getUniqueId(), hunt.getId())) {
             return;
         }
@@ -110,7 +110,7 @@ public class TimedBehavior implements Behavior {
     }
 
     @Override
-    public String getDisplayInfo(Player player, Hunt hunt) {
+    public String getDisplayInfo(Player player, HBHunt hunt) {
         return registry.getLanguageService().message("Hunt.Behavior.Timed");
     }
 

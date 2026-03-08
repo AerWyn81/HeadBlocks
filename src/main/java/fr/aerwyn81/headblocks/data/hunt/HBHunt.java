@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 
-public class Hunt {
+public class HBHunt {
     private final String id;
     private final ConfigService configService;
     private String displayName;
@@ -20,7 +20,7 @@ public class Hunt {
     private HuntConfig config;
     private final Set<UUID> headUUIDs;
 
-    public Hunt(ConfigService configService, String id, String displayName, HuntState state, int priority, String icon) {
+    public HBHunt(ConfigService configService, String id, String displayName, HuntState state, int priority, String icon) {
         this.id = id;
         this.configService = configService;
         this.displayName = displayName;
@@ -164,7 +164,7 @@ public class Hunt {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Hunt hunt = (Hunt) o;
+        HBHunt hunt = (HBHunt) o;
         return id.equals(hunt.id);
     }
 

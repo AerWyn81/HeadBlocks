@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.data.hunt.behavior;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.LanguageService;
@@ -41,13 +41,13 @@ class ScheduledBehaviorTest {
     @Mock
     ConfigService configService;
 
-    private Hunt hunt;
+    private HBHunt hunt;
 
     @BeforeEach
     void setUp() {
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         lenient().when(languageService.message(anyString())).thenReturn("mocked");
-        hunt = new Hunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
     }
 
     @Test

@@ -1,6 +1,6 @@
 package fr.aerwyn81.headblocks.api.events;
 
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -10,18 +10,18 @@ import org.jetbrains.annotations.NotNull;
 public class HuntStateChangeEvent extends Event implements Cancellable {
     public static final HandlerList handlers = new HandlerList();
 
-    private final Hunt hunt;
+    private final HBHunt hunt;
     private final HuntState oldState;
     private final HuntState newState;
     private boolean cancelled;
 
-    public HuntStateChangeEvent(Hunt hunt, HuntState oldState, HuntState newState) {
+    public HuntStateChangeEvent(HBHunt hunt, HuntState oldState, HuntState newState) {
         this.hunt = hunt;
         this.oldState = oldState;
         this.newState = newState;
     }
 
-    public Hunt getHunt() {
+    public HBHunt getHunt() {
         return hunt;
     }
 

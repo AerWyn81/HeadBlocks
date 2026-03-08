@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -105,14 +105,14 @@ class ProgressCommandTest {
     }
 
     @Nested
-    class MultiHuntMode {
+    class MultiHBHuntMode {
 
         @Test
         void multiHunt_sendsHuntProgress() throws InternalException {
             UUID playerUuid = UUID.randomUUID();
             PlayerProfileLight profile = new PlayerProfileLight(playerUuid, "testPlayer", "");
 
-            Hunt hunt1 = mock(Hunt.class);
+            HBHunt hunt1 = mock(HBHunt.class);
             when(hunt1.getId()).thenReturn("hunt1");
             when(hunt1.getDisplayName()).thenReturn("Hunt One");
             when(hunt1.getHeadCount()).thenReturn(10);
@@ -120,7 +120,7 @@ class ProgressCommandTest {
             when(hunt1.getState()).thenReturn(huntState);
             when(huntState.getLocalizedName(languageService)).thenReturn("Active");
 
-            ArrayList<Hunt> hunts = new ArrayList<>(java.util.List.of(hunt1));
+            ArrayList<HBHunt> hunts = new ArrayList<>(java.util.List.of(hunt1));
             ArrayList<UUID> playerHuntHeads = new ArrayList<>(java.util.List.of(UUID.randomUUID(), UUID.randomUUID()));
 
             try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class);
@@ -154,9 +154,9 @@ class ProgressCommandTest {
             UUID playerUuid = UUID.randomUUID();
             PlayerProfileLight profile = new PlayerProfileLight(playerUuid, "testPlayer", "");
 
-            Hunt hunt1 = mock(Hunt.class);
+            HBHunt hunt1 = mock(HBHunt.class);
             when(hunt1.getId()).thenReturn("hunt1");
-            ArrayList<Hunt> hunts = new ArrayList<>(java.util.List.of(hunt1));
+            ArrayList<HBHunt> hunts = new ArrayList<>(java.util.List.of(hunt1));
 
             try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class);
                  MockedStatic<CommandsUtils> cu = mockStatic(CommandsUtils.class)) {

@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.services.gui.types;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HintMode;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -39,7 +39,7 @@ public class HintGui extends GuiBase {
         registry.getGuiService().openHuntSelectionOrDirect(player, this::openHintGuiForHunt);
     }
 
-    public void openHintGuiForHunt(Player player, Hunt hunt) {
+    public void openHintGuiForHunt(Player player, HBHunt hunt) {
         HBMenu hintMenu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
                 registry.getLanguageService().message("Gui.TitleHint"), true, 5);
 

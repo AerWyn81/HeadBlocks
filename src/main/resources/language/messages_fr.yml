@@ -109,6 +109,7 @@ Messages:
   HuntInfoHeads: " &aTêtes : &e%headCount%"
   HuntInfoBehaviors: " &aComportements : &e%behaviors%"
   HuntSelected: "%prefix% &aHunt active définie sur &e%hunt%&a."
+  HuntOrderedHint: "%prefix% &7Utilisez &e/hb options order &7pour définir l'ordre des têtes une fois posées."
   HuntSelectReset: "%prefix% &aHunt active réinitialisée sur &edefault&a."
   HuntActiveSelection: "%prefix% &7Votre hunt active est : &e%hunt%"
   HuntHeadTransferred: "%prefix% &aTête &e%head% &atransférée vers la hunt &e%hunt%&a."

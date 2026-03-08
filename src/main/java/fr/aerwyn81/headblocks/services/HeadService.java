@@ -8,7 +8,7 @@ import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
@@ -254,7 +254,7 @@ public class HeadService {
                 hologramService.removeHolograms(headLocation.getLocation());
             }
 
-            for (Hunt hunt : huntService.getAllHunts()) {
+            for (HBHunt hunt : huntService.getAllHunts()) {
                 hunt.removeHead(headLocation.getUuid());
             }
             huntService.rebuildHeadToHuntsCache();
@@ -315,7 +315,7 @@ public class HeadService {
 
             final int finalRemoved = removed;
             scheduler.runTask(() -> {
-                for (Hunt hunt : huntService.getAllHunts()) {
+                for (HBHunt hunt : huntService.getAllHunts()) {
                     for (HeadLocation hl : headsToRemove) {
                         if (hl != null) {
                             hunt.removeHead(hl.getUuid());
@@ -443,7 +443,7 @@ public class HeadService {
         return headLocations;
     }
 
-    public ArrayList<HeadLocation> getHeadLocationsForHunt(Hunt hunt) {
+    public ArrayList<HeadLocation> getHeadLocationsForHunt(HBHunt hunt) {
         return headLocations.stream()
                 .filter(h -> hunt.containsHead(h.getUuid()))
                 .collect(Collectors.toCollection(ArrayList::new));

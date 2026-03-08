@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.hooks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -190,7 +190,7 @@ class PlaceholderHookTest {
     // --- hunt_<id>_<type> ---
 
     @Nested
-    class HuntPlaceholders {
+    class HBHuntPlaceholders {
         @Test
         void huntNotFound_returnsEmpty() {
             when(huntService.getHuntById("nope")).thenReturn(null);
@@ -205,7 +205,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getHeadsPlayerForHunt(playerUuid, "myhunt"))
                     .thenReturn(new ArrayList<>(java.util.List.of(UUID.randomUUID(), UUID.randomUUID())));
@@ -217,7 +217,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntTotal_returnsHeadCount() {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getHeadCount()).thenReturn(7);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
@@ -231,7 +231,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getHeadCount()).thenReturn(5);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getHeadsPlayerForHunt(playerUuid, "myhunt"))
@@ -244,7 +244,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntName_returnsDisplayName() {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getDisplayName()).thenReturn("My Cool Hunt");
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
@@ -255,7 +255,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntState_returnsLocalizedState() {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             HuntState state = mock(HuntState.class);
             when(hunt.getState()).thenReturn(state);
             when(state.getLocalizedName(languageService)).thenReturn("Active");
@@ -271,7 +271,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getBestTime(playerUuid, "myhunt")).thenReturn(null);
 
@@ -285,7 +285,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getBestTime(playerUuid, "myhunt")).thenReturn(65000L);
 
@@ -299,7 +299,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getTimedRunCount(playerUuid, "myhunt")).thenReturn(3);
 
@@ -313,7 +313,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getHeadCount()).thenReturn(5);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getHeadsPlayerForHunt(playerUuid, "myhunt"))
@@ -338,7 +338,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
@@ -353,7 +353,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntTimePosition_notFound_returnsDash() throws InternalException {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getTimedLeaderboard("myhunt", 50)).thenReturn(new LinkedHashMap<>());
 
@@ -371,7 +371,7 @@ class PlaceholderHookTest {
 
         @Test
         void unknownSubType_returnsEmpty() {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             String result = hook.onRequest(player, "hunt_myhunt_unknownfield");
@@ -381,7 +381,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntTimetop_name_returnsPlayerName() throws InternalException {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
@@ -395,7 +395,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntTimetop_time_returnsFormattedTime() throws InternalException {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
@@ -409,7 +409,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntTimetop_positionTooHigh_returnsDash() throws InternalException {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
@@ -423,7 +423,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntTimetop_unknownField_returnsDash() throws InternalException {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
@@ -437,7 +437,7 @@ class PlaceholderHookTest {
 
         @Test
         void huntTimetop_tooFewParts_returnsEmpty() {
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             String result = hook.onRequest(player, "hunt_myhunt_timetop_1");
@@ -450,7 +450,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getHeadsPlayerForHunt(playerUuid, "myhunt"))
                     .thenThrow(new InternalException("db error"));
@@ -465,7 +465,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(hunt.getHeadCount()).thenReturn(5);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getHeadsPlayerForHunt(playerUuid, "myhunt"))
@@ -481,7 +481,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getBestTime(playerUuid, "myhunt"))
                     .thenThrow(new InternalException("db error"));
@@ -496,7 +496,7 @@ class PlaceholderHookTest {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
 
-            Hunt hunt = mock(Hunt.class);
+            HBHunt hunt = mock(HBHunt.class);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getTimedRunCount(playerUuid, "myhunt"))
                     .thenThrow(new InternalException("db error"));

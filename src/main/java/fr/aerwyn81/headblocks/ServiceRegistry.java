@@ -67,7 +67,7 @@ public class ServiceRegistry {
 
         this.huntService = new HuntService(configService, huntConfigService, storageService);
 
-        this.placeholdersService = new PlaceholdersService(storageService, configService, languageService, pluginProvider);
+        this.placeholdersService = new PlaceholdersService(storageService, configService, languageService, pluginProvider, huntService);
 
         this.headService = new HeadService(configService, storageService, languageService, scheduler, pluginProvider);
         headService.setHuntService(huntService);

@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadClickEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.utils.bukkit.FireworkUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
@@ -88,9 +88,9 @@ public class OnPlayerInteractEvent implements Listener {
         }
 
         // Get hunts for this head
-        List<Hunt> allHunts = registry.getHuntService().getHuntsForHead(headLocation.getUuid());
-        List<Hunt> activeHunts = allHunts.stream()
-                .filter(Hunt::isActive)
+        List<HBHunt> allHunts = registry.getHuntService().getHuntsForHead(headLocation.getUuid());
+        List<HBHunt> activeHunts = allHunts.stream()
+                .filter(HBHunt::isActive)
                 .collect(Collectors.toList());
 
         if (activeHunts.isEmpty()) {
@@ -114,17 +114,18 @@ public class OnPlayerInteractEvent implements Listener {
     }
 
     private void handleHuntClick(Player player, HeadLocation headLocation, Location clickedLocation,
-                                 Block block, List<Hunt> activeHunts) {
-        Hunt primaryHunt = activeHunts.get(0); // highest priority (list is sorted)
+                                 Block block, List<HBHunt> activeHunts) {
+        HBHunt primaryHunt = activeHunts.get(0); // highest priority (list is sorted)
         HuntConfig primaryConfig = primaryHunt.getConfig();
 
         registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(allPlayerHeads -> {
             var playerHeads = new ArrayList<>(allPlayerHeads);
             boolean globallyFound = playerHeads.contains(headLocation.getUuid());
             boolean anyNewFind = false;
+            boolean anyBehaviorDenied = false;
             List<String> foundHuntIds = new ArrayList<>();
 
-            for (Hunt hunt : activeHunts) {
+            for (HBHunt hunt : activeHunts) {
                 try {
                     ArrayList<UUID> huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
                             player.getUniqueId(), hunt.getId());
@@ -139,6 +140,7 @@ public class OnPlayerInteractEvent implements Listener {
                         if (behaviorResult.denyMessage() != null && !behaviorResult.denyMessage().isEmpty()) {
                             player.sendMessage(behaviorResult.denyMessage());
                         }
+                        anyBehaviorDenied = true;
                         continue;
                     }
 
@@ -167,7 +169,7 @@ public class OnPlayerInteractEvent implements Listener {
                     hunt.notifyHeadFound(player, headLocation);
 
                     // Give hunt-specific rewards
-                    registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, hunt.getConfig());
+                    registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, hunt.getConfig(), hunt.getId());
 
                     // Give special head rewards only on first new find
                     if (!anyNewFind) {
@@ -205,9 +207,9 @@ public class OnPlayerInteractEvent implements Listener {
                 // Title using primary hunt config
                 if (primaryConfig.isHeadClickTitleEnabled()) {
                     String firstLine = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
-                            headLocation, primaryConfig.getHeadClickTitleFirstLine());
+                            headLocation, primaryConfig.getHeadClickTitleFirstLine(), primaryHunt.getId());
                     String subTitle = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
-                            headLocation, primaryConfig.getHeadClickTitleSubTitle());
+                            headLocation, primaryConfig.getHeadClickTitleSubTitle(), primaryHunt.getId());
                     int fadeIn = primaryConfig.getHeadClickTitleFadeIn();
                     int stay = primaryConfig.getHeadClickTitleStay();
                     int fadeOut = primaryConfig.getHeadClickTitleFadeOut();
@@ -229,11 +231,11 @@ public class OnPlayerInteractEvent implements Listener {
 
                 Bukkit.getPluginManager().callEvent(
                         new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true, foundHuntIds));
-            } else {
+            } else if (!anyBehaviorDenied) {
                 // All hunts already found — show "already claimed" with primary config
-                showAlreadyClaimed(player, headLocation, clickedLocation, primaryConfig);
+                showAlreadyClaimed(player, headLocation, clickedLocation, primaryConfig, primaryHunt.getId());
 
-                var allHuntIds = activeHunts.stream().map(Hunt::getId).collect(java.util.stream.Collectors.toList());
+                var allHuntIds = activeHunts.stream().map(HBHunt::getId).collect(java.util.stream.Collectors.toList());
                 Bukkit.getPluginManager().callEvent(
                         new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, false, allHuntIds));
             }
@@ -241,9 +243,9 @@ public class OnPlayerInteractEvent implements Listener {
     }
 
     private void showAlreadyClaimed(Player player, HeadLocation headLocation,
-                                    Location clickedLocation, HuntConfig config) {
+                                    Location clickedLocation, HuntConfig config, String huntId) {
         String message = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
-                headLocation, registry.getLanguageService().message("Messages.AlreadyClaimHead"));
+                headLocation, registry.getLanguageService().message("Messages.AlreadyClaimHead"), huntId);
         if (!message.trim().isEmpty()) {
             player.sendMessage(message);
         }

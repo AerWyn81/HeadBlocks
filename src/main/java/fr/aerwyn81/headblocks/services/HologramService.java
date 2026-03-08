@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.holograms.InternalHologram;
@@ -147,7 +147,7 @@ public class HologramService {
                 continue;
             }
 
-            Hunt primaryHunt = huntService.getHighestPriorityHuntForHead(loc.getUuid());
+            HBHunt primaryHunt = huntService.getHighestPriorityHuntForHead(loc.getUuid());
             HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig(configService);
             createHolograms(headLoc, huntConfig);
         }

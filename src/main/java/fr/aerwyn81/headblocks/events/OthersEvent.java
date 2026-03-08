@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
@@ -101,7 +101,7 @@ public class OthersEvent implements Listener {
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));
             head.setCharged(true);
 
-            Hunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(head.getUuid());
+            HBHunt primaryHunt = registry.getHuntService().getHighestPriorityHuntForHead(head.getUuid());
             HuntConfig huntConfig = primaryHunt != null ? primaryHunt.getConfig() : new HuntConfig(registry.getConfigService());
             registry.getHologramService().createHolograms(head.getLocation(), huntConfig);
         }

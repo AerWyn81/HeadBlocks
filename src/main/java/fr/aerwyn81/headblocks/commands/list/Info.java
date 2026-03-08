@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -53,7 +53,7 @@ public class Info implements Cmd {
         player.spigot().sendMessage(msgUuid);
 
         var hunts = registry.getHuntService().getHuntsForHead(headLocation.getUuid());
-        String huntNames = hunts.isEmpty() ? "none" : hunts.stream().map(Hunt::getId).collect(java.util.stream.Collectors.joining(", "));
+        String huntNames = hunts.isEmpty() ? "none" : hunts.stream().map(HBHunt::getId).collect(java.util.stream.Collectors.joining(", "));
         player.spigot().sendMessage(new TextComponent(registry.getLanguageService().message("Chat.Info.Hunt") + huntNames));
 
         TextComponent msgLoc = new TextComponent(registry.getLanguageService().message("Chat.Info.Location") + LocationUtils.toFormattedString(headLocation.getLocation()));

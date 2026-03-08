@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.behavior.BehaviorResult;
 import fr.aerwyn81.headblocks.data.reward.Reward;
@@ -384,7 +384,7 @@ class OnPlayerInteractEventTest {
     // ================================================================
 
     @Nested
-    class HuntLookup {
+    class HBHuntLookup {
 
         @Test
         void noActiveHunts_allInactive_sendMessage() {
@@ -392,7 +392,7 @@ class OnPlayerInteractEventTest {
             UUID headUuid = UUID.randomUUID();
             when(headLocation.getUuid()).thenReturn(headUuid);
 
-            Hunt inactiveHunt = mock(Hunt.class);
+            HBHunt inactiveHunt = mock(HBHunt.class);
             when(inactiveHunt.isActive()).thenReturn(false);
 
             when(event.getClickedBlock()).thenReturn(block);
@@ -423,7 +423,7 @@ class OnPlayerInteractEventTest {
             UUID headUuid = UUID.randomUUID();
             when(headLocation.getUuid()).thenReturn(headUuid);
 
-            Hunt inactiveHunt = mock(Hunt.class);
+            HBHunt inactiveHunt = mock(HBHunt.class);
             when(inactiveHunt.isActive()).thenReturn(false);
 
             when(event.getClickedBlock()).thenReturn(block);
@@ -480,7 +480,7 @@ class OnPlayerInteractEventTest {
             UUID headUuid = UUID.randomUUID();
             when(headLocation.getUuid()).thenReturn(headUuid);
 
-            Hunt activeHunt = mock(Hunt.class);
+            HBHunt activeHunt = mock(HBHunt.class);
             when(activeHunt.isActive()).thenReturn(true);
 
             UUID playerUuid = UUID.randomUUID();
@@ -515,12 +515,12 @@ class OnPlayerInteractEventTest {
     // ================================================================
 
     @Nested
-    class HandleHuntClick {
+    class HandleHBHuntClick {
 
         private UUID headUuid;
         private UUID playerUuid;
         private HeadLocation headLocation;
-        private Hunt activeHunt;
+        private HBHunt activeHunt;
         private HuntConfig huntConfig;
 
         @BeforeEach
@@ -533,7 +533,7 @@ class OnPlayerInteractEventTest {
             lenient().when(headLocation.getLocation()).thenReturn(location);
             lenient().when(headLocation.getRewards()).thenReturn(new ArrayList<>());
 
-            activeHunt = mock(Hunt.class);
+            activeHunt = mock(HBHunt.class);
             lenient().when(activeHunt.isActive()).thenReturn(true);
             lenient().when(activeHunt.getId()).thenReturn("default");
 
@@ -560,7 +560,7 @@ class OnPlayerInteractEventTest {
 
             lenient().when(configService.headClickParticlesEnabled()).thenReturn(false);
 
-            lenient().when(placeholdersService.parse(anyString(), any(UUID.class), any(HeadLocation.class), anyString()))
+            lenient().when(placeholdersService.parse(anyString(), any(UUID.class), any(HeadLocation.class), anyString(), nullable(String.class)))
                     .thenReturn("parsed-message");
         }
 
@@ -679,7 +679,7 @@ class OnPlayerInteractEventTest {
 
                 triggerHandleHuntClick(new HashSet<>());
 
-                verify(rewardService).giveReward(eq(player), any(), eq(headLocation), eq(huntConfig));
+                verify(rewardService).giveReward(eq(player), any(), eq(headLocation), eq(huntConfig), eq("default"));
             }
 
             @Test
@@ -866,7 +866,7 @@ class OnPlayerInteractEventTest {
             }
 
             @Test
-            void behaviorDenied_nullMessage_doesNotSendDenyButSendsAlreadyClaimed() throws InternalException {
+            void behaviorDenied_nullMessage_doesNotSendDenyOrAlreadyClaimed() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
                 when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
                 when(activeHunt.evaluateBehaviors(player, headLocation))
@@ -874,13 +874,13 @@ class OnPlayerInteractEventTest {
 
                 triggerHandleHuntClick(new HashSet<>());
 
-                // Deny message is null so not sent, but "already claimed" IS sent via showAlreadyClaimed
+                // Deny message is null so not sent, and "already claimed" is NOT sent because behavior denied
                 verify(player, never()).sendMessage((String) null);
-                verify(languageService).message("Messages.AlreadyClaimHead");
+                verify(languageService, never()).message("Messages.AlreadyClaimHead");
             }
 
             @Test
-            void behaviorDenied_emptyMessage_doesNotSendDenyButSendsAlreadyClaimed() throws InternalException {
+            void behaviorDenied_emptyMessage_doesNotSendDenyOrAlreadyClaimed() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
                 when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
                 when(activeHunt.evaluateBehaviors(player, headLocation))
@@ -888,13 +888,13 @@ class OnPlayerInteractEventTest {
 
                 triggerHandleHuntClick(new HashSet<>());
 
-                // Empty deny message skipped, but "already claimed" still sent
+                // Empty deny message skipped, and "already claimed" is NOT sent because behavior denied
                 verify(player, never()).sendMessage("");
-                verify(languageService).message("Messages.AlreadyClaimHead");
+                verify(languageService, never()).message("Messages.AlreadyClaimHead");
             }
 
             @Test
-            void behaviorDenied_allHuntsDenied_showsAlreadyClaimed() throws InternalException {
+            void behaviorDenied_allHuntsDenied_doesNotShowAlreadyClaimed() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
                 when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
                 when(activeHunt.evaluateBehaviors(player, headLocation))
@@ -902,8 +902,8 @@ class OnPlayerInteractEventTest {
 
                 triggerHandleHuntClick(new HashSet<>());
 
-                // anyNewFind remains false, so "already claimed" path is taken
-                verify(languageService).message("Messages.AlreadyClaimHead");
+                // Behavior denied, so "already claimed" path is NOT taken
+                verify(languageService, never()).message("Messages.AlreadyClaimHead");
             }
         }
 
@@ -954,11 +954,11 @@ class OnPlayerInteractEventTest {
         // --- Multi-hunt scenarios ---
 
         @Nested
-        class MultiHuntScenarios {
+        class MultiHBHuntScenarios {
 
             @Test
             void multipleActiveHunts_findsInBoth() throws InternalException {
-                Hunt secondHunt = mock(Hunt.class);
+                HBHunt secondHunt = mock(HBHunt.class);
                 when(secondHunt.isActive()).thenReturn(true);
                 when(secondHunt.getId()).thenReturn("special");
                 HuntConfig secondConfig = mock(HuntConfig.class);
@@ -983,7 +983,7 @@ class OnPlayerInteractEventTest {
 
             @Test
             void multipleActiveHunts_oneAlreadyFound_findsOther() throws InternalException {
-                Hunt secondHunt = mock(Hunt.class);
+                HBHunt secondHunt = mock(HBHunt.class);
                 when(secondHunt.isActive()).thenReturn(true);
                 when(secondHunt.getId()).thenReturn("special");
                 HuntConfig secondConfig = mock(HuntConfig.class);
@@ -1010,7 +1010,7 @@ class OnPlayerInteractEventTest {
                 Reward headReward = mock(Reward.class);
                 when(headLocation.getRewards()).thenReturn(new ArrayList<>(List.of(headReward)));
 
-                Hunt secondHunt = mock(Hunt.class);
+                HBHunt secondHunt = mock(HBHunt.class);
                 when(secondHunt.isActive()).thenReturn(true);
                 when(secondHunt.getId()).thenReturn("special");
                 HuntConfig secondConfig = mock(HuntConfig.class);
@@ -1035,7 +1035,7 @@ class OnPlayerInteractEventTest {
 
             @Test
             void multipleActiveHunts_eachHuntGetsOwnReward() throws InternalException {
-                Hunt secondHunt = mock(Hunt.class);
+                HBHunt secondHunt = mock(HBHunt.class);
                 when(secondHunt.isActive()).thenReturn(true);
                 when(secondHunt.getId()).thenReturn("special");
                 HuntConfig secondConfig = mock(HuntConfig.class);
@@ -1054,13 +1054,13 @@ class OnPlayerInteractEventTest {
 
                 triggerHandleHuntClick(new HashSet<>());
 
-                verify(rewardService).giveReward(eq(player), any(), eq(headLocation), eq(huntConfig));
-                verify(rewardService).giveReward(eq(player), any(), eq(headLocation), eq(secondConfig));
+                verify(rewardService).giveReward(eq(player), any(), eq(headLocation), eq(huntConfig), eq("default"));
+                verify(rewardService).giveReward(eq(player), any(), eq(headLocation), eq(secondConfig), eq("special"));
             }
 
             @Test
             void multipleActiveHunts_eachHuntNotifiesBehaviors() throws InternalException {
-                Hunt secondHunt = mock(Hunt.class);
+                HBHunt secondHunt = mock(HBHunt.class);
                 when(secondHunt.isActive()).thenReturn(true);
                 when(secondHunt.getId()).thenReturn("special");
                 HuntConfig secondConfig = mock(HuntConfig.class);
@@ -1102,7 +1102,7 @@ class OnPlayerInteractEventTest {
 
             @Test
             void internalException_onSecondHunt_firstHuntStillProcessed() throws InternalException {
-                Hunt secondHunt = mock(Hunt.class);
+                HBHunt secondHunt = mock(HBHunt.class);
                 lenient().when(secondHunt.isActive()).thenReturn(true);
                 lenient().when(secondHunt.getId()).thenReturn("broken");
                 HuntConfig secondConfig = mock(HuntConfig.class);
@@ -1146,7 +1146,7 @@ class OnPlayerInteractEventTest {
 
             @Test
             void behaviorDeniedOnFirst_secondHuntSucceeds() throws InternalException {
-                Hunt secondHunt = mock(Hunt.class);
+                HBHunt secondHunt = mock(HBHunt.class);
                 when(secondHunt.isActive()).thenReturn(true);
                 when(secondHunt.getId()).thenReturn("special");
                 HuntConfig secondConfig = mock(HuntConfig.class);
@@ -1172,7 +1172,7 @@ class OnPlayerInteractEventTest {
 
             @Test
             void insufficientSlotsOnFirst_secondHuntSucceeds() throws InternalException {
-                Hunt secondHunt = mock(Hunt.class);
+                HBHunt secondHunt = mock(HBHunt.class);
                 when(secondHunt.isActive()).thenReturn(true);
                 when(secondHunt.getId()).thenReturn("special");
                 HuntConfig secondConfig = mock(HuntConfig.class);

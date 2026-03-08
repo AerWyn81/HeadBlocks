@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.data.hunt.behavior;
 
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import org.bukkit.entity.Player;
 
 public class FreeBehavior implements Behavior {
@@ -12,17 +12,17 @@ public class FreeBehavior implements Behavior {
     }
 
     @Override
-    public BehaviorResult canPlayerClick(Player player, HeadLocation head, Hunt hunt) {
+    public BehaviorResult canPlayerClick(Player player, HeadLocation head, HBHunt hunt) {
         return BehaviorResult.allow();
     }
 
     @Override
-    public void onHeadFound(Player player, HeadLocation head, Hunt hunt) {
+    public void onHeadFound(Player player, HeadLocation head, HBHunt hunt) {
         // No-op for free behavior
     }
 
     @Override
-    public String getDisplayInfo(Player player, Hunt hunt) {
+    public String getDisplayInfo(Player player, HBHunt hunt) {
         return "";
     }
 }

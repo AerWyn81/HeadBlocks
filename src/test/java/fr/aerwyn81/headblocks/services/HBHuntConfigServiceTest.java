@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.TieredReward;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
-class HuntConfigServiceTest {
+class HBHuntConfigServiceTest {
 
     @TempDir
     Path tempDir;
@@ -126,7 +126,7 @@ class HuntConfigServiceTest {
         File defaultFile = new File(tempDir.toFile(), "hunts/default.yml");
         assertThat(defaultFile.delete()).isTrue();
 
-        List<Hunt> hunts = huntConfigService.loadHunts();
+        List<HBHunt> hunts = huntConfigService.loadHunts();
 
         assertThat(hunts).isEmpty();
     }
@@ -144,10 +144,10 @@ class HuntConfigServiceTest {
         yaml.set("icon", "DIAMOND");
         yaml.save(secondFile);
 
-        List<Hunt> hunts = huntConfigService.loadHunts();
+        List<HBHunt> hunts = huntConfigService.loadHunts();
 
         assertThat(hunts).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(hunts).extracting(Hunt::getId).contains("default", "second");
+        assertThat(hunts).extracting(HBHunt::getId).contains("default", "second");
     }
 
     @Test
@@ -156,10 +156,10 @@ class HuntConfigServiceTest {
         File txtFile = new File(huntsDir, "notes.txt");
         assertThat(txtFile.createNewFile()).isTrue();
 
-        List<Hunt> hunts = huntConfigService.loadHunts();
+        List<HBHunt> hunts = huntConfigService.loadHunts();
 
         // Should only contain default.yml, not notes.txt
-        assertThat(hunts).extracting(Hunt::getId).doesNotContain("notes");
+        assertThat(hunts).extracting(HBHunt::getId).doesNotContain("notes");
     }
 
     @Test
@@ -170,11 +170,11 @@ class HuntConfigServiceTest {
         yaml.set("displayName", "No ID Hunt");
         yaml.save(badFile);
 
-        List<Hunt> hunts = huntConfigService.loadHunts();
+        List<HBHunt> hunts = huntConfigService.loadHunts();
 
         // noid.yml should be skipped; default.yml should still load
-        assertThat(hunts).extracting(Hunt::getId).doesNotContain((String) null);
-        assertThat(hunts).extracting(Hunt::getId).contains("default");
+        assertThat(hunts).extracting(HBHunt::getId).doesNotContain((String) null);
+        assertThat(hunts).extracting(HBHunt::getId).contains("default");
     }
 
     // --- loadHunt ---
@@ -186,7 +186,7 @@ class HuntConfigServiceTest {
         yaml.set("displayName", "No ID");
         yaml.save(file);
 
-        Hunt result = huntConfigService.loadHunt(file);
+        HBHunt result = huntConfigService.loadHunt(file);
 
         assertThat(result).isNull();
     }
@@ -199,7 +199,7 @@ class HuntConfigServiceTest {
         yaml.set("displayName", "Empty ID");
         yaml.save(file);
 
-        Hunt result = huntConfigService.loadHunt(file);
+        HBHunt result = huntConfigService.loadHunt(file);
 
         assertThat(result).isNull();
     }
@@ -215,7 +215,7 @@ class HuntConfigServiceTest {
         yaml.set("icon", "GOLD_BLOCK");
         yaml.save(file);
 
-        Hunt result = huntConfigService.loadHunt(file);
+        HBHunt result = huntConfigService.loadHunt(file);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo("myHunt");
@@ -232,7 +232,7 @@ class HuntConfigServiceTest {
         yaml.set("id", "minimal");
         yaml.save(file);
 
-        Hunt result = huntConfigService.loadHunt(file);
+        HBHunt result = huntConfigService.loadHunt(file);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo("minimal");
@@ -250,7 +250,7 @@ class HuntConfigServiceTest {
         yaml.createSection("behaviors.free");
         yaml.save(file);
 
-        Hunt result = huntConfigService.loadHunt(file);
+        HBHunt result = huntConfigService.loadHunt(file);
 
         assertThat(result).isNotNull();
         assertThat(result.getBehaviors()).isNotEmpty();
@@ -264,7 +264,7 @@ class HuntConfigServiceTest {
         yaml.set("id", "nobhunt");
         yaml.save(file);
 
-        Hunt result = huntConfigService.loadHunt(file);
+        HBHunt result = huntConfigService.loadHunt(file);
 
         assertThat(result).isNotNull();
         // setBehaviors with empty list should fall back to FreeBehavior
@@ -276,7 +276,7 @@ class HuntConfigServiceTest {
 
     @Test
     void saveHunt_createsFileOnDisk() {
-        Hunt hunt = new Hunt(configService, "saveme", "Save Me", HuntState.ACTIVE, 3, "EMERALD");
+        HBHunt hunt = new HBHunt(configService, "saveme", "Save Me", HuntState.ACTIVE, 3, "EMERALD");
 
         huntConfigService.saveHunt(hunt);
 
@@ -286,7 +286,7 @@ class HuntConfigServiceTest {
 
     @Test
     void saveHunt_writesCorrectValues() {
-        Hunt hunt = new Hunt(configService, "test1", "Test One", HuntState.ARCHIVED, 7, "BEACON");
+        HBHunt hunt = new HBHunt(configService, "test1", "Test One", HuntState.ARCHIVED, 7, "BEACON");
 
         huntConfigService.saveHunt(hunt);
 
@@ -302,12 +302,12 @@ class HuntConfigServiceTest {
 
     @Test
     void saveAndLoad_roundTrip_preservesCoreFields() {
-        Hunt original = new Hunt(configService, "roundtrip", "Round Trip", HuntState.INACTIVE, 42, "HOPPER");
+        HBHunt original = new HBHunt(configService, "roundtrip", "Round Trip", HuntState.INACTIVE, 42, "HOPPER");
 
         huntConfigService.saveHunt(original);
 
         File file = new File(tempDir.toFile(), "hunts/roundtrip.yml");
-        Hunt loaded = huntConfigService.loadHunt(file);
+        HBHunt loaded = huntConfigService.loadHunt(file);
 
         assertThat(loaded).isNotNull();
         assertThat(loaded.getId()).isEqualTo("roundtrip");
@@ -319,14 +319,14 @@ class HuntConfigServiceTest {
 
     @Test
     void saveAndLoad_roundTrip_preservesHuntConfigMessages() {
-        Hunt hunt = new Hunt(configService, "msgtrip", "Msg Trip", HuntState.ACTIVE, 1, "CHEST");
+        HBHunt hunt = new HBHunt(configService, "msgtrip", "Msg Trip", HuntState.ACTIVE, 1, "CHEST");
         HuntConfig hc = hunt.getConfig();
         hc.setHeadClickMessages(List.of("Hello!", "World!"));
 
         huntConfigService.saveHunt(hunt);
 
         File file = new File(tempDir.toFile(), "hunts/msgtrip.yml");
-        Hunt loaded = huntConfigService.loadHunt(file);
+        HBHunt loaded = huntConfigService.loadHunt(file);
 
         assertThat(loaded).isNotNull();
         assertThat(loaded.getConfig().getHeadClickMessages()).containsExactly("Hello!", "World!");
@@ -334,7 +334,7 @@ class HuntConfigServiceTest {
 
     @Test
     void saveAndLoad_roundTrip_preservesHologramLines() {
-        Hunt hunt = new Hunt(configService, "holotrip", "Holo Trip", HuntState.ACTIVE, 1, "CHEST");
+        HBHunt hunt = new HBHunt(configService, "holotrip", "Holo Trip", HuntState.ACTIVE, 1, "CHEST");
         HuntConfig hc = hunt.getConfig();
         hc.setHologramsFoundLines(new ArrayList<>(List.of("&aFound!")));
         hc.setHologramsNotFoundLines(new ArrayList<>(List.of("&cNot found!")));
@@ -342,7 +342,7 @@ class HuntConfigServiceTest {
         huntConfigService.saveHunt(hunt);
 
         File file = new File(tempDir.toFile(), "hunts/holotrip.yml");
-        Hunt loaded = huntConfigService.loadHunt(file);
+        HBHunt loaded = huntConfigService.loadHunt(file);
 
         assertThat(loaded).isNotNull();
         assertThat(loaded.getConfig().getHologramsFoundLines()).containsExactly("&aFound!");
@@ -351,7 +351,7 @@ class HuntConfigServiceTest {
 
     @Test
     void saveAndLoad_roundTrip_preservesTieredRewards() {
-        Hunt hunt = new Hunt(configService, "tiertrip", "Tier Trip", HuntState.ACTIVE, 1, "CHEST");
+        HBHunt hunt = new HBHunt(configService, "tiertrip", "Tier Trip", HuntState.ACTIVE, 1, "CHEST");
         HuntConfig hc = hunt.getConfig();
         List<TieredReward> rewards = List.of(
                 new TieredReward(5, List.of("Level 5!"), List.of("give %player% diamond 1"), List.of("Broadcast!"), 3, true),
@@ -362,7 +362,7 @@ class HuntConfigServiceTest {
         huntConfigService.saveHunt(hunt);
 
         File file = new File(tempDir.toFile(), "hunts/tiertrip.yml");
-        Hunt loaded = huntConfigService.loadHunt(file);
+        HBHunt loaded = huntConfigService.loadHunt(file);
 
         assertThat(loaded).isNotNull();
         List<TieredReward> loadedRewards = loaded.getConfig().getTieredRewards();
@@ -399,7 +399,7 @@ class HuntConfigServiceTest {
 
     @Test
     void huntFileExists_afterSave_returnsTrue() {
-        Hunt hunt = new Hunt(configService, "newbie", "Newbie", HuntState.ACTIVE, 1, "CHEST");
+        HBHunt hunt = new HBHunt(configService, "newbie", "Newbie", HuntState.ACTIVE, 1, "CHEST");
         huntConfigService.saveHunt(hunt);
 
         assertThat(huntConfigService.huntFileExists("newbie")).isTrue();
@@ -424,7 +424,7 @@ class HuntConfigServiceTest {
 
     @Test
     void deleteHuntFile_afterSaveAndDelete_fileGone() {
-        Hunt hunt = new Hunt(configService, "deleteme", "Delete Me", HuntState.ACTIVE, 1, "CHEST");
+        HBHunt hunt = new HBHunt(configService, "deleteme", "Delete Me", HuntState.ACTIVE, 1, "CHEST");
         huntConfigService.saveHunt(hunt);
         assertThat(huntConfigService.huntFileExists("deleteme")).isTrue();
 
@@ -457,7 +457,7 @@ class HuntConfigServiceTest {
         yaml.set(p + "headClick.eject.power", 2.5);
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         HuntConfig hc = hunt.getConfig();
@@ -490,7 +490,7 @@ class HuntConfigServiceTest {
         yaml.set(p + "holograms.notFound.lines", List.of("&cStill searching..."));
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         HuntConfig hc = hunt.getConfig();
@@ -513,7 +513,7 @@ class HuntConfigServiceTest {
         yaml.set(p + "hints.frequency", 10);
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         HuntConfig hc = hunt.getConfig();
@@ -534,7 +534,7 @@ class HuntConfigServiceTest {
         yaml.set(p + "spin.linked", false);
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         HuntConfig hc = hunt.getConfig();
@@ -558,7 +558,7 @@ class HuntConfigServiceTest {
         yaml.set(p + "particles.notFound.amount", 2);
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         HuntConfig hc = hunt.getConfig();
@@ -586,7 +586,7 @@ class HuntConfigServiceTest {
         yaml.set(p + "tieredRewards.7.commands", List.of("give %player% gold_ingot 7"));
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         List<TieredReward> rewards = hunt.getConfig().getTieredRewards();
@@ -615,7 +615,7 @@ class HuntConfigServiceTest {
         yaml.set("id", "noconfig");
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         HuntConfig hc = hunt.getConfig();
@@ -729,30 +729,30 @@ class HuntConfigServiceTest {
         // Delete default so we control everything
         huntConfigService.deleteHuntFile("default");
 
-        Hunt hunt1 = new Hunt(configService, "alpha", "Alpha Hunt", HuntState.ACTIVE, 1, "CHEST");
-        Hunt hunt2 = new Hunt(configService, "beta", "Beta Hunt", HuntState.INACTIVE, 2, "DIAMOND");
-        Hunt hunt3 = new Hunt(configService, "gamma", "Gamma Hunt", HuntState.ARCHIVED, 3, "GOLD_BLOCK");
+        HBHunt hunt1 = new HBHunt(configService, "alpha", "Alpha Hunt", HuntState.ACTIVE, 1, "CHEST");
+        HBHunt hunt2 = new HBHunt(configService, "beta", "Beta Hunt", HuntState.INACTIVE, 2, "DIAMOND");
+        HBHunt hunt3 = new HBHunt(configService, "gamma", "Gamma Hunt", HuntState.ARCHIVED, 3, "GOLD_BLOCK");
 
         huntConfigService.saveHunt(hunt1);
         huntConfigService.saveHunt(hunt2);
         huntConfigService.saveHunt(hunt3);
 
-        List<Hunt> loaded = huntConfigService.loadHunts();
+        List<HBHunt> loaded = huntConfigService.loadHunts();
 
         assertThat(loaded).hasSize(3);
-        assertThat(loaded).extracting(Hunt::getId).containsExactlyInAnyOrder("alpha", "beta", "gamma");
+        assertThat(loaded).extracting(HBHunt::getId).containsExactlyInAnyOrder("alpha", "beta", "gamma");
     }
 
     @Test
     void saveHunt_overwritesExistingFile() {
-        Hunt original = new Hunt(configService, "overwrite", "Original", HuntState.ACTIVE, 1, "CHEST");
+        HBHunt original = new HBHunt(configService, "overwrite", "Original", HuntState.ACTIVE, 1, "CHEST");
         huntConfigService.saveHunt(original);
 
-        Hunt updated = new Hunt(configService, "overwrite", "Updated", HuntState.INACTIVE, 99, "EMERALD");
+        HBHunt updated = new HBHunt(configService, "overwrite", "Updated", HuntState.INACTIVE, 99, "EMERALD");
         huntConfigService.saveHunt(updated);
 
         File file = new File(tempDir.toFile(), "hunts/overwrite.yml");
-        Hunt loaded = huntConfigService.loadHunt(file);
+        HBHunt loaded = huntConfigService.loadHunt(file);
 
         assertThat(loaded).isNotNull();
         assertThat(loaded.getDisplayName()).isEqualTo("Updated");
@@ -771,7 +771,7 @@ class HuntConfigServiceTest {
         yaml.set("state", "NONEXISTENT_STATE");
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         assertThat(hunt.getState()).isEqualTo(HuntState.ACTIVE);
@@ -790,7 +790,7 @@ class HuntConfigServiceTest {
         yaml.set(p + "tieredRewards.notanumber.messages", List.of("Bad level"));
         yaml.save(file);
 
-        Hunt hunt = huntConfigService.loadHunt(file);
+        HBHunt hunt = huntConfigService.loadHunt(file);
 
         assertThat(hunt).isNotNull();
         List<TieredReward> rewards = hunt.getConfig().getTieredRewards();

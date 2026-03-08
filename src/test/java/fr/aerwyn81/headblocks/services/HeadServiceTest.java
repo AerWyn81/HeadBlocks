@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.services;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
-import fr.aerwyn81.headblocks.data.hunt.Hunt;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -442,7 +442,7 @@ class HeadServiceTest {
     // =========================================================================
 
     @Nested
-    class GetHeadLocationsForHunt {
+    class GetHeadLocationsForHBHunt {
 
         @Test
         void returns_heads_belonging_to_hunt() throws Exception {
@@ -458,7 +458,7 @@ class HeadServiceTest {
             headLocations().add(hl2);
             headLocations().add(hl3);
 
-            Hunt hunt = new Hunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
+            HBHunt hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
             hunt.addHead(uuid1);
             hunt.addHead(uuid3);
 
@@ -472,14 +472,14 @@ class HeadServiceTest {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "H", null, true);
             headLocations().add(hl);
 
-            Hunt hunt = new Hunt(configService, "empty", "Empty", HuntState.ACTIVE, 1, "D");
+            HBHunt hunt = new HBHunt(configService, "empty", "Empty", HuntState.ACTIVE, 1, "D");
 
             assertThat(headService.getHeadLocationsForHunt(hunt)).isEmpty();
         }
 
         @Test
         void empty_headLocations_returns_empty() {
-            Hunt hunt = new Hunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
+            HBHunt hunt = new HBHunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
             hunt.addHead(UUID.randomUUID());
 
             assertThat(headService.getHeadLocationsForHunt(hunt)).isEmpty();
@@ -487,7 +487,7 @@ class HeadServiceTest {
 
         @Test
         void returns_arraylist_type() throws Exception {
-            Hunt hunt = new Hunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
+            HBHunt hunt = new HBHunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
 
             assertThat(headService.getHeadLocationsForHunt(hunt)).isInstanceOf(ArrayList.class);
         }
@@ -695,8 +695,8 @@ class HeadServiceTest {
             setField("config", yamlConfig);
             setField("configFile", configFile);
 
-            Hunt hunt1 = mock(Hunt.class);
-            Hunt hunt2 = mock(Hunt.class);
+            HBHunt hunt1 = mock(HBHunt.class);
+            HBHunt hunt2 = mock(HBHunt.class);
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             when(huntService.getAllHunts()).thenReturn(List.of(hunt1, hunt2));
 
@@ -2609,7 +2609,7 @@ class HeadServiceTest {
     // =========================================================================
 
     @Nested
-    class GetHeadLocationsForHuntAdditional {
+    class GetHeadLocationsForHBHuntAdditional {
 
         @Test
         void all_heads_in_hunt_returns_all() throws Exception {
@@ -2625,7 +2625,7 @@ class HeadServiceTest {
             headLocations().add(hl2);
             headLocations().add(hl3);
 
-            Hunt hunt = new Hunt(configService, "all", "All Heads", HuntState.ACTIVE, 1, "D");
+            HBHunt hunt = new HBHunt(configService, "all", "All Heads", HuntState.ACTIVE, 1, "D");
             hunt.addHead(uuid1);
             hunt.addHead(uuid2);
             hunt.addHead(uuid3);
@@ -2641,7 +2641,7 @@ class HeadServiceTest {
             HeadLocation hl = createHeadLocation(uuid, "H", null, true);
             headLocations().add(hl);
 
-            Hunt hunt = new Hunt(configService, "unknown", "Unknown", HuntState.ACTIVE, 1, "D");
+            HBHunt hunt = new HBHunt(configService, "unknown", "Unknown", HuntState.ACTIVE, 1, "D");
             hunt.addHead(UUID.randomUUID());
             hunt.addHead(UUID.randomUUID());
 
@@ -2733,9 +2733,9 @@ class HeadServiceTest {
             setField("config", yamlConfig);
             setField("configFile", configFile);
 
-            Hunt hunt1 = mock(Hunt.class);
-            Hunt hunt2 = mock(Hunt.class);
-            Hunt hunt3 = mock(Hunt.class);
+            HBHunt hunt1 = mock(HBHunt.class);
+            HBHunt hunt2 = mock(HBHunt.class);
+            HBHunt hunt3 = mock(HBHunt.class);
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
             when(huntService.getAllHunts()).thenReturn(List.of(hunt1, hunt2, hunt3));
 

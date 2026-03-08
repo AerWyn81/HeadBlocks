@@ -422,7 +422,7 @@ class RewardServiceTest {
         huntConfig.setHeadClickCommands(Collections.emptyList());
 
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(false);
-        when(placeholdersService.parse(player, headLocation, List.of("Hunt message!")))
+        when(placeholdersService.parse(player, headLocation, List.of("Hunt message!"), null))
                 .thenReturn(new String[]{"Hunt message!"});
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation, huntConfig);
@@ -441,9 +441,9 @@ class RewardServiceTest {
 
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(false);
         when(configService.headClickCommandsRandomized()).thenReturn(false);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("huntcmd1")))
+        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("huntcmd1"), (String) isNull()))
                 .thenReturn("huntcmd1");
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("huntcmd2")))
+        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("huntcmd2"), (String) isNull()))
                 .thenReturn("huntcmd2");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation, huntConfig);
@@ -463,7 +463,7 @@ class RewardServiceTest {
 
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(false);
         when(configService.headClickCommandsRandomized()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("onlyHuntCmd")))
+        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("onlyHuntCmd"), (String) isNull()))
                 .thenReturn("onlyHuntCmd");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation, huntConfig);
@@ -479,7 +479,7 @@ class RewardServiceTest {
         TieredReward tier = new TieredReward(2, List.of("Hunt tier msg"), Collections.emptyList(), Collections.emptyList(), -1, false);
         huntConfig.setTieredRewards(List.of(tier));
 
-        when(placeholdersService.parse(player, headLocation, List.of("Hunt tier msg")))
+        when(placeholdersService.parse(player, headLocation, List.of("Hunt tier msg"), null))
                 .thenReturn(new String[]{"Hunt tier msg"});
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
@@ -499,7 +499,7 @@ class RewardServiceTest {
 
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("huntTierCmd")))
+        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("huntTierCmd"), (String) isNull()))
                 .thenReturn("huntTierCmd");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation, huntConfig);
@@ -517,7 +517,7 @@ class RewardServiceTest {
 
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("Hunt broadcast!")))
+        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("Hunt broadcast!"), (String) isNull()))
                 .thenReturn("Hunt broadcast!");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation, huntConfig);
@@ -536,7 +536,7 @@ class RewardServiceTest {
 
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("tierCmd")))
+        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("tierCmd"), (String) isNull()))
                 .thenReturn("tierCmd");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation, huntConfig);
@@ -569,7 +569,7 @@ class RewardServiceTest {
 
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("randomCmd")))
+        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("randomCmd"), (String) isNull()))
                 .thenReturn("randomCmd");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation, huntConfig);

@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -87,7 +88,7 @@ public class Hunt implements Cmd {
 
         // Console: create directly with FreeBehavior
         String huntId = name.toLowerCase();
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = new fr.aerwyn81.headblocks.data.hunt.Hunt(registry.getConfigService(), huntId, name, HuntState.ACTIVE, 1, "PLAYER_HEAD");
+        HBHunt hunt = new HBHunt(registry.getConfigService(), huntId, name, HuntState.ACTIVE, 1, "PLAYER_HEAD");
 
         HuntCreateEvent createEvent = new HuntCreateEvent(hunt);
         Bukkit.getPluginManager().callEvent(createEvent);
@@ -124,7 +125,7 @@ public class Hunt implements Cmd {
             return;
         }
 
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
                     .replace("%hunt%", huntId));
@@ -159,7 +160,7 @@ public class Hunt implements Cmd {
         String resolvedFallback = keepHeads ? (fallbackHuntId != null ? fallbackHuntId : "default") : null;
 
         if (keepHeads && fallbackHuntId != null) {
-            fr.aerwyn81.headblocks.data.hunt.Hunt fb = registry.getHuntService().getHuntById(fallbackHuntId);
+            HBHunt fb = registry.getHuntService().getHuntById(fallbackHuntId);
             if (fb == null) {
                 sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleteFallbackNotFound")
                         .replace("%hunt%", fallbackHuntId));
@@ -197,7 +198,7 @@ public class Hunt implements Cmd {
         }
     }
 
-    private void handleDeleteWithHeads(CommandSender sender, fr.aerwyn81.headblocks.data.hunt.Hunt hunt, String huntId) {
+    private void handleDeleteWithHeads(CommandSender sender, HBHunt hunt, String huntId) {
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleteInProgress")
                 .replace("%hunt%", huntId));
 
@@ -231,9 +232,9 @@ public class Hunt implements Cmd {
         });
     }
 
-    private void handleDeleteKeepHeads(CommandSender sender, fr.aerwyn81.headblocks.data.hunt.Hunt hunt, String huntId, String fallbackHuntId) {
+    private void handleDeleteKeepHeads(CommandSender sender, HBHunt hunt, String huntId, String fallbackHuntId) {
         try {
-            fr.aerwyn81.headblocks.data.hunt.Hunt fallbackHunt = registry.getHuntService().getHuntById(fallbackHuntId);
+            HBHunt fallbackHunt = registry.getHuntService().getHuntById(fallbackHuntId);
 
             // Reassign heads to fallback hunt
             for (UUID headUUID : hunt.getHeadUUIDs()) {
@@ -269,7 +270,7 @@ public class Hunt implements Cmd {
         }
 
         String huntId = args[2].toLowerCase();
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
@@ -312,7 +313,7 @@ public class Hunt implements Cmd {
         }
 
         String huntId = args[2].toLowerCase();
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
@@ -359,7 +360,7 @@ public class Hunt implements Cmd {
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntListHeader")
                 .replace("%count%", String.valueOf(hunts.size())));
 
-        for (fr.aerwyn81.headblocks.data.hunt.Hunt hunt : hunts) {
+        for (HBHunt hunt : hunts) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntListEntry")
                     .replace("%hunt%", hunt.getId())
                     .replace("%displayName%", hunt.getDisplayName())
@@ -375,7 +376,7 @@ public class Hunt implements Cmd {
         }
 
         String huntId = args[2].toLowerCase();
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
@@ -422,7 +423,7 @@ public class Hunt implements Cmd {
         }
 
         String huntId = args[2].toLowerCase();
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
@@ -550,7 +551,7 @@ public class Hunt implements Cmd {
             return;
         }
 
-        fr.aerwyn81.headblocks.data.hunt.Hunt targetHunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt targetHunt = registry.getHuntService().getHuntById(huntId);
         java.util.List<HeadLocation> headsToAssign = candidates.stream()
                 .filter(h -> !targetHunt.containsHead(h.getUuid()))
                 .toList();
@@ -637,7 +638,7 @@ public class Hunt implements Cmd {
         }
 
         String huntId = args[2].toLowerCase();
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
@@ -697,7 +698,7 @@ public class Hunt implements Cmd {
         }
 
         String huntId = args[2].toLowerCase();
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
@@ -746,7 +747,7 @@ public class Hunt implements Cmd {
         }
 
         String huntId = args[2].toLowerCase();
-        fr.aerwyn81.headblocks.data.hunt.Hunt hunt = registry.getHuntService().getHuntById(huntId);
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
 
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
