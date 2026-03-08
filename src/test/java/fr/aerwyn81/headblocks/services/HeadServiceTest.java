@@ -1171,6 +1171,7 @@ class HeadServiceTest {
     // loadLocations
     // =========================================================================
 
+    @Nested
     class LoadLocations {
 
         @Test
