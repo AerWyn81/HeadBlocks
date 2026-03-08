@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -11,10 +12,13 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 @HBAnnotations(command = "list", permission = "headblocks.admin", alias = "l")
 public class List implements Cmd {
@@ -26,7 +30,30 @@ public class List implements Cmd {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
+        String huntFilter = null;
+        if (args.length >= 2 && !NumberUtils.isDigits(args[1])) {
+            huntFilter = args[1];
+        }
+
+        if (huntFilter != null) {
+            HBHunt hunt = registry.getHuntService().getHuntById(huntFilter);
+            if (hunt == null) {
+                sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
+                        .replace("%hunt%", huntFilter));
+                return true;
+            }
+        }
+
         ArrayList<HeadLocation> headLocations = new ArrayList<>(registry.getHeadService().getHeadLocations());
+
+        final String filter = huntFilter;
+        if (filter != null) {
+            headLocations.removeIf(h -> !filter.equals(h.getHuntId()));
+        }
+
+        if (registry.getHuntService().isMultiHunt()) {
+            headLocations.sort(Comparator.comparing(HeadLocation::getHuntId));
+        }
 
         if (headLocations.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
@@ -45,8 +72,24 @@ public class List implements Cmd {
             sender.sendMessage(message);
         }
 
+        boolean showHuntSeparator = registry.getHuntService().isMultiHunt() && filter == null;
+        String lastHuntId = null;
+
         for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
             HeadLocation headLocation = headLocations.get(i);
+
+            if (showHuntSeparator && !headLocation.getHuntId().equals(lastHuntId)) {
+                lastHuntId = headLocation.getHuntId();
+                HBHunt hunt = registry.getHuntService().getHuntById(lastHuntId);
+                String huntName = hunt != null ? hunt.getDisplayName() : lastHuntId;
+                String separator = registry.getLanguageService().message("Chat.HuntSeparator")
+                        .replace("%hunt%", huntName);
+                if (sender instanceof Player) {
+                    cpu.addLine(new TextComponent(separator));
+                } else {
+                    sender.sendMessage(separator);
+                }
+            }
 
             TextComponent msg = new TextComponent(MessageUtils.colorize((headLocation.isCharged() ? "&6" : "&7| &c&o") + headLocation.getNameOrUuid()));
             TextComponent space = new TextComponent(" ");
@@ -86,13 +129,18 @@ public class List implements Cmd {
             }
         }
 
-        cpu.addPageLine("list");
+        cpu.addPageLine("list" + (filter != null ? " " + filter : ""));
         cpu.build();
         return true;
     }
 
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 2) {
+            return registry.getHuntService().getHuntNames().stream()
+                    .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
         return new ArrayList<>();
     }
 }

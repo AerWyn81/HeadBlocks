@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.chat.ChatPageUtils;
 import fr.aerwyn81.headblocks.utils.internal.CommandsUtils;
@@ -14,6 +15,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -38,6 +40,18 @@ public class Stats implements Cmd {
             return true;
         }
 
+        // Determine hunt filter: it's the first non-digit arg after the player name position
+        String huntFilter = parseHuntFilter(args);
+
+        if (huntFilter != null) {
+            HBHunt hunt = registry.getHuntService().getHuntById(huntFilter);
+            if (hunt == null) {
+                sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
+                        .replace("%hunt%", huntFilter));
+                return true;
+            }
+        }
+
         ArrayList<UUID> heads;
 
         try {
@@ -52,10 +66,32 @@ public class Stats implements Cmd {
             return true;
         }
 
+        final String filter = huntFilter;
+
+        // Build a sorted list of head UUIDs, optionally filtered by hunt
+        var chargedHeads = registry.getHeadService().getChargedHeadLocations();
+
+        if (filter != null) {
+            heads.removeIf(uuid -> {
+                var loc = chargedHeads.stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
+                return loc.isEmpty() || !filter.equals(loc.get().getHuntId());
+            });
+        }
+
+        if (registry.getHuntService().isMultiHunt()) {
+            heads.sort(Comparator.comparing(uuid -> {
+                var loc = chargedHeads.stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
+                return loc.map(HeadLocation::getHuntId).orElse("zzz");
+            }));
+        }
+
+        if (heads.isEmpty()) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
+            return true;
+        }
+
         registry.getStorageService().getHeadsPlayer(playerProfileLight.uuid()).whenComplete(pHeads -> {
             var playerHeads = new ArrayList<>(pHeads);
-
-            heads.sort(Comparator.comparingInt(playerHeads::indexOf));
 
             ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService())
                     .entriesCount(heads.size())
@@ -70,14 +106,33 @@ public class Stats implements Cmd {
                 sender.sendMessage(message);
             }
 
+            boolean showHuntSeparator = registry.getHuntService().isMultiHunt() && filter == null;
+            String lastHuntId = null;
+
             for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
                 UUID uuid = heads.get(i);
 
                 HeadLocation headLocation = null;
 
-                var chargedHead = registry.getHeadService().getChargedHeadLocations().stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
+                var chargedHead = chargedHeads.stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
                 if (chargedHead.isPresent()) {
                     headLocation = chargedHead.get();
+                }
+
+                if (showHuntSeparator) {
+                    String currentHuntId = headLocation != null ? headLocation.getHuntId() : null;
+                    if (currentHuntId != null && !currentHuntId.equals(lastHuntId)) {
+                        lastHuntId = currentHuntId;
+                        HBHunt hunt = registry.getHuntService().getHuntById(lastHuntId);
+                        String huntName = hunt != null ? hunt.getDisplayName() : lastHuntId;
+                        String separator = registry.getLanguageService().message("Chat.HuntSeparator")
+                                .replace("%hunt%", huntName);
+                        if (sender instanceof Player) {
+                            cpu.addLine(new TextComponent(separator));
+                        } else {
+                            sender.sendMessage(separator);
+                        }
+                    }
                 }
 
                 var hover = registry.getLanguageService().message("Chat.Hover.HeadIsNotOnThisServer");
@@ -126,17 +181,43 @@ public class Stats implements Cmd {
                 }
             }
 
-            cpu.addPageLine("stats " + playerProfileLight.name());
+            cpu.addPageLine("stats " + playerProfileLight.name() + (filter != null ? " " + filter : ""));
             cpu.build();
         });
 
         return true;
     }
 
+    private String parseHuntFilter(String[] args) {
+        // args[0] = "stats"
+        // args[1] = player name (non-digit) OR page (digit) OR absent
+        // args[2] = huntId (non-digit) OR page (digit) OR absent
+        // args[3] = page (digit) OR absent
+        // Last arg if digit is always page, handled by ChatPageUtils
+
+        boolean hasPlayerArg = args.length >= 2 && !NumberUtils.isDigits(args[1]);
+        int huntArgIndex = hasPlayerArg ? 2 : 1;
+
+        if (args.length > huntArgIndex && !NumberUtils.isDigits(args[huntArgIndex])) {
+            return args[huntArgIndex];
+        }
+        return null;
+    }
+
     @Override
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
-        return args.length == 2 ? Bukkit.getOnlinePlayers().stream()
-                .map(Player::getName)
-                .collect(Collectors.toCollection(ArrayList::new)) : new ArrayList<>();
+        if (args.length == 2) {
+            // Suggest player names
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+        if (args.length == 3) {
+            // Suggest hunt IDs
+            return registry.getHuntService().getHuntNames().stream()
+                    .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+        return new ArrayList<>();
     }
 }
