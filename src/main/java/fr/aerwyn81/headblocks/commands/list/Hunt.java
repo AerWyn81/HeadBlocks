@@ -506,18 +506,11 @@ public class Hunt implements Cmd {
         }
 
         String mode = args[3].toLowerCase();
-        java.util.List<HeadLocation> headsToAssign;
+        java.util.List<HeadLocation> candidates;
 
         switch (mode) {
             case "all" -> {
-                fr.aerwyn81.headblocks.data.hunt.Hunt defaultHunt = registry.getHuntService().getDefaultHunt();
-                if (defaultHunt == null) {
-                    sender.sendMessage(registry.getLanguageService().message("Messages.HuntListEmpty"));
-                    return;
-                }
-                headsToAssign = registry.getHeadService().getHeadLocations().stream()
-                        .filter(h -> defaultHunt.containsHead(h.getUuid()))
-                        .collect(Collectors.toList());
+                candidates = new ArrayList<>(registry.getHeadService().getHeadLocations());
             }
             case "radius" -> {
                 if (!(sender instanceof Player player)) {
@@ -539,7 +532,7 @@ public class Hunt implements Cmd {
                 }
 
                 var playerLoc = player.getLocation();
-                headsToAssign = registry.getHeadService().getHeadLocations().stream()
+                candidates = registry.getHeadService().getHeadLocations().stream()
                         .filter(h -> h.getLocation() != null
                                 && h.getLocation().getWorld() != null
                                 && h.getLocation().getWorld().equals(playerLoc.getWorld())
@@ -552,8 +545,21 @@ public class Hunt implements Cmd {
             }
         }
 
-        if (headsToAssign.isEmpty()) {
+        if (candidates.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntAssignNoHeads"));
+            return;
+        }
+
+        fr.aerwyn81.headblocks.data.hunt.Hunt targetHunt = registry.getHuntService().getHuntById(huntId);
+        java.util.List<HeadLocation> headsToAssign = candidates.stream()
+                .filter(h -> !targetHunt.containsHead(h.getUuid()))
+                .toList();
+
+        int skipped = candidates.size() - headsToAssign.size();
+
+        if (headsToAssign.isEmpty()) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntAssignAllAlreadyInHunt")
+                    .replace("%hunt%", huntId));
             return;
         }
 
@@ -569,6 +575,7 @@ public class Hunt implements Cmd {
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntAssignSuccess")
                 .replace("%count%", String.valueOf(count))
+                .replace("%skipped%", String.valueOf(skipped))
                 .replace("%hunt%", huntId));
 
         if (sender instanceof Player player) {
