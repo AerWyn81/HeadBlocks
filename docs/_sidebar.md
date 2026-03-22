@@ -6,8 +6,7 @@
 - **Customization**
     - [Configuration](config/general.md)
         - [config.yml](config/config.md)
-      - [Hunt files](config/hunts.md)
-          - [Head locations](config/locations.md)
+      - [locations.yml](config/locations.md)
     - [Translations](config/translations.md)
 - **Reference**
     - [Particles](reference/particles.md)

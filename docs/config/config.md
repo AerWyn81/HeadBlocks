@@ -539,8 +539,8 @@ affect plugin behavior.
 Use the `/hb options` command to configure additional head parameters through an intuitive GUI:
 
 - **Order:**
-  Define a specific sequence in which players must click heads. For clear player instructions, name your heads using
-  `/hb rename` after defining the order. The name appears in chat when a player clicks heads out of order.
+  Define a specific sequence in which players must click heads. For clear player instructions, name your heads in the
+  `locations.yml` file after defining the order. The name appears in chat when a player clicks heads out of order.
   Multiple heads can share the same order position. **Lower order values have higher priority.**
 
 - **ClickCounter:**
