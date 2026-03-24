@@ -17,7 +17,8 @@ Each page follows the order of sections in `config.yml` — what you see in the 
 
 ## Other Files
 
-| Page                            | File                             |
-|---------------------------------|----------------------------------|
-| [Locations](locations.md)       | `locations.yml` — head locations |
-| [Translations](translations.md) | `messages/messages_xx.yml`       |
+| Page                            | File                                   |
+|---------------------------------|----------------------------------------|
+| [Hunt Files](hunts.md)          | `hunts/*.yml` — per-hunt configuration |
+| [Head Locations](locations.md)  | Stored inside each hunt file           |
+| [Translations](translations.md) | `messages/messages_xx.yml`             |

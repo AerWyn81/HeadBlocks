@@ -19,7 +19,8 @@
 
 ## Other Files
 
-* [Locations](configuration/locations.md)
+* [Hunt Files](configuration/hunts.md)
+* [Head Locations](configuration/locations.md)
 * [Translations](configuration/translations.md)
 
 ## Reference

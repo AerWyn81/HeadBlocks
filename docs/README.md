@@ -16,14 +16,15 @@ New to HeadBlocks? Get up and running in under a minute:
 
 - **Create treasure hunts** — place unlimited heads across your world with custom textures
 - **Reward players** — configure commands, messages, and milestone rewards when heads are found
-- **Organize hunts** — create themed, scheduled, or timed hunts with [Hunt Files](configuration/hunts.md)
+- **Multi-Hunt system** — create independent hunts with their own heads, progression, rewards, and [behaviors](configuration/hunts.md#behaviors)
+- **Hunt behaviors** — free, ordered, scheduled (date-based), or timed (race mode with pressure plate)
 - **Customize everything** — particles, holograms, sounds, fireworks, titles, and more
 - **Scale up** — works on single servers or multi-server networks with [Redis + MySQL](configuration/storage.md)
 
 ### For Developers
 
-- [Java API](developers/api.md) with events for head click, creation, and deletion
-- [PlaceholderAPI](reference/placeholders.md) integration for scoreboards, holograms, and more
+- [Java API](developers/api.md) with events for heads and hunts (with cancellable hunt events)
+- [PlaceholderAPI](reference/placeholders.md) integration with per-hunt placeholders
 
 ## Need Help?
 
