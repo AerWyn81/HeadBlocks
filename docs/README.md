@@ -1,40 +1,33 @@
-# Overview
+# Welcome
 
-HeadBlocks is a plugin that keeps your players engaged and entertained.
-The concept is simple: hide heads throughout your world, and players must find them to earn rewards.
+HeadBlocks is a Minecraft plugin that keeps your players engaged and entertained. Hide heads throughout your world, and players must find them to earn rewards.
 
-![Issue Github](https://img.shields.io/github/issues-raw/AerWyn81/HeadBlocks?color=%2370d121&style=for-the-badge)
-![Discord](https://img.shields.io/discord/912462773995335701?label=DISCORD&logo=discord&logoColor=%238bc1f7&style=for-the-badge)
-![Code Quality](https://img.shields.io/codefactor/grade/github/AerWyn81/HeadBlocks?logo=codefactor&style=for-the-badge)
-___
+## Quick Start
 
-# Features
+New to HeadBlocks? Get up and running in under a minute:
 
-- Easy to use
-- Unlimited heads
-- Execute commands on click or based on collection milestones
-- Customize head textures
-- Customize click sounds
-- Send multi-line messages on click
-- Customize fireworks or explosions with any colors
-- Display customizable titles to players
-- Add particles to found and unfound heads
-- Works in lobbies, single servers, or multi-server networks (with Redis)
-- Store player data in SQLite or MySQL
-- Fully translatable
-- API for developers
-- Multiple placeholders available
-- Automatic configuration updates
-- Supports Minecraft 1.16+ color codes
-- Display holograms above heads
-- Set collection order or define maximum clicks per head
-- Push back heads when already collected
-- Head spin animation (synchronized or independent rotation)
-- Hint system (actionBar or Sound)
-- Per-head rewards (commands, broadcast, message)
-- Hide head when found (using PacketEvents)
+1. [Install the plugin](getting-started/installation.md)
+2. [Place your first heads](getting-started/first-steps.md)
+3. [Customize the experience](configuration/overview.md)
 
-___
+## What Can You Do?
 
-Want to try? [Let's start](getting-started/installation.md)  
-If you need help, join the **[Discord](https://discord.gg/f3d848XsQt)**
+### For Server Admins
+
+- **Create treasure hunts** — place unlimited heads across your world with custom textures
+- **Reward players** — configure commands, messages, and milestone rewards when heads are found
+- **Organize hunts** — create themed, scheduled, or timed hunts with [Hunt Files](configuration/hunts.md)
+- **Customize everything** — particles, holograms, sounds, fireworks, titles, and more
+- **Scale up** — works on single servers or multi-server networks with [Redis + MySQL](configuration/storage.md)
+
+### For Developers
+
+- [Java API](developers/api.md) with events for head click, creation, and deletion
+- [PlaceholderAPI](reference/placeholders.md) integration for scoreboards, holograms, and more
+
+## Need Help?
+
+- Browse the [Commands Reference](getting-started/commands.md) for all available commands
+- Check the [Configuration Guide](configuration/overview.md) for setup details
+- Join the [Discord](https://discord.gg/f3d848XsQt) for community support
+- Report bugs on [GitHub](https://github.com/AerWyn81/HeadBlocks/issues)
