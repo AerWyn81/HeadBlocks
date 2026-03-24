@@ -1,6 +1,8 @@
-?> Arguments with `<>` are required and `()` are optional parameters.
-
 # Commands and Permissions
+
+{% hint style="info" %}
+Arguments with `<>` are required and `()` are optional parameters.
+{% endhint %}
 
 | **Command**       | **Alias** | **Sender** | **Arguments**                      | **Permission**                                                        | **Details**                                                 |
 |-------------------|:---------:|:----------:|------------------------------------|-----------------------------------------------------------------------|-------------------------------------------------------------|

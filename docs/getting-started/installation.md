@@ -10,7 +10,9 @@ not receive new features but will continue to receive bug fixes.
 
 **HeadBlocks can be downloaded on [Spigot](https://www.spigotmc.org/resources/headblocks.97630/)**
 
-?> HeadBlocks has optional dependencies.
+{% hint style="info" %}
+HeadBlocks has optional dependencies.
+{% endhint %}
 
 ### Optional Dependencies
 
@@ -23,5 +25,5 @@ not receive new features but will continue to receive bug fixes.
 1. Place the `HeadBlocks-<version>.jar` file and any optional plugins into your server's `plugins` folder.
 2. Start your server.
 3. Verify the plugin is running using the `/plugins` command.
-4. For usage information, click [here](usage).
-5. For configuration information, click [here](../config/config.md).
+4. For usage information, click [here](first-steps.md).
+5. For configuration information, click [here](../configuration/overview.md).

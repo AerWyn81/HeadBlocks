@@ -120,17 +120,9 @@ Use `/hb hunt enable <name>` and `/hb hunt disable <name>` to change state at ru
 
 Behaviors control how players can interact with a hunt's heads. They are evaluated as a chain — if any behavior denies a click, the entire chain denies it.
 
-```yaml
-behaviors:
-  free:
-  scheduled:
-    start: "2026-12-01T00:00"
-    end: "2026-12-31T23:59"
-```
-
 ### Free
 
-No constraints. Players can click heads at any time. This is the default behavior when no behavior is explicitly configured.
+No constraints. Players can click heads at any time. This is the default behavior.
 
 ```yaml
 behaviors:
@@ -139,7 +131,7 @@ behaviors:
 
 ### Ordered
 
-Players must find heads in a specific order. Heads with a lower `orderIndex` must be found before heads with a higher one. Configure the order via `/hb options order`.
+Players must find heads in a specific order. Configure the order via `/hb options order`.
 
 ```yaml
 behaviors:
@@ -147,11 +139,11 @@ behaviors:
 ```
 
 - Heads with `orderIndex <= 0` are always clickable
-- If a player tries to click a head while there are unfound heads with a lower order, the click is denied with the `Messages.OrderClickError` message
+- Clicking a head while lower-order heads are unfound shows the `Messages.OrderClickError` message
 
 ### Scheduled
 
-The hunt is only active within a date range. Outside the range, clicks are denied with a configurable message.
+The hunt is only active within a date range.
 
 ```yaml
 behaviors:
@@ -160,13 +152,9 @@ behaviors:
     end: "2026-12-31T23:59"
 ```
 
-- Before `start`: click denied with `Hunt.Behavior.ScheduledNotStarted` message
-- Between `start` and `end`: click allowed
-- After `end`: click denied with `Hunt.Behavior.ScheduledEnded` message
-
 ### Timed
 
-Players race against the clock to find all heads. A pressure plate acts as the start trigger — stepping on it begins the timer. An action bar displays elapsed time and progress.
+Players race against the clock. A pressure plate starts the timer.
 
 ```yaml
 behaviors:
@@ -179,135 +167,30 @@ behaviors:
     repeatable: true
 ```
 
-- `startPlate`: the location of the pressure plate that starts the timed run. Can be configured via the GUI (`/hb hunt create` or the timed config GUI).
-- `repeatable`: if `true`, players can replay the hunt after completion (their progress is reset). Defaults to `true`.
-- Players must step on the plate to start — clicking a head without an active run shows `Messages.TimedNotStarted`
-- On completion, the time is saved and the `Messages.TimedCompleted` message is shown
+- **startPlate**: location of the pressure plate that starts the timed run
+- **repeatable**: if `true`, players can replay after completion (progress is reset)
 - Players can leave a run with `/hb leave`
 
-?> Behaviors can be combined. For example, `scheduled` + `ordered` means the hunt is date-restricted and heads must be found in order.
+{% hint style="info" %}
+Behaviors can be combined. For example, `scheduled` + `ordered` means the hunt is date-restricted and heads must be found in order.
+{% endhint %}
 
 ## Per-Hunt Configuration
 
 Each setting under `config:` overrides the global `config.yml` value for this hunt only. **Any field left out inherits from `config.yml` at runtime.** This means hunt files stay lightweight — only override what you need.
 
-### headClick
-
-Customize messages, titles, sounds, fireworks, commands, and pushback when a player clicks a head in this hunt.
-
-```yaml
-config:
-  headClick:
-    messages:
-      - "&aYou found a head!"
-    title:
-      enabled: false
-      firstLine: ""
-      subTitle: ""
-      fadeIn: 0
-      stay: 50
-      fadeOut: 0
-    sound:
-      found: block_note_block_bell
-      alreadyOwn: block_note_block_didgeridoo
-    firework:
-      enabled: false
-    commands:
-      - "give %player% diamond"
-    eject:
-      enabled: false
-      power: 1
-```
-
-### holograms
-
-Configure holograms displayed above heads for this hunt.
-
-```yaml
-config:
-  holograms:
-    found:
-      enabled: true
-      lines:
-        - "&a&lFound"
-    notFound:
-      enabled: true
-      lines:
-        - "&c&lNot found"
-```
-
-### hints
-
-Override hint distance and frequency for this hunt.
-
-```yaml
-config:
-  hints:
-    distance: 16
-    frequency: 20
-```
-
-### spin
-
-Override head rotation for this hunt.
-
-```yaml
-config:
-  spin:
-    enabled: false
-    speed: 20
-    linked: true
-```
-
-### particles
-
-Override particle effects for this hunt.
-
-```yaml
-config:
-  particles:
-    found:
-      enabled: false
-      type: REDSTONE
-      amount: 1
-    notFound:
-      enabled: true
-      type: REDSTONE
-      amount: 1
-```
-
-### tieredRewards
-
-Define milestone rewards specific to this hunt. Triggers when a player reaches a head count within this hunt.
-
-```yaml
-config:
-  tieredRewards:
-    5:
-      messages:
-        - "%prefix% &aYou found &e5 &aheads!"
-      commands:
-        - "give %player% diamond 5"
-      broadcast:
-        - "%prefix% &6%player% &afound 5 heads!"
-      slotsRequired: 2
-      randomizeCommands: false
-```
-
-## Priority and Display Conflicts
-
-Each head belongs to exactly one hunt. The priority determines display order in GUIs and messages when multiple hunts exist.
+See [Head Click](head-click.md), [Holograms](holograms.md), [Effects](effects.md), and [Rewards](rewards.md) for the available options.
 
 ## Default Hunt
 
 The `default` hunt is special:
 
-- It is created automatically on first start
-- It cannot be deleted
+- Created automatically on first start
+- Cannot be deleted
 - Newly placed heads go into `default` unless another hunt is selected
-- When a hunt is deleted with `--keepHeads`, its heads and player progress are reassigned to `default` (or to a specified `--fallback` hunt)
-- When a hunt is deleted without `--keepHeads` (default mode), its heads are physically removed from the world and player progress is reset
+- When a hunt is deleted with `--keepHeads`, its heads and progress are reassigned to `default` (or to a specified `--fallback` hunt)
+- When a hunt is deleted without `--keepHeads`, its heads are physically removed and player progress is reset
 
 ## Backward Compatibility
 
-If only the `default` hunt exists, the plugin behaves identically to previous versions. All commands (`/hb progress`, `/hb top`, `/hb reset`) work as before. No configuration changes are needed.
+If only the `default` hunt exists, the plugin behaves identically to previous versions. All commands work as before. No configuration changes needed.

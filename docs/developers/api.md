@@ -1,8 +1,8 @@
 # API
 
-#### Using Maven
+## Maven
 
-```
+```xml
 <repositories>
   <repository>
     <id>jitpack.io</id>
@@ -17,9 +17,9 @@
 </dependency>
 ```
 
-#### Using Gradle
+## Gradle
 
-```
+```groovy
 repositories {
   maven { url 'https://jitpack.io' }
 }
@@ -29,29 +29,31 @@ dependencies {
 }
 ```
 
-#### Getting the HeadBlocks Plugin Instance
+## Getting the Plugin Instance
 
-```
+```java
 package package.artifactId;
 
 public final class MyPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
-        HeadBlocks headBlocksInstance = (HeadBlocks) this.getServer().getPluginManager().getPlugin("HeadBlocks");
+        HeadBlocks headBlocksInstance = (HeadBlocks) this.getServer()
+            .getPluginManager().getPlugin("HeadBlocks");
 
         if (headBlocksInstance == null) {
             // HeadBlocks not enabled
+            return;
         }
 
         // Access the plugin using the headBlocksInstance
-        headBlocksInstance..
     }
+}
 ```
 
-#### Available Events
+## Available Events
 
-| Events           | Description                                                  |
-|------------------|--------------------------------------------------------------|
-| HeadClickEvent   | _Triggered when a head is clicked (includes success status)_ |
-| HeadCreatedEvent | _Called when a head is created (includes the location)_      |
-| HeadDeletedEvent | _Triggered when a head is deleted_                           |
+| Event                | Description                                                |
+|----------------------|------------------------------------------------------------|
+| **HeadClickEvent**   | Triggered when a head is clicked (includes success status) |
+| **HeadCreatedEvent** | Called when a head is created (includes the location)      |
+| **HeadDeletedEvent** | Triggered when a head is deleted                           |

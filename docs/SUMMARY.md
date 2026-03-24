@@ -3,24 +3,33 @@
 ## Getting Started
 
 * [Installation](getting-started/installation.md)
+* [First Steps](getting-started/first-steps.md)
 * [Commands and Permissions](getting-started/commands.md)
-* [First-time Usage](getting-started/usage.md)
-* [Advanced Usage](getting-started/advanced-usage.md)
 
-## Customization
+## Configuration
 
-* [Configuration](config/general.md)
-    * [config.yml](config/config.md)
-    * [Hunt Files](config/hunts.md)
-    * [locations.yml](config/locations.md)
-* [Translations](config/translations.md)
+* [Overview](configuration/overview.md)
+* [Global Settings](configuration/global-settings.md)
+* [Head Click](configuration/head-click.md)
+* [Holograms](configuration/holograms.md)
+* [Rewards](configuration/rewards.md)
+* [Effects](configuration/effects.md)
+* [Storage](configuration/storage.md)
+* [Hunt Files](configuration/hunts.md)
+* [Locations](configuration/locations.md)
+* [Translations](configuration/translations.md)
 
 ## Reference
 
+* [Placeholders](reference/placeholders.md)
 * [Particles](reference/particles.md)
 * [Sounds](reference/sounds.md)
 * [Screenshots](reference/screenshots.md)
 
-## API (For Developers)
+## Advanced
 
-* [General](api/info.md)
+* [Debug Commands](advanced/debug.md)
+
+## Developers
+
+* [API](developers/api.md)
