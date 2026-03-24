@@ -13,7 +13,7 @@ plugins/HeadBlocks/
     ...
 ```
 
-Each file defines one hunt. The file name must match the hunt ID (e.g., `christmas.yml` for hunt ID `christmas`).
+Each file defines one hunt. The filename must match the hunt ID (e.g., `christmas.yml` for hunt ID `christmas`).
 
 ## Full Example
 
