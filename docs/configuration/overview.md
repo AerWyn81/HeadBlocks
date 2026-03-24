@@ -6,7 +6,6 @@ When HeadBlocks is loaded, you will find the following files inside the **HeadBl
 |----------------------------------|----------------------------------|
 | [config.yml](global-settings.md) | Main configuration file          |
 | [messages/](translations.md)     | Translation files                |
-| [hunts/](hunts.md)               | Per-hunt configuration files     |
 | locations.yml                    | Head locations (auto-generated)  |
 | headblocks.db                    | SQLite database (auto-generated) |
 
