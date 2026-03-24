@@ -1,26 +1,28 @@
 # Global Settings
 
-## Language
+Settings at the top level of `config.yml` that control general plugin behavior.
+
+## language
 
 ```yaml
 language: en
 ```
 
-Specifies which language file to use. The language file must be located in the `plugins/HeadBlocks/language/` folder and named `messages_xx.yml` where `xx` corresponds to the language code.
+Specifies which language file to use. The file must be in `plugins/HeadBlocks/language/` and named `messages_xx.yml` where `xx` is the language code.
 
-## Metrics
+## metrics
 
 ```yaml
 metrics: true
 ```
 
-Allows gathering anonymous usage statistics for the plugin via bStats. You can safely disable this option if needed.
+Allows gathering anonymous usage statistics via bStats. You can safely disable this.
 
 {% hint style="warning" %}
-Reloading the plugin has no effect on this property. To change it, restart the server.
+Reloading the plugin has no effect on this property. Restart the server to apply changes.
 {% endhint %}
 
-## Heads
+## heads
 
 ```yaml
 heads:
@@ -29,22 +31,24 @@ heads:
   - 'player:PlayerName'
 ```
 
-You can use multiple textures for HeadBlocks. Three types are available:
+Head textures used when placing HeadBlocks. Three formats are available:
 
-- **default**: Visit [Minecraft-Heads](https://minecraft-heads.com/), find the head you want, scroll to the bottom, and in the **Other** section, copy the **Value**.
-- **hdb**: Requires [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/). Use the head ID from the plugin.
-- **player**: Use a player's name to display their head texture.
+| Format             | Description                                                                                                    |
+|--------------------|----------------------------------------------------------------------------------------------------------------|
+| `default:<base64>` | Base64 encoded texture. Get the **Value** from [Minecraft-Heads](https://minecraft-heads.com/) (Other section) |
+| `hdb:<id>`         | Head ID from [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/) plugin                    |
+| `player:<name>`    | A player's name — uses their skin head texture                                                                 |
 
 {% hint style="warning" %}
 Skulls and BetterHeads plugins are not supported due to API incompatibility.
 {% endhint %}
 
-When using `/hb give <playerName>`, you can specify which HeadBlock to give:
+When using `/hb give <playerName>`:
 
-- Add `*` at the end to give all HeadBlocks
+- Add `*` to give all HeadBlocks
 - Add a `number` to give the head at that position in the config
 
-## Head Themes
+## headsTheme
 
 ```yaml
 headsTheme:
@@ -61,15 +65,13 @@ headsTheme:
       - ''
 ```
 
-Predefined themed head texture lists. When enabled, this **overrides** the `heads` configuration above.
-
-Each theme supports the same texture types as `heads` (default, hdb, player). You can add your own themes by following the indentation format.
+Predefined themed texture lists. When enabled, **overrides** the `heads` config above. Each theme uses the same texture formats as `heads`.
 
 {% hint style="warning" %}
-Enabling a theme will not update already-placed heads.
+Will not update already-placed heads.
 {% endhint %}
 
-## Progress Bar
+## progressBar
 
 ```yaml
 progressBar:
@@ -79,26 +81,105 @@ progressBar:
   completedColor: '&a'
 ```
 
-Configures the progress bar displayed with the `%progress%` placeholder:
+Configures the progress bar displayed with the `%progress%` placeholder.
 
-- **totalBars**: number of symbols displayed
-- **symbol**: any character (`|`, `▮`, etc.)
-- **notCompletedColor**: color for incomplete portion
-- **completedColor**: color for completed portion
+| Option                | Description                     |
+|-----------------------|---------------------------------|
+| **totalBars**         | Number of symbols displayed     |
+| **symbol**            | Any character (`\|`, `▮`, etc.) |
+| **notCompletedColor** | Color for incomplete portion    |
+| **completedColor**    | Color for completed portion     |
 
 {% hint style="info" %}
-Hex colors (format: `{#ffffff}`) and centering (use: `{center}`) are supported.
+Hex colors (`{#ffffff}`) and centering (`{center}`) are supported.
 {% endhint %}
 
-## Reset Player Data
+## shouldResetPlayerData
 
 ```yaml
 shouldResetPlayerData: true
 ```
 
-When disabled, player progress data will **not** be deleted when a head is removed (via command or sneak+click). It is not recommended to disable this as unused data will accumulate in the database.
+When `true`, player progress data is deleted when a head is removed (via command or sneak+click). Disabling this will cause unused data to accumulate in the database.
 
-## Internal Task
+## hideFoundHeads
+
+```yaml
+hideFoundHeads: false
+```
+
+When enabled, heads a player has already found are hidden from their view using [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/).
+
+{% hint style="warning" %}
+**Known limitation**: The server still maintains the physical block. Players will encounter an invisible collision box (forcefield effect) where hidden heads are located.
+{% endhint %}
+
+{% hint style="warning" %}
+Requires PacketEvents and a server restart. Remember to disable the 'Found' hologram or leave the placeholder empty in advanced hologram mode.
+{% endhint %}
+
+## preventCommandsOnTieredRewardsLevel
+
+```yaml
+preventCommandsOnTieredRewardsLevel: false
+```
+
+When enabled, `headClick` commands are **not** executed if the player's current count matches a [tieredRewards](rewards.md) milestone. Only the milestone commands run.
+
+## preventMessagesOnTieredRewardsLevel
+
+```yaml
+preventMessagesOnTieredRewardsLevel: false
+```
+
+When enabled, `headClick` messages are **not** sent if the player's current count matches a [tieredRewards](rewards.md) milestone. Only the milestone message is shown.
+
+## externalInteractions
+
+```yaml
+externalInteractions:
+  piston: true
+  water: true
+  explosion: true
+```
+
+Controls protection against external block interactions that could destroy heads.
+
+| Option        | Description                                   |
+|---------------|-----------------------------------------------|
+| **piston**    | Prevent pistons from pushing/destroying heads |
+| **water**     | Prevent liquid flow from destroying heads     |
+| **explosion** | Prevent explosions from destroying heads      |
+
+{% hint style="info" %}
+Disabling these options can improve performance, but heads will be vulnerable to the corresponding interactions.
+{% endhint %}
+
+## placeholders
+
+```yaml
+placeholders:
+  leaderboard:
+    prefix: ""
+    suffix: ""
+    nickname: false
+```
+
+Customizes the `%headblocks_leaderboard_<position>_custom%` placeholder. Supports PlaceholderAPI.
+
+| Option       | Description                             |
+|--------------|-----------------------------------------|
+| **prefix**   | Text displayed before the player name   |
+| **suffix**   | Text displayed after the player name    |
+| **nickname** | Use player nickname instead of username |
+
+{% hint style="warning" %}
+Players must reconnect or the server must restart for changes to take effect.
+{% endhint %}
+
+See [Placeholders Reference](../reference/placeholders.md) for the full list of available placeholders.
+
+## internalTask
 
 ```yaml
 internalTask:
@@ -106,7 +187,41 @@ internalTask:
   hologramParticlePlayerViewDistance: 16
 ```
 
-Controls the plugin's internal task scheduler:
+Controls the plugin's internal task scheduler.
 
-- **delay**: how often (in ticks) the plugin checks for nearby players around heads
-- **hologramParticlePlayerViewDistance**: maximum distance at which players can see holograms and particles
+| Option                                 | Description                                                            |
+|----------------------------------------|------------------------------------------------------------------------|
+| **delay**                              | How often (in ticks) the plugin checks for nearby players around heads |
+| **hologramParticlePlayerViewDistance** | Maximum distance at which players can see holograms and particles      |
+
+{% hint style="info" %}
+Increasing the delay or reducing the view distance can improve performance.
+{% endhint %}
+
+## gui
+
+```yaml
+gui:
+  borderIcon:
+    type: GRAY_STAINED_GLASS_PANE
+  previousIcon:
+    type: ARROW
+  nextIcon:
+    type: ARROW
+  backIcon:
+    type: SPRUCE_DOOR
+  closeIcon:
+    type: BARRIER
+```
+
+Customizes the icons used in all plugin GUIs.
+
+| Icon             | Default                   | Description           |
+|------------------|---------------------------|-----------------------|
+| **borderIcon**   | `GRAY_STAINED_GLASS_PANE` | Border/filler slots   |
+| **previousIcon** | `ARROW`                   | Previous page button  |
+| **nextIcon**     | `ARROW`                   | Next page button      |
+| **backIcon**     | `SPRUCE_DOOR`             | Back to previous menu |
+| **closeIcon**    | `BARRIER`                 | Close menu button     |
+
+Values must be valid [Material](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html) names.

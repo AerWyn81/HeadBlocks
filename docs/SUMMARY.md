@@ -7,15 +7,18 @@
 * [First Steps](getting-started/first-steps.md)
 * [Commands and Permissions](getting-started/commands.md)
 
-## Configuration
+## Configuration (config.yml)
 
 * [Overview](configuration/README.md)
 * [Global Settings](configuration/global-settings.md)
+* [Storage](configuration/storage.md)
 * [Head Click](configuration/head-click.md)
 * [Holograms](configuration/holograms.md)
-* [Rewards](configuration/rewards.md)
 * [Effects](configuration/effects.md)
-* [Storage](configuration/storage.md)
+* [Rewards](configuration/rewards.md)
+
+## Other Files
+
 * [Hunt Files](configuration/hunts.md)
 * [Locations](configuration/locations.md)
 * [Translations](configuration/translations.md)

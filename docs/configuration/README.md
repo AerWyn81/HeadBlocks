@@ -1,27 +1,24 @@
 # Configuration
 
-HeadBlocks is fully configurable. Start with the [overview](overview.md) to understand the file structure, then dive into the specific sections below.
+HeadBlocks is fully configurable. Start with the [overview](overview.md) to understand the file structure, then dive into the pages below.
 
-## Core Settings
+Each page follows the order of sections in `config.yml` — what you see in the file maps directly to a page here.
 
-| Page                                  | What it covers                                         |
-|---------------------------------------|--------------------------------------------------------|
-| [Global Settings](global-settings.md) | Language, head textures, themes, progress bar          |
-| [Head Click](head-click.md)           | Messages, titles, fireworks, sounds, commands on click |
-| [Holograms](holograms.md)             | Text displayed above heads (default or advanced mode)  |
-| [Rewards](rewards.md)                 | Milestone rewards and per-head rewards                 |
-| [Effects](effects.md)                 | Particles, spin animation, hints, hide found heads     |
+## config.yml
 
-## Storage and Multi-Server
+| Page                                  | Sections covered                                                                                                                                                                                  |
+|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Global Settings](global-settings.md) | `language`, `metrics`, `heads`, `headsTheme`, `progressBar`, `shouldResetPlayerData`, `hideFoundHeads`, `preventCommands/Messages`, `externalInteractions`, `placeholders`, `internalTask`, `gui` |
+| [Storage](storage.md)                 | `database`, `redis`                                                                                                                                                                               |
+| [Head Click](head-click.md)           | `headClick` (messages, title, firework, particles, sounds, commands, pushBack)                                                                                                                    |
+| [Holograms](holograms.md)             | `holograms`                                                                                                                                                                                       |
+| [Effects](effects.md)                 | `floatingParticles`, `spin`, `hint`                                                                                                                                                               |
+| [Rewards](rewards.md)                 | `tieredRewards`                                                                                                                                                                                   |
 
-| Page                  | What it covers                                |
-|-----------------------|-----------------------------------------------|
-| [Storage](storage.md) | SQLite, MySQL/MariaDB, Redis for multi-server |
+## Other Files
 
-## Advanced Configuration
-
-| Page                            | What it covers                               |
-|---------------------------------|----------------------------------------------|
-| [Hunt Files](hunts.md)          | Create themed, scheduled, or timed hunts     |
-| [Locations](locations.md)       | Auto-generated head location file format     |
-| [Translations](translations.md) | Translate all plugin messages, color formats |
+| Page                            | File                                   |
+|---------------------------------|----------------------------------------|
+| [Hunt Files](hunts.md)          | `hunts/*.yml` — per-hunt configuration |
+| [Locations](locations.md)       | `hunts/*.yml` locations section        |
+| [Translations](translations.md) | `messages/messages_xx.yml`             |
