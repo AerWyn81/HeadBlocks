@@ -78,7 +78,7 @@ public final class MyPlugin extends JavaPlugin {
 
 ### WIKI:
 
-Find the wiki **[here](https://aerwyn81.github.io/HeadBlocks)**
+Find the wiki **[here](https://aerwyn81.gitbook.io/headblocks)**
 ___
 It's my first plugin, it's not perfect yet, don't hesitate to tell me bugs or suggestions on discord or in issue :)
 Thank you for your interest ❤️
