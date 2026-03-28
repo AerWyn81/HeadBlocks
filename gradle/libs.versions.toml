@@ -25,6 +25,7 @@ mockbukkit = "3.93.2"
 sqlite-jdbc = "3.49.1.0"
 
 # Build Plugins
+sonarqube = "7.2.3.7755"
 shadow = "9.3.1"
 plugin-yml = "0.6.0"
 run-paper = "3.0.2"
@@ -59,6 +60,7 @@ mockbukkit = { module = "com.github.seeseemelk:MockBukkit-v1.20", version.ref = 
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
 
 [plugins]
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 plugin-yml = { id = "net.minecrell.plugin-yml.bukkit", version.ref = "plugin-yml" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }

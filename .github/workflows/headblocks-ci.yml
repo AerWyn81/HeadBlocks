@@ -22,3 +22,8 @@ jobs:
         run: ./gradlew test
       - name: Build with Gradle
         run: ./gradlew build
+      - name: SonarCloud analysis
+        run: ./gradlew sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io

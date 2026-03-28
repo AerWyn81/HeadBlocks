@@ -4,6 +4,7 @@ import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
 plugins {
     java
     jacoco
+    alias(libs.plugins.sonarqube)
     alias(libs.plugins.shadow)
     alias(libs.plugins.plugin.yml)
     alias(libs.plugins.run.paper)
@@ -69,6 +70,7 @@ tasks {
         dependsOn(test)
         reports {
             csv.required.set(true)
+            xml.required.set(true)
         }
         classDirectories.setFrom(
             files(classDirectories.files.map {
@@ -176,6 +178,13 @@ tasks {
             exclude(dependency("com.zaxxer:HikariCP:.*"))
             exclude(dependency("org.slf4j:slf4j-jdk14:.*"))
         }
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "AerWyn81_HeadBlocks")
+        property("sonar.organization", "aerwyn81")
     }
 }
 
