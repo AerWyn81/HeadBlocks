@@ -32,11 +32,11 @@ import java.util.Map;
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
 
-    private static volatile HeadBlocks instance;
-    public static volatile boolean isPlaceholderApiActive;
-    public static volatile boolean isReloadInProgress;
-    public static volatile boolean isHeadDatabaseActive;
-    public static volatile boolean isPacketEventsActive;
+    private static HeadBlocks instance;
+    public static boolean isPlaceholderApiActive;
+    public static boolean isReloadInProgress;
+    public static boolean isHeadDatabaseActive;
+    public static boolean isPacketEventsActive;
 
     private ServiceRegistry serviceRegistry;
     private ConfigService earlyConfigService;
