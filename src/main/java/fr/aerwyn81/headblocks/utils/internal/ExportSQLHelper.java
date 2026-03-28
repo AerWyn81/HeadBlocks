@@ -17,8 +17,8 @@ public class ExportSQLHelper {
     public static void generateFile(ServiceRegistry registry, EnumTypeDatabase enumTypeDatabase, String fileName) throws Exception {
         File sqlFile = new File(HeadBlocks.getInstance().getDataFolder(), fileName);
 
-        if (sqlFile.exists()) {
-            sqlFile.delete();
+        if (sqlFile.exists() && !sqlFile.delete()) {
+            LogUtil.error("Cannot delete existing SQL export file: {0}", sqlFile.getAbsolutePath());
         }
 
         Charset charset = StandardCharsets.UTF_8;

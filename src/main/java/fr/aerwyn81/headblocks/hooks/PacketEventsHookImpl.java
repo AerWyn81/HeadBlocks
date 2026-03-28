@@ -32,6 +32,7 @@ class PacketEventsHookImpl {
             return;
         }
 
+        //noinspection UnstableApiUsage
         PacketEvents.getAPI().getSettings().checkForUpdates(false);
         PacketEvents.getAPI().init();
 

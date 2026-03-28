@@ -19,8 +19,7 @@ public class IridiumColorAPI {
      * The current version of the server in the a form of a major version.
      * If the static initialization for this fails, you know something's wrong with
      * the server software.
-     *
-     * @credits <a href="https://github.com/Iridium-Development/IridiumColorAPI">...</a>
+     * Credits: <a href="https://github.com/Iridium-Development/IridiumColorAPI">IridiumColorAPI</a>
      * @since 1.0.0
      */
     private static final int VERSION = getVersion();

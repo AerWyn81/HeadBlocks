@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.utils.config;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
-public class KeyBuilder implements Cloneable {
+public class KeyBuilder {
 
     private final FileConfiguration config;
     private final char separator;
@@ -14,12 +14,6 @@ public class KeyBuilder implements Cloneable {
         this.builder = new StringBuilder();
     }
 
-    private KeyBuilder(KeyBuilder keyBuilder) {
-        this.config = keyBuilder.config;
-        this.separator = keyBuilder.separator;
-        this.builder = new StringBuilder(keyBuilder.toString());
-    }
-
     public void parseLine(String line) {
         line = line.trim();
         String[] currentSplitLine = line.split(":");
@@ -27,13 +21,13 @@ public class KeyBuilder implements Cloneable {
 
         //Checks keyBuilder path against config to see if the path is valid.
         //If the path doesn't exist in the config it keeps removing last key in keyBuilder.
-        while (builder.length() > 0 && !config.contains(builder.toString() + separator + key)) {
+        while (!isEmpty() && !config.contains(builder.toString() + separator + key)) {
             removeLastKey();
         }
 
         //Add the separator if there is already a key inside keyBuilder
         //If currentSplitLine[0] is 'key2' and keyBuilder contains 'key1' the result will be 'key1.' if '.' is the separator
-        if (builder.length() > 0)
+        if (!isEmpty())
             builder.append(separator);
 
         //Appends the current key to keyBuilder
@@ -42,14 +36,14 @@ public class KeyBuilder implements Cloneable {
     }
 
     public String getLastKey() {
-        if (builder.length() == 0)
+        if (isEmpty())
             return "";
 
         return builder.toString().split("[" + separator + "]")[0];
     }
 
     public boolean isEmpty() {
-        return builder.length() == 0;
+        return builder.isEmpty();
     }
 
     //Checks to see if subKey is a sub-key of the key path this instance represents
@@ -83,18 +77,19 @@ public class KeyBuilder implements Cloneable {
 
     public boolean isConfigSectionWithKeys() {
         String key = builder.toString();
-        return config.isConfigurationSection(key) && !config.getConfigurationSection(key).getKeys(false).isEmpty();
+        var section = config.getConfigurationSection(key);
+        return section != null && !section.getKeys(false).isEmpty();
     }
 
     //Input: 'key1.key2' Result: 'key1'
     public void removeLastKey() {
-        if (builder.length() == 0)
+        if (isEmpty())
             return;
 
         String keyString = builder.toString();
-        //Must be enclosed in brackets in case a regex special character is the separator
+        //Must be enclosed in brackets if a regular expression special character is the separator.
         String[] split = keyString.split("[" + separator + "]");
-        //Makes sure begin index isn't < 0 (error). Occurs when there is only one key in the path
+        //Makes sure begin index isn't < 0 (error). Occurs when there is only one key in the path.
         int minIndex = Math.max(0, builder.length() - split[split.length - 1].length() - 1);
         builder.replace(minIndex, builder.length(), "");
     }
@@ -104,8 +99,4 @@ public class KeyBuilder implements Cloneable {
         return builder.toString();
     }
 
-    @Override
-    protected KeyBuilder clone() {
-        return new KeyBuilder(this);
-    }
 }

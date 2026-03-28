@@ -12,6 +12,7 @@ import org.bukkit.entity.TextDisplay;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("UnstableApiUsage")
 public class BasicHologram implements IHologram {
     TextDisplay hologram;
 

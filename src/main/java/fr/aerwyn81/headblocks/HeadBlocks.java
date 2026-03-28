@@ -197,6 +197,7 @@ public final class HeadBlocks extends JavaPlugin {
         packetEventsHook.unload();
 
         if (holoEasyLib != null) {
+            //noinspection UnstableApiUsage
             holoEasyLib.destroyPools();
         }
 

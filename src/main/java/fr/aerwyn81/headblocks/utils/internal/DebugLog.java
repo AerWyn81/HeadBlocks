@@ -17,8 +17,8 @@ public class DebugLog {
     public static void Init() {
         File logFile = new File(HeadBlocks.getInstance().getDataFolder(), "debugLog.txt");
 
-        if (logFile.exists()) {
-            logFile.delete();
+        if (logFile.exists() && !logFile.delete()) {
+            LogUtil.error("Cannot delete existing debug log file: {0}", logFile.getAbsolutePath());
         }
 
         try {

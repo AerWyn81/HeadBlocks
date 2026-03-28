@@ -88,6 +88,7 @@ public class AdvancedHologram implements IHologram {
         return hologram != null;
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     public void refresh(Player player) {
         registry.getScheduler().runTaskAsync(() -> {
             for (Line<?> line : hologram.getLines()) {

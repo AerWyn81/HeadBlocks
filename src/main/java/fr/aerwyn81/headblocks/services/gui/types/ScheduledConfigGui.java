@@ -243,17 +243,15 @@ public class ScheduledConfigGui {
 
         // Add slot button
         int addSlotIdx = Math.min(slots.size(), 7) + 9;
-        if (addSlotIdx <= 16) {
-            menu.setItem(0, addSlotIdx, new ItemGUI(new ItemBuilder(Material.LIME_DYE)
-                    .setName(registry.getLanguageService().message("Gui.ScheduledSlotsAddSlot"))
-                    .toItemStack(), true)
-                    .addOnClickEvent(event -> {
-                        Player p = (Player) event.getWhoClicked();
-                        p.closeInventory();
-                        pendingChatFields.put(p.getUniqueId(), "slot_days");
-                        p.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledSlotsInputDays")));
-                    }));
-        }
+        menu.setItem(0, addSlotIdx, new ItemGUI(new ItemBuilder(Material.LIME_DYE)
+                .setName(registry.getLanguageService().message("Gui.ScheduledSlotsAddSlot"))
+                .toItemStack(), true)
+                .addOnClickEvent(event -> {
+                    Player p = (Player) event.getWhoClicked();
+                    p.closeInventory();
+                    pendingChatFields.put(p.getUniqueId(), "slot_days");
+                    p.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledSlotsInputDays")));
+                }));
 
         // Validate button
         if (!slots.isEmpty()) {

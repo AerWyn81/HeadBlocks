@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import org.holoeasy.HoloEasy;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Objects;
@@ -139,11 +140,11 @@ public class ServiceRegistry {
         return configService;
     }
 
-    public LanguageService getLanguageService() {
+    public @NotNull LanguageService getLanguageService() {
         return languageService;
     }
 
-    public StorageService getStorageService() {
+    public @NotNull StorageService getStorageService() {
         return storageService;
     }
 
