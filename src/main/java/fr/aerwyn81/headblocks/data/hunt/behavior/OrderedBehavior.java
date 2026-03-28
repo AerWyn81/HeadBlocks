@@ -15,10 +15,6 @@ public class OrderedBehavior implements Behavior {
 
     private final ServiceRegistry registry;
 
-    public OrderedBehavior() {
-        this.registry = null;
-    }
-
     public OrderedBehavior(ServiceRegistry registry) {
         this.registry = registry;
     }

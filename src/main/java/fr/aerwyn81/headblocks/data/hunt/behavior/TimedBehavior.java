@@ -20,12 +20,6 @@ public class TimedBehavior implements Behavior {
     private final Location startPlateLocation;
     private final boolean repeatable;
 
-    public TimedBehavior(Location startPlateLocation, boolean repeatable) {
-        this.registry = null;
-        this.startPlateLocation = startPlateLocation;
-        this.repeatable = repeatable;
-    }
-
     public TimedBehavior(ServiceRegistry registry, Location startPlateLocation, boolean repeatable) {
         this.registry = registry;
         this.startPlateLocation = startPlateLocation;
