@@ -2,7 +2,7 @@
 
 Visual and audio effects displayed around heads.
 
-## floatingParticles
+## Floating Particles
 
 Particles that float above heads based on whether the player has found them.
 
@@ -37,7 +37,7 @@ floatingParticles:
 The display frequency and view distance are controlled by [internalTask](global-settings.md#internaltask).
 {% endhint %}
 
-## spin
+## Spin
 
 ```yaml
 spin:
@@ -54,7 +54,7 @@ Make heads rotate continuously.
 | **speed**   | Rotation speed in ticks (only used when `linked` is `false`)                                                                     |
 | **linked**  | `true`: all heads rotate synchronously using `internalTask.delay`. `false`: each head rotates independently with a 5-tick offset |
 
-## hint
+## Hint
 
 ```yaml
 hint:
