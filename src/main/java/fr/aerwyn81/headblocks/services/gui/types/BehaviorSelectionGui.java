@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.api.events.HuntCreateEvent;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.*;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.ScheduleMode;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
@@ -13,7 +14,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
@@ -119,10 +119,10 @@ public class BehaviorSelectionGui {
             return;
         }
 
-        createHunt(player, null, true, null, null);
+        createHunt(player, null, true, null);
     }
 
-    public void createHunt(Player player, Location plateLocation, boolean repeatable, LocalDateTime start, LocalDateTime end) {
+    public void createHunt(Player player, Location plateLocation, boolean repeatable, ScheduleMode scheduleMode) {
         String huntName = pendingHuntNames.remove(player.getUniqueId());
         Set<String> selected = selectedBehaviors.remove(player.getUniqueId());
 
@@ -142,7 +142,7 @@ public class BehaviorSelectionGui {
             for (String behaviorId : selected) {
                 switch (behaviorId) {
                     case "ordered" -> behaviors.add(new OrderedBehavior(registry));
-                    case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, start, end));
+                    case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, scheduleMode));
                     case "timed" -> behaviors.add(new TimedBehavior(registry, plateLocation, repeatable));
                 }
             }

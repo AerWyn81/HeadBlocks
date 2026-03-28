@@ -7,12 +7,12 @@ import fr.aerwyn81.headblocks.api.events.HuntDeleteEvent;
 import fr.aerwyn81.headblocks.api.events.HuntStateChangeEvent;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.commands.list.schedule.ScheduleCommandHandler;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -20,11 +20,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,9 +27,11 @@ import java.util.stream.Stream;
 @HBAnnotations(command = "hunt", permission = "headblocks.admin")
 public class Hunt implements Cmd {
     private final ServiceRegistry registry;
+    private final ScheduleCommandHandler scheduleHandler;
 
     public Hunt(ServiceRegistry registry) {
         this.registry = registry;
+        this.scheduleHandler = new ScheduleCommandHandler(registry);
     }
 
     @Override
@@ -794,105 +791,7 @@ public class Hunt implements Cmd {
     }
 
     private void handleSchedule(CommandSender sender, String[] args) {
-        if (args.length < 4) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
-            return;
-        }
-
-        String huntId = args[2].toLowerCase();
-        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
-        if (hunt == null) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replace("%hunt%", huntId));
-            return;
-        }
-
-        String action = args[3].toLowerCase();
-
-        if ("clear".equals(action)) {
-            ArrayList<Behavior> behaviors = new ArrayList<>(hunt.getBehaviors());
-            ScheduledBehavior existing = behaviors.stream()
-                    .filter(b -> b instanceof ScheduledBehavior)
-                    .map(b -> (ScheduledBehavior) b)
-                    .findFirst().orElse(null);
-
-            if (existing == null) {
-                sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleNoScheduled")
-                        .replace("%hunt%", huntId));
-                return;
-            }
-
-            String which = args.length >= 5 ? args[4].toLowerCase() : null;
-            behaviors.remove(existing);
-
-            if ("start".equals(which) && existing.end() != null) {
-                behaviors.add(new ScheduledBehavior(registry, null, existing.end()));
-            } else if ("end".equals(which) && existing.start() != null) {
-                behaviors.add(new ScheduledBehavior(registry, existing.start(), null));
-            }
-
-            hunt.setBehaviors(behaviors);
-            registry.getHuntConfigService().saveHunt(hunt);
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleCleared")
-                    .replace("%hunt%", huntId));
-            return;
-        }
-
-        if (!"start".equals(action) && !"end".equals(action)) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
-            return;
-        }
-
-        if (args.length < 5) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
-            return;
-        }
-
-        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
-
-        LocalDate date;
-        try {
-            date = LocalDate.parse(args[4], dateFmt);
-        } catch (DateTimeParseException e) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInvalidDate"));
-            return;
-        }
-
-        LocalDateTime datetime;
-        if (args.length >= 6) {
-            try {
-                datetime = date.atTime(LocalTime.parse(args[5], timeFmt));
-            } catch (DateTimeParseException e) {
-                sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInvalidDate"));
-                return;
-            }
-        } else {
-            datetime = date.atStartOfDay();
-        }
-
-        ArrayList<Behavior> behaviors = new ArrayList<>(hunt.getBehaviors());
-        ScheduledBehavior existing = behaviors.stream()
-                .filter(b -> b instanceof ScheduledBehavior)
-                .map(b -> (ScheduledBehavior) b)
-                .findFirst().orElse(null);
-
-        LocalDateTime newStart;
-        LocalDateTime newEnd;
-        if (existing != null) {
-            newStart = "start".equals(action) ? datetime : existing.start();
-            newEnd = "end".equals(action) ? datetime : existing.end();
-            behaviors.remove(existing);
-        } else {
-            newStart = "start".equals(action) ? datetime : null;
-            newEnd = "end".equals(action) ? datetime : null;
-        }
-
-        behaviors.add(new ScheduledBehavior(registry, newStart, newEnd));
-        hunt.setBehaviors(behaviors);
-        registry.getHuntConfigService().saveHunt(hunt);
-        sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleUpdated")
-                .replace("%hunt%", huntId));
+        scheduleHandler.handle(sender, args);
     }
 
     // --- Tab completion ---
@@ -933,13 +832,12 @@ public class Hunt implements Cmd {
                 return getDeleteTabCompletions(args);
             }
 
+            if ("schedule".equals(sub)) {
+                return scheduleHandler.tabComplete(args);
+            }
+
             if (args.length == 4) {
                 switch (sub) {
-                    case "schedule" -> {
-                        return Stream.of("start", "end", "clear")
-                                .filter(s -> s.startsWith(args[3].toLowerCase()))
-                                .collect(Collectors.toCollection(ArrayList::new));
-                    }
                     case "assign" -> {
                         return Stream.of("all", "radius")
                                 .filter(s -> s.startsWith(args[3].toLowerCase())).collect(Collectors.toCollection(ArrayList::new));

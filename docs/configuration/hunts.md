@@ -147,22 +147,113 @@ behaviors:
 
 ### Scheduled
 
-The hunt is only active within a date/time range.
+The scheduled behavior restricts when a hunt is active. It supports three modes: **range**, **slots**, and **recurring
+**.
+
+#### Range mode
+
+Active between specific start and end dates. This is the default mode and is backward compatible with existing
+configurations.
 
 ```yaml
 behaviors:
   scheduled:
+    mode: range          # optional, defaults to "range" if omitted
     start:
       date: "12/01/2026"
-      time: "00:00"    # optional, defaults to 00:00
+      time: "00:00"      # optional, defaults to 00:00
     end:
       date: "12/31/2026"
-      time: "23:59"    # optional, defaults to 00:00
+      time: "23:59"      # optional, defaults to 00:00
 ```
 
 - **date**: required, format `MM/dd/yyyy`
 - **time**: optional, format `HH:mm` — if omitted, defaults to `00:00`
 - Both `start` and `end` are optional — omit one to leave that bound open
+
+You can optionally add **time slots** to a range to restrict activity to specific hours on certain days:
+
+```yaml
+behaviors:
+  scheduled:
+    mode: range
+    start:
+      date: "03/01/2026"
+    end:
+      date: "03/31/2026"
+    slots:
+      - days: [ SATURDAY, SUNDAY ]
+        from: "14:00"
+        to: "18:00"
+```
+
+This means the hunt is only active on weekends between 2pm and 6pm during March 2026.
+
+#### Slots mode
+
+Active during recurring weekly time windows. No start/end date by default, but you can optionally bound it with
+`activeFrom` / `activeUntil`.
+
+```yaml
+behaviors:
+  scheduled:
+    mode: slots
+    slots:
+      - days: [ MONDAY, WEDNESDAY, FRIDAY ]
+        from: "14:00"
+        to: "18:00"
+      - days: [ SATURDAY, SUNDAY ]
+        from: "10:00"
+        to: "20:00"
+    activeFrom:
+      date: "03/01/2026"    # optional
+    activeUntil:
+      date: "06/30/2026"    # optional
+```
+
+- **slots**: list of time windows with `days` (list of day names), `from` and `to` (format `HH:mm`)
+- **activeFrom** / **activeUntil**: optional date bounds (format `MM/dd/yyyy`)
+
+#### Recurring mode
+
+The hunt automatically recurs on a yearly, monthly, or weekly cycle.
+
+```yaml
+behaviors:
+  scheduled:
+    mode: recurring
+    every: year            # year, month, or week
+    startRef: "12/01"      # MM/dd for year, day number for month, day name for week
+    duration: "31d"        # supports d (days), w (weeks), h (hours)
+```
+
+**Examples:**
+
+| Use case                   | `every` | `startRef` | `duration` |
+|----------------------------|---------|------------|------------|
+| Christmas event (Dec 1-31) | `year`  | `12/01`    | `31d`      |
+| First 3 days of each month | `month` | `1`        | `3d`       |
+| Every weekend (Sat-Sun)    | `week`  | `SATURDAY` | `2d`       |
+
+Recurring mode also supports optional `slots` for further restricting activity hours within the active period:
+
+```yaml
+behaviors:
+  scheduled:
+    mode: recurring
+    every: year
+    startRef: "12/01"
+    duration: "31d"
+    slots:
+      - days: [ SATURDAY, SUNDAY ]
+        from: "14:00"
+        to: "18:00"
+```
+
+{% hint style="info" %}
+Duration can span across boundaries (e.g., a yearly recurrence starting December 15 with `30d` duration will extend into
+January).
+{% endhint %}
 
 ### Timed
 

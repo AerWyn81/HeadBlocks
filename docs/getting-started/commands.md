@@ -281,23 +281,52 @@ Reset a player's progress in a specific hunt.
 
 ### /hb hunt schedule
 
-Manage the scheduled behavior dates of a hunt.
+Manage the scheduled behavior of a hunt. Supports three scheduling modes: **range** (date bounds), **slots** (weekly time windows), and **recurring** (yearly/monthly/weekly cycles).
 
-|               |                                              |
-|---------------|----------------------------------------------|
-| **Arguments** | `<name> <start\|end\|clear> (date) (time)`   |
+|               |                             |
+|---------------|-----------------------------|
+| **Arguments** | `<name> <action> (args...)` |
 
 **Sub-actions:**
 
-- `start <MM/dd/yyyy> (HH:mm)` — Set the start date (time defaults to 00:00)
-- `end <MM/dd/yyyy> (HH:mm)` — Set the end date (time defaults to 00:00)
-- `clear (start\|end)` — Remove the schedule entirely, or only the start/end date
+| Action        | Arguments                   | Description                                                |
+|---------------|-----------------------------|------------------------------------------------------------|
+| `start`       | `<MM/dd/yyyy> (HH:mm)`      | Set the range start date (time defaults to 00:00)          |
+| `end`         | `<MM/dd/yyyy> (HH:mm)`      | Set the range end date (time defaults to 00:00)            |
+| `clear`       | `(start\|end)`              | Remove the schedule entirely, or only the start/end        |
+| `mode`        | `<range\|slots\|recurring>` | Switch the scheduling mode (resets mode config)            |
+| `addslot`     | `<DAYS> <from> <to>`        | Add a time slot (e.g., `MON,WED,FRI 14:00 18:00`)          |
+| `removeslot`  | `<index>`                   | Remove a time slot by its 1-based index                    |
+| `every`       | `<year\|month\|week>`       | Set the recurrence unit (recurring mode)                   |
+| `startref`    | `<ref>`                     | Set the start reference (`MM/dd`, day number, or day name) |
+| `duration`    | `<duration>`                | Set the duration (`31d`, `2w`, `48h`)                      |
+| `activefrom`  | `<MM/dd/yyyy>`              | Set the active-from bound (slots mode)                     |
+| `activeuntil` | `<MM/dd/yyyy>`              | Set the active-until bound (slots mode)                    |
+| `info`        |                             | Display the current schedule configuration                 |
 
 **Examples:**
 
 ```
+# Range mode (default)
 /hb hunt schedule christmas start 12/01/2025
 /hb hunt schedule christmas end 12/31/2025 23:59
 /hb hunt schedule christmas clear
 /hb hunt schedule christmas clear start
+
+# Slots mode
+/hb hunt schedule weekend mode slots
+/hb hunt schedule weekend addslot SAT,SUN 10:00 20:00
+/hb hunt schedule weekend addslot MON,WED,FRI 14:00 18:00
+/hb hunt schedule weekend activefrom 03/01/2026
+/hb hunt schedule weekend activeuntil 06/30/2026
+/hb hunt schedule weekend removeslot 1
+/hb hunt schedule weekend info
+
+# Recurring mode
+/hb hunt schedule xmas mode recurring
+/hb hunt schedule xmas every year
+/hb hunt schedule xmas startref 12/01
+/hb hunt schedule xmas duration 31d
+/hb hunt schedule xmas addslot SAT,SUN 14:00 18:00
+/hb hunt schedule xmas info
 ```

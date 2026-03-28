@@ -4,6 +4,9 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.RangeScheduleMode;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.SlotsScheduleMode;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.TimeSlot;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -17,6 +20,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -107,7 +111,7 @@ class ScheduledBehaviorTest {
 
     @Test
     void canPlayerClick_bothNull_alwaysAllow() {
-        ScheduledBehavior behavior = new ScheduledBehavior(registry, null, null);
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, (LocalDateTime) null, null);
 
         BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
 
@@ -133,6 +137,24 @@ class ScheduledBehaviorTest {
     }
 
     @Test
+    void canPlayerClick_outsideSlot_returnsDeny() {
+        when(languageService.message("Hunt.Behavior.ScheduledOutsideSlot")).thenReturn("Outside slot");
+
+        RangeScheduleMode mode = new RangeScheduleMode(
+                LocalDateTime.now().minusDays(5),
+                LocalDateTime.now().plusDays(5),
+                List.of(new TimeSlot(List.of(java.time.DayOfWeek.of(
+                        LocalDateTime.now().getDayOfWeek().getValue() == 7 ? 1 : LocalDateTime.now().getDayOfWeek().getValue() + 1
+                )), java.time.LocalTime.of(0, 0), java.time.LocalTime.of(23, 59)))
+        );
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, mode);
+
+        BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
+
+        assertThat(result.allowed()).isFalse();
+    }
+
+    @Test
     void getDisplayInfo_formatsCorrectly() {
         LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 30);
         LocalDateTime end = LocalDateTime.of(2025, 12, 31, 23, 59);
@@ -145,7 +167,7 @@ class ScheduledBehaviorTest {
 
     @Test
     void getDisplayInfo_nullDatesShowInfinity() {
-        ScheduledBehavior behavior = new ScheduledBehavior(registry, null, null);
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, (LocalDateTime) null, null);
 
         String info = behavior.getDisplayInfo(player, hunt);
 
@@ -154,16 +176,42 @@ class ScheduledBehaviorTest {
 
     @Test
     void getId_returnsScheduled() {
-        ScheduledBehavior behavior = new ScheduledBehavior(registry, null, null);
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, (LocalDateTime) null, null);
         assertThat(behavior.getId()).isEqualTo("scheduled");
     }
 
     @Test
     void onHeadFound_doesNothing() {
-        ScheduledBehavior behavior = new ScheduledBehavior(registry, null, null);
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, (LocalDateTime) null, null);
 
         behavior.onHeadFound(player, headLocation, hunt);
         // No-op, no exception = pass
+    }
+
+    @Test
+    void getScheduleMode_returnsRangeForCompatConstructor() {
+        LocalDateTime start = LocalDateTime.of(2025, 6, 1, 0, 0);
+        LocalDateTime end = LocalDateTime.of(2025, 12, 31, 0, 0);
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, start, end);
+
+        assertThat(behavior.getScheduleMode()).isInstanceOf(RangeScheduleMode.class);
+        RangeScheduleMode mode = (RangeScheduleMode) behavior.getScheduleMode();
+        assertThat(mode.start()).isEqualTo(start);
+        assertThat(mode.end()).isEqualTo(end);
+    }
+
+    @Test
+    void isAccessGate_returnsTrue() {
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, (LocalDateTime) null, null);
+        assertThat(behavior.isAccessGate()).isTrue();
+    }
+
+    @Test
+    void getScheduleMode_returnsProvidedMode() {
+        SlotsScheduleMode slotsMode = new SlotsScheduleMode(List.of(), null, null);
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, slotsMode);
+
+        assertThat(behavior.getScheduleMode()).isSameAs(slotsMode);
     }
 
     // --- fromConfig ---
@@ -172,8 +220,10 @@ class ScheduledBehaviorTest {
     void fromConfig_nullSection_returnsNullDates() {
         ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, null);
 
-        assertThat(behavior.start()).isNull();
-        assertThat(behavior.end()).isNull();
+        assertThat(behavior.getScheduleMode()).isInstanceOf(RangeScheduleMode.class);
+        RangeScheduleMode mode = (RangeScheduleMode) behavior.getScheduleMode();
+        assertThat(mode.start()).isNull();
+        assertThat(mode.end()).isNull();
     }
 
     @Test
@@ -182,6 +232,7 @@ class ScheduledBehaviorTest {
         ConfigurationSection startSub = mock(ConfigurationSection.class);
         ConfigurationSection endSub = mock(ConfigurationSection.class);
 
+        when(section.getString("mode", "range")).thenReturn("range");
         when(section.getConfigurationSection("start")).thenReturn(startSub);
         when(section.getConfigurationSection("end")).thenReturn(endSub);
         when(startSub.getString("date")).thenReturn("06/01/2025");
@@ -191,8 +242,9 @@ class ScheduledBehaviorTest {
 
         ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
-        assertThat(behavior.start()).isEqualTo(LocalDateTime.of(2025, 6, 1, 9, 0));
-        assertThat(behavior.end()).isEqualTo(LocalDateTime.of(2025, 12, 31, 23, 59));
+        RangeScheduleMode mode = (RangeScheduleMode) behavior.getScheduleMode();
+        assertThat(mode.start()).isEqualTo(LocalDateTime.of(2025, 6, 1, 9, 0));
+        assertThat(mode.end()).isEqualTo(LocalDateTime.of(2025, 12, 31, 23, 59));
     }
 
     @Test
@@ -200,6 +252,7 @@ class ScheduledBehaviorTest {
         ConfigurationSection section = mock(ConfigurationSection.class);
         ConfigurationSection startSub = mock(ConfigurationSection.class);
 
+        when(section.getString("mode", "range")).thenReturn("range");
         when(section.getConfigurationSection("start")).thenReturn(startSub);
         when(section.getConfigurationSection("end")).thenReturn(null);
         when(startSub.getString("date")).thenReturn("06/01/2025");
@@ -207,8 +260,9 @@ class ScheduledBehaviorTest {
 
         ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
-        assertThat(behavior.start()).isEqualTo(LocalDateTime.of(2025, 6, 1, 0, 0));
-        assertThat(behavior.end()).isNull();
+        RangeScheduleMode mode = (RangeScheduleMode) behavior.getScheduleMode();
+        assertThat(mode.start()).isEqualTo(LocalDateTime.of(2025, 6, 1, 0, 0));
+        assertThat(mode.end()).isNull();
     }
 
     @Test
@@ -216,6 +270,7 @@ class ScheduledBehaviorTest {
         ConfigurationSection section = mock(ConfigurationSection.class);
         ConfigurationSection endSub = mock(ConfigurationSection.class);
 
+        when(section.getString("mode", "range")).thenReturn("range");
         when(section.getConfigurationSection("start")).thenReturn(null);
         when(section.getConfigurationSection("end")).thenReturn(endSub);
         when(endSub.getString("date")).thenReturn("12/31/2025");
@@ -223,8 +278,9 @@ class ScheduledBehaviorTest {
 
         ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
-        assertThat(behavior.start()).isNull();
-        assertThat(behavior.end()).isEqualTo(LocalDateTime.of(2025, 12, 31, 0, 0));
+        RangeScheduleMode mode = (RangeScheduleMode) behavior.getScheduleMode();
+        assertThat(mode.start()).isNull();
+        assertThat(mode.end()).isEqualTo(LocalDateTime.of(2025, 12, 31, 0, 0));
     }
 
     @Test
@@ -233,13 +289,15 @@ class ScheduledBehaviorTest {
             ConfigurationSection section = mock(ConfigurationSection.class);
             ConfigurationSection startSub = mock(ConfigurationSection.class);
 
+            when(section.getString("mode", "range")).thenReturn("range");
             when(section.getConfigurationSection("start")).thenReturn(startSub);
             when(section.getConfigurationSection("end")).thenReturn(null);
             when(startSub.getString("date")).thenReturn("not-a-date");
 
             ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
-            assertThat(behavior.start()).isNull();
+            RangeScheduleMode mode = (RangeScheduleMode) behavior.getScheduleMode();
+            assertThat(mode.start()).isNull();
             logUtil.verify(() -> LogUtil.error(anyString(), eq("start"), eq("not-a-date")));
         }
     }
@@ -250,13 +308,15 @@ class ScheduledBehaviorTest {
             ConfigurationSection section = mock(ConfigurationSection.class);
             ConfigurationSection endSub = mock(ConfigurationSection.class);
 
+            when(section.getString("mode", "range")).thenReturn("range");
             when(section.getConfigurationSection("start")).thenReturn(null);
             when(section.getConfigurationSection("end")).thenReturn(endSub);
             when(endSub.getString("date")).thenReturn("bad-end");
 
             ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
-            assertThat(behavior.end()).isNull();
+            RangeScheduleMode mode = (RangeScheduleMode) behavior.getScheduleMode();
+            assertThat(mode.end()).isNull();
             logUtil.verify(() -> LogUtil.error(anyString(), eq("end"), eq("bad-end")));
         }
     }

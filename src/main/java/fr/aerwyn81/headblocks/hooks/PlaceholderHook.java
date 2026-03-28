@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.hooks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -274,7 +275,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                         if (best == null) {
                             return "-";
                         }
-                        return fr.aerwyn81.headblocks.services.TimedRunManager.formatTime(best);
+                        return TimedRunManager.formatTime(best);
                     } catch (InternalException e) {
                         return "-";
                     }
@@ -319,8 +320,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                             var entry = leaderboard.get(pos - 1);
                             return switch (field) {
                                 case "name" -> entry.getKey().name();
-                                case "time" ->
-                                        fr.aerwyn81.headblocks.services.TimedRunManager.formatTime(entry.getValue());
+                                case "time" -> TimedRunManager.formatTime(entry.getValue());
                                 default -> "-";
                             };
                         } catch (Exception e) {

@@ -56,4 +56,9 @@ class FreeBehaviorTest {
     void getDisplayInfo_returnsEmptyString() {
         assertThat(behavior.getDisplayInfo(player, hunt)).isEmpty();
     }
+
+    @Test
+    void isAccessGate_returnsFalse() {
+        assertThat(behavior.isAccessGate()).isFalse();
+    }
 }

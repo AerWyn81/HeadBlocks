@@ -7,6 +7,8 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -16,7 +18,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class HuntConfigService {
@@ -413,20 +414,15 @@ public class HuntConfigService {
             String key = "behaviors." + behavior.getId();
             yaml.createSection(key);
 
-            if (behavior instanceof fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior sb) {
-                DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-                DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
-                if (sb.start() != null) {
-                    yaml.set(key + ".start.date", sb.start().format(dateFmt));
-                    yaml.set(key + ".start.time", sb.start().format(timeFmt));
-                }
-                if (sb.end() != null) {
-                    yaml.set(key + ".end.date", sb.end().format(dateFmt));
-                    yaml.set(key + ".end.time", sb.end().format(timeFmt));
+            if (behavior instanceof ScheduledBehavior sb) {
+                var section = yaml.getConfigurationSection(key);
+                if (section != null) {
+                    section.set("mode", sb.getScheduleMode().getModeId());
+                    sb.getScheduleMode().saveTo(section);
                 }
             }
 
-            if (behavior instanceof fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior tb) {
+            if (behavior instanceof TimedBehavior tb) {
                 yaml.set(key + ".repeatable", tb.repeatable());
                 if (tb.startPlateLocation() != null) {
                     var loc = tb.startPlateLocation();

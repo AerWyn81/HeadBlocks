@@ -543,6 +543,12 @@ class OnPlayerInteractEventTest {
             lenient().when(headLocation.getHuntId()).thenReturn("default");
             lenient().when(huntService.getHuntById("default")).thenReturn(activeHunt);
 
+            // Default behavior evaluation — allow by default
+            lenient().when(activeHunt.evaluateAccessGates(any(), any()))
+                    .thenReturn(BehaviorResult.allow());
+            lenient().when(activeHunt.evaluateBehaviors(any(), any()))
+                    .thenReturn(BehaviorResult.allow());
+
             // Default HuntConfig stubs for the "already claimed" path
             lenient().when(huntConfig.getHeadClickSoundFound()).thenReturn("");
             lenient().when(huntConfig.getHeadClickSoundAlreadyOwn()).thenReturn("");
@@ -587,6 +593,48 @@ class OnPlayerInteractEventTest {
                 ArgumentCaptor<Consumer<Set<UUID>>> captor = ArgumentCaptor.forClass(Consumer.class);
                 verify(futureResult).whenComplete(captor.capture());
                 captor.getValue().accept(playerHeads);
+            }
+        }
+
+        // --- Access gate deny (scheduled behavior) ---
+
+        @Nested
+        class AccessGateDeny {
+
+            @Test
+            void accessGateDenied_alreadyFoundHead_showsScheduleMessageNotAlreadyClaimed() throws InternalException {
+                ArrayList<UUID> huntPlayerHeads = new ArrayList<>(List.of(headUuid));
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
+                when(activeHunt.evaluateAccessGates(player, headLocation))
+                        .thenReturn(BehaviorResult.deny("Hunt has ended"));
+
+                triggerHandleHuntClick(Set.of(headUuid));
+
+                verify(player).sendMessage("Hunt has ended");
+                verify(languageService, never()).message("Messages.AlreadyClaimHead");
+            }
+
+            @Test
+            void accessGateDenied_newHead_showsScheduleMessage() throws InternalException {
+                ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
+                when(activeHunt.evaluateAccessGates(player, headLocation))
+                        .thenReturn(BehaviorResult.deny("Hunt not started yet"));
+
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(player).sendMessage("Hunt not started yet");
+                verify(storageService, never()).addHeadForHunt(any(), any(), anyString());
+            }
+
+            @Test
+            void accessGateAllowed_alreadyFoundHead_showsAlreadyClaimed() throws InternalException {
+                ArrayList<UUID> huntPlayerHeads = new ArrayList<>(List.of(headUuid));
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
+
+                triggerHandleHuntClick(Set.of(headUuid));
+
+                verify(languageService).message("Messages.AlreadyClaimHead");
             }
         }
 

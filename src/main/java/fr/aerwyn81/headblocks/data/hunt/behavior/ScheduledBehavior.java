@@ -3,20 +3,33 @@ package fr.aerwyn81.headblocks.data.hunt.behavior;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
-import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.DenyReason;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.RangeScheduleMode;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.ScheduleMode;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.ScheduleModeFactory;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.util.List;
 
-public record ScheduledBehavior(ServiceRegistry registry, LocalDateTime start, LocalDateTime end) implements Behavior {
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
-    private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
+public class ScheduledBehavior implements Behavior {
+
+    private final ServiceRegistry registry;
+    private final ScheduleMode scheduleMode;
+
+    public ScheduledBehavior(ServiceRegistry registry, ScheduleMode scheduleMode) {
+        this.registry = registry;
+        this.scheduleMode = scheduleMode;
+    }
+
+    public ScheduledBehavior(ServiceRegistry registry, LocalDateTime start, LocalDateTime end) {
+        this(registry, new RangeScheduleMode(start, end, List.of()));
+    }
+
+    public ScheduleMode getScheduleMode() {
+        return scheduleMode;
+    }
 
     @Override
     public String getId() {
@@ -24,22 +37,31 @@ public record ScheduledBehavior(ServiceRegistry registry, LocalDateTime start, L
     }
 
     @Override
+    public boolean isAccessGate() {
+        return true;
+    }
+
+    @Override
     public BehaviorResult canPlayerClick(Player player, HeadLocation head, HBHunt hunt) {
         LocalDateTime now = LocalDateTime.now();
+        DenyReason reason = scheduleMode.getDenyReason(now);
 
-        if (start != null && now.isBefore(start)) {
-            return BehaviorResult.deny(registry.getLanguageService().message("Hunt.Behavior.ScheduledNotStarted")
-                    .replace("%name%", hunt.getDisplayName())
-                    .replace("%when%", start.format(DISPLAY_FORMAT)));
+        if (reason == null) {
+            return BehaviorResult.allow();
         }
 
-        if (end != null && now.isAfter(end)) {
-            return BehaviorResult.deny(registry.getLanguageService().message("Hunt.Behavior.ScheduledEnded")
-                    .replace("%name%", hunt.getDisplayName())
-                    .replace("%when%", end.format(DISPLAY_FORMAT)));
-        }
+        String msgKey = switch (reason) {
+            case NOT_STARTED -> "Hunt.Behavior.ScheduledNotStarted";
+            case ENDED -> "Hunt.Behavior.ScheduledEnded";
+            case OUTSIDE_SLOT -> "Hunt.Behavior.ScheduledOutsideSlot";
+            case NOT_IN_RECURRENCE -> "Hunt.Behavior.ScheduledNotInRecurrence";
+        };
 
-        return BehaviorResult.allow();
+        String detail = scheduleMode.getDenyDetail(reason);
+
+        return BehaviorResult.deny(registry.getLanguageService().message(msgKey)
+                .replace("%name%", hunt.getDisplayName())
+                .replace("%when%", detail));
     }
 
     @Override
@@ -49,52 +71,10 @@ public record ScheduledBehavior(ServiceRegistry registry, LocalDateTime start, L
 
     @Override
     public String getDisplayInfo(Player player, HBHunt hunt) {
-        String startStr = start != null ? start.format(DISPLAY_FORMAT) : "∞";
-        String endStr = end != null ? end.format(DISPLAY_FORMAT) : "∞";
-        return startStr + " → " + endStr;
-    }
-
-    private static LocalDateTime parseDateTime(ConfigurationSection section, String key) {
-        if (section == null) {
-            return null;
-        }
-
-        ConfigurationSection sub = section.getConfigurationSection(key);
-        if (sub == null) {
-            return null;
-        }
-
-        String dateStr = sub.getString("date");
-        if (dateStr == null) {
-            LogUtil.error("Missing \"date\" field in scheduled behavior section \"{0}\"", key);
-            return null;
-        }
-
-        LocalDate date;
-        try {
-            date = LocalDate.parse(dateStr, DATE_FORMAT);
-        } catch (DateTimeParseException e) {
-            LogUtil.error("Cannot parse scheduled {0} date \"{1}\": expected format MM/dd/yyyy", key, dateStr);
-            return null;
-        }
-
-        String timeStr = sub.getString("time");
-        if (timeStr == null) {
-            return date.atStartOfDay();
-        }
-
-        try {
-            LocalTime time = LocalTime.parse(timeStr, TIME_FORMAT);
-            return date.atTime(time);
-        } catch (DateTimeParseException e) {
-            LogUtil.error("Cannot parse scheduled {0} time \"{1}\": expected format HH:mm", key, timeStr);
-            return date.atStartOfDay();
-        }
+        return scheduleMode.getDisplayInfo();
     }
 
     public static ScheduledBehavior fromConfig(ServiceRegistry registry, ConfigurationSection section) {
-        LocalDateTime start = parseDateTime(section, "start");
-        LocalDateTime end = parseDateTime(section, "end");
-        return new ScheduledBehavior(registry, start, end);
+        return new ScheduledBehavior(registry, ScheduleModeFactory.fromConfig(section));
     }
 }

@@ -116,6 +116,15 @@ public class OnPlayerInteractEvent implements Listener {
                 ArrayList<UUID> huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
                         player.getUniqueId(), hunt.getId());
 
+                // Check access-gate behaviors first (scheduled) — these gate the entire hunt
+                var accessResult = hunt.evaluateAccessGates(player, headLocation);
+                if (!accessResult.allowed()) {
+                    if (accessResult.denyMessage() != null && !accessResult.denyMessage().isEmpty()) {
+                        player.sendMessage(accessResult.denyMessage());
+                    }
+                    return;
+                }
+
                 if (huntPlayerHeads.contains(headLocation.getUuid())) {
                     // Already found in this hunt
                     showAlreadyClaimed(player, headLocation, clickedLocation, huntConfig, hunt.getId());
@@ -125,7 +134,7 @@ public class OnPlayerInteractEvent implements Listener {
                     return;
                 }
 
-                // Check behaviors
+                // Check remaining behaviors (ordered, timed, etc.)
                 var behaviorResult = hunt.evaluateBehaviors(player, headLocation);
                 if (!behaviorResult.allowed()) {
                     if (behaviorResult.denyMessage() != null && !behaviorResult.denyMessage().isEmpty()) {

@@ -92,6 +92,22 @@ public class HBHunt {
     }
 
     /**
+     * Evaluates only access-gate behaviors (e.g., scheduled).
+     * These gate the entire hunt availability and should be checked before the "already found" check.
+     */
+    public BehaviorResult evaluateAccessGates(Player player, HeadLocation head) {
+        for (Behavior behavior : behaviors) {
+            if (behavior.isAccessGate()) {
+                BehaviorResult result = behavior.canPlayerClick(player, head, this);
+                if (!result.allowed()) {
+                    return result;
+                }
+            }
+        }
+        return BehaviorResult.allow();
+    }
+
+    /**
      * Evaluates all behaviors in chain.
      * If any behavior denies the click, the chain stops and the deny result is returned.
      */

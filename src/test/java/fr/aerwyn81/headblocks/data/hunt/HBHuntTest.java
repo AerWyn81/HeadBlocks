@@ -179,6 +179,55 @@ class HBHuntTest {
     }
 
     @Test
+    void evaluateAccessGates_onlyChecksAccessGateBehaviors() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        Behavior gate = mock(Behavior.class);
+        Behavior normal = mock(Behavior.class);
+        when(gate.isAccessGate()).thenReturn(true);
+        when(gate.canPlayerClick(player, headLocation, hunt)).thenReturn(BehaviorResult.allow());
+        when(normal.isAccessGate()).thenReturn(false);
+        hunt.setBehaviors(List.of(gate, normal));
+
+        BehaviorResult result = hunt.evaluateAccessGates(player, headLocation);
+
+        assertThat(result.allowed()).isTrue();
+        verify(gate).canPlayerClick(player, headLocation, hunt);
+        verify(normal, never()).canPlayerClick(any(), any(), any());
+    }
+
+    @Test
+    void evaluateAccessGates_gateDeny_returnsDenyWithoutCheckingOthers() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        Behavior gate = mock(Behavior.class);
+        Behavior normal = mock(Behavior.class);
+        when(gate.isAccessGate()).thenReturn(true);
+        when(gate.canPlayerClick(player, headLocation, hunt)).thenReturn(BehaviorResult.deny("hunt ended"));
+        hunt.setBehaviors(List.of(gate, normal));
+
+        BehaviorResult result = hunt.evaluateAccessGates(player, headLocation);
+
+        assertThat(result.allowed()).isFalse();
+        assertThat(result.denyMessage()).isEqualTo("hunt ended");
+        verify(normal, never()).canPlayerClick(any(), any(), any());
+    }
+
+    @Test
+    void evaluateAccessGates_noGates_returnsAllow() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        Behavior normal = mock(Behavior.class);
+        when(normal.isAccessGate()).thenReturn(false);
+        hunt.setBehaviors(List.of(normal));
+
+        BehaviorResult result = hunt.evaluateAccessGates(player, headLocation);
+
+        assertThat(result.allowed()).isTrue();
+        verify(normal, never()).canPlayerClick(any(), any(), any());
+    }
+
+    @Test
     void notifyHeadFound_callsOnHeadFoundOnAllBehaviors() {
         HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
 

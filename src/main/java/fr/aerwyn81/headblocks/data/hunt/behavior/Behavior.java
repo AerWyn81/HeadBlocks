@@ -17,6 +17,10 @@ public interface Behavior {
 
     String getDisplayInfo(Player player, HBHunt hunt);
 
+    default boolean isAccessGate() {
+        return false;
+    }
+
     static Behavior fromConfig(String type, ServiceRegistry registry, ConfigurationSection section) {
         return switch (type.toLowerCase()) {
             case "ordered" -> OrderedBehavior.fromConfig(registry, section);

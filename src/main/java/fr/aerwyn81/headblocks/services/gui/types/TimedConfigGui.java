@@ -137,7 +137,7 @@ public class TimedConfigGui {
             return;
         }
 
-        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, plateLoc, repeatable, null, null);
+        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, plateLoc, repeatable, null);
     }
 
     public boolean hasPendingPlatePlacement(UUID playerUuid) {
