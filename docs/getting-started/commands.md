@@ -278,3 +278,26 @@ Reset a player's progress in a specific hunt.
 |               |                    |
 |---------------|--------------------|
 | **Arguments** | `<name> <player>`  |
+
+### /hb hunt schedule
+
+Manage the scheduled behavior dates of a hunt.
+
+|               |                                              |
+|---------------|----------------------------------------------|
+| **Arguments** | `<name> <start\|end\|clear> (date) (time)`   |
+
+**Sub-actions:**
+
+- `start <MM/dd/yyyy> (HH:mm)` — Set the start date (time defaults to 00:00)
+- `end <MM/dd/yyyy> (HH:mm)` — Set the end date (time defaults to 00:00)
+- `clear (start\|end)` — Remove the schedule entirely, or only the start/end date
+
+**Examples:**
+
+```
+/hb hunt schedule christmas start 12/01/2025
+/hb hunt schedule christmas end 12/31/2025 23:59
+/hb hunt schedule christmas clear
+/hb hunt schedule christmas clear start
+```
