@@ -81,6 +81,7 @@ public class OthersEvent implements Listener {
         TimedRunManager.leaveRun(e.getPlayer().getUniqueId());
         registry.getGuiService().getBehaviorSelectionManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getTimedConfigManager().clearState(e.getPlayer().getUniqueId());
+        registry.getGuiService().getScheduledConfigManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getRewardsManager().cancelPendingRewardInput(e.getPlayer());
         registry.getGuiService().getHintManager().clearCache(e.getPlayer().getUniqueId());
 

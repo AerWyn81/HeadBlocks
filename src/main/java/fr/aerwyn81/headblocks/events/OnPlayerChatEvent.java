@@ -26,6 +26,12 @@ public class OnPlayerChatEvent implements Listener {
             player.getServer().getScheduler().runTask(HeadBlocks.getInstance(),
                     () -> registry.getGuiService().getRewardsManager().processPendingRewardInput(player, event.getMessage())
             );
+        } else if (registry.getGuiService().getScheduledConfigManager().hasPendingChatInput(player)) {
+            event.setCancelled(true);
+
+            player.getServer().getScheduler().runTask(HeadBlocks.getInstance(),
+                    () -> registry.getGuiService().getScheduledConfigManager().processPendingChatInput(player, event.getMessage())
+            );
         }
     }
 }

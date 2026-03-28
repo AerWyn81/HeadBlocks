@@ -16,7 +16,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -54,7 +54,7 @@ class ScheduledBehaviorTest {
     void canPlayerClick_beforeStart_returnsDeny() {
         when(languageService.message("Hunt.Behavior.ScheduledNotStarted")).thenReturn("Not started");
 
-        LocalDate futureStart = LocalDate.now().plusDays(10);
+        LocalDateTime futureStart = LocalDateTime.now().plusDays(10);
         ScheduledBehavior behavior = new ScheduledBehavior(registry, futureStart, null);
 
         BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
@@ -66,7 +66,7 @@ class ScheduledBehaviorTest {
     void canPlayerClick_afterEnd_returnsDeny() {
         when(languageService.message("Hunt.Behavior.ScheduledEnded")).thenReturn("Ended");
 
-        LocalDate pastEnd = LocalDate.now().minusDays(10);
+        LocalDateTime pastEnd = LocalDateTime.now().minusDays(10);
         ScheduledBehavior behavior = new ScheduledBehavior(registry, null, pastEnd);
 
         BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
@@ -76,8 +76,8 @@ class ScheduledBehaviorTest {
 
     @Test
     void canPlayerClick_withinRange_returnsAllow() {
-        LocalDate pastStart = LocalDate.now().minusDays(5);
-        LocalDate futureEnd = LocalDate.now().plusDays(5);
+        LocalDateTime pastStart = LocalDateTime.now().minusDays(5);
+        LocalDateTime futureEnd = LocalDateTime.now().plusDays(5);
         ScheduledBehavior behavior = new ScheduledBehavior(registry, pastStart, futureEnd);
 
         BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
@@ -87,7 +87,7 @@ class ScheduledBehaviorTest {
 
     @Test
     void canPlayerClick_startNull_noStartRestriction() {
-        LocalDate futureEnd = LocalDate.now().plusDays(5);
+        LocalDateTime futureEnd = LocalDateTime.now().plusDays(5);
         ScheduledBehavior behavior = new ScheduledBehavior(registry, null, futureEnd);
 
         BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
@@ -97,7 +97,7 @@ class ScheduledBehaviorTest {
 
     @Test
     void canPlayerClick_endNull_noEndRestriction() {
-        LocalDate pastStart = LocalDate.now().minusDays(5);
+        LocalDateTime pastStart = LocalDateTime.now().minusDays(5);
         ScheduledBehavior behavior = new ScheduledBehavior(registry, pastStart, null);
 
         BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
@@ -115,9 +115,8 @@ class ScheduledBehaviorTest {
     }
 
     @Test
-    void canPlayerClick_startEqualsToday_allowsBecauseIsBeforeIsExclusive() {
-        // isBefore(today) is false when start == today, so no denial
-        ScheduledBehavior behavior = new ScheduledBehavior(registry, LocalDate.now(), null);
+    void canPlayerClick_startInThePast_allows() {
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, LocalDateTime.now().minusSeconds(1), null);
 
         BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
 
@@ -125,9 +124,8 @@ class ScheduledBehaviorTest {
     }
 
     @Test
-    void canPlayerClick_endEqualsToday_allowsBecauseIsAfterIsExclusive() {
-        // isAfter(today) is false when end == today, so no denial
-        ScheduledBehavior behavior = new ScheduledBehavior(registry, null, LocalDate.now());
+    void canPlayerClick_endInTheFuture_allows() {
+        ScheduledBehavior behavior = new ScheduledBehavior(registry, null, LocalDateTime.now().plusSeconds(1));
 
         BehaviorResult result = behavior.canPlayerClick(player, headLocation, hunt);
 
@@ -136,13 +134,13 @@ class ScheduledBehaviorTest {
 
     @Test
     void getDisplayInfo_formatsCorrectly() {
-        LocalDate start = LocalDate.of(2025, 1, 15);
-        LocalDate end = LocalDate.of(2025, 12, 31);
+        LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 30);
+        LocalDateTime end = LocalDateTime.of(2025, 12, 31, 23, 59);
         ScheduledBehavior behavior = new ScheduledBehavior(registry, start, end);
 
         String info = behavior.getDisplayInfo(player, hunt);
 
-        assertThat(info).isEqualTo("2025-01-15 → 2025-12-31");
+        assertThat(info).isEqualTo("01/15/2025 10:30 → 12/31/2025 23:59");
     }
 
     @Test
@@ -179,40 +177,70 @@ class ScheduledBehaviorTest {
     }
 
     @Test
-    void fromConfig_validDates_parsesBoth() {
+    void fromConfig_validDatesWithTime_parsesBoth() {
         ConfigurationSection section = mock(ConfigurationSection.class);
-        when(section.getString("start")).thenReturn("2025-06-01");
-        when(section.getString("end")).thenReturn("2025-12-31");
+        ConfigurationSection startSub = mock(ConfigurationSection.class);
+        ConfigurationSection endSub = mock(ConfigurationSection.class);
+
+        when(section.getConfigurationSection("start")).thenReturn(startSub);
+        when(section.getConfigurationSection("end")).thenReturn(endSub);
+        when(startSub.getString("date")).thenReturn("06/01/2025");
+        when(startSub.getString("time")).thenReturn("09:00");
+        when(endSub.getString("date")).thenReturn("12/31/2025");
+        when(endSub.getString("time")).thenReturn("23:59");
 
         ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
-        assertThat(behavior.start()).isEqualTo(LocalDate.of(2025, 6, 1));
-        assertThat(behavior.end()).isEqualTo(LocalDate.of(2025, 12, 31));
+        assertThat(behavior.start()).isEqualTo(LocalDateTime.of(2025, 6, 1, 9, 0));
+        assertThat(behavior.end()).isEqualTo(LocalDateTime.of(2025, 12, 31, 23, 59));
     }
 
     @Test
-    void fromConfig_missingStartKey_startIsNull() {
+    void fromConfig_validDateWithoutTime_defaultsMidnight() {
         ConfigurationSection section = mock(ConfigurationSection.class);
-        when(section.getString("start")).thenReturn(null);
-        when(section.getString("end")).thenReturn("2025-12-31");
+        ConfigurationSection startSub = mock(ConfigurationSection.class);
+
+        when(section.getConfigurationSection("start")).thenReturn(startSub);
+        when(section.getConfigurationSection("end")).thenReturn(null);
+        when(startSub.getString("date")).thenReturn("06/01/2025");
+        when(startSub.getString("time")).thenReturn(null);
+
+        ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
+
+        assertThat(behavior.start()).isEqualTo(LocalDateTime.of(2025, 6, 1, 0, 0));
+        assertThat(behavior.end()).isNull();
+    }
+
+    @Test
+    void fromConfig_missingStartSection_startIsNull() {
+        ConfigurationSection section = mock(ConfigurationSection.class);
+        ConfigurationSection endSub = mock(ConfigurationSection.class);
+
+        when(section.getConfigurationSection("start")).thenReturn(null);
+        when(section.getConfigurationSection("end")).thenReturn(endSub);
+        when(endSub.getString("date")).thenReturn("12/31/2025");
+        when(endSub.getString("time")).thenReturn(null);
 
         ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
         assertThat(behavior.start()).isNull();
-        assertThat(behavior.end()).isEqualTo(LocalDate.of(2025, 12, 31));
+        assertThat(behavior.end()).isEqualTo(LocalDateTime.of(2025, 12, 31, 0, 0));
     }
 
     @Test
     void fromConfig_invalidStartDate_logsErrorAndStartIsNull() {
         try (MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class)) {
             ConfigurationSection section = mock(ConfigurationSection.class);
-            when(section.getString("start")).thenReturn("not-a-date");
-            when(section.getString("end")).thenReturn(null);
+            ConfigurationSection startSub = mock(ConfigurationSection.class);
+
+            when(section.getConfigurationSection("start")).thenReturn(startSub);
+            when(section.getConfigurationSection("end")).thenReturn(null);
+            when(startSub.getString("date")).thenReturn("not-a-date");
 
             ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
             assertThat(behavior.start()).isNull();
-            logUtil.verify(() -> LogUtil.error(anyString(), eq("not-a-date"), anyString()));
+            logUtil.verify(() -> LogUtil.error(anyString(), eq("start"), eq("not-a-date")));
         }
     }
 
@@ -220,13 +248,16 @@ class ScheduledBehaviorTest {
     void fromConfig_invalidEndDate_logsErrorAndEndIsNull() {
         try (MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class)) {
             ConfigurationSection section = mock(ConfigurationSection.class);
-            when(section.getString("start")).thenReturn(null);
-            when(section.getString("end")).thenReturn("bad-end");
+            ConfigurationSection endSub = mock(ConfigurationSection.class);
+
+            when(section.getConfigurationSection("start")).thenReturn(null);
+            when(section.getConfigurationSection("end")).thenReturn(endSub);
+            when(endSub.getString("date")).thenReturn("bad-end");
 
             ScheduledBehavior behavior = ScheduledBehavior.fromConfig(registry, section);
 
             assertThat(behavior.end()).isNull();
-            logUtil.verify(() -> LogUtil.error(anyString(), eq("bad-end"), anyString()));
+            logUtil.verify(() -> LogUtil.error(anyString(), eq("end"), eq("bad-end")));
         }
     }
 }

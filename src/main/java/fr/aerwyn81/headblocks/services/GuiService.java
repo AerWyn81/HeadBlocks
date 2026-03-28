@@ -28,6 +28,7 @@ public class GuiService {
     private final HintGui hintManager;
     private final BehaviorSelectionGui behaviorSelectionManager;
     private final TimedConfigGui timedConfigManager;
+    private final ScheduledConfigGui scheduledConfigManager;
 
     // --- Constructor ---
 
@@ -45,6 +46,7 @@ public class GuiService {
         this.hintManager = new HintGui(registry);
         this.behaviorSelectionManager = new BehaviorSelectionGui(registry);
         this.timedConfigManager = new TimedConfigGui(registry);
+        this.scheduledConfigManager = new ScheduledConfigGui(registry);
     }
 
     // --- Instance methods ---
@@ -74,6 +76,10 @@ public class GuiService {
 
     public TimedConfigGui getTimedConfigManager() {
         return timedConfigManager;
+    }
+
+    public ScheduledConfigGui getScheduledConfigManager() {
+        return scheduledConfigManager;
     }
 
     public void openHuntSelectionOrDirect(Player player, BiConsumer<Player, HBHunt> callback) {

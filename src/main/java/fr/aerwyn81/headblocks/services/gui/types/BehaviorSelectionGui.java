@@ -13,6 +13,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
@@ -34,7 +35,7 @@ public class BehaviorSelectionGui {
         buildAndOpenGui(player);
     }
 
-    private void buildAndOpenGui(Player player) {
+    void buildAndOpenGui(Player player) {
         var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
                 registry.getLanguageService().message("Gui.BehaviorSelectionTitle"), false, 2);
 
@@ -113,10 +114,15 @@ public class BehaviorSelectionGui {
             return;
         }
 
-        createHunt(player, null, true);
+        if (selected != null && selected.contains("scheduled")) {
+            registry.getGuiService().getScheduledConfigManager().open(player, null, true);
+            return;
+        }
+
+        createHunt(player, null, true, null, null);
     }
 
-    public void createHunt(Player player, Location plateLocation, boolean repeatable) {
+    public void createHunt(Player player, Location plateLocation, boolean repeatable, LocalDateTime start, LocalDateTime end) {
         String huntName = pendingHuntNames.remove(player.getUniqueId());
         Set<String> selected = selectedBehaviors.remove(player.getUniqueId());
 
@@ -136,7 +142,7 @@ public class BehaviorSelectionGui {
             for (String behaviorId : selected) {
                 switch (behaviorId) {
                     case "ordered" -> behaviors.add(new OrderedBehavior(registry));
-                    case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, null, null));
+                    case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, start, end));
                     case "timed" -> behaviors.add(new TimedBehavior(registry, plateLocation, repeatable));
                 }
             }
@@ -178,10 +184,6 @@ public class BehaviorSelectionGui {
         }
     }
 
-    public String getPendingHuntName(UUID playerUuid) {
-        return pendingHuntNames.get(playerUuid);
-    }
-
     public Set<String> getSelectedBehaviors(UUID playerUuid) {
         return selectedBehaviors.get(playerUuid);
     }
@@ -189,9 +191,5 @@ public class BehaviorSelectionGui {
     public void clearState(UUID playerUuid) {
         pendingHuntNames.remove(playerUuid);
         selectedBehaviors.remove(playerUuid);
-    }
-
-    public boolean hasPendingCreation(UUID playerUuid) {
-        return pendingHuntNames.containsKey(playerUuid);
     }
 }

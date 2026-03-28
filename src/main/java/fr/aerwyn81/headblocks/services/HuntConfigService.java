@@ -16,6 +16,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class HuntConfigService {
@@ -357,10 +358,6 @@ public class HuntConfigService {
         });
     }
 
-    public void invalidateYamlCache(String huntId) {
-        yamlCache.remove(huntId);
-    }
-
     public void invalidateAllYamlCaches() {
         yamlCache.clear();
     }
@@ -417,11 +414,15 @@ public class HuntConfigService {
             yaml.createSection(key);
 
             if (behavior instanceof fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior sb) {
+                DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+                DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
                 if (sb.start() != null) {
-                    yaml.set(key + ".start", sb.start().toString());
+                    yaml.set(key + ".start.date", sb.start().format(dateFmt));
+                    yaml.set(key + ".start.time", sb.start().format(timeFmt));
                 }
                 if (sb.end() != null) {
-                    yaml.set(key + ".end", sb.end().toString());
+                    yaml.set(key + ".end.date", sb.end().format(dateFmt));
+                    yaml.set(key + ".end.time", sb.end().format(timeFmt));
                 }
             }
 

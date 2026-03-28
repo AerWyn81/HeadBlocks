@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
+import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -96,11 +97,30 @@ public class TimedConfigGui {
                 }));
 
         // Slot 15: Validate
-        menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
-                .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
-                .setLore(registry.getLanguageService().messageList("Gui.ValidateCreateLore"))
-                .toItemStack(), true)
-                .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
+        if (plateLoc != null) {
+            menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
+                    .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
+                    .setLore(registry.getLanguageService().messageList("Gui.ValidateCreateLore"))
+                    .toItemStack(), true)
+                    .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
+        } else {
+            menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.BARRIER)
+                    .setName(registry.getLanguageService().message("Gui.ValidateBlocked"))
+                    .setLore(registry.getLanguageService().messageList("Gui.TimedConfigValidateBlockedLore"))
+                    .toItemStack()));
+        }
+
+        menu.setPaginationButtonBuilder((type, inv) -> {
+            if (type == HBPaginationButtonType.CLOSE_BUTTON) {
+                return new ItemGUI(registry.getConfigService().guiBackIcon()
+                        .setName(registry.getLanguageService().message("Gui.Back"))
+                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
+                        .toItemStack())
+                        .addOnClickEvent(event -> registry.getGuiService().getBehaviorSelectionManager()
+                                .buildAndOpenGui((Player) event.getWhoClicked()));
+            }
+            return null;
+        });
 
         player.openInventory(menu.getInventory());
     }
@@ -111,7 +131,13 @@ public class TimedConfigGui {
         boolean repeatable = repeatableStates.getOrDefault(uuid, true);
         repeatableStates.remove(uuid);
 
-        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, plateLoc, repeatable);
+        var selected = registry.getGuiService().getBehaviorSelectionManager().getSelectedBehaviors(uuid);
+        if (selected != null && selected.contains("scheduled")) {
+            registry.getGuiService().getScheduledConfigManager().open(player, plateLoc, repeatable);
+            return;
+        }
+
+        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, plateLoc, repeatable, null, null);
     }
 
     public boolean hasPendingPlatePlacement(UUID playerUuid) {

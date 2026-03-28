@@ -127,6 +127,10 @@ Messages:
   HuntTopHeader: "%prefix% &7-----[ &6Top &8- &e%displayName% &7]-----"
   HuntPlayerReset: "%prefix% &aPlayer &e%player% &aprogress in hunt &e%hunt% &ahas been reset."
   HuntResetRequireHunt: "%prefix% &cMultiple hunts detected. Use &7/hb hunt reset <name> <player> &cto reset a specific hunt."
+  HuntScheduleUpdated: "%prefix% &aSchedule updated for hunt &e%hunt%&a."
+  HuntScheduleCleared: "%prefix% &aSchedule cleared for hunt &e%hunt%&a."
+  HuntScheduleNoScheduled: "%prefix% &cHunt &e%hunt% &cdoes not have a scheduled behavior."
+  HuntScheduleInvalidDate: "%prefix% &cInvalid date/time format. Use: &eMM/dd/yyyy &7[&eHH:mm&7]"
   HuntHeadInactive: "%prefix% &cThis head is part of an inactive hunt."
   TimedNotStarted: "%prefix% &cYou must step on the start plate to begin the timed run."
   TimedStarted: "%prefix% &aTimer started for hunt &e%hunt%&a! Find all the heads as fast as you can!"
@@ -194,8 +198,8 @@ Hunt:
   Behavior:
     Ordered: "&6Ordered"
     Timed: "&bTimed"
-    ScheduledNotStarted: "%prefix% &cThis hunt has not started yet."
-    ScheduledEnded: "%prefix% &cThis hunt has ended."
+    ScheduledNotStarted: "%prefix% &cThe hunt &e%name% &chas not started yet. &7(starts %when%)"
+    ScheduledEnded: "%prefix% &cThe hunt &e%name% &chas ended. &7(ended %when%)"
 
 Other:
   NameNotSet: "&cName not set"
@@ -315,7 +319,7 @@ Gui:
     - "&7when a player finds this head"
     - ""
     - "&a&lCLICK&8: &7Select this type"
-  BehaviorSelectionTitle: "&8HeadBlocks &7- &a&lBehaviors"
+  BehaviorSelectionTitle: "&8HeadBlocks &7- &2Behaviors"
   BehaviorEnabled: "&aSelected"
   BehaviorDisabled: "&7Not selected"
   ValidateCreate: "&a&lValidate"
@@ -323,6 +327,7 @@ Gui:
     - ""
     - "&7Click to create the hunt"
     - "&7with the selected behaviors"
+  ValidateBlocked: "&c&lCannot validate"
   BehaviorOrderedName: "&6Ordered"
   BehaviorOrderedLore:
     - ""
@@ -339,7 +344,11 @@ Gui:
     - "&7Players race against the clock"
     - "&7to find all heads"
   TimedActionBar: "&e&l%time% &8| &7%hunt% &8| &e%found%&7/&e%total%"
-  TimedConfigTitle: "&8HeadBlocks &7- &e&lTimed Config"
+  TimedConfigTitle: "&8HeadBlocks &7- &eTimed Config"
+  TimedConfigValidateBlockedLore:
+    - ""
+    - "&cThe start plate must be"
+    - "&cdefined before validating"
   TimedConfigPlate: "&e&lStart Plate"
   TimedConfigPlateLore:
     - ""
@@ -358,6 +367,28 @@ Gui:
     - "&7the hunt after completion"
     - ""
     - "&7Status: %status%"
+  ScheduledConfigTitle: "&8HeadBlocks &7- &bScheduled Config"
+  ScheduledConfigValidateBlockedLore:
+    - ""
+    - "&cAt least a start or end date"
+    - "&cmust be defined before validating"
+  ScheduledConfigStart: "&b&lStart"
+  ScheduledConfigStartLore:
+    - ""
+    - "&7Current value: %value%"
+    - ""
+    - "&a&lCLICK&8: &7Set start date/time"
+  ScheduledConfigEnd: "&b&lEnd"
+  ScheduledConfigEndLore:
+    - ""
+    - "&7Current value: %value%"
+    - ""
+    - "&a&lCLICK&8: &7Set end date/time"
+  ScheduledConfigNotDefined: "&cNot defined"
+  ScheduledConfigInputDate: "&7Enter date/time in chat &7(&eformat: MM/dd/yyyy HH:mm &7or &eMM/dd/yyyy&7, type &ccancel &7to abort)"
+  ScheduledConfigInputCancelled: "&aInput cancelled. &7Reopening configuration..."
+  ScheduledConfigInputInvalid: "&cInvalid format. Expected: &eMM/dd/yyyy HH:mm &cor &eMM/dd/yyyy&c."
+  ScheduledConfigInputSet: "&aDate set! &7Reopening configuration..."
   HintName: "&7Set up &8- &b&lHint"
   HintLore:
     - ""
