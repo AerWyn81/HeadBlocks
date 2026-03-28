@@ -112,7 +112,9 @@ public class LanguageService {
         File file = new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml");
         if (!file.exists()) {
             try {
-                file.createNewFile();
+                if (!file.createNewFile()) {
+                    LogUtil.error("Cannot create translation file: {0}", file.getAbsolutePath());
+                }
             } catch (IOException e) {
                 LogUtil.error("Error loading translation file: {0}", e.getMessage());
             }

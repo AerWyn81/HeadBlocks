@@ -219,9 +219,9 @@ public class IridiumColorAPI {
      */
     private static ChatColor[] createGradient(Color start, Color end, int step) {
         ChatColor[] colors = new ChatColor[step];
-        int stepR = Math.abs(start.getRed() - end.getRed()) / (step - 1);
-        int stepG = Math.abs(start.getGreen() - end.getGreen()) / (step - 1);
-        int stepB = Math.abs(start.getBlue() - end.getBlue()) / (step - 1);
+        int stepR = (int) Math.round(Math.abs(start.getRed() - end.getRed()) / (double) (step - 1));
+        int stepG = (int) Math.round(Math.abs(start.getGreen() - end.getGreen()) / (double) (step - 1));
+        int stepB = (int) Math.round(Math.abs(start.getBlue() - end.getBlue()) / (double) (step - 1));
         int[] direction = new int[]{
                 start.getRed() < end.getRed() ? +1 : -1,
                 start.getGreen() < end.getGreen() ? +1 : -1,

@@ -163,6 +163,7 @@ class HBHuntConfigServiceTest {
         List<HBHunt> hunts = huntConfigService.loadHunts();
 
         // Should only contain default.yml, not notes.txt
+        assertThat(hunts).isNotEmpty();
         assertThat(hunts).extracting(HBHunt::getId).doesNotContain("notes");
     }
 
@@ -177,6 +178,7 @@ class HBHuntConfigServiceTest {
         List<HBHunt> hunts = huntConfigService.loadHunts();
 
         // noid.yml should be skipped; default.yml should still load
+        assertThat(hunts).isNotEmpty();
         assertThat(hunts).extracting(HBHunt::getId).doesNotContain((String) null);
         assertThat(hunts).extracting(HBHunt::getId).contains("default");
     }
