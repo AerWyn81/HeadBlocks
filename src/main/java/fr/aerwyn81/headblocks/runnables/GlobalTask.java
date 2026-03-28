@@ -16,14 +16,13 @@ import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class GlobalTask extends BukkitRunnable {
 
     private static final int CHUNK_SIZE = 16;
     private static int VIEW_RADIUS_CHUNKS = 1;
 
-    private static final Random random = new Random();
     private static final int HUNT_SYNC_INTERVAL = 100; // ~5 seconds at 20 TPS
     private boolean particlesDisabled = false;
     private int tickCounter = 0;
@@ -162,14 +161,14 @@ public class GlobalTask extends BukkitRunnable {
 
                             if (hintConfig != null && hintConfig.isHintsEnabled()) {
                                 var hintFrequency = Math.max(1, hintConfig.getHintFrequency());
-                                var shouldTriggerHintSound = random.nextInt(hintFrequency) == 0;
-                                var shouldTriggerHintActionBar = random.nextInt(hintFrequency) == 0;
+                                var shouldTriggerHintSound = ThreadLocalRandom.current().nextInt(hintFrequency) == 0;
+                                var shouldTriggerHintActionBar = ThreadLocalRandom.current().nextInt(hintFrequency) == 0;
 
                                 if (headLocation.isHintSoundEnabled() && shouldTriggerHintSound) {
                                     registry.getConfigService().hintSoundType()
                                             .record()
                                             .withVolume(registry.getConfigService().hintSoundVolume())
-                                            .withPitch(random.nextInt(3))
+                                            .withPitch(ThreadLocalRandom.current().nextInt(3))
                                             .soundPlayer()
                                             .forPlayers(player)
                                             .atLocation(location)

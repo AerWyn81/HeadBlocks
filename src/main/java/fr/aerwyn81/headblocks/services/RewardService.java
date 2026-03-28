@@ -9,10 +9,11 @@ import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import org.bukkit.entity.Player;
 
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class RewardService {
+
     private final ConfigService configService;
     private final PlaceholdersService placeholdersService;
     private final SchedulerAdapter scheduler;
@@ -48,7 +49,7 @@ public class RewardService {
                     List<String> tieredCommands = tieredReward.commands();
                     if (!tieredCommands.isEmpty()) {
                         if (tieredReward.isRandom()) {
-                            String randomCommand = tieredCommands.get(new Random().nextInt(tieredCommands.size()));
+                            String randomCommand = tieredCommands.get(ThreadLocalRandom.current().nextInt(tieredCommands.size()));
                             scheduler.runTaskLater(() -> {
                                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
                                 if (!parsedCommand.isBlank()) {
@@ -96,7 +97,7 @@ public class RewardService {
         }
 
         if (isRandomCommand) {
-            String randomCommand = headClickCommands.get(new Random().nextInt(headClickCommands.size()));
+            String randomCommand = headClickCommands.get(ThreadLocalRandom.current().nextInt(headClickCommands.size()));
             scheduler.runTaskLater(() -> {
                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
                 if (!parsedCommand.isBlank()) {
@@ -157,7 +158,7 @@ public class RewardService {
                     List<String> tieredCommands = tieredReward.commands();
                     if (!tieredCommands.isEmpty()) {
                         if (tieredReward.isRandom()) {
-                            String randomCommand = tieredCommands.get(new Random().nextInt(tieredCommands.size()));
+                            String randomCommand = tieredCommands.get(ThreadLocalRandom.current().nextInt(tieredCommands.size()));
                             scheduler.runTaskLater(() -> {
                                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand, huntId);
                                 if (!parsedCommand.isBlank()) {
@@ -205,7 +206,7 @@ public class RewardService {
         }
 
         if (isRandomCommand) {
-            String randomCommand = headClickCommands.get(new Random().nextInt(headClickCommands.size()));
+            String randomCommand = headClickCommands.get(ThreadLocalRandom.current().nextInt(headClickCommands.size()));
             scheduler.runTaskLater(() -> {
                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand, huntId);
                 if (!parsedCommand.isBlank()) {
