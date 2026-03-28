@@ -1,4 +1,6 @@
-# Summary
+# Table of contents
+
+* [README](README.md)
 
 ## Getting Started
 
