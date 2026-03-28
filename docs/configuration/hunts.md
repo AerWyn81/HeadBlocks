@@ -27,10 +27,10 @@ icon: PLAYER_HEAD
 behaviors:
   scheduled:
     start:
-      date: "01/12/2026"
+      date: "12/01/2026"
       time: "00:00"
     end:
-      date: "31/12/2026"
+      date: "12/31/2026"
       time: "23:59"
 
 config:
@@ -153,14 +153,14 @@ The hunt is only active within a date/time range.
 behaviors:
   scheduled:
     start:
-      date: "01/12/2026"
+      date: "12/01/2026"
       time: "00:00"    # optional, defaults to 00:00
     end:
-      date: "31/12/2026"
+      date: "12/31/2026"
       time: "23:59"    # optional, defaults to 00:00
 ```
 
-- **date**: required, format `dd/MM/yyyy`
+- **date**: required, format `MM/dd/yyyy`
 - **time**: optional, format `HH:mm` — if omitted, defaults to `00:00`
 - Both `start` and `end` are optional — omit one to leave that bound open
 
