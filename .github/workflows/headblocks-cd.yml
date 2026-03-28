@@ -129,7 +129,7 @@ jobs:
           fi
 
       - name: Publish to Modrinth
-        uses: Kir-Antipov/mc-publish@v3.3
+        uses: Kir-Antipov/mc-publish@81d6d71ffaab1fb4f8d8a11cf574eac578e3e9d1 # v3.3
         with:
           modrinth-id: bpD0tpKu
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
