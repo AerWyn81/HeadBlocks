@@ -26,8 +26,12 @@ icon: PLAYER_HEAD
 
 behaviors:
   scheduled:
-    start: "2026-12-01T00:00"
-    end: "2026-12-31T23:59"
+    start:
+      date: "01/12/2026"
+      time: "00:00"
+    end:
+      date: "31/12/2026"
+      time: "23:59"
 
 config:
   headClick:
@@ -143,14 +147,22 @@ behaviors:
 
 ### Scheduled
 
-The hunt is only active within a date range.
+The hunt is only active within a date/time range.
 
 ```yaml
 behaviors:
   scheduled:
-    start: "2026-12-01T00:00"
-    end: "2026-12-31T23:59"
+    start:
+      date: "01/12/2026"
+      time: "00:00"    # optional, defaults to 00:00
+    end:
+      date: "31/12/2026"
+      time: "23:59"    # optional, defaults to 00:00
 ```
+
+- **date**: required, format `dd/MM/yyyy`
+- **time**: optional, format `HH:mm` — if omitted, defaults to `00:00`
+- Both `start` and `end` are optional — omit one to leave that bound open
 
 ### Timed
 
