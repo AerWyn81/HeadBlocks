@@ -37,6 +37,15 @@ Display leaderboard of heads found.
 | **Arguments**  | `(limit)`                 |
 | **Permission** | `headblocks.commands.top` |
 
+### /hb leave
+
+Leave the current timed run.
+
+|                |                  |
+|----------------|------------------|
+| **Permission** | `headblocks.use` |
+| **Sender**     | Player           |
+
 ## Admin Commands
 
 All admin commands require `headblocks.admin`.
@@ -85,21 +94,21 @@ Reset all player progress.
 
 ### /hb list
 
-List all spawned heads with remove/teleport options.
-
-|               |          |
-|---------------|----------|
-| **Alias**     | `l`      |
-| **Arguments** | `(page)` |
-
-### /hb stats
-
-Show heads found by player.
+List all spawned heads (grouped by hunt, filterable).
 
 |               |                   |
 |---------------|-------------------|
-| **Alias**     | `s`               |
-| **Arguments** | `(player) (page)` |
+| **Alias**     | `l`               |
+| **Arguments** | `(huntId) (page)` |
+
+### /hb stats
+
+Show heads found by player (grouped by hunt, filterable).
+
+|               |                            |
+|---------------|----------------------------|
+| **Alias**     | `s`                        |
+| **Arguments** | `(player) (huntId) (page)` |
 
 ### /hb reload
 
@@ -151,3 +160,144 @@ Show current plugin version.
 |           |     |
 |-----------|-----|
 | **Alias** | `v` |
+
+## Hunt Commands
+
+All hunt commands require `headblocks.admin`.
+
+### /hb hunt create
+
+Create a new hunt (alphanumeric + hyphens only).
+
+|               |          |
+|---------------|----------|
+| **Arguments** | `<name>` |
+
+### /hb hunt delete
+
+Delete a hunt. Default: removes heads from world and resets progress. With `--keepHeads`: moves heads and progress to fallback hunt.
+
+|               |                                              |
+|---------------|----------------------------------------------|
+| **Arguments** | `<name> --confirm [--keepHeads] [--fallback <hunt>]` |
+
+{% hint style="warning" %}
+The default hunt cannot be deleted.
+{% endhint %}
+
+### /hb hunt enable
+
+Set a hunt state to ACTIVE.
+
+|               |          |
+|---------------|----------|
+| **Arguments** | `<name>` |
+
+### /hb hunt disable
+
+Set a hunt state to INACTIVE.
+
+|               |          |
+|---------------|----------|
+| **Arguments** | `<name>` |
+
+### /hb hunt list
+
+List all hunts with state and head count.
+
+### /hb hunt info
+
+Show detailed hunt info (state, priority, behaviors, heads, players).
+
+|               |          |
+|---------------|----------|
+| **Arguments** | `<name>` |
+
+### /hb hunt select
+
+Set the active hunt for head placement. No argument resets to "default".
+
+|               |          |
+|---------------|----------|
+| **Arguments** | `(name)` |
+| **Sender**    | Player   |
+
+### /hb hunt active
+
+Display your currently selected hunt.
+
+|            |        |
+|------------|--------|
+| **Sender** | Player |
+
+### /hb hunt set
+
+Reassign the targeted head to the specified hunt.
+
+|               |          |
+|---------------|----------|
+| **Arguments** | `<name>` |
+| **Sender**    | Player   |
+
+### /hb hunt assign
+
+Mass-assign heads to a hunt.
+
+|               |                        |
+|---------------|------------------------|
+| **Arguments** | `<name> <all\|radius> (N)` |
+
+### /hb hunt transfer
+
+Transfer a specific head (by UUID) to a different hunt.
+
+|               |                |
+|---------------|----------------|
+| **Arguments** | `<uuid> <name>` |
+
+### /hb hunt progress
+
+Show progression for a specific hunt.
+
+|               |                    |
+|---------------|--------------------|
+| **Arguments** | `<name> (player)`  |
+
+### /hb hunt top
+
+Show leaderboard for a specific hunt.
+
+|               |                   |
+|---------------|-------------------|
+| **Arguments** | `<name> (limit)`  |
+
+### /hb hunt reset
+
+Reset a player's progress in a specific hunt.
+
+|               |                    |
+|---------------|--------------------|
+| **Arguments** | `<name> <player>`  |
+
+### /hb hunt schedule
+
+Manage the scheduled behavior dates of a hunt.
+
+|               |                                              |
+|---------------|----------------------------------------------|
+| **Arguments** | `<name> <start\|end\|clear> (date) (time)`   |
+
+**Sub-actions:**
+
+- `start <MM/dd/yyyy> (HH:mm)` — Set the start date (time defaults to 00:00)
+- `end <MM/dd/yyyy> (HH:mm)` — Set the end date (time defaults to 00:00)
+- `clear (start\|end)` — Remove the schedule entirely, or only the start/end date
+
+**Examples:**
+
+```
+/hb hunt schedule christmas start 12/01/2025
+/hb hunt schedule christmas end 12/31/2025 23:59
+/hb hunt schedule christmas clear
+/hb hunt schedule christmas clear start
+```

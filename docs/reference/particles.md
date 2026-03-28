@@ -7,7 +7,7 @@ HeadBlocks supports the following particles for Minecraft 1.21 and 1.20.
 ## Minecraft 1.21
 
 ```
-ANGRY_VILLAGER      ASH                 BLOCK
+ANGRY_VILLAGER      ASH                 BLOCK 
 BLOCK_MARKER        BUBBLE              BUBBLE_COLUMN_UP
 BUBBLE_POP          CAMPFIRE_COSY_SMOKE CAMPFIRE_SIGNAL_SMOKE
 CHERRY_LEAVES       CLOUD               COMPOSTER
