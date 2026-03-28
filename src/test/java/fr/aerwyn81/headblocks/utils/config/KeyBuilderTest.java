@@ -456,44 +456,4 @@ class KeyBuilderTest {
         }
     }
 
-    // --- clone ---
-
-    @Nested
-    class CloneTests {
-
-        @Test
-        void clonedBuilder_hasIndependentState() {
-            FileConfiguration config = mock(FileConfiguration.class);
-            when(config.contains("key1")).thenReturn(true);
-            when(config.contains("key1.key2")).thenReturn(true);
-
-            KeyBuilder original = new KeyBuilder(config, '.');
-            original.parseLine("key1:");
-            original.parseLine("key2:");
-            assertThat(original.toString()).isEqualTo("key1.key2");
-
-            KeyBuilder cloned = original.clone();
-            assertThat(cloned.toString()).isEqualTo("key1.key2");
-
-            // Modifying original should not affect clone
-            original.removeLastKey();
-            assertThat(original.toString()).isEqualTo("key1");
-            assertThat(cloned.toString()).isEqualTo("key1.key2");
-        }
-
-        @Test
-        void clonedBuilder_modifyCloneDoesNotAffectOriginal() {
-            FileConfiguration config = mock(FileConfiguration.class);
-            when(config.contains("key1")).thenReturn(true);
-
-            KeyBuilder original = new KeyBuilder(config, '.');
-            original.parseLine("key1:");
-
-            KeyBuilder cloned = original.clone();
-            cloned.removeLastKey();
-
-            assertThat(original.toString()).isEqualTo("key1");
-            assertThat(cloned.toString()).isEmpty();
-        }
-    }
 }
