@@ -13,6 +13,55 @@ plugins {
 
 version = "3.0.0"
 
+val coverageExclusions = listOf(
+    // Third-party shaded libraries
+    "**/utils/message/color/IridiumColorAPI.java",
+    "**/utils/message/DefaultFont.java",
+
+    // NMS-dependent (NBTAPI requires Minecraft server internals)
+    "**/utils/bukkit/HeadAdapterNbtApi.java",
+    "**/databases/types/MySQL.java",
+
+    // Plugin main class & Bukkit infrastructure
+    "**/HeadBlocks.java",
+    "**/utils/bukkit/BukkitSchedulerAdapter.java",
+    "**/utils/bukkit/HeadBlocksPluginProvider.java",
+    "**/utils/bukkit/BukkitCommandDispatcher.java",
+    "**/utils/bukkit/FireworkUtils.java",
+    "**/utils/bukkit/ParticlesUtils.java",
+    "**/utils/bukkit/ItemBuilder.java",
+
+    // GUI (Bukkit inventory API)
+    "**/services/gui/**",
+    "**/services/GuiService.java",
+
+    // Holograms (external plugin dependency)
+    "**/services/HologramService.java",
+    "**/holograms/types/**",
+    "**/holograms/InternalHologram.java",
+
+    // Hooks (external plugin dependencies)
+    "**/hooks/HeadHidingPacketListener.java",
+    "**/hooks/PacketEventsHook.java",
+    "**/hooks/PacketEventsHookImpl.java",
+    "**/hooks/HeadDatabaseHook.java",
+
+    // Events (Bukkit-bound, not unit-testable)
+    "**/events/OnHeadDatabaseLoaded.java",
+    "**/events/OnPlayerClickInventoryEvent.java",
+    "**/events/OnPlayerChatEvent.java",
+    "**/events/OthersEvent.java",
+
+    // Runnables (Bukkit scheduler-bound)
+    "**/runnables/GlobalTask.java",
+    "**/runnables/TimedRunTask.java",
+    "**/runnables/CompletableBukkitFuture.java",
+
+    // Misc untestable
+    "**/utils/internal/DebugLog.java",
+    "**/commands/list/Debug.java"
+)
+
 repositories {
     mavenCentral()
 
@@ -75,54 +124,9 @@ tasks {
         classDirectories.setFrom(
             files(classDirectories.files.map {
                 fileTree(it) {
-                    exclude(
-                        // Third-party shaded libraries
-                        "**/utils/message/color/IridiumColorAPI*",
-                        "**/utils/message/color/patterns/**",
-                        "**/utils/message/DefaultFont*",
-
-                        // NMS-dependent (NBTAPI requires Minecraft server internals)
-                        "**/utils/bukkit/HeadAdapterNbtApi*",
-                        "**/databases/types/MySQL*",
-
-                        // Plugin main class & Bukkit infrastructure
-                        "**/HeadBlocks.class",
-                        "**/utils/bukkit/BukkitSchedulerAdapter*",
-                        "**/utils/bukkit/HeadBlocksPluginProvider*",
-                        "**/utils/bukkit/BukkitCommandDispatcher*",
-                        "**/utils/bukkit/FireworkUtils*",
-                        "**/utils/bukkit/ParticlesUtils*",
-                        "**/utils/bukkit/ItemBuilder*",
-
-                        // GUI (Bukkit inventory API)
-                        "**/services/gui/**",
-                        "**/services/GuiService*",
-                        "**/utils/gui/**",
-
-                        // Holograms (external plugin dependency)
-                        "**/services/HologramService*",
-                        "**/holograms/types/**",
-                        "**/holograms/InternalHologram*",
-
-                        // Hooks (external plugin dependencies)
-                        "**/hooks/HeadHidingPacketListener*",
-                        "**/hooks/PacketEventsHook*",
-                        "**/hooks/HeadDatabaseHook*",
-
-                        // Events (Bukkit-bound, not unit-testable)
-                        "**/events/OnHeadDatabaseLoaded*",
-                        "**/events/OnPlayerClickInventoryEvent*",
-                        "**/events/OnPlayerChatEvent*",
-                        "**/events/OthersEvent*",
-
-                        // Runnables & misc
-                        "**/runnables/**",
-                        "**/utils/chat/**",
-                        "**/utils/config/ConfigUpdater*",
-                        "**/utils/internal/DebugLog*",
-                        "**/commands/list/Debug*",
-                        "**/api/events/**"
-                    )
+                    exclude(coverageExclusions.map { pattern ->
+                        pattern.replace(".java", "*")
+                    })
                 }
             })
         )
@@ -185,6 +189,7 @@ sonar {
     properties {
         property("sonar.projectKey", "AerWyn81_HeadBlocks")
         property("sonar.organization", "aerwyn81")
+        property("sonar.coverage.exclusions", coverageExclusions.joinToString(","))
     }
 }
 
