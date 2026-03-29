@@ -434,4 +434,232 @@ class SQLiteIntegrationTest {
 
         assertThat(db.checkVersion()).isEqualTo(5);
     }
+
+    // ---- Additional AbstractDatabase coverage ----
+
+    @Test
+    void removeHead_withDelete_true_removes_head_completely() throws InternalException {
+        UUID head = UUID.randomUUID();
+        db.createNewHead(head, "texture", "s1");
+
+        db.removeHead(head, true);
+
+        assertThat(db.isHeadExist(head)).isFalse();
+    }
+
+    @Test
+    void removeHead_withDelete_false_marks_head_as_not_existing() throws InternalException {
+        UUID head = UUID.randomUUID();
+        db.createNewHead(head, "texture", "s1");
+
+        db.removeHead(head, false);
+
+        // Head record still exists but flagged
+        assertThat(db.getHeads()).doesNotContain(head);
+    }
+
+    @Test
+    void getHuntById_returns_hunt_data() throws InternalException {
+        db.createHunt("myHunt", "My Hunt", "ACTIVE");
+
+        String[] hunt = db.getHuntById("myHunt");
+
+        assertThat(hunt).isNotNull();
+        assertThat(hunt[0]).isEqualTo("myHunt");
+        assertThat(hunt[1]).isEqualTo("My Hunt");
+        assertThat(hunt[2]).isEqualTo("ACTIVE");
+    }
+
+    @Test
+    void getHuntById_returns_null_for_unknown() throws InternalException {
+        String[] hunt = db.getHuntById("nonexistent");
+
+        assertThat(hunt).isNull();
+    }
+
+    @Test
+    void deletePlayerProgressForHunt_removes_all_progress() throws InternalException {
+        UUID p1 = UUID.randomUUID();
+        UUID p2 = UUID.randomUUID();
+        UUID h1 = UUID.randomUUID();
+        UUID h2 = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(p1, "P1", ""));
+        db.updatePlayerInfo(new PlayerProfileLight(p2, "P2", ""));
+        db.createNewHead(h1, "", "s");
+        db.createNewHead(h2, "", "s");
+        db.createHunt("huntDel", "Delete", "ACTIVE");
+        db.addHeadForHunt(p1, h1, "huntDel");
+        db.addHeadForHunt(p2, h2, "huntDel");
+
+        db.deletePlayerProgressForHunt("huntDel");
+
+        assertThat(db.getHeadsPlayerForHunt(p1, "huntDel")).isEmpty();
+        assertThat(db.getHeadsPlayerForHunt(p2, "huntDel")).isEmpty();
+    }
+
+    @Test
+    void resetPlayerHeadHunt_removes_specific_head_from_hunt() throws InternalException {
+        UUID player = UUID.randomUUID();
+        UUID h1 = UUID.randomUUID();
+        UUID h2 = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(player, "P", ""));
+        db.createNewHead(h1, "", "s");
+        db.createNewHead(h2, "", "s");
+        db.createHunt("huntRPH", "RPH", "ACTIVE");
+        db.addHeadForHunt(player, h1, "huntRPH");
+        db.addHeadForHunt(player, h2, "huntRPH");
+
+        db.resetPlayerHeadHunt(player, h1, "huntRPH");
+
+        assertThat(db.getHeadsPlayerForHunt(player, "huntRPH")).containsExactly(h2);
+    }
+
+    @Test
+    void getDistinctServerIds_returns_unique_ids() throws InternalException {
+        UUID h1 = UUID.randomUUID();
+        UUID h2 = UUID.randomUUID();
+        UUID h3 = UUID.randomUUID();
+        db.createNewHead(h1, "", "server-a");
+        db.createNewHead(h2, "", "server-b");
+        db.createNewHead(h3, "", "server-a");
+
+        var serverIds = db.getDistinctServerIds();
+
+        assertThat(serverIds).containsExactlyInAnyOrder("server-a", "server-b");
+    }
+
+    @Test
+    void getTableHeads_returns_all_head_rows() throws InternalException {
+        UUID h1 = UUID.randomUUID();
+        UUID h2 = UUID.randomUUID();
+        db.createNewHead(h1, "tex1", "s1");
+        db.createNewHead(h2, "tex2", "s1");
+
+        var heads = db.getTableHeads();
+
+        assertThat(heads).hasSize(2);
+        assertThat(heads.stream().map(r -> r.uuid())).containsExactlyInAnyOrder(h1.toString(), h2.toString());
+    }
+
+    @Test
+    void getTablePlayerHeads_returns_all_links() throws InternalException {
+        UUID player = UUID.randomUUID();
+        UUID head = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(player, "P", ""));
+        db.createNewHead(head, "", "s");
+        db.addHead(player, head);
+
+        var playerHeads = db.getTablePlayerHeads();
+
+        assertThat(playerHeads).hasSize(1);
+        assertThat(playerHeads.get(0).playerUuid()).isEqualTo(player.toString());
+        assertThat(playerHeads.get(0).headUuid()).isEqualTo(head.toString());
+    }
+
+    @Test
+    void getTablePlayers_returns_all_players() throws InternalException {
+        UUID p1 = UUID.randomUUID();
+        UUID p2 = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(p1, "Alice", ""));
+        db.updatePlayerInfo(new PlayerProfileLight(p2, "Bob", ""));
+
+        var players = db.getTablePlayers();
+
+        assertThat(players).hasSize(2);
+        assertThat(players.stream().map(r -> r.name())).containsExactlyInAnyOrder("Alice", "Bob");
+    }
+
+    @Test
+    void getPlayers_returns_players_that_found_head() throws InternalException {
+        UUID p1 = UUID.randomUUID();
+        UUID p2 = UUID.randomUUID();
+        UUID head = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(p1, "P1", ""));
+        db.updatePlayerInfo(new PlayerProfileLight(p2, "P2", ""));
+        db.createNewHead(head, "", "s");
+        db.addHead(p1, head);
+        db.addHead(p2, head);
+
+        var players = db.getPlayers(head);
+
+        assertThat(players).containsExactlyInAnyOrder(p1, p2);
+    }
+
+    @Test
+    void getHeadTexture_returns_empty_for_unknown_head() throws InternalException {
+        UUID unknown = UUID.randomUUID();
+
+        String texture = db.getHeadTexture(unknown);
+
+        assertThat(texture).isEmpty();
+    }
+
+    @Test
+    void getHeads_byServerId_returns_empty_for_unknown_server() throws InternalException {
+        UUID head = UUID.randomUUID();
+        db.createNewHead(head, "", "server-x");
+
+        var heads = db.getHeads("server-y");
+
+        assertThat(heads).isEmpty();
+    }
+
+    @Test
+    void getTopPlayersForHunt_empty_hunt_returns_empty() throws InternalException {
+        db.createHunt("emptyH", "Empty", "ACTIVE");
+
+        var top = db.getTopPlayersForHunt("emptyH");
+
+        assertThat(top).isEmpty();
+    }
+
+    @Test
+    void hasPlayerRenamed_returns_true_for_unknown_player() throws InternalException {
+        UUID unknown = UUID.randomUUID();
+
+        boolean renamed = db.hasPlayerRenamed(new PlayerProfileLight(unknown, "X", ""));
+
+        assertThat(renamed).isTrue();
+    }
+
+    @Test
+    void getTimedRunCount_returns_zero_for_no_runs() throws InternalException {
+        UUID player = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(player, "P", ""));
+        db.createHunt("huntZero", "Zero", "ACTIVE");
+
+        int count = db.getTimedRunCount(player, "huntZero");
+
+        assertThat(count).isEqualTo(0);
+    }
+
+    @Test
+    void getTimedLeaderboard_empty_returns_empty() throws InternalException {
+        db.createHunt("huntEmpty", "Empty", "ACTIVE");
+
+        var lb = db.getTimedLeaderboard("huntEmpty", 10);
+
+        assertThat(lb).isEmpty();
+    }
+
+    @Test
+    void updatePlayerInfo_updates_display_name() throws InternalException {
+        UUID player = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(player, "Name", "Display1"));
+
+        db.updatePlayerInfo(new PlayerProfileLight(player, "Name", "Display2"));
+
+        boolean renamed = db.hasPlayerRenamed(new PlayerProfileLight(player, "Name", "Display2"));
+        assertThat(renamed).isFalse();
+    }
+
+    @Test
+    void hasPlayerRenamed_detects_display_name_change() throws InternalException {
+        UUID player = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(player, "Same", "OldDisplay"));
+
+        boolean renamed = db.hasPlayerRenamed(new PlayerProfileLight(player, "Same", "NewDisplay"));
+
+        assertThat(renamed).isTrue();
+    }
 }

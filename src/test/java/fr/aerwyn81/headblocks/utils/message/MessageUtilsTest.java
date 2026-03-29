@@ -151,4 +151,127 @@ class MessageUtilsTest {
             assertThat(colors).hasSizeBetween(1, 3);
         }
     }
+
+    @Test
+    void createProgressBar_maxIsZero_allNotCompleted() {
+        try (MockedStatic<IridiumColorAPI> api = mockStatic(IridiumColorAPI.class)) {
+            api.when(() -> IridiumColorAPI.process(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+            String result = MessageUtils.createProgressBar(5, 0, 10, "#", "&a", "&c");
+
+            assertThat(result).isEqualTo("&c#&c#&c#&c#&c#&c#&c#&c#&c#&c#");
+        }
+    }
+
+    @Test
+    void createProgressBar_currentExceedsMax_clampedToFull() {
+        try (MockedStatic<IridiumColorAPI> api = mockStatic(IridiumColorAPI.class)) {
+            api.when(() -> IridiumColorAPI.process(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+            String result = MessageUtils.createProgressBar(15, 10, 10, "|", "&a", "&7");
+
+            // Math.min clamps progressBars to totalBars
+            assertThat(result).isEqualTo("&a|&a|&a|&a|&a|&a|&a|&a|&a|&a|");
+        }
+    }
+
+    @Test
+    void createProgressBar_currentIsZero_allNotCompleted() {
+        try (MockedStatic<IridiumColorAPI> api = mockStatic(IridiumColorAPI.class)) {
+            api.when(() -> IridiumColorAPI.process(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+            String result = MessageUtils.createProgressBar(0, 5, 8, "X", "&2", "&4");
+
+            assertThat(result).isEqualTo("&4X&4X&4X&4X&4X&4X&4X&4X");
+        }
+    }
+
+    @Test
+    void createProgressBar_currentEqualsMax_allCompleted() {
+        try (MockedStatic<IridiumColorAPI> api = mockStatic(IridiumColorAPI.class)) {
+            api.when(() -> IridiumColorAPI.process(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+            String result = MessageUtils.createProgressBar(7, 7, 6, "=", "&b", "&8");
+
+            assertThat(result).isEqualTo("&b=&b=&b=&b=&b=&b=");
+        }
+    }
+
+    @Test
+    void createProgressBar_negativeMax_treatedAsAllNotCompleted() {
+        try (MockedStatic<IridiumColorAPI> api = mockStatic(IridiumColorAPI.class)) {
+            api.when(() -> IridiumColorAPI.process(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+            String result = MessageUtils.createProgressBar(3, -5, 4, "o", "&a", "&c");
+
+            assertThat(result).isEqualTo("&co&co&co&co");
+        }
+    }
+
+    @Test
+    void centerMessage_plainTextWithoutTag_returnsExactSameString() {
+        String input = "No centering here";
+
+        assertThat(MessageUtils.centerMessage(input)).isSameAs(input);
+    }
+
+    @Test
+    void centerMessage_emptyString_returnsEmptyString() {
+        assertThat(MessageUtils.centerMessage("")).isEqualTo("");
+    }
+
+    @Test
+    void centerMessage_onlyCenterTag_returnsSpacePaddedEmpty() {
+        String result = MessageUtils.centerMessage("{center}");
+
+        assertThat(result).doesNotContain("{center}");
+        assertThat(result.trim()).isEmpty();
+    }
+
+    @Test
+    void getRandomColors_colorsAreValidBukkitColors() {
+        for (int i = 0; i < 10; i++) {
+            var colors = MessageUtils.getRandomColors();
+            for (var color : colors) {
+                assertThat(color.getRed()).isBetween(0, 255);
+                assertThat(color.getGreen()).isBetween(0, 255);
+                assertThat(color.getBlue()).isBetween(0, 255);
+            }
+        }
+    }
+
+    @Test
+    void sendCenteredString_multilineString_eachLineEndedWithNewline() {
+        String result = MessageUtils.sendCenteredString("Line1\nLine2\nLine3");
+        String[] lines = result.split("\n", -1);
+
+        // Each centered line gets a trailing \n, so split produces at least 3 non-empty entries
+        int nonEmpty = 0;
+        for (String line : lines) {
+            if (!line.isEmpty()) {
+                nonEmpty++;
+            }
+        }
+        assertThat(nonEmpty).isGreaterThanOrEqualTo(3);
+    }
+
+    @Test
+    void sendCenteredString_veryLongLine_wrapsIntoMultipleLines() {
+        // Build a line that exceeds the 154px center width so the wrap logic triggers
+        String longLine = "ABCDEFGHIJ ".repeat(20).trim();
+
+        String result = MessageUtils.sendCenteredString(longLine);
+        String[] lines = result.split("\n");
+
+        assertThat(lines.length).isGreaterThan(1);
+    }
+
+    @Test
+    void sendCenteredString_singleCharacter_paddedAndEndedWithNewline() {
+        String result = MessageUtils.sendCenteredString("A");
+
+        assertThat(result).endsWith("\n");
+        assertThat(result).contains("A");
+        assertThat(result.indexOf('A')).isGreaterThan(0);
+    }
 }

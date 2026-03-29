@@ -1256,4 +1256,327 @@ class RequestsTest {
             assertThat(Requests.getTablePlayers()).isEqualTo("second_hb_players");
         }
     }
+
+    // =========================================================================
+    // 25. Hunt CRUD queries with prefix
+    // =========================================================================
+
+    @Nested
+    class HuntCrudQueriesWithPrefix {
+
+        @Test
+        void insertHunt_with_prefix() {
+            initWithPrefix("g_");
+
+            assertThat(Requests.insertHunt()).contains("g_hb_hunts");
+        }
+
+        @Test
+        void updateHuntState_with_prefix() {
+            initWithPrefix("g_");
+
+            assertThat(Requests.updateHuntState()).contains("g_hb_hunts");
+        }
+
+        @Test
+        void updateHuntName_with_prefix() {
+            initWithPrefix("g_");
+
+            assertThat(Requests.updateHuntName()).contains("g_hb_hunts");
+        }
+
+        @Test
+        void deleteHuntById_with_prefix() {
+            initWithPrefix("g_");
+
+            assertThat(Requests.deleteHuntById()).contains("g_hb_hunts");
+        }
+
+        @Test
+        void getHuntsAll_with_prefix() {
+            initWithPrefix("g_");
+
+            assertThat(Requests.getHuntsAll()).contains("g_hb_hunts");
+        }
+
+        @Test
+        void getHuntById_with_prefix() {
+            initWithPrefix("g_");
+
+            assertThat(Requests.getHuntById()).contains("g_hb_hunts");
+        }
+    }
+
+    // =========================================================================
+    // 26. Hunt-aware progression queries with prefix
+    // =========================================================================
+
+    @Nested
+    class HuntAwareProgressionQueriesWithPrefix {
+
+        @Test
+        void savePlayerHeadHunt_with_prefix() {
+            initWithPrefix("h_");
+
+            assertThat(Requests.savePlayerHeadHunt()).contains("h_hb_playerHeads");
+        }
+
+        @Test
+        void getPlayerHeadsForHunt_with_prefix_references_both_tables() {
+            initWithPrefix("h_");
+
+            String sql = Requests.getPlayerHeadsForHunt();
+
+            assertThat(sql).contains("h_hb_playerHeads");
+            assertThat(sql).contains("h_hb_heads");
+        }
+
+        @Test
+        void resetPlayerHunt_with_prefix() {
+            initWithPrefix("h_");
+
+            assertThat(Requests.resetPlayerHunt()).contains("h_hb_playerHeads");
+        }
+
+        @Test
+        void resetPlayerHeadHunt_with_prefix() {
+            initWithPrefix("h_");
+
+            assertThat(Requests.resetPlayerHeadHunt()).contains("h_hb_playerHeads");
+        }
+
+        @Test
+        void getTopPlayersForHunt_with_prefix_references_all_three_tables() {
+            initWithPrefix("h_");
+
+            String sql = Requests.getTopPlayersForHunt();
+
+            assertThat(sql).contains("h_hb_playerHeads");
+            assertThat(sql).contains("h_hb_players");
+            assertThat(sql).contains("h_hb_heads");
+        }
+
+        @Test
+        void transferPlayerProgressSQLite_with_prefix() {
+            initWithPrefix("h_");
+
+            assertThat(Requests.transferPlayerProgressSQLite()).contains("h_hb_playerHeads");
+        }
+
+        @Test
+        void transferPlayerProgressMySQL_with_prefix() {
+            initWithPrefix("h_");
+
+            assertThat(Requests.transferPlayerProgressMySQL()).contains("h_hb_playerHeads");
+        }
+
+        @Test
+        void deletePlayerProgressForHunt_with_prefix() {
+            initWithPrefix("h_");
+
+            assertThat(Requests.deletePlayerProgressForHunt()).contains("h_hb_playerHeads");
+        }
+    }
+
+    // =========================================================================
+    // 27. Migration v5 queries with prefix
+    // =========================================================================
+
+    @Nested
+    class MigrationV5QueriesWithPrefix {
+
+        @Test
+        void addColumnHuntIdSQLite_with_prefix() {
+            initWithPrefix("m_");
+
+            assertThat(Requests.addColumnHuntIdSQLite()).contains("m_hb_playerHeads");
+        }
+
+        @Test
+        void addColumnHuntIdMariaDb_with_prefix() {
+            initWithPrefix("m_");
+
+            assertThat(Requests.addColumnHuntIdMariaDb()).contains("m_hb_playerHeads");
+        }
+
+        @Test
+        void addColumnHuntIdMySQL_with_prefix() {
+            initWithPrefix("m_");
+
+            assertThat(Requests.addColumnHuntIdMySQL()).contains("m_hb_playerHeads");
+        }
+
+        @Test
+        void migV5InsertDefaultHunt_with_prefix() {
+            initWithPrefix("m_");
+
+            assertThat(Requests.migV5InsertDefaultHunt()).contains("m_hb_hunts");
+        }
+
+        @Test
+        void migV5CreateTempPlayerHeadsSQLite_with_prefix() {
+            initWithPrefix("m_");
+
+            String sql = Requests.migV5CreateTempPlayerHeadsSQLite();
+
+            assertThat(sql).contains("m_hb_playerHeads_v5tmp");
+            assertThat(sql).contains("m_hb_heads");
+        }
+
+        @Test
+        void migV5CopyPlayerHeadsToTempSQLite_with_prefix() {
+            initWithPrefix("m_");
+
+            String sql = Requests.migV5CopyPlayerHeadsToTempSQLite();
+
+            assertThat(sql).contains("m_hb_playerHeads_v5tmp");
+            assertThat(sql).contains("m_hb_playerHeads");
+        }
+
+        @Test
+        void migV5DropOldPlayerHeadsSQLite_with_prefix() {
+            initWithPrefix("m_");
+
+            assertThat(Requests.migV5DropOldPlayerHeadsSQLite()).contains("m_hb_playerHeads");
+        }
+
+        @Test
+        void migV5RenameTempPlayerHeadsSQLite_with_prefix() {
+            initWithPrefix("m_");
+
+            String sql = Requests.migV5RenameTempPlayerHeadsSQLite();
+
+            assertThat(sql).contains("m_hb_playerHeads_v5tmp");
+            assertThat(sql).contains("m_hb_playerHeads");
+        }
+    }
+
+    // =========================================================================
+    // 28. Timed run queries with prefix
+    // =========================================================================
+
+    @Nested
+    class TimedRunQueriesWithPrefix {
+
+        @Test
+        void getTimedLeaderboard_with_prefix_references_both_tables() {
+            initWithPrefix("t_");
+
+            String sql = Requests.getTimedLeaderboard();
+
+            assertThat(sql).contains("t_hb_timed_runs");
+            assertThat(sql).contains("t_hb_players");
+        }
+
+        @Test
+        void getBestTime_with_prefix() {
+            initWithPrefix("t_");
+
+            assertThat(Requests.getBestTime()).contains("t_hb_timed_runs");
+        }
+
+        @Test
+        void getTimedRunCount_with_prefix() {
+            initWithPrefix("t_");
+
+            assertThat(Requests.getTimedRunCount()).contains("t_hb_timed_runs");
+        }
+
+        @Test
+        void createTableTimedRunsMySQL_with_prefix() {
+            initWithPrefix("t_");
+
+            assertThat(Requests.createTableTimedRunsMySQL()).contains("t_hb_timed_runs");
+        }
+    }
+
+    // =========================================================================
+    // 29. isColumnExist with different database names
+    // =========================================================================
+
+    @Nested
+    class IsColumnExistQueries {
+
+        @Test
+        void isColumnExist_embeds_database_name_in_query() {
+            initWithPrefixAndDbName("", "production_db");
+
+            String sql = Requests.isColumnExist();
+
+            assertThat(sql).contains("production_db");
+            assertThat(sql).contains("TABLE_SCHEMA = 'production_db'");
+        }
+
+        @Test
+        void isColumnExist_updates_when_reinitialised_with_different_db_name() {
+            initWithPrefixAndDbName("", "db_one");
+            assertThat(Requests.isColumnExist()).contains("db_one");
+
+            initWithPrefixAndDbName("", "db_two");
+            assertThat(Requests.isColumnExist()).contains("db_two");
+            assertThat(Requests.isColumnExist()).doesNotContain("db_one");
+        }
+    }
+
+    // =========================================================================
+    // 30. Timed runs table creation structure
+    // =========================================================================
+
+    @Nested
+    class TimedRunsTableStructure {
+
+        @Test
+        void createTableTimedRuns_has_composite_primary_key() {
+            initWithPrefix("");
+
+            String sql = Requests.createTableTimedRuns();
+
+            assertThat(sql).contains("PRIMARY KEY (pUUID, huntId, completedAt)");
+        }
+
+        @Test
+        void createTableTimedRunsMySQL_has_composite_primary_key() {
+            initWithPrefix("");
+
+            String sql = Requests.createTableTimedRunsMySQL();
+
+            assertThat(sql).contains("PRIMARY KEY (pUUID, huntId, completedAt)");
+        }
+
+        @Test
+        void createTableTimedRuns_contains_huntId_column() {
+            initWithPrefix("");
+
+            assertThat(Requests.createTableTimedRuns()).contains("huntId");
+        }
+
+        @Test
+        void createTableTimedRuns_contains_pUUID_column() {
+            initWithPrefix("");
+
+            assertThat(Requests.createTableTimedRuns()).contains("pUUID");
+        }
+    }
+
+    // =========================================================================
+    // 31. getTableTimedRuns table name
+    // =========================================================================
+
+    @Nested
+    class TableTimedRunsName {
+
+        @Test
+        void getTableTimedRuns_without_prefix() {
+            initWithPrefix("");
+
+            assertThat(Requests.getTableTimedRuns()).isEqualTo("hb_timed_runs");
+        }
+
+        @Test
+        void getTableTimedRuns_with_prefix() {
+            initWithPrefix("z_");
+
+            assertThat(Requests.getTableTimedRuns()).isEqualTo("z_hb_timed_runs");
+        }
+    }
 }

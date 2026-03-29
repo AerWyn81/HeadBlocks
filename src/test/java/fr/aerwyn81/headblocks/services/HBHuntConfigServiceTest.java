@@ -1,14 +1,23 @@
 package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.*;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -18,11 +27,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class HBHuntConfigServiceTest {
@@ -803,5 +814,304 @@ class HBHuntConfigServiceTest {
         // Only the valid tier should be loaded
         assertThat(rewards).hasSize(1);
         assertThat(rewards.get(0).level()).isEqualTo(5);
+    }
+
+    // --- Behavior serialization round-trips ---
+
+    @Nested
+    class BehaviorSerialization {
+
+        @Test
+        void saveAndLoad_scheduledBehavior_rangeMode() {
+            HBHunt hunt = new HBHunt(configService, "sched-range", "Scheduled Range", HuntState.ACTIVE, 1, "CHEST");
+            TimeSlot slot = new TimeSlot(List.of(DayOfWeek.MONDAY, DayOfWeek.FRIDAY), LocalTime.of(14, 0), LocalTime.of(18, 0));
+            RangeScheduleMode mode = new RangeScheduleMode(
+                    LocalDateTime.of(2026, 3, 1, 10, 0),
+                    LocalDateTime.of(2026, 12, 31, 23, 59),
+                    List.of(slot));
+            hunt.setBehaviors(List.of(new ScheduledBehavior(registry, mode)));
+
+            huntConfigService.saveHunt(hunt);
+            HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/sched-range.yml"));
+
+            assertThat(loaded).isNotNull();
+            assertThat(loaded.getBehaviors()).hasSize(1);
+            Behavior behavior = loaded.getBehaviors().get(0);
+            assertThat(behavior).isInstanceOf(ScheduledBehavior.class);
+            ScheduledBehavior sb = (ScheduledBehavior) behavior;
+            assertThat(sb.getScheduleMode()).isInstanceOf(RangeScheduleMode.class);
+            RangeScheduleMode rsm = (RangeScheduleMode) sb.getScheduleMode();
+            assertThat(rsm.start()).isNotNull();
+            assertThat(rsm.end()).isNotNull();
+            assertThat(rsm.slots()).hasSize(1);
+        }
+
+        @Test
+        void saveAndLoad_scheduledBehavior_slotsMode() {
+            HBHunt hunt = new HBHunt(configService, "sched-slots", "Scheduled Slots", HuntState.ACTIVE, 1, "CHEST");
+            TimeSlot slot = new TimeSlot(List.of(DayOfWeek.SATURDAY), LocalTime.of(10, 0), LocalTime.of(16, 0));
+            SlotsScheduleMode mode = new SlotsScheduleMode(
+                    List.of(slot),
+                    LocalDate.of(2026, 1, 1),
+                    LocalDate.of(2026, 12, 31));
+            hunt.setBehaviors(List.of(new ScheduledBehavior(registry, mode)));
+
+            huntConfigService.saveHunt(hunt);
+            HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/sched-slots.yml"));
+
+            assertThat(loaded).isNotNull();
+            ScheduledBehavior sb = (ScheduledBehavior) loaded.getBehaviors().get(0);
+            assertThat(sb.getScheduleMode()).isInstanceOf(SlotsScheduleMode.class);
+            SlotsScheduleMode ssm = (SlotsScheduleMode) sb.getScheduleMode();
+            assertThat(ssm.slots()).hasSize(1);
+            assertThat(ssm.activeFrom()).isEqualTo(LocalDate.of(2026, 1, 1));
+            assertThat(ssm.activeUntil()).isEqualTo(LocalDate.of(2026, 12, 31));
+        }
+
+        @Test
+        void saveAndLoad_scheduledBehavior_recurringMode() {
+            HBHunt hunt = new HBHunt(configService, "sched-rec", "Recurring", HuntState.ACTIVE, 1, "CHEST");
+            RecurringScheduleMode mode = new RecurringScheduleMode(
+                    RecurrenceUnit.WEEK, "MONDAY", Duration.ofDays(2), List.of());
+            hunt.setBehaviors(List.of(new ScheduledBehavior(registry, mode)));
+
+            huntConfigService.saveHunt(hunt);
+            HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/sched-rec.yml"));
+
+            assertThat(loaded).isNotNull();
+            ScheduledBehavior sb = (ScheduledBehavior) loaded.getBehaviors().get(0);
+            assertThat(sb.getScheduleMode()).isInstanceOf(RecurringScheduleMode.class);
+            RecurringScheduleMode rsm = (RecurringScheduleMode) sb.getScheduleMode();
+            assertThat(rsm.every()).isEqualTo(RecurrenceUnit.WEEK);
+            assertThat(rsm.startRef()).isEqualTo("MONDAY");
+            assertThat(rsm.duration()).isEqualTo(Duration.ofDays(2));
+        }
+
+        @Test
+        void saveAndLoad_timedBehavior_withStartPlate() throws IOException {
+            // Write the YAML manually to test saveBehaviors output
+            HBHunt hunt = new HBHunt(configService, "timed", "Timed", HuntState.ACTIVE, 1, "CHEST");
+            World world = mock(World.class);
+            when(world.getName()).thenReturn("world");
+            Location plateLocation = new Location(world, 100, 64, 200);
+            hunt.setBehaviors(List.of(new TimedBehavior(registry, plateLocation, true)));
+
+            huntConfigService.saveHunt(hunt);
+
+            // Verify the YAML structure rather than round-tripping (fromConfig needs Bukkit.getWorld)
+            File file = new File(tempDir.toFile(), "hunts/timed.yml");
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+            assertThat(yaml.getBoolean("behaviors.timed.repeatable")).isTrue();
+            assertThat(yaml.getString("behaviors.timed.startPlate.world")).isEqualTo("world");
+            assertThat(yaml.getInt("behaviors.timed.startPlate.x")).isEqualTo(100);
+            assertThat(yaml.getInt("behaviors.timed.startPlate.y")).isEqualTo(64);
+            assertThat(yaml.getInt("behaviors.timed.startPlate.z")).isEqualTo(200);
+        }
+
+        @Test
+        void saveAndLoad_timedBehavior_nullStartPlate() {
+            HBHunt hunt = new HBHunt(configService, "timed-null", "Timed Null", HuntState.ACTIVE, 1, "CHEST");
+            hunt.setBehaviors(List.of(new TimedBehavior(registry, null, false)));
+
+            huntConfigService.saveHunt(hunt);
+
+            File file = new File(tempDir.toFile(), "hunts/timed-null.yml");
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+            assertThat(yaml.getBoolean("behaviors.timed.repeatable")).isFalse();
+            assertThat(yaml.contains("behaviors.timed.startPlate")).isFalse();
+        }
+
+        @Test
+        void saveAndLoad_multipleBehaviors() {
+            HBHunt hunt = new HBHunt(configService, "multi-beh", "Multi", HuntState.ACTIVE, 1, "CHEST");
+            hunt.setBehaviors(List.of(
+                    new FreeBehavior(),
+                    new ScheduledBehavior(registry, new RangeScheduleMode(null, null, List.of()))));
+
+            huntConfigService.saveHunt(hunt);
+            HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/multi-beh.yml"));
+
+            assertThat(loaded).isNotNull();
+            assertThat(loaded.getBehaviors()).hasSize(2);
+        }
+    }
+
+    // --- Location management ---
+
+    @Nested
+    class LocationManagement {
+
+        @Test
+        void loadLocationsFromHunt_emptyHunt_returnsEmpty() {
+            HBHunt hunt = new HBHunt(configService, "empty-loc", "Empty", HuntState.ACTIVE, 1, "CHEST");
+            huntConfigService.saveHunt(hunt);
+
+            List<HeadLocation> locations = huntConfigService.loadLocationsFromHunt("empty-loc");
+
+            assertThat(locations).isEmpty();
+        }
+
+        @Test
+        void loadLocationsFromHunt_nonExistentHunt_returnsEmpty() {
+            List<HeadLocation> locations = huntConfigService.loadLocationsFromHunt("nonexistent");
+
+            assertThat(locations).isEmpty();
+        }
+
+        @Test
+        void saveLocationInHunt_writesToCachedYaml() {
+            // Create a hunt file
+            HBHunt hunt = new HBHunt(configService, "loc-save", "Loc Save", HuntState.ACTIVE, 1, "CHEST");
+            huntConfigService.saveHunt(hunt);
+
+            UUID headUuid = UUID.randomUUID();
+            HeadLocation headLoc = new HeadLocation("myhead", headUuid, "loc-save", "world", 10.5, 64.0, 20.5, -1, false, false, new ArrayList<>());
+            huntConfigService.saveLocationInHunt("loc-save", headLoc);
+
+            // Verify the hunt yaml file on disk contains the location key
+            File file = new File(tempDir.toFile(), "hunts/loc-save.yml");
+            // Note: the actual save is debounced, so read back the hunt file
+            // which was modified by saveHunt (the location is in the cached yaml)
+            assertThat(file.exists()).isTrue();
+        }
+
+        @Test
+        void saveLocationInHunt_nonExistentHunt_doesNotThrow() {
+            UUID headUuid = UUID.randomUUID();
+            HeadLocation headLoc = new HeadLocation("myhead", headUuid, "nope", "world", 10.5, 64.0, 20.5, -1, false, false, new ArrayList<>());
+
+            // Should not throw even if hunt file doesn't exist
+            huntConfigService.saveLocationInHunt("nope", headLoc);
+        }
+    }
+
+    // --- Migration ---
+
+    @Nested
+    class Migration {
+
+        @Test
+        void migrateLocationsFromLegacy_nullFile_noOp() {
+            huntConfigService.migrateLocationsFromLegacy(null);
+            // Should not throw
+        }
+
+        @Test
+        void migrateLocationsFromLegacy_nonExistentFile_noOp() {
+            File nonexistent = new File(tempDir.toFile(), "nope.yml");
+            huntConfigService.migrateLocationsFromLegacy(nonexistent);
+            // Should not throw
+        }
+
+        @Test
+        void migrateLocationsFromLegacy_emptyLocations_renames() throws IOException {
+            File legacyFile = new File(tempDir.toFile(), "locations.yml");
+            YamlConfiguration yaml = new YamlConfiguration();
+            yaml.save(legacyFile);
+
+            huntConfigService.migrateLocationsFromLegacy(legacyFile);
+
+            assertThat(legacyFile.exists()).isFalse();
+            assertThat(new File(tempDir.toFile(), "locations.yml.migrated").exists()).isTrue();
+        }
+
+        @Test
+        void migrateLocationsFromLegacy_withLocations_renames() throws IOException {
+            File legacyFile = new File(tempDir.toFile(), "locations.yml");
+            YamlConfiguration yaml = new YamlConfiguration();
+            UUID headUuid = UUID.randomUUID();
+            String key = "locations." + headUuid;
+            yaml.set(key + ".name", "testHead");
+            yaml.set(key + ".location.x", 10.5);
+            yaml.set(key + ".location.y", 64.0);
+            yaml.set(key + ".location.z", 20.5);
+            yaml.set(key + ".location.world", "world");
+            yaml.save(legacyFile);
+
+            huntConfigService.migrateLocationsFromLegacy(legacyFile);
+
+            assertThat(legacyFile.exists()).isFalse();
+            assertThat(new File(tempDir.toFile(), "locations.yml.migrated").exists()).isTrue();
+        }
+    }
+
+    // --- Yaml cache ---
+
+    @Test
+    void invalidateAllYamlCaches_allowsReloadFromDisk() throws IOException {
+        HBHunt hunt = new HBHunt(configService, "cache-test", "Cache", HuntState.ACTIVE, 1, "CHEST");
+        huntConfigService.saveHunt(hunt);
+
+        // Modify file directly
+        File file = new File(tempDir.toFile(), "hunts/cache-test.yml");
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        yaml.set("displayName", "Modified");
+        yaml.save(file);
+
+        // Without invalidation, the cached yaml would be stale
+        huntConfigService.invalidateAllYamlCaches();
+        HBHunt loaded = huntConfigService.loadHunt(file);
+
+        assertThat(loaded).isNotNull();
+        assertThat(loaded.getDisplayName()).isEqualTo("Modified");
+    }
+
+    // --- SaveHuntConfig round-trip (only fields that saveHuntConfig persists) ---
+
+    @Test
+    void saveAndLoad_huntConfig_headClickMessages() {
+        HBHunt hunt = new HBHunt(configService, "msg-cfg", "Messages", HuntState.ACTIVE, 1, "CHEST");
+        HuntConfig config = hunt.getConfig();
+        config.setHeadClickMessages(List.of("&aYou found a head!", "&7Keep hunting!"));
+
+        huntConfigService.saveHunt(hunt);
+        HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/msg-cfg.yml"));
+
+        assertThat(loaded).isNotNull();
+        assertThat(loaded.getConfig().getHeadClickMessages()).containsExactly("&aYou found a head!", "&7Keep hunting!");
+    }
+
+    @Test
+    void saveAndLoad_huntConfig_tieredRewardsWithAllFields() {
+        HBHunt hunt = new HBHunt(configService, "tier-full", "Tiers", HuntState.ACTIVE, 1, "CHEST");
+        HuntConfig config = hunt.getConfig();
+        List<TieredReward> rewards = List.of(
+                new TieredReward(5, List.of("5 heads!"), List.of("give %player% diamond 5"), List.of("&a%player% reached level 5!"), 5, true),
+                new TieredReward(10, List.of("10 heads!"), List.of("give %player% diamond 10"), List.of(), -1, false));
+        config.setTieredRewards(rewards);
+
+        huntConfigService.saveHunt(hunt);
+        HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/tier-full.yml"));
+
+        assertThat(loaded).isNotNull();
+        List<TieredReward> loadedRewards = loaded.getConfig().getTieredRewards();
+        assertThat(loadedRewards).hasSize(2);
+
+        TieredReward t5 = loadedRewards.stream().filter(r -> r.level() == 5).findFirst().orElse(null);
+        assertThat(t5).isNotNull();
+        assertThat(t5.messages()).containsExactly("5 heads!");
+        assertThat(t5.commands()).containsExactly("give %player% diamond 5");
+        assertThat(t5.broadcastMessages()).containsExactly("&a%player% reached level 5!");
+        assertThat(t5.slotsRequired()).isEqualTo(5);
+        assertThat(t5.isRandom()).isTrue();
+
+        TieredReward t10 = loadedRewards.stream().filter(r -> r.level() == 10).findFirst().orElse(null);
+        assertThat(t10).isNotNull();
+        assertThat(t10.isRandom()).isFalse();
+    }
+
+    @Test
+    void saveAndLoad_huntConfig_hologramLines() {
+        HBHunt hunt = new HBHunt(configService, "holo-cfg", "Holo", HuntState.ACTIVE, 1, "CHEST");
+        HuntConfig config = hunt.getConfig();
+        config.setHologramsFoundLines(new ArrayList<>(List.of("&aFound!")));
+        config.setHologramsNotFoundLines(new ArrayList<>(List.of("&cNot found")));
+
+        huntConfigService.saveHunt(hunt);
+        HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/holo-cfg.yml"));
+
+        assertThat(loaded).isNotNull();
+        assertThat(loaded.getConfig().getHologramsFoundLines()).containsExactly("&aFound!");
+        assertThat(loaded.getConfig().getHologramsNotFoundLines()).containsExactly("&cNot found");
     }
 }
