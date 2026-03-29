@@ -2113,4 +2113,88 @@ class ConfigServiceTest {
             assertThat(service.getConfig().getString("language")).isEqualTo("fr");
         }
     }
+
+    // =========================================================================
+    // 17. GUI icons
+    // =========================================================================
+
+    @Nested
+    class GuiIcons {
+
+        @Test
+        void guiBackIcon_default_returnsSpruceDoor() throws IOException {
+            var service = new ConfigService(writeConfig(""));
+            var icon = service.guiBackIcon();
+            assertThat(icon).isNotNull();
+            assertThat(icon.toItemStack().getType()).isEqualTo(org.bukkit.Material.SPRUCE_DOOR);
+        }
+
+        @Test
+        void guiBackIcon_custom_returnsConfiguredMaterial() throws IOException {
+            var service = new ConfigService(writeConfig("gui:\n  backIcon:\n    type: DIAMOND"));
+            var icon = service.guiBackIcon();
+            assertThat(icon.toItemStack().getType()).isEqualTo(org.bukkit.Material.DIAMOND);
+        }
+
+        @Test
+        void guiBorderIcon_default_returnsGrayStainedGlassPane() throws IOException {
+            var service = new ConfigService(writeConfig(""));
+            var icon = service.guiBorderIcon();
+            assertThat(icon).isNotNull();
+            assertThat(icon.toItemStack().getType()).isEqualTo(org.bukkit.Material.GRAY_STAINED_GLASS_PANE);
+        }
+
+        @Test
+        void guiPreviousIcon_default_returnsArrow() throws IOException {
+            var service = new ConfigService(writeConfig(""));
+            var icon = service.guiPreviousIcon();
+            assertThat(icon).isNotNull();
+            assertThat(icon.toItemStack().getType()).isEqualTo(org.bukkit.Material.ARROW);
+        }
+
+        @Test
+        void guiNextIcon_default_returnsArrow() throws IOException {
+            var service = new ConfigService(writeConfig(""));
+            var icon = service.guiNextIcon();
+            assertThat(icon).isNotNull();
+            assertThat(icon.toItemStack().getType()).isEqualTo(org.bukkit.Material.ARROW);
+        }
+
+        @Test
+        void guiCloseIcon_default_returnsBarrier() throws IOException {
+            var service = new ConfigService(writeConfig(""));
+            var icon = service.guiCloseIcon();
+            assertThat(icon).isNotNull();
+            assertThat(icon.toItemStack().getType()).isEqualTo(org.bukkit.Material.BARRIER);
+        }
+    }
+
+    // =========================================================================
+    // 18. Hint sound type
+    // =========================================================================
+
+    @Nested
+    class HintSoundType {
+
+        @Test
+        void hintSoundType_default_returnsAmethystBlockChime() throws IOException {
+            var service = new ConfigService(writeConfig(""));
+            var sound = service.hintSoundType();
+            assertThat(sound).isEqualTo(com.cryptomorin.xseries.XSound.BLOCK_AMETHYST_BLOCK_CHIME);
+        }
+
+        @Test
+        void hintSoundType_validSound_returnsThatSound() throws IOException {
+            var service = new ConfigService(writeConfig("hint:\n  sound:\n    sound: ENTITY_EXPERIENCE_ORB_PICKUP"));
+            var sound = service.hintSoundType();
+            assertThat(sound).isEqualTo(com.cryptomorin.xseries.XSound.ENTITY_EXPERIENCE_ORB_PICKUP);
+        }
+
+        @Test
+        void hintSoundType_invalidSound_fallsBackToDefault() throws IOException {
+            var service = new ConfigService(writeConfig("hint:\n  sound:\n    sound: TOTALLY_INVALID_SOUND"));
+            var sound = service.hintSoundType();
+            assertThat(sound).isEqualTo(com.cryptomorin.xseries.XSound.BLOCK_AMETHYST_BLOCK_CHIME);
+        }
+    }
 }

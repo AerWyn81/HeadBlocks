@@ -10,10 +10,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1719,6 +1727,198 @@ class StorageServiceTest {
             verify(database).resetPlayerHunt(player, "myHunt");
             verify(storage).clearCachedPlayerHeadsForHunt("myHunt");
             verify(storage).clearCachedTopPlayersForHunt("myHunt");
+        }
+    }
+
+    @Nested
+    class VerifyDatabaseMigrationTests {
+
+        private Method verifyDatabaseMigrationMethod;
+
+        @BeforeEach
+        void setUp() throws Exception {
+            verifyDatabaseMigrationMethod = StorageService.class.getDeclaredMethod("verifyDatabaseMigration");
+            verifyDatabaseMigrationMethod.setAccessible(true);
+        }
+
+        private void invokeVerifyDatabaseMigration() throws Throwable {
+            try {
+                verifyDatabaseMigrationMethod.invoke(service);
+            } catch (InvocationTargetException e) {
+                throw e.getCause();
+            }
+        }
+
+        @Test
+        void tablesNotExist_returnsEarly() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(false);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database).isDefaultTablesExist();
+            verify(database, never()).checkVersion();
+        }
+
+        @Test
+        void versionMatchesCurrent_returnsEarly() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(Database.version);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database, never()).migrate();
+            verify(database, never()).insertVersion();
+            verify(database, never()).upsertTableVersion(anyInt());
+        }
+
+        @Test
+        void versionMinus1_callsMigrate() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(-1);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database).migrate();
+            verify(database).upsertTableVersion(-1);
+        }
+
+        @Test
+        void version0_callsInsertVersionAndAllColumns() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(0);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database).insertVersion();
+            verify(database).addColumnHeadTexture();
+            verify(database).addColumnDisplayName();
+            verify(database).addColumnServerIdentifier();
+            verify(database).upsertTableVersion(0);
+        }
+
+        @Test
+        void version1_callsAddColumnHeadTexture() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(1);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database).addColumnHeadTexture();
+            verify(database).addColumnDisplayName();
+            verify(database).addColumnServerIdentifier();
+            verify(database).migrateToV5();
+            verify(database).upsertTableVersion(1);
+        }
+
+        @Test
+        void version2_callsAddColumnDisplayName() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(2);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database, never()).addColumnHeadTexture();
+            verify(database).addColumnDisplayName();
+            verify(database).addColumnServerIdentifier();
+            verify(database).migrateToV5();
+            verify(database).upsertTableVersion(2);
+        }
+
+        @Test
+        void version3_callsAddColumnServerIdentifier() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(3);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database, never()).addColumnHeadTexture();
+            verify(database, never()).addColumnDisplayName();
+            verify(database).addColumnServerIdentifier();
+            verify(database).migrateToV5();
+            verify(database).upsertTableVersion(3);
+        }
+
+        @Test
+        void version4_callsMigrateToV5() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(4);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database, never()).addColumnHeadTexture();
+            verify(database, never()).addColumnDisplayName();
+            verify(database, never()).addColumnServerIdentifier();
+            verify(database).migrateToV5();
+            verify(database).upsertTableVersion(4);
+        }
+
+        @Test
+        void version4_migrateToV5Fails_throwsAndRethrows() throws InternalException {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(4);
+            doThrow(new InternalException("migration failed")).when(database).migrateToV5();
+
+            assertThatThrownBy(() -> invokeVerifyDatabaseMigration())
+                    .isInstanceOf(InternalException.class)
+                    .hasMessage("migration failed");
+        }
+
+        @Test
+        void versionChanged_callsUpsertTableVersion() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(3);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database).upsertTableVersion(3);
+        }
+    }
+
+    @Nested
+    class BackupDatabaseTests {
+
+        @TempDir
+        Path tempDir;
+
+        private StorageService serviceWithDataFolder;
+
+        @BeforeEach
+        void setUp() throws Exception {
+            serviceWithDataFolder = new StorageService(configService, storage, database);
+            Field dataFolderField = StorageService.class.getDeclaredField("dataFolder");
+            dataFolderField.setAccessible(true);
+            dataFolderField.set(serviceWithDataFolder, tempDir.toFile());
+        }
+
+        @Test
+        void dbFileExists_copiesAndReturnsFileName() throws IOException {
+            Files.createFile(tempDir.resolve("headblocks.db"));
+
+            String result = serviceWithDataFolder.backupDatabase("save-");
+
+            assertThat(result).isNotNull();
+            assertThat(result).startsWith("headblocks.db.save-");
+            assertThat(Files.exists(tempDir.resolve(result))).isTrue();
+        }
+
+        @Test
+        void dbFileNotExists_returnsNull() {
+            String result = serviceWithDataFolder.backupDatabase("save-");
+
+            assertThat(result).isNull();
+        }
+
+        @Test
+        void copyFails_returnsNull() throws IOException {
+            Files.createFile(tempDir.resolve("headblocks.db"));
+
+            File backupBlocker = tempDir.resolve("headblocks.db.fail-" + java.time.LocalDateTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"))).toFile();
+            backupBlocker.mkdir();
+
+            String result = serviceWithDataFolder.backupDatabase("fail-");
+
+            assertThat(result).isNull();
         }
     }
 }

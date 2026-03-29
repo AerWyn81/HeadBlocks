@@ -13,6 +13,7 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.*;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
@@ -1113,5 +1115,174 @@ class HBHuntConfigServiceTest {
         assertThat(loaded).isNotNull();
         assertThat(loaded.getConfig().getHologramsFoundLines()).containsExactly("&aFound!");
         assertThat(loaded.getConfig().getHologramsNotFoundLines()).containsExactly("&cNot found");
+    }
+
+    // =========================================================================
+    // loadLocationsFromHunt with actual location data
+    // =========================================================================
+
+    @Nested
+    class LoadLocationsWithData {
+
+        @Test
+        void loadLocationsFromHunt_withValidLocations_returnsHeadLocations() throws IOException {
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getWorld(anyString())).thenReturn(null);
+
+                UUID head1 = UUID.randomUUID();
+                UUID head2 = UUID.randomUUID();
+
+                File huntFile = new File(tempDir.toFile(), "hunts/loc-test.yml");
+                YamlConfiguration yaml = new YamlConfiguration();
+                yaml.set("id", "loc-test");
+                yaml.set("displayName", "Loc Test");
+                yaml.set("state", "ACTIVE");
+
+                yaml.set("locations." + head1 + ".name", "head_one");
+                yaml.set("locations." + head1 + ".location.x", 10.5);
+                yaml.set("locations." + head1 + ".location.y", 64.0);
+                yaml.set("locations." + head1 + ".location.z", 20.5);
+                yaml.set("locations." + head1 + ".location.world", "world");
+
+                yaml.set("locations." + head2 + ".name", "head_two");
+                yaml.set("locations." + head2 + ".location.x", -5.5);
+                yaml.set("locations." + head2 + ".location.y", 100.0);
+                yaml.set("locations." + head2 + ".location.z", 0.5);
+                yaml.set("locations." + head2 + ".location.world", "nether");
+
+                yaml.save(huntFile);
+
+                huntConfigService.invalidateAllYamlCaches();
+                List<HeadLocation> locations = huntConfigService.loadLocationsFromHunt("loc-test");
+
+                assertThat(locations).hasSize(2);
+                assertThat(locations).extracting(HeadLocation::getHuntId).containsOnly("loc-test");
+            }
+        }
+
+        @Test
+        void loadLocationsFromHunt_withInvalidUuid_skipsInvalid() throws IOException {
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getWorld(anyString())).thenReturn(null);
+
+                UUID validHead = UUID.randomUUID();
+
+                File huntFile = new File(tempDir.toFile(), "hunts/inv-uuid.yml");
+                YamlConfiguration yaml = new YamlConfiguration();
+                yaml.set("id", "inv-uuid");
+                yaml.set("locations." + validHead + ".name", "valid");
+                yaml.set("locations." + validHead + ".location.x", 1.5);
+                yaml.set("locations." + validHead + ".location.y", 2.0);
+                yaml.set("locations." + validHead + ".location.z", 3.5);
+                yaml.set("locations." + validHead + ".location.world", "world");
+                yaml.set("locations.not-a-valid-uuid.name", "broken");
+                yaml.save(huntFile);
+
+                huntConfigService.invalidateAllYamlCaches();
+                List<HeadLocation> locations = huntConfigService.loadLocationsFromHunt("inv-uuid");
+
+                assertThat(locations).hasSize(1);
+                assertThat(locations.get(0).getUuid()).isEqualTo(validHead);
+            }
+        }
+
+        @Test
+        void loadLocationsFromHunt_locationWithOrderIndex_preservesOrderIndex() throws IOException {
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getWorld(anyString())).thenReturn(null);
+
+                UUID head = UUID.randomUUID();
+
+                File huntFile = new File(tempDir.toFile(), "hunts/order-test.yml");
+                YamlConfiguration yaml = new YamlConfiguration();
+                yaml.set("id", "order-test");
+                yaml.set("locations." + head + ".name", "ordered");
+                yaml.set("locations." + head + ".location.x", 5.5);
+                yaml.set("locations." + head + ".location.y", 70.0);
+                yaml.set("locations." + head + ".location.z", 15.5);
+                yaml.set("locations." + head + ".location.world", "world");
+                yaml.set("locations." + head + ".orderIndex", 3);
+                yaml.save(huntFile);
+
+                huntConfigService.invalidateAllYamlCaches();
+                List<HeadLocation> locations = huntConfigService.loadLocationsFromHunt("order-test");
+
+                assertThat(locations).hasSize(1);
+                assertThat(locations.get(0).getOrderIndex()).isEqualTo(3);
+            }
+        }
+    }
+
+    // =========================================================================
+    // removeLocationFromHunt
+    // =========================================================================
+
+    @Nested
+    class RemoveLocation {
+
+        @Test
+        void removeLocationFromHunt_existingLocation_removesFromYaml() throws IOException {
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getWorld(anyString())).thenReturn(null);
+
+                UUID head = UUID.randomUUID();
+
+                File huntFile = new File(tempDir.toFile(), "hunts/rem-test.yml");
+                YamlConfiguration yaml = new YamlConfiguration();
+                yaml.set("id", "rem-test");
+                yaml.set("locations." + head + ".name", "to_remove");
+                yaml.set("locations." + head + ".location.x", 1.5);
+                yaml.set("locations." + head + ".location.y", 2.0);
+                yaml.set("locations." + head + ".location.z", 3.5);
+                yaml.set("locations." + head + ".location.world", "world");
+                yaml.save(huntFile);
+
+                huntConfigService.invalidateAllYamlCaches();
+
+                // Verify location is loaded before removal
+                List<HeadLocation> before = huntConfigService.loadLocationsFromHunt("rem-test");
+                assertThat(before).hasSize(1);
+
+                huntConfigService.removeLocationFromHunt("rem-test", head);
+
+                // The location is removed from the cached yaml (in memory)
+                // Re-loading from the same cache should yield empty
+                List<HeadLocation> after = huntConfigService.loadLocationsFromHunt("rem-test");
+                assertThat(after).isEmpty();
+            }
+        }
+
+        @Test
+        void removeLocationFromHunt_nonExistentHunt_doesNotThrow() {
+            huntConfigService.removeLocationFromHunt("does-not-exist", UUID.randomUUID());
+        }
+
+        @Test
+        void removeLocationFromHunt_nonExistentLocation_doesNotAffectOthers() throws IOException {
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getWorld(anyString())).thenReturn(null);
+
+                UUID existing = UUID.randomUUID();
+                UUID nonExistent = UUID.randomUUID();
+
+                File huntFile = new File(tempDir.toFile(), "hunts/rem-safe.yml");
+                YamlConfiguration yaml = new YamlConfiguration();
+                yaml.set("id", "rem-safe");
+                yaml.set("locations." + existing + ".name", "keeper");
+                yaml.set("locations." + existing + ".location.x", 1.5);
+                yaml.set("locations." + existing + ".location.y", 2.0);
+                yaml.set("locations." + existing + ".location.z", 3.5);
+                yaml.set("locations." + existing + ".location.world", "world");
+                yaml.save(huntFile);
+
+                huntConfigService.invalidateAllYamlCaches();
+                huntConfigService.removeLocationFromHunt("rem-safe", nonExistent);
+
+                // Existing location should still be present (cache not invalidated, same yaml)
+                List<HeadLocation> remaining = huntConfigService.loadLocationsFromHunt("rem-safe");
+                assertThat(remaining).hasSize(1);
+                assertThat(remaining.get(0).getUuid()).isEqualTo(existing);
+            }
+        }
     }
 }
