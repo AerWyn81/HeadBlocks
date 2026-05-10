@@ -3,6 +3,7 @@
 spigot-api = "1.20.1-R0.1-SNAPSHOT"
 placeholderapi = "2.12.2"
 headdatabase-api = "1.3.2"
+headdb-api = "6.0.0-rc.2"
 packetevents = "2.12.1"
 
 # Libraries
@@ -36,6 +37,7 @@ hangar-publish = "0.1.4"
 spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
 placeholderapi = { module = "me.clip:placeholderapi", version.ref = "placeholderapi" }
 headdatabase-api = { module = "com.arcaniax:HeadDatabase-API", version.ref = "headdatabase-api" }
+headdb-api = { module = "com.github.TheSilentPro.HeadDB:headdb-api", version.ref = "headdb-api" }
 packetevents = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
 
 # Implementation Dependencies

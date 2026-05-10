@@ -45,6 +45,7 @@ val coverageExclusions = listOf(
     "**/hooks/PacketEventsHook.java",
     "**/hooks/PacketEventsHookImpl.java",
     "**/hooks/HeadDatabaseHook.java",
+    "**/hooks/HeadDBHook.java",
 
     // Events (Bukkit-bound, not unit-testable)
     "**/events/OnHeadDatabaseLoaded.java",
@@ -77,6 +78,7 @@ dependencies {
     compileOnly(libs.spigot.api)
     compileOnly(libs.placeholderapi)
     compileOnly(libs.headdatabase.api)
+    compileOnly(libs.headdb.api)
     compileOnly(libs.packetevents)
 
     implementation(libs.jedis)
@@ -199,7 +201,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "packetevents")
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents")
     version = project.version.toString()
     website = "https://just2craft.fr"
 
@@ -251,6 +253,9 @@ hangarPublish {
                         required = false
                     }
                     hangar("HeadDatabase") {
+                        required = false
+                    }
+                    hangar("HeadDB") {
                         required = false
                     }
                     hangar("packetevents") {

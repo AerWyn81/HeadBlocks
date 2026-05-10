@@ -2,26 +2,44 @@ package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
+import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.events.OnHeadDatabaseLoaded;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.arcaniax.hdb.enums.CategoryEnum;
 import me.arcaniax.hdb.object.head.Head;
 import org.bukkit.Bukkit;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
-public class HeadDatabaseHook {
-    private final ServiceRegistry registry;
+public class HeadDatabaseHook implements HeadProviderHook {
+    public static final String PREFIX = "hdb";
+
+    private final PluginProvider pluginProvider;
+    private ServiceRegistry registry;
     private HeadDatabaseAPI headDatabaseAPI;
 
-    public HeadDatabaseHook(ServiceRegistry registry) {
-        this.registry = registry;
+    public HeadDatabaseHook(PluginProvider pluginProvider) {
+        this.pluginProvider = pluginProvider;
     }
 
-    public boolean init() {
+    @Override
+    public String prefix() {
+        return PREFIX;
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return pluginProvider.isHeadDatabaseActive();
+    }
+
+    @Override
+    public boolean init(ServiceRegistry registry) {
+        this.registry = registry;
         var plugin = HeadBlocks.getInstance();
 
         try {
@@ -49,7 +67,7 @@ public class HeadDatabaseHook {
             // If the list is not empty, then the database is already loaded
             List<Head> heads = headDatabaseAPI.getHeads(CategoryEnum.ALPHABET);
             if (heads != null && !heads.isEmpty()) {
-                this.loadHeadsHDB();
+                this.loadTextures();
             }
         } catch (Exception ignored) {
         }
@@ -58,7 +76,17 @@ public class HeadDatabaseHook {
         return true;
     }
 
-    public void loadHeadsHDB() {
+    @Override
+    public HBHead createHead(ItemStack base, String rawId) {
+        return new HBHeadHDB(base, rawId);
+    }
+
+    @Override
+    public void loadTextures() {
+        if (registry == null || headDatabaseAPI == null) {
+            return;
+        }
+
         registry.getHeadService().getHeads().stream()
                 .filter(HBHeadHDB.class::isInstance)
                 .map(HBHeadHDB.class::cast)
@@ -75,4 +103,5 @@ public class HeadDatabaseHook {
                     LogUtil.info("Loaded HeadDatabase head id {0}.", h.getId());
                 });
     }
+
 }

@@ -20,4 +20,6 @@ public interface PluginProvider {
     boolean isPacketEventsActive();
 
     boolean isHeadDatabaseActive();
+
+    boolean isHeadDBActive();
 }

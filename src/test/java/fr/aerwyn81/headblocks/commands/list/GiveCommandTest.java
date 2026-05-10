@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadHeadDB;
 import fr.aerwyn81.headblocks.services.HeadService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -232,7 +233,7 @@ class GiveCommandTest {
         void hdbHeadNotLoaded_sendsNotLoadedMessage() {
             HBHeadHDB hdbHead = mock(HBHeadHDB.class);
             when(hdbHead.isLoaded()).thenReturn(false);
-            when(hdbHead.getId()).thenReturn("hdb-123");
+            when(hdbHead.getDisplayId()).thenReturn("hdb-123");
             ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(hdbHead));
             when(headService.getHeads()).thenReturn(heads);
 
@@ -244,6 +245,56 @@ class GiveCommandTest {
                 assertThat(result).isTrue();
                 // headGiven is 0, so HeadGiven message should not be sent
                 verify(languageService, never()).message("Messages.HeadGiven");
+            }
+        }
+    }
+
+    @Nested
+    class HeadDBHeadCheck {
+
+        @Test
+        void headDBHeadNotLoaded_sendsNotLoadedMessage() {
+            HBHeadHeadDB headDBHead = mock(HBHeadHeadDB.class);
+            when(headDBHead.isLoaded()).thenReturn(false);
+            when(headDBHead.getDisplayId()).thenReturn("5678");
+            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(headDBHead));
+            when(headService.getHeads()).thenReturn(heads);
+
+            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
+                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
+
+                boolean result = command.perform(player, new String[]{"give"});
+
+                assertThat(result).isTrue();
+                verify(languageService, never()).message("Messages.HeadGiven");
+                verify(languageService).message("Messages.HeadNotYetLoaded");
+            }
+        }
+
+        @Test
+        void mixedLoadedAndNotLoaded_givesOnlyLoaded() {
+            HBHeadHDB loadedHdb = mock(HBHeadHDB.class);
+            when(loadedHdb.isLoaded()).thenReturn(true);
+            ItemStack loadedItem = mock(ItemStack.class);
+            when(loadedHdb.getItemStack()).thenReturn(loadedItem);
+
+            HBHeadHeadDB unloadedHeadDb = mock(HBHeadHeadDB.class);
+            when(unloadedHeadDb.isLoaded()).thenReturn(false);
+            when(unloadedHeadDb.getDisplayId()).thenReturn("99");
+
+            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(loadedHdb, unloadedHeadDb));
+            when(headService.getHeads()).thenReturn(heads);
+            when(player.getInventory()).thenReturn(playerInventory);
+
+            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
+                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
+
+                boolean result = command.perform(player, new String[]{"give"});
+
+                assertThat(result).isTrue();
+                verify(playerInventory, times(1)).addItem(loadedItem);
+                verify(languageService).message("Messages.HeadGiven");
+                verify(languageService).message("Messages.HeadNotYetLoaded");
             }
         }
     }

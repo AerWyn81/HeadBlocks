@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
@@ -63,6 +64,7 @@ class HeadServiceTest {
     @BeforeEach
     void setUp() throws Exception {
         headService = new HeadService(configService, storageService, languageService, scheduler, pluginProvider);
+        assertThat(headService.getHeadProviders()).isEmpty();
         headService.setHologramService(hologramService);
         headService.setHuntService(huntService);
         headService.setHuntConfigService(huntConfigService);
@@ -122,6 +124,39 @@ class HeadServiceTest {
         lenient().when(hl.getLocation()).thenReturn(location);
         lenient().when(hl.isCharged()).thenReturn(charged);
         return hl;
+    }
+
+    // =========================================================================
+    // HeadProviderHook map
+    // =========================================================================
+
+    @Nested
+    class Providers {
+
+        @Test
+        void defaultConstructor_emptyProviders() {
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider);
+
+            assertThat(svc.getHeadProviders()).isEmpty();
+        }
+
+        @Test
+        void providersMap_isExposed() {
+            HeadProviderHook hook = mock(HeadProviderHook.class);
+            Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
+            providers.put("custom", hook);
+
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
+
+            assertThat(svc.getHeadProviders()).containsEntry("custom", hook);
+        }
+
+        @Test
+        void nullProviders_treatedAsEmpty() {
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, null);
+
+            assertThat(svc.getHeadProviders()).isEmpty();
+        }
     }
 
     // =========================================================================

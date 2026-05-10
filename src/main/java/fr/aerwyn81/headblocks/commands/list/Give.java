@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.head.HBHead;
-import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
+import fr.aerwyn81.headblocks.data.head.LoadableHead;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -77,12 +77,10 @@ public class Give implements Cmd {
 
         int headGiven = 0;
         for (HBHead head : headsToGive) {
-            if (head instanceof HBHeadHDB headHDB) {
-                if (!headHDB.isLoaded()) {
-                    player.sendMessage(registry.getLanguageService().message("Messages.HeadNotYetLoaded")
-                            .replace("%id%", String.valueOf(headHDB.getId())));
-                    continue;
-                }
+            if (head instanceof LoadableHead loadable && !loadable.isLoaded()) {
+                player.sendMessage(registry.getLanguageService().message("Messages.HeadNotYetLoaded")
+                        .replace("%id%", loadable.getDisplayId()));
+                continue;
             }
 
             player.getInventory().addItem(head.getItemStack());

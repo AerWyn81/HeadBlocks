@@ -6,9 +6,9 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
-import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
@@ -26,10 +26,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class HeadService {
@@ -38,6 +35,7 @@ public class HeadService {
     private final LanguageService languageService;
     private final SchedulerAdapter scheduler;
     private final PluginProvider pluginProvider;
+    private final Map<String, HeadProviderHook> headProviders;
     private HologramService hologramService; // setter-injected (circular dep)
     private HuntService huntService; // setter-injected
     private HuntConfigService huntConfigService; // setter-injected
@@ -54,11 +52,22 @@ public class HeadService {
     public HeadService(ConfigService configService, StorageService storageService,
                        LanguageService languageService, SchedulerAdapter scheduler,
                        PluginProvider pluginProvider) {
+        this(configService, storageService, languageService, scheduler, pluginProvider, Collections.emptyMap());
+    }
+
+    public HeadService(ConfigService configService, StorageService storageService,
+                       LanguageService languageService, SchedulerAdapter scheduler,
+                       PluginProvider pluginProvider, Map<String, HeadProviderHook> headProviders) {
         this.configService = configService;
         this.storageService = storageService;
         this.languageService = languageService;
         this.scheduler = scheduler;
         this.pluginProvider = pluginProvider;
+        this.headProviders = headProviders == null ? Collections.emptyMap() : headProviders;
+    }
+
+    public Map<String, HeadProviderHook> getHeadProviders() {
+        return headProviders;
     }
 
     public void setHologramService(HologramService hologramService) {
@@ -370,24 +379,35 @@ public class HeadService {
                     head.setItemMeta(headMeta);
                     heads.add(HeadUtils.createHead(new HBHeadDefault(head), parts[1]));
                     break;
-                case "hdb":
-                    if (!pluginProvider.isHeadDatabaseActive()) {
-                        LogUtil.error("Cannot load hdb head {0} without HeadDatabase installed", configHead);
+                default:
+                    HeadProviderHook provider = headProviders.get(parts[0]);
+                    if (provider == null) {
+                        LogUtil.error("The {0} type is not yet supported!", parts[0]);
                         continue;
                     }
-
+                    if (!provider.isAvailable()) {
+                        LogUtil.error("Cannot load {0} head {1} without the corresponding plugin installed", parts[0], configHead);
+                        continue;
+                    }
                     head.setItemMeta(headMeta);
-                    heads.add(new HBHeadHDB(head, parts[1]));
-                    break;
-                default:
-                    LogUtil.error("The {0} type is not yet supported!", parts[0]);
+                    try {
+                        heads.add(provider.createHead(head, parts[1]));
+                    } catch (IllegalArgumentException ex) {
+                        LogUtil.error("Invalid head {0} (l.{1}): {2}", configHead, (i + 1), ex.getMessage());
+                    }
             }
         }
 
-        var headsHdb = heads.stream()
-                .filter(HBHeadHDB.class::isInstance).count();
+        long providerHeadCount = heads.size() - heads.stream()
+                .filter(h -> h instanceof HBHeadDefault || h instanceof HBHeadPlayer)
+                .count();
+        long localHeadCount = heads.size() - providerHeadCount;
 
-        LogUtil.success("Loaded {0} (+{1} HeadDatabase heads) configuration heads!", Math.abs(heads.size() - headsHdb), headsHdb);
+        if (providerHeadCount == 0) {
+            LogUtil.success("Loaded {0} configuration heads!", localHeadCount);
+        } else {
+            LogUtil.success("Loaded {0} (+{1} provider heads) configuration heads!", localHeadCount, providerHeadCount);
+        }
     }
 
     public ArrayList<HBHead> getHeads() {

@@ -5,26 +5,26 @@ import fr.aerwyn81.headblocks.data.head.HeadType;
 import fr.aerwyn81.headblocks.data.head.LoadableHead;
 import org.bukkit.inventory.ItemStack;
 
-public class HBHeadHDB extends HBHead implements LoadableHead {
-    private String id;
+public class HBHeadHeadDB extends HBHead implements LoadableHead {
+    private int id;
     private boolean loaded;
 
-    public HBHeadHDB(ItemStack head, String hdbId) {
+    public HBHeadHeadDB(ItemStack head, int headDbId) {
         setItemStack(head);
-        this.id = hdbId;
+        this.id = headDbId;
         this.loaded = false;
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
     public HeadType getType() {
-        return HeadType.HDB;
+        return HeadType.HEADDB;
     }
 
     @Override
@@ -38,6 +38,6 @@ public class HBHeadHDB extends HBHead implements LoadableHead {
 
     @Override
     public String getDisplayId() {
-        return id;
+        return String.valueOf(id);
     }
 }

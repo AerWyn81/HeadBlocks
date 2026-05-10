@@ -48,4 +48,9 @@ public class HeadBlocksPluginProvider implements PluginProvider {
     public boolean isHeadDatabaseActive() {
         return HeadBlocks.isHeadDatabaseActive;
     }
+
+    @Override
+    public boolean isHeadDBActive() {
+        return HeadBlocks.isHeadDBActive;
+    }
 }

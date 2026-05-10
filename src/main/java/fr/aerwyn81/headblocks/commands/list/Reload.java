@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
-import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
+import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -29,15 +29,11 @@ public class Reload implements Cmd {
 
         registry.reload();
 
-        if (HeadBlocks.isHeadDatabaseActive) {
-            if (plugin.getHeadDatabaseHook() == null) {
-                var headDatabaseApi = new HeadDatabaseHook(registry);
-                if (headDatabaseApi.init()) {
-                    plugin.setHeadDatabaseHook(headDatabaseApi);
-                }
+        for (HeadProviderHook provider : registry.getHeadService().getHeadProviders().values()) {
+            if (!provider.isAvailable()) {
+                continue;
             }
-
-            plugin.getHeadDatabaseHook().loadHeadsHDB();
+            provider.loadTextures();
         }
 
         var players = Collections.synchronizedCollection(Bukkit.getOnlinePlayers());

@@ -6,9 +6,7 @@ import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
-import fr.aerwyn81.headblocks.hooks.HeadDatabaseHook;
-import fr.aerwyn81.headblocks.hooks.PacketEventsHook;
-import fr.aerwyn81.headblocks.hooks.PlaceholderHook;
+import fr.aerwyn81.headblocks.hooks.*;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.runnables.TimedRunTask;
 import fr.aerwyn81.headblocks.services.ConfigService;
@@ -27,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @SuppressWarnings("ConstantConditions")
@@ -36,12 +35,14 @@ public final class HeadBlocks extends JavaPlugin {
     public static boolean isPlaceholderApiActive;
     public static boolean isReloadInProgress;
     public static boolean isHeadDatabaseActive;
+    public static boolean isHeadDBActive;
     public static boolean isPacketEventsActive;
 
     private ServiceRegistry serviceRegistry;
     private ConfigService earlyConfigService;
     private GlobalTask globalTask;
     private HeadDatabaseHook headDatabaseHook;
+    private HeadDBHook headDBHook;
     private PacketEventsHook packetEventsHook;
 
     private HoloEasy holoEasyLib;
@@ -97,6 +98,8 @@ public final class HeadBlocks extends JavaPlugin {
 
         isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
 
+        isHeadDBActive = Bukkit.getPluginManager().isPluginEnabled("HeadDB");
+
         isPlaceholderApiActive = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
 
         isPacketEventsActive = Bukkit.getPluginManager().isPluginEnabled("packetevents");
@@ -106,9 +109,20 @@ public final class HeadBlocks extends JavaPlugin {
         SchedulerAdapter scheduler = new BukkitSchedulerAdapter(this);
         CommandDispatcher commandDispatcher = new BukkitCommandDispatcher();
 
+        // Providers must exist before SR creation because loadHeads() consults them.
+        Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
+        if (isHeadDatabaseActive) {
+            this.headDatabaseHook = new HeadDatabaseHook(pluginProvider);
+            providers.put(headDatabaseHook.prefix(), headDatabaseHook);
+        }
+        if (isHeadDBActive) {
+            this.headDBHook = new HeadDBHook(pluginProvider, scheduler);
+            providers.put(headDBHook.prefix(), headDBHook);
+        }
+
         this.serviceRegistry = new ServiceRegistry(
                 pluginProvider, scheduler, commandDispatcher,
-                configFile, locationFile, holoEasyLib, earlyConfigService);
+                configFile, locationFile, holoEasyLib, earlyConfigService, providers);
 
         packetEventsHook.init(serviceRegistry);
 
@@ -118,11 +132,11 @@ public final class HeadBlocks extends JavaPlugin {
 
         startInternalTaskTimer();
 
-        if (isHeadDatabaseActive) {
-            this.headDatabaseHook = new HeadDatabaseHook(serviceRegistry);
-            if (!this.headDatabaseHook.init()) {
-                isHeadDatabaseActive = false;
-            }
+        if (isHeadDatabaseActive && !this.headDatabaseHook.init(serviceRegistry)) {
+            isHeadDatabaseActive = false;
+        }
+        if (isHeadDBActive && !this.headDBHook.init(serviceRegistry)) {
+            isHeadDBActive = false;
         }
 
         getCommand("headblocks").setExecutor(new HBCommandExecutor(serviceRegistry));
@@ -239,6 +253,14 @@ public final class HeadBlocks extends JavaPlugin {
 
     public void setHeadDatabaseHook(HeadDatabaseHook headDatabaseHook) {
         this.headDatabaseHook = headDatabaseHook;
+    }
+
+    public HeadDBHook getHeadDBHook() {
+        return headDBHook;
+    }
+
+    public void setHeadDBHook(HeadDBHook headDBHook) {
+        this.headDBHook = headDBHook;
     }
 
     public HoloEasy getHoloEasyLib() {

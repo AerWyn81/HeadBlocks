@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.data.head;
 
 import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
+import fr.aerwyn81.headblocks.data.head.types.HBHeadHeadDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,8 @@ class HBHeadTypesTest {
     // --- HeadType enum ---
 
     @Test
-    void headType_hasThreeValues() {
-        assertThat(HeadType.values()).containsExactly(HeadType.DEFAULT, HeadType.PLAYER, HeadType.HDB);
+    void headType_hasFourValues() {
+        assertThat(HeadType.values()).containsExactly(HeadType.DEFAULT, HeadType.PLAYER, HeadType.HDB, HeadType.HEADDB);
     }
 
     @Test
@@ -31,6 +32,11 @@ class HBHeadTypesTest {
     @Test
     void headType_valueOf_hdb() {
         assertThat(HeadType.valueOf("HDB")).isEqualTo(HeadType.HDB);
+    }
+
+    @Test
+    void headType_valueOf_headdb() {
+        assertThat(HeadType.valueOf("HEADDB")).isEqualTo(HeadType.HEADDB);
     }
 
     // --- HBHead base class ---
@@ -143,5 +149,64 @@ class HBHeadTypesTest {
         head.setId("new-id");
 
         assertThat(head.getId()).isEqualTo("new-id");
+    }
+
+    @Test
+    void hbHeadHDB_implementsLoadableHead() {
+        HBHeadHDB head = new HBHeadHDB(mock(ItemStack.class), "abc-42");
+
+        assertThat(head).isInstanceOf(LoadableHead.class);
+        assertThat(((LoadableHead) head).getDisplayId()).isEqualTo("abc-42");
+    }
+
+    // --- HBHeadHeadDB ---
+
+    @Test
+    void hbHeadHeadDB_constructorSetsItemStackAndId() {
+        ItemStack item = mock(ItemStack.class);
+        HBHeadHeadDB head = new HBHeadHeadDB(item, 42);
+
+        assertThat(head.getItemStack()).isSameAs(item);
+        assertThat(head.getId()).isEqualTo(42);
+    }
+
+    @Test
+    void hbHeadHeadDB_getType_returnsHeadDB() {
+        HBHeadHeadDB head = new HBHeadHeadDB(mock(ItemStack.class), 1);
+
+        assertThat(head.getType()).isEqualTo(HeadType.HEADDB);
+    }
+
+    @Test
+    void hbHeadHeadDB_defaultNotLoaded() {
+        HBHeadHeadDB head = new HBHeadHeadDB(mock(ItemStack.class), 1);
+
+        assertThat(head.isLoaded()).isFalse();
+    }
+
+    @Test
+    void hbHeadHeadDB_setLoaded() {
+        HBHeadHeadDB head = new HBHeadHeadDB(mock(ItemStack.class), 1);
+
+        head.setLoaded(true);
+
+        assertThat(head.isLoaded()).isTrue();
+    }
+
+    @Test
+    void hbHeadHeadDB_setId() {
+        HBHeadHeadDB head = new HBHeadHeadDB(mock(ItemStack.class), 1);
+
+        head.setId(99);
+
+        assertThat(head.getId()).isEqualTo(99);
+    }
+
+    @Test
+    void hbHeadHeadDB_implementsLoadableHead() {
+        HBHeadHeadDB head = new HBHeadHeadDB(mock(ItemStack.class), 7);
+
+        assertThat(head).isInstanceOf(LoadableHead.class);
+        assertThat(((LoadableHead) head).getDisplayId()).isEqualTo("7");
     }
 }

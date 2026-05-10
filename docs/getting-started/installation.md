@@ -17,8 +17,9 @@ HeadBlocks has optional dependencies.
 ### Optional Dependencies
 
 1. [**PlaceholderAPI**](https://www.spigotmc.org/resources/placeholderapi.6245/)
-2. [**HeadDatabase**](https://www.spigotmc.org/resources/head-database.14280)
-3. [**PacketEvents**](https://www.spigotmc.org/resources/packetevents-api.80279/)
+2. [**HeadDatabase**](https://www.spigotmc.org/resources/head-database.14280) (Arcaniax)
+3. [**HeadDB**](https://github.com/TheSilentPro/HeadDB) (TheSilentPro)
+4. [**PacketEvents**](https://www.spigotmc.org/resources/packetevents-api.80279/)
 
 ## Plugin Installation
 

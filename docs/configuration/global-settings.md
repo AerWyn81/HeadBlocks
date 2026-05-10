@@ -28,16 +28,22 @@ Reloading the plugin has no effect on this property. Restart the server to apply
 heads:
   - 'default:Base64String'
   - 'hdb:Id'
+  - 'headdb:Id'
   - 'player:PlayerName'
 ```
 
-Head textures used when placing HeadBlocks. Three formats are available:
+Head textures used when placing HeadBlocks. Four formats are available:
 
 | Format             | Description                                                                                                    |
 |--------------------|----------------------------------------------------------------------------------------------------------------|
 | `default:<base64>` | Base64 encoded texture. Get the **Value** from [Minecraft-Heads](https://minecraft-heads.com/) (Other section) |
-| `hdb:<id>`         | Head ID from [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/) plugin                    |
+| `hdb:<id>`         | Head ID from the [HeadDatabase](https://www.spigotmc.org/resources/head-database.14280/) plugin (Arcaniax)     |
+| `headdb:<id>`      | Numeric head ID from the [HeadDB](https://github.com/TheSilentPro/HeadDB) plugin (TheSilentPro)                |
 | `player:<name>`    | A player's name — uses their skin head texture                                                                 |
+
+{% hint style="info" %}
+`hdb:` and `headdb:` are two separate plugins with similar names. Both can be installed simultaneously; pick the prefix matching the plugin you have. IDs are **not** interchangeable between them.
+{% endhint %}
 
 {% hint style="warning" %}
 Skulls and BetterHeads plugins are not supported due to API incompatibility.
