@@ -175,7 +175,7 @@ public class HuntConfigService {
 
         renameLegacyFile(locationFile);
         invalidateAllYamlCaches();
-        LogUtil.info("Migration complete: {0} head(s) migrated to default hunt.", migrated);
+        LogUtil.success("Migration complete: {0} head(s) migrated to default hunt.", migrated);
     }
 
     private void renameLegacyFile(File locationFile) {
@@ -295,7 +295,7 @@ public class HuntConfigService {
 
         try {
             yaml.save(defaultFile);
-            LogUtil.info("hunts/default.yml generated successfully.");
+            LogUtil.success("hunts/default.yml generated successfully.");
         } catch (IOException e) {
             LogUtil.error("Failed to generate hunts/default.yml: {0}", e.getMessage());
         }

@@ -152,7 +152,7 @@ public class HeadService {
                             storageService.removeHead(head, true);
                         }
 
-                        LogUtil.info("Headblocks heads table cleaned!");
+                        LogUtil.success("Headblocks heads table cleaned!");
                     }
                 }
             } catch (Exception e) {
@@ -160,7 +160,7 @@ public class HeadService {
             }
         }
 
-        LogUtil.info("Loaded {0} locations!", headLocations.size());
+        LogUtil.success("Loaded {0} locations!", headLocations.size());
     }
 
     private void addHeadToSpin(HeadLocation headLoc, int offset) {
@@ -387,7 +387,7 @@ public class HeadService {
         var headsHdb = heads.stream()
                 .filter(HBHeadHDB.class::isInstance).count();
 
-        LogUtil.info("Loaded {0} (+{1} HeadDatabase heads) configuration heads!", Math.abs(heads.size() - headsHdb), headsHdb);
+        LogUtil.success("Loaded {0} (+{1} HeadDatabase heads) configuration heads!", Math.abs(heads.size() - headsHdb), headsHdb);
     }
 
     public ArrayList<HBHead> getHeads() {

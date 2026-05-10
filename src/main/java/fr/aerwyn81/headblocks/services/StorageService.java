@@ -95,7 +95,7 @@ public class StorageService {
             storage.init();
 
             if (configService.redisEnabled()) {
-                LogUtil.info("Redis cache properly connected!");
+                LogUtil.success("Redis cache properly connected!");
             }
         } catch (InternalException ex) {
             LogUtil.error("Error while trying to initialize the storage: {0}", ex.getMessage());
@@ -118,9 +118,9 @@ public class StorageService {
 
         if (!storageError) {
             if (configService.databaseEnabled()) {
-                LogUtil.info("{0} storage properly connected!", configService.databaseType());
+                LogUtil.success("{0} storage properly connected!", configService.databaseType());
             } else {
-                LogUtil.info("SQLite storage properly connected!");
+                LogUtil.success("SQLite storage properly connected!");
             }
         }
     }
@@ -217,7 +217,7 @@ public class StorageService {
                 throw ex;
             }
             dbVersion = 5;
-            LogUtil.info("Database migration to v5 completed successfully.");
+            LogUtil.success("Database migration to v5 completed successfully.");
         }
 
         if (dbVersion != initialVersion) {

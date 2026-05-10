@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.hangar.publish)
 }
 
-version = "3.0.0"
+version = "3.0.1"
 
 val coverageExclusions = listOf(
     // Third-party shaded libraries
@@ -103,7 +103,7 @@ dependencies {
 
 tasks {
     runServer {
-        minecraftVersion("1.21.11")
+        minecraftVersion("26.1.2")
 
         systemProperty("com.mojang.eula.agree", "true")
         systemProperty("terminal.ansi", true)

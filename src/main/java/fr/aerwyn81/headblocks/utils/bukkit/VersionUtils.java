@@ -4,6 +4,8 @@ import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public enum VersionUtils {
     v1_20_R1(1201, 120),
@@ -22,7 +24,12 @@ public enum VersionUtils {
     v1_21_R8(1218, 128),
     v1_21_R9(1219, 129),
     v1_21_R10(12110, 1210),
-    v1_21_R11(12111, 12111);
+    v1_21_R11(12111, 12111),
+    v26_1(26010000, 261, 26),
+    v26_1_1(26010001, 2611),
+    v26_1_2(26010002, 2612);
+
+    private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
 
     private static VersionUtils version;
     private final int[] versionId;
@@ -44,21 +51,37 @@ public enum VersionUtils {
         }
 
         try {
-            version = extractFromString(Bukkit.getBukkitVersion().split("-")[0].replaceAll("\\.", ""));
+            version = extractFromString(Bukkit.getBukkitVersion());
         } catch (Exception e) {
-            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), v1_21_R11.name());
-            version = v1_21_R11;
+            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), v26_1_2.name());
+            version = v26_1_2;
         }
 
         return version;
     }
 
-    private static VersionUtils extractFromString(String ver) throws IllegalArgumentException {
-        for (VersionUtils version : VersionUtils.values())
-            if (Arrays.stream(version.versionId).anyMatch(v -> ver.equals(String.valueOf(v))))
-                return version;
+    private static VersionUtils extractFromString(String bukkitVersion) {
+        if (bukkitVersion == null || bukkitVersion.isEmpty()) {
+            throw new IllegalArgumentException("Empty bukkit version string");
+        }
 
-        throw new RuntimeException("Unknown version: " + ver + ". Please report to developer. HeadBlocks will use latest.");
+        Matcher matcher = VERSION_PATTERN.matcher(bukkitVersion);
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("Unrecognized bukkit version format: " + bukkitVersion);
+        }
+
+        String major = matcher.group(1);
+        String minor = matcher.group(2);
+        String patch = matcher.group(3);
+        String key = patch != null ? major + minor + patch : major + minor;
+
+        for (VersionUtils v : VersionUtils.values()) {
+            if (Arrays.stream(v.versionId).anyMatch(id -> key.equals(String.valueOf(id)))) {
+                return v;
+            }
+        }
+
+        throw new RuntimeException("Unknown version: " + bukkitVersion + ". Please report to developer. HeadBlocks will use latest.");
     }
 
     public static boolean isAtLeastVersion(VersionUtils version) {

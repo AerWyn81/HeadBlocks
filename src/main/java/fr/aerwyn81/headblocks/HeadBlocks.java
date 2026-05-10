@@ -177,7 +177,7 @@ public final class HeadBlocks extends JavaPlugin {
             }));
         }
 
-        LogUtil.info("HeadBlocks successfully loaded!");
+        LogUtil.success("HeadBlocks successfully loaded!");
     }
 
     private void initializeExternals() {

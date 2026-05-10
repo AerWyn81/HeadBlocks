@@ -54,7 +54,7 @@ public class HeadDatabaseHook {
         } catch (Exception ignored) {
         }
 
-        LogUtil.info("HeadDatabase successfully hooked!");
+        LogUtil.success("HeadDatabase successfully hooked!");
         return true;
     }
 

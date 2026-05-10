@@ -49,7 +49,7 @@ public class HuntService {
 
         knownHuntVersion = storageService.getHuntVersion();
 
-        LogUtil.info("Loaded {0} hunt(s): [{1}]", huntsById.size(),
+        LogUtil.success("Loaded {0} hunt(s): [{1}]", huntsById.size(),
                 huntsById.values().stream().map(HBHunt::getId).collect(Collectors.joining(", ")));
     }
 

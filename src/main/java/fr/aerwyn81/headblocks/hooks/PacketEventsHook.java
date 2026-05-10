@@ -17,7 +17,7 @@ public class PacketEventsHook {
             isEnabled = packetEventsImpl.load(plugin);
 
             if (isEnabled) {
-                LogUtil.info("HeadBlocks PacketEvents successfully hooked!");
+                LogUtil.success("HeadBlocks PacketEvents successfully hooked!");
             }
 
             return isEnabled;

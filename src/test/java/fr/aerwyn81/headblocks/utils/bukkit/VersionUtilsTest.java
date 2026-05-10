@@ -105,7 +105,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v1_21_R11);
+            assertThat(result).isEqualTo(VersionUtils.v26_1_2);
         }
     }
 
@@ -118,7 +118,65 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v1_21_R11);
+            assertThat(result).isEqualTo(VersionUtils.v26_1_2);
+        }
+    }
+
+    // --- Paper calver convention (26.x.y) ---
+
+    @Test
+    void getVersion_26_1_2_returnsV26_1_2() {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(Bukkit::getBukkitVersion).thenReturn("26.1.2-61-8dea6f1");
+
+            VersionUtils result = VersionUtils.getVersion();
+
+            assertThat(result).isEqualTo(VersionUtils.v26_1_2);
+        }
+    }
+
+    @Test
+    void getVersion_26_1_returnsV26_1_viaAlternateId() {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(Bukkit::getBukkitVersion).thenReturn("26.1-R0.1-SNAPSHOT");
+
+            VersionUtils result = VersionUtils.getVersion();
+
+            assertThat(result).isEqualTo(VersionUtils.v26_1);
+        }
+    }
+
+    @Test
+    void isAtLeastVersion_26_1_2_isAboveAll_1_x() {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(Bukkit::getBukkitVersion).thenReturn("26.1.2-61-8dea6f1");
+
+            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.v1_20_R1)).isTrue();
+            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.v1_21_R11)).isTrue();
+        }
+    }
+
+    @Test
+    void getVersion_paperBuildSuffixWithoutHyphen_stillParses() {
+        // Real Paper 26.1.2 produced "2612build61" after the legacy split/replace —
+        // make sure the regex parser only looks at the MAJOR.MINOR.PATCH prefix.
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(Bukkit::getBukkitVersion).thenReturn("26.1.2build.61-SNAPSHOT");
+
+            VersionUtils result = VersionUtils.getVersion();
+
+            assertThat(result).isEqualTo(VersionUtils.v26_1_2);
+        }
+    }
+
+    @Test
+    void getVersion_legacyFormatWithRevisionSuffix_stillParses() {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(Bukkit::getBukkitVersion).thenReturn("1.21.5-R0.1-SNAPSHOT");
+
+            VersionUtils result = VersionUtils.getVersion();
+
+            assertThat(result).isEqualTo(VersionUtils.v1_21_R5);
         }
     }
 
