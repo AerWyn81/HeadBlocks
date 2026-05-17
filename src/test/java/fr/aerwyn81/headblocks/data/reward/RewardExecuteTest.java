@@ -80,7 +80,7 @@ class RewardExecuteTest {
         reward.execute(player, headLocation, registry);
 
         ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
-        verify(scheduler).runTaskLater(captor.capture(), eq(1L));
+        verify(scheduler).runTaskGlobalLater(captor.capture(), eq(1L));
 
         captor.getValue().run();
         verify(commandDispatcher).dispatchConsoleCommand("give Steve diamond 1");

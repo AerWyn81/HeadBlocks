@@ -68,7 +68,7 @@ class RewardServiceTest {
             Runnable runnable = invocation.getArgument(0);
             runnable.run();
             return null;
-        }).when(scheduler).runTaskLater(any(Runnable.class), anyLong());
+        }).when(scheduler).runTaskGlobalLater(any(Runnable.class), anyLong());
     }
 
     private List<UUID> playerHeadsOfSize(int size) {

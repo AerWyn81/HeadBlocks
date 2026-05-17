@@ -56,7 +56,7 @@ public class HeadDBHook implements HeadProviderHook {
             return false;
         }
 
-        headAPI.onReady().thenRun(() -> scheduler.runTask(this::loadTextures));
+        headAPI.onReady().thenRun(() -> scheduler.runTaskGlobal(this::loadTextures));
 
         if (headAPI.isReady()) {
             this.loadTextures();
