@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
+import fr.aerwyn81.headblocks.utils.paper.PaperUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -45,7 +46,7 @@ class TpCommandTest {
             assertThat(result).isTrue();
 
             ArgumentCaptor<Location> captor = ArgumentCaptor.forClass(Location.class);
-            verify(player).teleport(captor.capture());
+            PaperUtil.teleportAsync(verify(player), captor.capture());
 
             Location loc = captor.getValue();
             assertThat(loc.getWorld()).isSameAs(world);
@@ -60,7 +61,7 @@ class TpCommandTest {
         boolean result = command.perform(player, new String[]{"tp", "bad"});
 
         assertThat(result).isTrue();
-        verify(player, never()).teleport(any(Location.class));
+        PaperUtil.teleportAsync(verify(player, never()), any(Location.class));
     }
 
     @Test

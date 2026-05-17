@@ -13,6 +13,10 @@ import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.paper.PaperUtil;
+import fr.aerwyn81.headblocks.utils.scheduler.BukkitSchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.FoliaSchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedBarChart;
 import org.bstats.charts.SimplePie;
@@ -32,6 +36,7 @@ import java.util.Map;
 public final class HeadBlocks extends JavaPlugin {
 
     private static HeadBlocks instance;
+    private static SchedulerAdapter scheduler;
     public static boolean isPlaceholderApiActive;
     public static boolean isReloadInProgress;
     public static boolean isHeadDatabaseActive;
@@ -60,7 +65,7 @@ public final class HeadBlocks extends JavaPlugin {
             ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads", "headsTheme"));
         } catch (IOException e) {
             LogUtil.error("Error while loading config file: {0}", e.getMessage());
-            getPluginLoader().disablePlugin(this);
+            getServer().getPluginManager().disablePlugin(this);
             return;
         }
         reloadConfig();
@@ -80,6 +85,7 @@ public final class HeadBlocks extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        scheduler = PaperUtil.isFolia() ? new FoliaSchedulerAdapter(this) : new BukkitSchedulerAdapter(this);
 
         initializeExternals();
 
@@ -92,7 +98,7 @@ public final class HeadBlocks extends JavaPlugin {
             LogUtil.error("***** --------------------------------------- *****");
             LogUtil.error("HeadBlocks does not support your Minecraft Server version: {0}", VersionUtils.getVersion());
             LogUtil.error("***** --------------------------------------- *****");
-            getPluginLoader().disablePlugin(this);
+            getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
@@ -106,7 +112,6 @@ public final class HeadBlocks extends JavaPlugin {
 
         // --- Create ServiceRegistry (DI wiring) ---
         PluginProvider pluginProvider = new HeadBlocksPluginProvider(this);
-        SchedulerAdapter scheduler = new BukkitSchedulerAdapter(this);
         CommandDispatcher commandDispatcher = new BukkitCommandDispatcher();
 
         // Providers must exist before SR creation because loadHeads() consults them.
@@ -149,7 +154,7 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(serviceRegistry), this);
 
-        new TimedRunTask(serviceRegistry).runTaskTimer(this, 0, 2);
+        new TimedRunTask(serviceRegistry).repeatingGlobal(0, 2);
 
         if (serviceRegistry.getConfigService().metricsEnabled()) {
             var m = new Metrics(this, 15495);
@@ -202,7 +207,7 @@ public final class HeadBlocks extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        Bukkit.getScheduler().cancelTasks(this);
+        scheduler.cancelAllTasks();
 
         if (serviceRegistry != null) {
             serviceRegistry.shutdown();
@@ -236,11 +241,15 @@ public final class HeadBlocks extends JavaPlugin {
             return;
         }
 
-        globalTask.runTaskTimer(this, 0, configSvc.delayGlobalTask());
+        globalTask.repeatingGlobal(0, configSvc.delayGlobalTask());
     }
 
     public static HeadBlocks getInstance() {
         return instance;
+    }
+
+    public static SchedulerAdapter getScheduler() {
+        return scheduler;
     }
 
     public ServiceRegistry getServiceRegistry() {

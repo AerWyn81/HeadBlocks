@@ -43,7 +43,7 @@ public class Export implements Cmd {
 
         sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportInProgress")));
 
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getScheduler().runTaskAsync(() -> {
             try {
                 ExportSQLHelper.generateFile(registry, typeDatabase, fileName);
             } catch (Exception ex) {

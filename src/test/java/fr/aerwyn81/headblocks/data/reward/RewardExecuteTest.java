@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;

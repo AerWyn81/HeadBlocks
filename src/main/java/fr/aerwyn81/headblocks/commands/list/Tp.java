@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
+import fr.aerwyn81.headblocks.utils.paper.PaperUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -31,7 +32,7 @@ public class Tp implements Cmd {
                     Float.parseFloat(args[5]),
                     Float.parseFloat(args[6]));
 
-            player.teleport(loc);
+            PaperUtil.teleportAsync(player, loc);
         } catch (Exception ignored) {
         }
 

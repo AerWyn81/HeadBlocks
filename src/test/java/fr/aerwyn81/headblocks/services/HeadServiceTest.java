@@ -9,7 +9,7 @@ import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import org.bukkit.Location;
