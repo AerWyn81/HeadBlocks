@@ -276,21 +276,25 @@ jobs:
           VERSION="${{ steps.get_version.outputs.VERSION }}"
           SPIGOT_LINK="https://www.spigotmc.org/resources/headblocks.97630/updates"
 
-          # Format du message Discord
-          MESSAGE="❗ __New update for HeadBlocks **${VERSION}** is out__ <@&1289687740484685938> ❗
+          # The role ping must stay in `content` (mentions don't notify from inside embeds).
+          # `content` is capped at 2000 chars, so keep it short and put the changelog in an embed.
+          CONTENT=$(printf '❗ __New update for HeadBlocks **%s** is out__ <@&1289687740484685938> ❗\n\nIf you find a bug, let me know in <#912465021836083261> channel!\n\nThanks ❤️' "$VERSION")
 
-          In this update:
-          ${CHANGES}
+          # Embed descriptions are capped at 4096 chars; truncate the changelog to stay safe.
+          DESCRIPTION="$CHANGES"
+          if [ "${#DESCRIPTION}" -gt 4000 ]; then
+            DESCRIPTION=$(printf '%s\n\n… [Read the full changelog](%s)' "${DESCRIPTION:0:3800}" "$SPIGOT_LINK")
+          fi
 
-          If you find a bug, let me know in <#912465021836083261> channel!
+          PAYLOAD=$(jq -n \
+            --arg content "$CONTENT" \
+            --arg title "HeadBlocks $VERSION" \
+            --arg description "$DESCRIPTION" \
+            --arg url "$SPIGOT_LINK" \
+            '{content: $content, embeds: [{title: $title, url: $url, description: $description, color: 5763719}]}')
 
-          Link to the update:
-          ${SPIGOT_LINK}
-
-          Thanks ❤️"
-
-          # Envoie le webhook Discord
-          curl -H "Content-Type: application/json" \
+          # --fail-with-body makes the step go red (instead of silently green) if Discord rejects the payload.
+          curl --fail-with-body -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": $(echo "$MESSAGE" | jq -Rs .)}" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK"
