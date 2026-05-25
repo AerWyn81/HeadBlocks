@@ -13,6 +13,10 @@ import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.AdvancedBarChart;
+import org.bstats.charts.SimplePie;
+import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.holoeasy.HoloEasy;
@@ -148,6 +152,7 @@ public final class HeadBlocks extends JavaPlugin {
         new TimedRunTask(serviceRegistry).runTaskTimer(this, 0, 2);
 
         if (serviceRegistry.getConfigService().metricsEnabled()) {
+            var m = new Metrics(this, 15495);
             m.addCustomChart(new SimplePie("database_type", () -> serviceRegistry.getStorageService().selectedStorageType()));
             m.addCustomChart(new SimplePie("databaseType", () -> serviceRegistry.getStorageService().selectedStorageType()));
             m.addCustomChart(new SingleLineChart("heads", () -> serviceRegistry.getHeadService().getChargedHeadLocations().size()));
