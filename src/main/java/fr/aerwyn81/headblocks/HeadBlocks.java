@@ -13,10 +13,6 @@ import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
-import org.bstats.bukkit.Metrics;
-import org.bstats.charts.AdvancedBarChart;
-import org.bstats.charts.SimplePie;
-import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.holoeasy.HoloEasy;
@@ -152,12 +148,12 @@ public final class HeadBlocks extends JavaPlugin {
         new TimedRunTask(serviceRegistry).runTaskTimer(this, 0, 2);
 
         if (serviceRegistry.getConfigService().metricsEnabled()) {
-            var m = new Metrics(this, 15495);
             m.addCustomChart(new SimplePie("database_type", () -> serviceRegistry.getStorageService().selectedStorageType()));
+            m.addCustomChart(new SimplePie("databaseType", () -> serviceRegistry.getStorageService().selectedStorageType()));
             m.addCustomChart(new SingleLineChart("heads", () -> serviceRegistry.getHeadService().getChargedHeadLocations().size()));
             m.addCustomChart(new SimplePie("lang", () -> serviceRegistry.getLanguageService().language()));
             m.addCustomChart(new SingleLineChart("hunts", () -> serviceRegistry.getHuntService().getAllHunts().size()));
-            m.addCustomChart(new AdvancedBarChart("hunt_behaviors", () -> {
+            m.addCustomChart(new AdvancedBarChart("huntBehaviors", () -> {
                 Map<String, int[]> map = new HashMap<>();
                 for (var hunt : serviceRegistry.getHuntService().getAllHunts()) {
                     for (var behavior : hunt.getBehaviors()) {
@@ -171,21 +167,14 @@ public final class HeadBlocks extends JavaPlugin {
                 var heads = serviceRegistry.getHeadService().getChargedHeadLocations();
                 Map<String, int[]> map = new HashMap<>();
 
-                if (heads.stream().anyMatch(h -> h.getOrderIndex() != -1)) {
-                    map.put("Order", new int[]{1});
-                }
-                if (heads.stream().anyMatch(HeadLocation::isHintSoundEnabled)) {
-                    map.put("Hint sound", new int[]{1});
-                }
-                if (heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled)) {
-                    map.put("Hint action bar", new int[]{1});
-                }
-                if (heads.stream().anyMatch(h -> !h.getRewards().isEmpty())) {
-                    map.put("Hint rewards", new int[]{1});
-                }
-                if (serviceRegistry.getConfigService().isHideFoundHeads()) {
-                    map.put("Hide heads", new int[]{1});
-                }
+                var enabled = new int[]{1, 0};
+                var disabled = new int[]{0, 1};
+
+                map.put("Order", heads.stream().anyMatch(h -> h.getOrderIndex() != -1) ? enabled : disabled);
+                map.put("Hint sound", heads.stream().anyMatch(HeadLocation::isHintSoundEnabled) ? enabled : disabled);
+                map.put("Hint action bar", heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled) ? enabled : disabled);
+                map.put("Hint rewards", heads.stream().anyMatch(h -> !h.getRewards().isEmpty()) ? enabled : disabled);
+                map.put("Hide heads", serviceRegistry.getConfigService().isHideFoundHeads() ? enabled : disabled);
 
                 return map;
             }));
