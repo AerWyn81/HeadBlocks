@@ -4,9 +4,8 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
-import org.bukkit.Bukkit;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bukkit.command.CommandSender;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -73,21 +72,17 @@ class ExportCommandTest {
     @Test
     void validDatabaseType_startsAsyncExport() {
         try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class);
-             MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
              MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
             mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-            HeadBlocks plugin = mock(HeadBlocks.class);
-            hb.when(HeadBlocks::getInstance).thenReturn(plugin);
-            lenient().when(plugin.getName()).thenReturn("HeadBlocks");
-
-            BukkitScheduler scheduler = mock(BukkitScheduler.class);
-            bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
+            // Production calls HeadBlocks.getScheduler().runTaskAsync(...) — not Bukkit.getScheduler().
+            SchedulerAdapter sched = mock(SchedulerAdapter.class);
+            hb.when(HeadBlocks::getScheduler).thenReturn(sched);
 
             boolean result = command.perform(sender, new String[]{"export", "database", "SQLite"});
 
             assertThat(result).isTrue();
-            verify(scheduler).runTaskAsynchronously(eq(plugin), any(Runnable.class));
+            verify(sched).runTaskAsync(any(Runnable.class));
             verify(languageService).message("Messages.ExportInProgress");
         }
     }

@@ -12,10 +12,11 @@ import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.scheduler.task.Task;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Skull;
@@ -43,7 +44,7 @@ public class HeadService {
     private ArrayList<HBHead> heads;
     private HashMap<UUID, HeadMove> headMoves;
     private ArrayList<HeadLocation> headLocations;
-    private HashMap<UUID, Integer> tasksHeadSpin;
+    private HashMap<UUID, Task> tasksHeadSpin;
 
     public static String HB_KEY = "HB_HEAD";
 
@@ -177,9 +178,9 @@ public class HeadService {
             return;
         }
 
-        var taskId = scheduler.runTaskTimer(
+        var task = scheduler.runTaskTimer(headLoc.getLocation(),
                 () -> rotateHead(headLoc), 5L * offset, configService.spinSpeed());
-        tasksHeadSpin.put(headLoc.getUuid(), taskId);
+        tasksHeadSpin.put(headLoc.getUuid(), task);
     }
 
     public UUID saveHeadLocation(Location location, String texture, String huntId) throws InternalException {
@@ -259,7 +260,7 @@ public class HeadService {
                     continue;
                 }
 
-                scheduler.runTask(() -> {
+                scheduler.runTask(headLocation.getLocation(), () -> {
                     headLocation.getLocation().getBlock().setType(Material.AIR);
 
                     if (configService.hologramsEnabled() && hologramService != null) {
@@ -272,28 +273,28 @@ public class HeadService {
                 huntConfigService.removeLocationFromHunt(headLocation.getHuntId(), headLocation.getUuid());
 
                 headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-                var spinTaskId = tasksHeadSpin.get(headLocation.getUuid());
-                if (spinTaskId != null) {
-                    scheduler.cancelTask(spinTaskId);
+                var spinTask = tasksHeadSpin.get(headLocation.getUuid());
+                if (spinTask != null) {
+                    scheduler.cancelTask(spinTask);
                     tasksHeadSpin.remove(headLocation.getUuid());
                 }
 
                 removed++;
             }
 
-            final int finalRemoved = removed;
-            scheduler.runTask(() -> {
-                for (HeadLocation hl : headsToRemove) {
-                    if (hl != null) {
+            for (HeadLocation hl : headsToRemove) {
+                if (hl != null) {
+                    scheduler.runTask(hl.getLocation() , () -> {
                         var hunt = huntService.getHuntById(hl.getHuntId());
                         if (hunt != null) {
                             hunt.removeHead(hl.getUuid());
                         }
-                    }
+                    });
                 }
+            }
 
-                onComplete.accept(finalRemoved);
-            });
+            final int finalRemoved = removed;
+            scheduler.runTaskGlobal(() -> onComplete.accept(finalRemoved));
         });
     }
 

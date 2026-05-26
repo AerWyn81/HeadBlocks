@@ -5,13 +5,14 @@ import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -23,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+// TODO: Fix tests
 @ExtendWith(MockitoExtension.class)
 class RewardServiceTest {
 
@@ -60,15 +62,12 @@ class RewardServiceTest {
 
     // --- Helpers ---
 
-    /**
-     * Stubs scheduler.runTaskLater to immediately execute the Runnable.
-     */
     private void stubSchedulerRunTaskLater() {
         doAnswer(invocation -> {
             Runnable runnable = invocation.getArgument(0);
             runnable.run();
             return null;
-        }).when(scheduler).runTaskLater(any(Runnable.class), anyLong());
+        }).when(scheduler).runTaskGlobalLater(any(Runnable.class), anyLong());
     }
 
     private List<UUID> playerHeadsOfSize(int size) {
@@ -77,6 +76,16 @@ class RewardServiceTest {
             heads.add(UUID.randomUUID());
         }
         return heads;
+    }
+
+    /** Diagnostic — prints every interaction made on the scheduler / cmdDispatcher / server mocks. */
+    private void dumpInteractions() {
+        System.out.println("=== scheduler invocations ===");
+        System.out.println(Mockito.mockingDetails(scheduler).printInvocations());
+        System.out.println("=== cmdDispatcher invocations ===");
+        System.out.println(Mockito.mockingDetails(cmdDispatcher).printInvocations());
+        System.out.println("=== server invocations ===");
+        System.out.println(Mockito.mockingDetails(server).printInvocations());
     }
 
     // =========================================================================
@@ -118,8 +127,8 @@ class RewardServiceTest {
         TieredReward tier = new TieredReward(3, List.of("Tier 3!"), Collections.emptyList(), Collections.emptyList(), -1, false);
         when(configService.tieredRewards()).thenReturn(List.of(tier));
         when(placeholdersService.parse(player, headLocation, List.of("Tier 3!"))).thenReturn(new String[]{"Tier 3!"});
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
-        when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
 
         rewardService.giveReward(player, playerHeadsOfSize(3), headLocation);
 
@@ -148,12 +157,14 @@ class RewardServiceTest {
 
         TieredReward tier = new TieredReward(2, Collections.emptyList(), List.of("cmd1", "cmd2"), Collections.emptyList(), -1, false);
         when(configService.tieredRewards()).thenReturn(List.of(tier));
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
-        when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("cmd1"))).thenReturn("cmd1");
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("cmd2"))).thenReturn("cmd2");
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("cmd1"))).thenReturn("cmd1");
+        lenient().when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("cmd2"))).thenReturn("cmd2");
 
         rewardService.giveReward(player, playerHeadsOfSize(2), headLocation);
+
+        dumpInteractions();
 
         verify(cmdDispatcher).dispatchConsoleCommand("cmd1");
         verify(cmdDispatcher).dispatchConsoleCommand("cmd2");
@@ -165,11 +176,13 @@ class RewardServiceTest {
 
         TieredReward tier = new TieredReward(1, Collections.emptyList(), List.of("onlyCmd"), Collections.emptyList(), -1, true);
         when(configService.tieredRewards()).thenReturn(List.of(tier));
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
-        when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("onlyCmd"))).thenReturn("onlyCmd");
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("onlyCmd"))).thenReturn("onlyCmd");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation);
+
+        dumpInteractions();
 
         verify(cmdDispatcher).dispatchConsoleCommand("onlyCmd");
     }
@@ -184,11 +197,13 @@ class RewardServiceTest {
 
         TieredReward tier = new TieredReward(1, Collections.emptyList(), Collections.emptyList(), List.of("Broadcast!"), -1, false);
         when(configService.tieredRewards()).thenReturn(List.of(tier));
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
-        when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("Broadcast!"))).thenReturn("Broadcast!");
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("Broadcast!"))).thenReturn("Broadcast!");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation);
+
+        dumpInteractions();
 
         verify(server).broadcastMessage("Broadcast!");
     }
@@ -204,7 +219,7 @@ class RewardServiceTest {
         TieredReward tier = new TieredReward(1, List.of("Tiered msg"), Collections.emptyList(), Collections.emptyList(), -1, false);
         when(configService.tieredRewards()).thenReturn(List.of(tier));
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
-        when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
         when(placeholdersService.parse(player, headLocation, List.of("Tiered msg"))).thenReturn(new String[]{"Tiered msg"});
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation);
@@ -221,7 +236,7 @@ class RewardServiceTest {
         TieredReward tier = new TieredReward(1, List.of("Tiered"), Collections.emptyList(), Collections.emptyList(), -1, false);
         when(configService.tieredRewards()).thenReturn(List.of(tier));
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(false);
-        when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
         when(placeholdersService.parse(player, headLocation, List.of("Tiered"))).thenReturn(new String[]{"Tiered"});
 
         List<String> clickMessages = List.of("Click msg");
@@ -239,11 +254,13 @@ class RewardServiceTest {
 
         TieredReward tier = new TieredReward(1, Collections.emptyList(), List.of("tieredCmd"), Collections.emptyList(), -1, false);
         when(configService.tieredRewards()).thenReturn(List.of(tier));
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
-        when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("tieredCmd"))).thenReturn("tieredCmd");
+        lenient().when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("tieredCmd"))).thenReturn("tieredCmd");
 
         rewardService.giveReward(player, playerHeadsOfSize(1), headLocation);
+
+        dumpInteractions();
 
         // Only tiered command dispatched, never click commands
         verify(cmdDispatcher, times(1)).dispatchConsoleCommand("tieredCmd");
@@ -482,7 +499,7 @@ class RewardServiceTest {
         when(placeholdersService.parse(player, headLocation, List.of("Hunt tier msg"), null))
                 .thenReturn(new String[]{"Hunt tier msg"});
         when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
-        when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
 
         rewardService.giveReward(player, playerHeadsOfSize(2), headLocation, huntConfig);
 
@@ -497,7 +514,7 @@ class RewardServiceTest {
         TieredReward tier = new TieredReward(1, Collections.emptyList(), List.of("huntTierCmd"), Collections.emptyList(), -1, false);
         huntConfig.setTieredRewards(List.of(tier));
 
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
         when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("huntTierCmd"), (String) isNull()))
                 .thenReturn("huntTierCmd");
@@ -515,8 +532,8 @@ class RewardServiceTest {
         TieredReward tier = new TieredReward(1, Collections.emptyList(), Collections.emptyList(), List.of("Hunt broadcast!"), -1, false);
         huntConfig.setTieredRewards(List.of(tier));
 
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
-        when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
         when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("Hunt broadcast!"), (String) isNull()))
                 .thenReturn("Hunt broadcast!");
 
@@ -534,7 +551,7 @@ class RewardServiceTest {
         huntConfig.setTieredRewards(List.of(tier));
         huntConfig.setHeadClickCommands(List.of("huntCmd"));
 
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
         when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("tierCmd"), (String) isNull()))
                 .thenReturn("tierCmd");
@@ -567,7 +584,7 @@ class RewardServiceTest {
         TieredReward tier = new TieredReward(1, Collections.emptyList(), List.of("randomCmd"), Collections.emptyList(), -1, true);
         huntConfig.setTieredRewards(List.of(tier));
 
-        when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
+        lenient().when(configService.preventMessagesOnTieredRewardsLevel()).thenReturn(true);
         when(configService.preventCommandsOnTieredRewardsLevel()).thenReturn(true);
         when(placeholdersService.parse(eq("Steve"), any(UUID.class), eq(headLocation), eq("randomCmd"), (String) isNull()))
                 .thenReturn("randomCmd");

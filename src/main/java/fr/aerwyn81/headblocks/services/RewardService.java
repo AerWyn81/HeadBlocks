@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -45,12 +45,12 @@ public class RewardService {
                     p.sendMessage(placeholdersService.parse(p, headLocation, messages));
                 }
 
-                scheduler.runTaskLater(() -> {
+                scheduler.runTaskLater(p, () -> {
                     List<String> tieredCommands = tieredReward.commands();
                     if (!tieredCommands.isEmpty()) {
                         if (tieredReward.isRandom()) {
                             String randomCommand = tieredCommands.get(ThreadLocalRandom.current().nextInt(tieredCommands.size()));
-                            scheduler.runTaskLater(() -> {
+                            scheduler.runTaskGlobalLater(() -> {
                                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
                                 if (!parsedCommand.isBlank()) {
                                     cmdDispatcher.dispatchConsoleCommand(parsedCommand);
@@ -98,14 +98,14 @@ public class RewardService {
 
         if (isRandomCommand) {
             String randomCommand = headClickCommands.get(ThreadLocalRandom.current().nextInt(headClickCommands.size()));
-            scheduler.runTaskLater(() -> {
+            scheduler.runTaskGlobalLater(() -> {
                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
                 if (!parsedCommand.isBlank()) {
                     cmdDispatcher.dispatchConsoleCommand(parsedCommand);
                 }
             }, 1L);
         } else {
-            scheduler.runTaskLater(() -> headClickCommands.forEach(reward -> {
+            scheduler.runTaskGlobalLater(() -> headClickCommands.forEach(reward -> {
                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward);
                 if (!parsedCommand.isBlank()) {
                     cmdDispatcher.dispatchConsoleCommand(parsedCommand);
@@ -154,12 +154,12 @@ public class RewardService {
                     p.sendMessage(placeholdersService.parse(p, headLocation, messages, huntId));
                 }
 
-                scheduler.runTaskLater(() -> {
+                scheduler.runTaskGlobalLater(() -> {
                     List<String> tieredCommands = tieredReward.commands();
                     if (!tieredCommands.isEmpty()) {
                         if (tieredReward.isRandom()) {
                             String randomCommand = tieredCommands.get(ThreadLocalRandom.current().nextInt(tieredCommands.size()));
-                            scheduler.runTaskLater(() -> {
+                            scheduler.runTaskGlobalLater(() -> {
                                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand, huntId);
                                 if (!parsedCommand.isBlank()) {
                                     cmdDispatcher.dispatchConsoleCommand(parsedCommand);
@@ -207,14 +207,14 @@ public class RewardService {
 
         if (isRandomCommand) {
             String randomCommand = headClickCommands.get(ThreadLocalRandom.current().nextInt(headClickCommands.size()));
-            scheduler.runTaskLater(() -> {
+            scheduler.runTaskGlobalLater(() -> {
                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand, huntId);
                 if (!parsedCommand.isBlank()) {
                     cmdDispatcher.dispatchConsoleCommand(parsedCommand);
                 }
             }, 1L);
         } else {
-            scheduler.runTaskLater(() -> headClickCommands.forEach(reward -> {
+            scheduler.runTaskGlobalLater(() -> headClickCommands.forEach(reward -> {
                 String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward, huntId);
                 if (!parsedCommand.isBlank()) {
                     cmdDispatcher.dispatchConsoleCommand(parsedCommand);

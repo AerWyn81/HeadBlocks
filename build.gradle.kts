@@ -75,7 +75,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(libs.spigot.api)
+    compileOnly(libs.paper.api)
     compileOnly(libs.placeholderapi)
     compileOnly(libs.headdatabase.api)
     compileOnly(libs.headdb.api)
@@ -204,6 +204,7 @@ bukkit {
     softDepend = listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents")
     version = project.version.toString()
     website = "https://just2craft.fr"
+    foliaSupported = true
 
     commands {
         register("headblocks") {

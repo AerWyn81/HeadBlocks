@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.PlaceholdersService;
 import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
@@ -80,7 +80,7 @@ class RewardExecuteTest {
         reward.execute(player, headLocation, registry);
 
         ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
-        verify(scheduler).runTaskLater(captor.capture(), eq(1L));
+        verify(scheduler).runTaskGlobalLater(captor.capture(), eq(1L));
 
         captor.getValue().run();
         verify(commandDispatcher).dispatchConsoleCommand("give Steve diamond 1");

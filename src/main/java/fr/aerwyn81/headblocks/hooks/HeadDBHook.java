@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHeadDB;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
@@ -56,7 +56,7 @@ public class HeadDBHook implements HeadProviderHook {
             return false;
         }
 
-        headAPI.onReady().thenRun(() -> scheduler.runTask(this::loadTextures));
+        headAPI.onReady().thenRun(() -> scheduler.runTaskGlobal(this::loadTextures));
 
         if (headAPI.isReady()) {
             this.loadTextures();
@@ -104,7 +104,7 @@ public class HeadDBHook implements HeadProviderHook {
             }
 
             // NBT/ItemStack mutation must run on the main thread.
-            scheduler.runTask(() -> applyTexture(head, toBase64Texture(texture)));
+            scheduler.runTaskGlobal(() -> applyTexture(head, toBase64Texture(texture)));
         }).exceptionally(ex -> {
             LogUtil.error("Error loading HeadDB head id {0}: {1}", head.getId(), ex.getMessage());
             return null;

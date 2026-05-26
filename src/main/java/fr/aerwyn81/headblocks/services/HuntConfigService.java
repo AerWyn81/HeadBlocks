@@ -10,7 +10,7 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -369,7 +369,7 @@ public class HuntConfigService {
         }
         savePendingHunts.add(huntId);
 
-        scheduler.runTaskLater(() -> {
+        scheduler.runTaskGlobalLater(() -> {
             savePendingHunts.remove(huntId);
             String content = yaml.saveToString();
             File file = new File(huntsDir, huntId + ".yml");

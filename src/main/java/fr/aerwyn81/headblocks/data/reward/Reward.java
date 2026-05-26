@@ -56,7 +56,7 @@ public record Reward(RewardType type, String value) {
         var val = parsedValue;
         switch (type) {
             case MESSAGE -> player.sendMessage(parsedValue);
-            case COMMAND -> registry.getScheduler().runTaskLater(() ->
+            case COMMAND -> registry.getScheduler().runTaskGlobalLater(() ->
                     registry.getCommandDispatcher().dispatchConsoleCommand(val), 1L);
             case BROADCAST -> registry.getPluginProvider().getJavaPlugin().getServer().broadcastMessage(parsedValue);
         }

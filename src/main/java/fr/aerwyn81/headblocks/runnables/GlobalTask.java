@@ -8,17 +8,17 @@ import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.scheduler.task.TaskTimer;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class GlobalTask extends BukkitRunnable {
+public class GlobalTask extends TaskTimer {
 
     private static final int CHUNK_SIZE = 16;
     private static int VIEW_RADIUS_CHUNKS = 1;
@@ -49,21 +49,23 @@ public class GlobalTask extends BukkitRunnable {
 
         registry.getHeadService().getChargedHeadLocations().forEach(headLocation -> {
             var location = headLocation.getLocation();
-            if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
-                return;
-            }
+            HeadBlocks.getScheduler().runTask(location, () -> {
+                if (location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
+                    return;
+                }
 
-            // Resolve hunt config for this head (1:1)
-            HBHunt hunt = registry.getHuntService().getHuntById(headLocation.getHuntId());
-            HuntConfig huntConfig = hunt != null ? hunt.getConfig() : new HuntConfig(registry.getConfigService());
+                // Resolve hunt config for this head (1:1)
+                HBHunt hunt = registry.getHuntService().getHuntById(headLocation.getHuntId());
+                HuntConfig huntConfig = hunt != null ? hunt.getConfig() : new HuntConfig(registry.getConfigService());
 
-            if (huntConfig.isSpinEnabled() && huntConfig.isSpinLinked()) {
-                registry.getHeadService().rotateHead(headLocation);
-            }
+                if (huntConfig.isSpinEnabled() && huntConfig.isSpinLinked()) {
+                    registry.getHeadService().rotateHead(headLocation);
+                }
 
-            registry.getHologramService().ensureHologramsCreated(location, huntConfig);
+                registry.getHologramService().ensureHologramsCreated(location, huntConfig);
 
-            handleHologramAndParticles(headLocation, huntConfig);
+                handleHologramAndParticles(headLocation, huntConfig);
+            });
         });
     }
 
