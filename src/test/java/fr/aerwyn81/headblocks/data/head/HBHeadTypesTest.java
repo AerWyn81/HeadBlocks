@@ -39,6 +39,39 @@ class HBHeadTypesTest {
         assertThat(HeadType.valueOf("HEADDB")).isEqualTo(HeadType.HEADDB);
     }
 
+    @Test
+    void requiresPlugin_trueForProviderTypes() {
+        assertThat(HeadType.HDB.requiresPlugin()).isTrue();
+        assertThat(HeadType.HEADDB.requiresPlugin()).isTrue();
+    }
+
+    @Test
+    void requiresPlugin_falseForBuiltInTypes() {
+        assertThat(HeadType.DEFAULT.requiresPlugin()).isFalse();
+        assertThat(HeadType.PLAYER.requiresPlugin()).isFalse();
+    }
+
+    @Test
+    void getPluginName_returnsPluginPerType() {
+        assertThat(HeadType.HDB.getPluginName()).isEqualTo("HeadDatabase");
+        assertThat(HeadType.HEADDB.getPluginName()).isEqualTo("HeadDB");
+        assertThat(HeadType.DEFAULT.getPluginName()).isNull();
+        assertThat(HeadType.PLAYER.getPluginName()).isNull();
+    }
+
+    @Test
+    void fromPrefix_matchesCaseInsensitively() {
+        assertThat(HeadType.fromPrefix("headdb")).isEqualTo(HeadType.HEADDB);
+        assertThat(HeadType.fromPrefix("HDB")).isEqualTo(HeadType.HDB);
+        assertThat(HeadType.fromPrefix("Player")).isEqualTo(HeadType.PLAYER);
+    }
+
+    @Test
+    void fromPrefix_unknownReturnsNull() {
+        assertThat(HeadType.fromPrefix("foobar")).isNull();
+        assertThat(HeadType.fromPrefix("")).isNull();
+    }
+
     // --- HBHead base class ---
 
     @Test

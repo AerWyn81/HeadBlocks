@@ -12,10 +12,12 @@ import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
+import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -156,6 +158,114 @@ class HeadServiceTest {
             HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, null);
 
             assertThat(svc.getHeadProviders()).isEmpty();
+        }
+    }
+
+    // =========================================================================
+    // addProviderHead — known-type vs unsupported-type distinction
+    // =========================================================================
+
+    @Nested
+    class AddProviderHead {
+
+        @SuppressWarnings("unchecked")
+        private ArrayList<HBHead> heads(HeadService svc) throws Exception {
+            Field field = HeadService.class.getDeclaredField("heads");
+            field.setAccessible(true);
+            return (ArrayList<HBHead>) field.get(svc);
+        }
+
+        private void initHeads(HeadService svc) throws Exception {
+            Field field = HeadService.class.getDeclaredField("heads");
+            field.setAccessible(true);
+            field.set(svc, new ArrayList<HBHead>());
+        }
+
+        @Test
+        void unknownType_logsNotSupported() {
+            try (MockedStatic<LogUtil> log = mockStatic(LogUtil.class)) {
+                headService.addProviderHead(mock(ItemStack.class), "foobar", "1", "foobar:1", 3);
+
+                log.verify(() -> LogUtil.error("The {0} type is not yet supported!", "foobar"));
+                log.verify(() -> LogUtil.error(
+                        eq("Cannot load head {0}: the {1} plugin is not installed or enabled"), any(), any()), never());
+            }
+        }
+
+        @Test
+        void knownPrefixHeaddb_pluginInactive_logsPluginNameMissing() {
+            try (MockedStatic<LogUtil> log = mockStatic(LogUtil.class)) {
+                headService.addProviderHead(mock(ItemStack.class), "headdb", "5", "headdb:5", 7);
+
+                log.verify(() -> LogUtil.error(
+                        "Cannot load head {0}: the {1} plugin is not installed or enabled", "headdb:5", "HeadDB"));
+                log.verify(() -> LogUtil.error(eq("The {0} type is not yet supported!"), any()), never());
+            }
+        }
+
+        @Test
+        void knownPrefixHdb_pluginInactive_logsPluginNameMissing() {
+            try (MockedStatic<LogUtil> log = mockStatic(LogUtil.class)) {
+                headService.addProviderHead(mock(ItemStack.class), "hdb", "abc", "hdb:abc", 2);
+
+                log.verify(() -> LogUtil.error(
+                        "Cannot load head {0}: the {1} plugin is not installed or enabled", "hdb:abc", "HeadDatabase"));
+            }
+        }
+
+        @Test
+        void providerPresentButUnavailable_logsPluginNameMissing() {
+            HeadProviderHook hook = mock(HeadProviderHook.class);
+            when(hook.isAvailable()).thenReturn(false);
+            Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
+            providers.put("headdb", hook);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
+
+            try (MockedStatic<LogUtil> log = mockStatic(LogUtil.class)) {
+                svc.addProviderHead(mock(ItemStack.class), "headdb", "5", "headdb:5", 1);
+
+                log.verify(() -> LogUtil.error(
+                        "Cannot load head {0}: the {1} plugin is not installed or enabled", "headdb:5", "HeadDB"));
+                verify(hook, never()).createHead(any(), any());
+            }
+        }
+
+        @Test
+        void providerAvailable_createsAndAddsHead() throws Exception {
+            HBHead created = mock(HBHead.class);
+            HeadProviderHook hook = mock(HeadProviderHook.class);
+            when(hook.isAvailable()).thenReturn(true);
+            ItemStack head = mock(ItemStack.class);
+            when(hook.createHead(head, "5")).thenReturn(created);
+
+            Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
+            providers.put("headdb", hook);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
+            initHeads(svc);
+
+            svc.addProviderHead(head, "headdb", "5", "headdb:5", 1);
+
+            assertThat(heads(svc)).containsExactly(created);
+        }
+
+        @Test
+        void providerAvailable_createHeadThrows_logsInvalidHead() throws Exception {
+            HeadProviderHook hook = mock(HeadProviderHook.class);
+            when(hook.isAvailable()).thenReturn(true);
+            ItemStack head = mock(ItemStack.class);
+            when(hook.createHead(head, "bad")).thenThrow(new IllegalArgumentException("not a number"));
+
+            Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
+            providers.put("headdb", hook);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
+            initHeads(svc);
+
+            try (MockedStatic<LogUtil> log = mockStatic(LogUtil.class)) {
+                svc.addProviderHead(head, "headdb", "bad", "headdb:bad", 9);
+
+                log.verify(() -> LogUtil.error("Invalid head {0} (l.{1}): {2}", "headdb:bad", 9, "not a number"));
+                assertThat(heads(svc)).isEmpty();
+            }
         }
     }
 

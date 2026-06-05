@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.data.head.HeadType;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadDefault;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadPlayer;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
@@ -34,7 +35,6 @@ public class HeadService {
     private final StorageService storageService;
     private final LanguageService languageService;
     private final SchedulerAdapter scheduler;
-    private final PluginProvider pluginProvider;
     private final Map<String, HeadProviderHook> headProviders;
     private HologramService hologramService; // setter-injected (circular dep)
     private HuntService huntService; // setter-injected
@@ -62,7 +62,6 @@ public class HeadService {
         this.storageService = storageService;
         this.languageService = languageService;
         this.scheduler = scheduler;
-        this.pluginProvider = pluginProvider;
         this.headProviders = headProviders == null ? Collections.emptyMap() : headProviders;
     }
 
@@ -365,7 +364,7 @@ public class HeadService {
                     try {
                         p = Bukkit.getOfflinePlayer(UUID.fromString(parts[1]));
                     } catch (Exception ex) {
-                        LogUtil.error("Cannot parse the player UUID {0}. Please provide a correct UUID", configHead);
+                        LogUtil.error("Cannot parse the player UUID {0}. Please provide a correct UUID.", configHead);
                         continue;
                     }
 
@@ -380,21 +379,8 @@ public class HeadService {
                     heads.add(HeadUtils.createHead(new HBHeadDefault(head), parts[1]));
                     break;
                 default:
-                    HeadProviderHook provider = headProviders.get(parts[0]);
-                    if (provider == null) {
-                        LogUtil.error("The {0} type is not yet supported!", parts[0]);
-                        continue;
-                    }
-                    if (!provider.isAvailable()) {
-                        LogUtil.error("Cannot load {0} head {1} without the corresponding plugin installed", parts[0], configHead);
-                        continue;
-                    }
                     head.setItemMeta(headMeta);
-                    try {
-                        heads.add(provider.createHead(head, parts[1]));
-                    } catch (IllegalArgumentException ex) {
-                        LogUtil.error("Invalid head {0} (l.{1}): {2}", configHead, (i + 1), ex.getMessage());
-                    }
+                    addProviderHead(head, parts[0], parts[1], configHead, i + 1);
             }
         }
 
@@ -407,6 +393,25 @@ public class HeadService {
             LogUtil.success("Loaded {0} configuration heads!", localHeadCount);
         } else {
             LogUtil.success("Loaded {0} (+{1} provider heads) configuration heads!", localHeadCount, providerHeadCount);
+        }
+    }
+
+    void addProviderHead(ItemStack head, String type, String rawId, String configHead, int line) {
+        HeadProviderHook provider = headProviders.get(type);
+        if (provider != null && provider.isAvailable()) {
+            try {
+                heads.add(provider.createHead(head, rawId));
+            } catch (IllegalArgumentException ex) {
+                LogUtil.error("Invalid head {0} (l.{1}): {2}", configHead, line, ex.getMessage());
+            }
+            return;
+        }
+
+        HeadType headType = HeadType.fromPrefix(type);
+        if (headType != null && headType.requiresPlugin()) {
+            LogUtil.error("Cannot load head {0}: the {1} plugin is not installed or enabled.", configHead, headType.getPluginName());
+        } else {
+            LogUtil.error("The {0} type is not yet supported!", type);
         }
     }
 

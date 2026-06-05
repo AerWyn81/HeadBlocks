@@ -1,4 +1,4 @@
-# HeadBlocks v3.0.1
+# HeadBlocks v3.0.2
 
 ## What's New
 

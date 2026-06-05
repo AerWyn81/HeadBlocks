@@ -109,7 +109,6 @@ public final class HeadBlocks extends JavaPlugin {
         SchedulerAdapter scheduler = new BukkitSchedulerAdapter(this);
         CommandDispatcher commandDispatcher = new BukkitCommandDispatcher();
 
-        // Providers must exist before SR creation because loadHeads() consults them.
         Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
         if (isHeadDatabaseActive) {
             this.headDatabaseHook = new HeadDatabaseHook(pluginProvider);
