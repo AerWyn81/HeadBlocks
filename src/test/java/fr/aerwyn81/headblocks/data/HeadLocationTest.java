@@ -288,7 +288,30 @@ class HeadLocationTest {
     }
 
     @Test
-    void fromConfig_hintFlags() {
+    void fromConfig_hintActionBarOnly() {
+        UUID uuid = UUID.randomUUID();
+        YamlConfiguration config = new YamlConfiguration();
+        String key = "locations." + uuid;
+
+        config.set(key + ".name", "Hints");
+        config.set(key + ".location.x", 0.5);
+        config.set(key + ".location.y", 0);
+        config.set(key + ".location.z", 0.5);
+        config.set(key + ".location.world", "");
+        config.set(key + ".hintActionBar", true);
+
+        try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
+            bk.when(() -> Bukkit.getWorld("")).thenReturn(null);
+
+            HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
+
+            assertThat(hl.isHintSoundEnabled()).isFalse();
+            assertThat(hl.isHintActionBarEnabled()).isTrue();
+        }
+    }
+
+    @Test
+    void fromConfig_legacyBothHintFlags_normalizedToSoundOnly() {
         UUID uuid = UUID.randomUUID();
         YamlConfiguration config = new YamlConfiguration();
         String key = "locations." + uuid;
@@ -307,7 +330,7 @@ class HeadLocationTest {
             HeadLocation hl = HeadLocation.fromConfig(config, uuid, "default");
 
             assertThat(hl.isHintSoundEnabled()).isTrue();
-            assertThat(hl.isHintActionBarEnabled()).isTrue();
+            assertThat(hl.isHintActionBarEnabled()).isFalse();
         }
     }
 
@@ -465,6 +488,39 @@ class HeadLocationTest {
         HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, false, new ArrayList<>());
 
         hl.setHintActionBar(true);
+        assertThat(hl.isHintActionBarEnabled()).isTrue();
+    }
+
+    @Test
+    void setHintSound_enabling_disablesActionBar() {
+        UUID uuid = UUID.randomUUID();
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, true, new ArrayList<>());
+
+        hl.setHintSound(true);
+
+        assertThat(hl.isHintSoundEnabled()).isTrue();
+        assertThat(hl.isHintActionBarEnabled()).isFalse();
+    }
+
+    @Test
+    void setHintActionBar_enabling_disablesSound() {
+        UUID uuid = UUID.randomUUID();
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, true, false, new ArrayList<>());
+
+        hl.setHintActionBar(true);
+
+        assertThat(hl.isHintActionBarEnabled()).isTrue();
+        assertThat(hl.isHintSoundEnabled()).isFalse();
+    }
+
+    @Test
+    void setHintSound_disabling_doesNotTouchActionBar() {
+        UUID uuid = UUID.randomUUID();
+        HeadLocation hl = new HeadLocation("H", uuid, "default", "w", 0, 0, 0, -1, false, true, new ArrayList<>());
+
+        hl.setHintSound(false);
+
+        assertThat(hl.isHintSoundEnabled()).isFalse();
         assertThat(hl.isHintActionBarEnabled()).isTrue();
     }
 

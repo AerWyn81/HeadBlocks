@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
+import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -38,6 +39,9 @@ class TopCommandTest {
     private LanguageService languageService;
 
     @Mock
+    private ConfigService configService;
+
+    @Mock
     private Player playerSender;
 
     @Mock
@@ -49,6 +53,8 @@ class TopCommandTest {
     void setUp() {
         lenient().when(registry.getStorageService()).thenReturn(storageService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
+        lenient().when(registry.getConfigService()).thenReturn(configService);
+        lenient().when(configService.hiddenTopPlayers()).thenReturn(new ArrayList<>());
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
         lenient().when(languageService.message(anyString(), anyString())).thenReturn("mock-message");
         command = new Top(registry);
@@ -211,6 +217,51 @@ class TopCommandTest {
                 verify(languageService, never()).message("Chat.Hover.LineTop");
                 verify(spigot, atLeastOnce()).sendMessage(any(net.md_5.bungee.api.chat.BaseComponent.class));
             }
+        }
+    }
+
+    @Nested
+    class HiddenPlayers {
+
+        @Test
+        void hiddenPlayer_isExcludedFromLeaderboard() throws InternalException {
+            PlayerProfileLight alice = new PlayerProfileLight(UUID.randomUUID(), "Alice", "Alice");
+            PlayerProfileLight bob = new PlayerProfileLight(UUID.randomUUID(), "Bob", "Bob");
+
+            LinkedHashMap<PlayerProfileLight, Integer> topMap = new LinkedHashMap<>();
+            topMap.put(alice, 10);
+            topMap.put(bob, 7);
+
+            when(storageService.getTopPlayers()).thenReturn(topMap);
+            when(configService.hiddenTopPlayers()).thenReturn(new ArrayList<>(java.util.List.of("Bob")));
+
+            try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
+                mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+                boolean result = command.perform(consoleSender, new String[]{"top"});
+
+                assertThat(result).isTrue();
+                verify(languageService).message("Chat.LineTop", "Alice");
+                verify(languageService, never()).message("Chat.LineTop", "Bob");
+            }
+        }
+
+        @Test
+        void hiddenPlayer_matchingIsCaseInsensitive() throws InternalException {
+            PlayerProfileLight bob = new PlayerProfileLight(UUID.randomUUID(), "Bob", "Bob");
+
+            LinkedHashMap<PlayerProfileLight, Integer> topMap = new LinkedHashMap<>();
+            topMap.put(bob, 7);
+
+            when(storageService.getTopPlayers()).thenReturn(topMap);
+            when(configService.hiddenTopPlayers()).thenReturn(new ArrayList<>(java.util.List.of("bOb")));
+
+            boolean result = command.perform(consoleSender, new String[]{"top"});
+
+            assertThat(result).isTrue();
+            // All players filtered out -> empty leaderboard
+            verify(languageService).message("Messages.TopEmpty");
+            verify(languageService, never()).message("Chat.LineTop", "Bob");
         }
     }
 

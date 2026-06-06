@@ -2,8 +2,10 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.TimedRunData;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.ZoneBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneMessageMode;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -57,6 +59,7 @@ public class ZoneEnforcementService {
             }
             if (engagedHunt != null) {
                 sendExited(player, engagedHunt, reset);
+                teleportBackTimed(player, engagedHunt);
             }
             return Decision.NONE;
         }
@@ -152,6 +155,8 @@ public class ZoneEnforcementService {
                 player.sendMessage(reset);
             }
         }
+
+        teleportBackTimed(player, registry.getHuntService().getHuntById(engagedId));
         return true;
     }
 
@@ -251,6 +256,37 @@ public class ZoneEnforcementService {
         for (Behavior behavior : hunt.getBehaviors()) {
             if (behavior instanceof ZoneBehavior zb) {
                 return zb;
+            }
+        }
+        return null;
+    }
+
+    // When a hunt combines a zone with a timed run, leaving the zone ends the run and sends the
+    // player back to the start plate (same spot as a time-limit expiration).
+    private void teleportBackTimed(Player player, HBHunt hunt) {
+        UUID uuid = player.getUniqueId();
+        if (hunt == null || !TimedRunManager.isInRun(uuid, hunt.getId())) {
+            return;
+        }
+
+        TimedBehavior timed = findTimedBehavior(hunt);
+        if (timed == null || timed.startPlateLocation() == null
+                || timed.startPlateLocation().getWorld() == null) {
+            return;
+        }
+
+        TimedRunData run = TimedRunManager.getRun(uuid);
+        float yaw = run != null ? run.startYaw() : 0f;
+        TimedRunManager.leaveRun(uuid);
+
+        Location target = TimedRunManager.buildReturnLocation(timed.startPlateLocation(), yaw);
+        registry.getScheduler().runTaskLater(() -> player.teleport(target), 1L);
+    }
+
+    private TimedBehavior findTimedBehavior(HBHunt hunt) {
+        for (Behavior behavior : hunt.getBehaviors()) {
+            if (behavior instanceof TimedBehavior tb) {
+                return tb;
             }
         }
         return null;

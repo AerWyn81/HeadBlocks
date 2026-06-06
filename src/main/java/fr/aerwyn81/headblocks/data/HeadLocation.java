@@ -101,6 +101,10 @@ public class HeadLocation {
 
     public void setHintSound(boolean isHintSound) {
         this.hintSound = isHintSound;
+
+        if (isHintSound) {
+            this.hintActionBar = false;
+        }
     }
 
     public boolean isHintActionBarEnabled() {
@@ -109,6 +113,10 @@ public class HeadLocation {
 
     public void setHintActionBar(boolean isHintActionBar) {
         this.hintActionBar = isHintActionBar;
+
+        if (isHintActionBar) {
+            this.hintSound = false;
+        }
     }
 
     public int getOrderIndex() {
@@ -248,6 +256,10 @@ public class HeadLocation {
         boolean hintActionBar = false;
         if (section.contains("locations." + hUUID + ".hintActionBar")) {
             hintActionBar = section.getBoolean("locations." + hUUID + ".hintActionBar");
+        }
+
+        if (hintSound && hintActionBar) {
+            hintActionBar = false;
         }
 
         var rewards = new ArrayList<Reward>();

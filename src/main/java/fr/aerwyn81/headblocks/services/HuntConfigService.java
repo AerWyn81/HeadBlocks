@@ -425,6 +425,8 @@ public class HuntConfigService {
 
             if (behavior instanceof TimedBehavior tb) {
                 yaml.set(key + ".repeatable", tb.repeatable());
+                yaml.set(key + ".limitSeconds", tb.limitSeconds());
+                yaml.set(key + ".resetOnExpire", tb.resetOnExpire());
                 if (tb.startPlateLocation() != null) {
                     var loc = tb.startPlateLocation();
                     if (loc.getWorld() != null) {

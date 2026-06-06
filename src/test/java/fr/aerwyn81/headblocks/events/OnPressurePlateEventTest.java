@@ -198,6 +198,7 @@ class OnPressurePlateEventTest {
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
         when(hunt.getHeadCount()).thenReturn(3);
+        when(hunt.isValid()).thenReturn(true);
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
 
         // Player already found all 3 heads
@@ -237,6 +238,7 @@ class OnPressurePlateEventTest {
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
         when(hunt.getHeadCount()).thenReturn(5);
+        when(hunt.isValid()).thenReturn(true);
         when(hunt.getDisplayName()).thenReturn("Test Hunt");
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
 
@@ -247,12 +249,49 @@ class OnPressurePlateEventTest {
         try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
             trm.when(() -> TimedRunManager.getRun(playerUuid)).thenReturn(null);
             trm.when(() -> TimedRunManager.isInRun(playerUuid, "hunt1")).thenReturn(false);
+            Location playerLoc = mockLocation(world, 10, 21, 31);
+            when(player.getLocation()).thenReturn(playerLoc);
 
             handler.onPressurePlate(event);
 
-            trm.verify(() -> TimedRunManager.startRun(playerUuid, "hunt1"));
+            trm.verify(() -> TimedRunManager.startRun(eq(playerUuid), eq("hunt1"), anyFloat()));
             verify(player).sendMessage(anyString());
             verify(languageService).message("Messages.TimedStarted");
+        }
+    }
+
+    // --- Matching plate but hunt has no heads: timer does not start ---
+
+    @Test
+    void matchingPlate_noHeads_doesNotStart() {
+        UUID playerUuid = UUID.randomUUID();
+
+        when(event.getAction()).thenReturn(Action.PHYSICAL);
+        when(event.getClickedBlock()).thenReturn(clickedBlock);
+        when(event.getPlayer()).thenReturn(player);
+        when(player.getUniqueId()).thenReturn(playerUuid);
+
+        World world = mock(World.class);
+        Location blockLoc = mockLocation(world, 10, 20, 30);
+        when(clickedBlock.getLocation()).thenReturn(blockLoc);
+
+        Location plateLoc = mockLocation(world, 10, 20, 30);
+        TimedBehavior timed = mock(TimedBehavior.class);
+        when(timed.startPlateLocation()).thenReturn(plateLoc);
+
+        HBHunt hunt = mock(HBHunt.class);
+        when(hunt.isActive()).thenReturn(true);
+        when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
+        when(hunt.isValid()).thenReturn(false);
+        when(hunt.getDisplayName()).thenReturn("Test Hunt");
+        when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+
+        try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
+            handler.onPressurePlate(event);
+
+            trm.verify(() -> TimedRunManager.startRun(any(), anyString(), anyFloat()), never());
+            trm.verify(() -> TimedRunManager.startRun(any(), anyString()), never());
+            verify(languageService).message("Messages.TimedNoHeads");
         }
     }
 
@@ -280,6 +319,7 @@ class OnPressurePlateEventTest {
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
         when(hunt.getHeadCount()).thenReturn(5);
+        when(hunt.isValid()).thenReturn(true);
         when(hunt.getDisplayName()).thenReturn("Test Hunt");
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
 
@@ -290,11 +330,13 @@ class OnPressurePlateEventTest {
         try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
             trm.when(() -> TimedRunManager.getRun(playerUuid)).thenReturn(new TimedRunData("hunt1", System.currentTimeMillis()));
             trm.when(() -> TimedRunManager.isInRun(playerUuid, "hunt1")).thenReturn(true);
+            Location playerLoc = mockLocation(world, 10, 21, 31);
+            when(player.getLocation()).thenReturn(playerLoc);
 
             handler.onPressurePlate(event);
 
             verify(storageService).resetPlayerHunt(playerUuid, "hunt1");
-            trm.verify(() -> TimedRunManager.startRun(playerUuid, "hunt1"));
+            trm.verify(() -> TimedRunManager.startRun(eq(playerUuid), eq("hunt1"), anyFloat()));
             verify(languageService).message("Messages.TimedRestarted");
         }
     }
@@ -342,6 +384,7 @@ class OnPressurePlateEventTest {
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt2");
         when(hunt.getHeadCount()).thenReturn(5);
+        when(hunt.isValid()).thenReturn(true);
         when(hunt.getDisplayName()).thenReturn("Hunt Two");
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
 
@@ -352,11 +395,13 @@ class OnPressurePlateEventTest {
             // Currently in a different hunt's run
             trm.when(() -> TimedRunManager.getRun(playerUuid)).thenReturn(new TimedRunData("hunt1", System.currentTimeMillis()));
             trm.when(() -> TimedRunManager.isInRun(playerUuid, "hunt2")).thenReturn(false);
+            Location playerLoc = mockLocation(world, 10, 21, 31);
+            when(player.getLocation()).thenReturn(playerLoc);
 
             handler.onPressurePlate(event);
 
             trm.verify(() -> TimedRunManager.leaveRun(playerUuid));
-            trm.verify(() -> TimedRunManager.startRun(playerUuid, "hunt2"));
+            trm.verify(() -> TimedRunManager.startRun(eq(playerUuid), eq("hunt2"), anyFloat()));
         }
     }
 

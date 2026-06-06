@@ -141,6 +141,8 @@ public class RewardsGui extends GuiBase {
                             headLocation.getRewards().remove(rewardIndex);
                             registry.getHeadService().saveHeadInConfig(headLocation);
                             openRewardsGui(player, headLocation);
+                        } else if (event.getClick() == ClickType.DROP) {
+                            applyRewardsToHunt((Player) event.getWhoClicked(), headLocation);
                         }
                     });
 
@@ -168,6 +170,28 @@ public class RewardsGui extends GuiBase {
         });
 
         player.openInventory(rewardsMenu.getInventory());
+    }
+
+    private void applyRewardsToHunt(Player player, HeadLocation source) {
+        var hunt = registry.getHuntService().getHuntById(source.getHuntId());
+        if (hunt == null) {
+            return;
+        }
+
+        for (HeadLocation target : registry.getHeadService().getHeadLocationsForHunt(hunt)) {
+            if (target.getUuid().equals(source.getUuid())) {
+                continue;
+            }
+
+            target.getRewards().clear();
+            for (Reward reward : source.getRewards()) {
+                target.addReward(new Reward(reward.type(), reward.value()));
+            }
+        }
+
+        registry.getHeadService().saveAllHeadsInConfig();
+        player.sendMessage(registry.getLanguageService().message("Messages.RewardsAppliedToHunt"));
+        openRewardsGui(player, source);
     }
 
     public void openRewardTypeSelectionGui(Player player, HeadLocation headLocation, boolean isEdit, int rewardIndex) {

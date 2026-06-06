@@ -325,6 +325,51 @@ class TimedBehaviorTest {
         assertThat(result).isNotNull();
         assertThat(result.startPlateLocation()).isNull();
         assertThat(result.repeatable()).isTrue();
+        assertThat(result.limitSeconds()).isZero();
+        assertThat(result.resetOnExpire()).isFalse();
+    }
+
+    @Test
+    void limitSeconds_andResetOnExpire_returnConstructorValues() {
+        TimedBehavior behavior = new TimedBehavior(registry, null, true, 90, true);
+
+        assertThat(behavior.limitSeconds()).isEqualTo(90);
+        assertThat(behavior.resetOnExpire()).isTrue();
+    }
+
+    @Test
+    void convenienceConstructor_defaultsToUnlimitedAndNoReset() {
+        TimedBehavior behavior = new TimedBehavior(registry, null, true);
+
+        assertThat(behavior.limitSeconds()).isZero();
+        assertThat(behavior.resetOnExpire()).isFalse();
+    }
+
+    @Test
+    void fromConfig_readsLimitSecondsAndResetOnExpire() {
+        ConfigurationSection section = mock(ConfigurationSection.class);
+        when(section.contains("startPlate.world")).thenReturn(false);
+        when(section.getBoolean("repeatable", true)).thenReturn(true);
+        when(section.getInt("limitSeconds", 0)).thenReturn(120);
+        when(section.getBoolean("resetOnExpire", false)).thenReturn(true);
+
+        TimedBehavior result = TimedBehavior.fromConfig(registry, section);
+
+        assertThat(result.limitSeconds()).isEqualTo(120);
+        assertThat(result.resetOnExpire()).isTrue();
+    }
+
+    @Test
+    void fromConfig_negativeLimitSeconds_clampedToZero() {
+        ConfigurationSection section = mock(ConfigurationSection.class);
+        when(section.contains("startPlate.world")).thenReturn(false);
+        when(section.getBoolean("repeatable", true)).thenReturn(true);
+        when(section.getInt("limitSeconds", 0)).thenReturn(-30);
+        when(section.getBoolean("resetOnExpire", false)).thenReturn(false);
+
+        TimedBehavior result = TimedBehavior.fromConfig(registry, section);
+
+        assertThat(result.limitSeconds()).isZero();
     }
 
     @Test

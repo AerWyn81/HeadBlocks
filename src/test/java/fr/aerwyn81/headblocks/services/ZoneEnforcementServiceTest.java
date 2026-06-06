@@ -5,9 +5,11 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.ZoneBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneMessageMode;
 import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneProvider;
+import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -61,6 +63,9 @@ class ZoneEnforcementServiceTest {
     @Mock
     Location returnPoint;
 
+    @Mock
+    SchedulerAdapter scheduler;
+
     private ZoneEnforcementService service;
     private UUID uuid;
     private static final String HUNT_ID = "hunt1";
@@ -74,6 +79,7 @@ class ZoneEnforcementServiceTest {
         lenient().when(registry.getStorageService()).thenReturn(storageService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         lenient().when(registry.getHeadService()).thenReturn(headService);
+        lenient().when(registry.getScheduler()).thenReturn(scheduler);
 
         lenient().when(world.getName()).thenReturn("world");
         lenient().when(to.getWorld()).thenReturn(world);
@@ -86,6 +92,7 @@ class ZoneEnforcementServiceTest {
     @AfterEach
     void tearDown() {
         ZoneRunManager.clearAll();
+        TimedRunManager.clearAll();
     }
 
     private HBHunt hunt(String id, int priority, int headCount, ZoneProvider zoneProvider, Location rp) {
@@ -294,6 +301,42 @@ class ZoneEnforcementServiceTest {
         assertThat(decision).isEqualTo(ZoneEnforcementService.Decision.NONE);
         assertThat(ZoneRunManager.isEngaged(uuid)).isFalse();
         verify(storageService).resetPlayerHunt(uuid, HUNT_ID);
+    }
+
+    @Test
+    void evaluate_engaged_outside_withTimedRun_endsRunAndSchedulesTeleport() throws Exception {
+        Location plate = mock(Location.class);
+        when(plate.getWorld()).thenReturn(world);
+
+        HBHunt hunt = new HBHunt(configService, HUNT_ID, "Test Hunt", HuntState.ACTIVE, 1, "D");
+        hunt.addHead(UUID.randomUUID());
+        hunt.setBehaviors(List.of(new FreeBehavior(),
+                new ZoneBehavior(registry, zone, returnPoint, false, true, ZoneMessageMode.CHAT),
+                new TimedBehavior(registry, plate, true, 60, false)));
+        registerSingle(hunt);
+
+        when(zone.contains(to)).thenReturn(false);
+        ZoneRunManager.engage(uuid, HUNT_ID);
+        TimedRunManager.startRun(uuid, HUNT_ID, 90f);
+        when(languageService.message(anyString())).thenReturn("");
+
+        service.evaluate(player, to);
+
+        assertThat(TimedRunManager.isInRun(uuid)).isFalse();
+        verify(scheduler).runTaskLater(any(Runnable.class), eq(1L));
+    }
+
+    @Test
+    void evaluate_engaged_outside_noTimedRun_doesNotScheduleTeleport() throws Exception {
+        HBHunt hunt = hunt(HUNT_ID, 1, 3, zone, returnPoint, false, true);
+        registerSingle(hunt);
+        when(zone.contains(to)).thenReturn(false);
+        ZoneRunManager.engage(uuid, HUNT_ID);
+        when(languageService.message(anyString())).thenReturn("");
+
+        service.evaluate(player, to);
+
+        verify(scheduler, never()).runTaskLater(any(Runnable.class), anyLong());
     }
 
     @Test

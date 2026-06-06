@@ -5,12 +5,18 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.services.gui.types.BehaviorSelectionGui;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
@@ -204,6 +210,31 @@ class HBHuntCommandTest {
             huntCommand.perform(consoleSender, new String[]{"hunt", "delete", "myhunt", "--fallback", "other"});
 
             verify(languageService).message("Messages.HuntDeleteFallbackRequiresKeepHeads");
+        }
+
+        @Test
+        void keepHeadsConfirm_removesStartPlate() {
+            World world = mock(World.class);
+            Block plateBlock = mock(Block.class);
+            Location plate = mock(Location.class);
+            when(plate.getWorld()).thenReturn(world);
+            when(plate.getBlock()).thenReturn(plateBlock);
+
+            TimedBehavior timed = mock(TimedBehavior.class);
+            when(timed.startPlateLocation()).thenReturn(plate);
+
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getBehaviors()).thenReturn(java.util.List.<Behavior>of(timed));
+            when(hunt.getHeadUUIDs()).thenReturn(java.util.Set.of());
+            when(huntService.getHuntById("myhunt")).thenReturn(hunt);
+
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+
+                huntCommand.perform(consoleSender, new String[]{"hunt", "delete", "myhunt", "--keepheads", "--confirm"});
+            }
+
+            verify(plateBlock).setType(Material.AIR);
         }
 
         @Test

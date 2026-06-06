@@ -233,6 +233,11 @@ shouldResetPlayerData: true
 #     technical limitation that cannot be avoided. /!\
 hideFoundHeads: false
 
+# List of player names that will not be displayed in the /hb top leaderboard
+# Matching is case-insensitive
+hiddenTopPlayers:
+  - 'ExamplePlayer'
+
 # Used to cancel commands executed when clicking on the head if current headClicked is in levels of tieredRewards
 preventCommandsOnTieredRewardsLevel: false
 

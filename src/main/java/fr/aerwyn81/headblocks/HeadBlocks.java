@@ -159,7 +159,7 @@ public final class HeadBlocks extends JavaPlugin {
             m.addCustomChart(new SimplePie("databaseType", () -> serviceRegistry.getStorageService().selectedStorageType()));
             m.addCustomChart(new SingleLineChart("heads", () -> serviceRegistry.getHeadService().getChargedHeadLocations().size()));
             m.addCustomChart(new SimplePie("lang", () -> serviceRegistry.getLanguageService().language()));
-            m.addCustomChart(new SingleLineChart("hunts", () -> serviceRegistry.getHuntService().getAllHunts().size()));
+            m.addCustomChart(new SingleLineChart("hunts", () -> (int) serviceRegistry.getHuntService().getAllHunts().stream().filter(hunt -> !hunt.isDefault()).count()));
             m.addCustomChart(new AdvancedBarChart("huntBehaviors", () -> {
                 Map<String, int[]> map = new HashMap<>();
                 for (var hunt : serviceRegistry.getHuntService().getAllHunts()) {

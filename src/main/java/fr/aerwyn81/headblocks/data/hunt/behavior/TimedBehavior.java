@@ -19,11 +19,20 @@ public class TimedBehavior implements Behavior {
     private final ServiceRegistry registry;
     private final Location startPlateLocation;
     private final boolean repeatable;
+    private final int limitSeconds;
+    private final boolean resetOnExpire;
 
     public TimedBehavior(ServiceRegistry registry, Location startPlateLocation, boolean repeatable) {
+        this(registry, startPlateLocation, repeatable, 0, false);
+    }
+
+    public TimedBehavior(ServiceRegistry registry, Location startPlateLocation, boolean repeatable,
+                         int limitSeconds, boolean resetOnExpire) {
         this.registry = registry;
         this.startPlateLocation = startPlateLocation;
         this.repeatable = repeatable;
+        this.limitSeconds = limitSeconds;
+        this.resetOnExpire = resetOnExpire;
     }
 
     public Location startPlateLocation() {
@@ -32,6 +41,14 @@ public class TimedBehavior implements Behavior {
 
     public boolean repeatable() {
         return repeatable;
+    }
+
+    public int limitSeconds() {
+        return limitSeconds;
+    }
+
+    public boolean resetOnExpire() {
+        return resetOnExpire;
     }
 
     @Override
@@ -111,6 +128,8 @@ public class TimedBehavior implements Behavior {
     public static TimedBehavior fromConfig(ServiceRegistry registry, ConfigurationSection section) {
         Location loc = null;
         boolean repeatable = true;
+        int limitSeconds = 0;
+        boolean resetOnExpire = false;
 
         if (section != null) {
             if (section.contains("startPlate.world")) {
@@ -126,8 +145,10 @@ public class TimedBehavior implements Behavior {
             }
 
             repeatable = section.getBoolean("repeatable", true);
+            limitSeconds = Math.max(0, section.getInt("limitSeconds", 0));
+            resetOnExpire = section.getBoolean("resetOnExpire", false);
         }
 
-        return new TimedBehavior(registry, loc, repeatable);
+        return new TimedBehavior(registry, loc, repeatable, limitSeconds, resetOnExpire);
     }
 }

@@ -40,6 +40,11 @@ public class ZoneRunManager {
         released.remove(playerUuid);
     }
 
+    public static void clearAllForHunt(String huntId) {
+        engaged.values().removeIf(huntId::equals);
+        released.values().removeIf(huntId::equals);
+    }
+
     public static void clearAll() {
         engaged.clear();
         released.clear();

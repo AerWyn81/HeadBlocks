@@ -105,6 +105,15 @@ class HBHuntTest {
     }
 
     @Test
+    void isValid_falseWhenNoHeads_trueWithHeads() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        assertThat(hunt.isValid()).isFalse();
+
+        hunt.addHead(UUID.randomUUID());
+        assertThat(hunt.isValid()).isTrue();
+    }
+
+    @Test
     void getHeadUUIDs_returnsUnmodifiableSet() {
         HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         hunt.addHead(UUID.randomUUID());

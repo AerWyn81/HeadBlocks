@@ -80,7 +80,7 @@ public class HintGui extends GuiBase {
                                                 : registry.getLanguageService().message("Gui.Disabled")))
                                 .collect(Collectors.toList())).toItemStack(), true)
                         .addOnClickEvent(event -> {
-                            if (event.getClick() == ClickType.MIDDLE) {
+                            if (event.getClick() == ClickType.DROP) {
                                 guiViewHint.put(player.getUniqueId(), playerSelectedMode.next());
                             } else {
                                 switch (playerSelectedMode) {

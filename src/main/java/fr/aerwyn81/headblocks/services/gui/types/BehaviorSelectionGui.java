@@ -128,14 +128,15 @@ public class BehaviorSelectionGui {
         }
 
         if (selected != null && selected.contains("scheduled")) {
-            registry.getGuiService().getScheduledConfigManager().open(player, null, true);
+            registry.getGuiService().getScheduledConfigManager().open(player, null, true, 0, false);
             return;
         }
 
-        createHunt(player, null, true, null);
+        createHunt(player, null, true, 0, false, null);
     }
 
-    public void createHunt(Player player, Location plateLocation, boolean repeatable, ScheduleMode scheduleMode) {
+    public void createHunt(Player player, Location plateLocation, boolean repeatable,
+                           int limitSeconds, boolean resetOnExpire, ScheduleMode scheduleMode) {
         String huntName = pendingHuntNames.remove(player.getUniqueId());
         Set<String> selected = selectedBehaviors.remove(player.getUniqueId());
 
@@ -157,7 +158,8 @@ public class BehaviorSelectionGui {
                 switch (behaviorId) {
                     case "ordered" -> behaviors.add(new OrderedBehavior(registry));
                     case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, scheduleMode));
-                    case "timed" -> behaviors.add(new TimedBehavior(registry, plateLocation, repeatable));
+                    case "timed" ->
+                            behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
                     case "zone" -> behaviors.add(pendingZones.getOrDefault(player.getUniqueId(),
                             new ZoneBehavior(registry, null, null, false, false, ZoneMessageMode.CHAT)));
                 }

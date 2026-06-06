@@ -3,6 +3,9 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -219,6 +222,45 @@ class OnPlayerBreakBlockEventTest {
             verify(event).setCancelled(true);
             verify(languageService).message("Messages.StorageError");
         }
+    }
+
+    // --- Start plate protection ---
+
+    @Test
+    void startPlateBreak_cancelled() {
+        org.bukkit.World world = mock(org.bukkit.World.class);
+        Location plate = mock(Location.class);
+        lenient().when(plate.getWorld()).thenReturn(world);
+        lenient().when(plate.getBlockX()).thenReturn(82);
+        lenient().when(plate.getBlockY()).thenReturn(96);
+        lenient().when(plate.getBlockZ()).thenReturn(-20);
+
+        when(location.getWorld()).thenReturn(world);
+        when(location.getBlockX()).thenReturn(82);
+        when(location.getBlockY()).thenReturn(96);
+        when(location.getBlockZ()).thenReturn(-20);
+        when(block.getLocation()).thenReturn(location);
+
+        TimedBehavior timed = mock(TimedBehavior.class);
+        when(timed.startPlateLocation()).thenReturn(plate);
+        HBHunt hunt = mock(HBHunt.class);
+        when(hunt.getBehaviors()).thenReturn(java.util.List.<Behavior>of(timed));
+        when(huntService.getAllHunts()).thenReturn(java.util.List.of(hunt));
+
+        handler.onStartPlateBreak(event);
+
+        verify(event).setCancelled(true);
+        verify(languageService).message("Messages.TimedPlateProtected");
+    }
+
+    @Test
+    void nonStartPlateBreak_notCancelled() {
+        when(block.getLocation()).thenReturn(location);
+        when(huntService.getAllHunts()).thenReturn(java.util.List.of());
+
+        handler.onStartPlateBreak(event);
+
+        verify(event, never()).setCancelled(anyBoolean());
     }
 
     // --- Success: head removed ---

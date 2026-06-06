@@ -372,11 +372,11 @@ public class ZoneConfigGui {
             return;
         }
         if (selected != null && selected.contains("scheduled")) {
-            registry.getGuiService().getScheduledConfigManager().open(player, null, true);
+            registry.getGuiService().getScheduledConfigManager().open(player, null, true, 0, false);
             return;
         }
 
-        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, null, true, null);
+        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, null, true, 0, false, null);
     }
 
     private String describe(Location location) {
