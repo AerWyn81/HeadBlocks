@@ -124,6 +124,8 @@ Use `/hb hunt enable <name>` and `/hb hunt disable <name>` to change state at ru
 
 Behaviors control how players can interact with a hunt's heads. They are evaluated as a chain — if any behavior denies a click, the entire chain denies it.
 
+Behaviors are normally selected and configured through the in-game menus opened by `/hb hunt create` — see the [Behavior GUI](behaviors-gui.md) for every clickable element. The YAML below is the on-disk result you can also edit by hand.
+
 ### Free
 
 No constraints. Players can click heads at any time. This is the default behavior.

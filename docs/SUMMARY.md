@@ -18,6 +18,8 @@
 * [Holograms](configuration/holograms.md)
 * [Effects](configuration/effects.md)
 * [Rewards](configuration/rewards.md)
+* [Options GUI](configuration/options-gui.md)
+* [Behavior GUI](configuration/behaviors-gui.md)
 
 ## Other Files
 

@@ -158,11 +158,13 @@ Rename targeted head.
 
 Configure head mechanics via GUI.
 
-|               |                                    |
-|---------------|------------------------------------|
-| **Alias**     | `o`                                |
-| **Arguments** | `counter / hint / order / rewards` |
-| **Sender**    | Player                             |
+|               |                          |
+|---------------|--------------------------|
+| **Alias**     | `o`                      |
+| **Arguments** | `hint / order / rewards` |
+| **Sender**    | Player                   |
+
+See [Options GUI](../configuration/options-gui.md) for every clickable element and its click/drop action.
 
 ### /hb version
 
