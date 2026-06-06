@@ -1,4 +1,15 @@
-# Commands and Permissions
+# Permissions and Commands
+
+## Permissions
+
+| Permission                           | Description                             | Default  |
+|--------------------------------------|-----------------------------------------|----------|
+| `headblocks.use`                     | Interact with heads and see progress    | everyone |
+| `headblocks.commands.top`            | See the leaderboard                     | everyone |
+| `headblocks.commands.progress`       | See own progress                        | everyone |
+| `headblocks.commands.progress.other` | See another player's progress           | op       |
+| `headblocks.zone.bypass`             | Bypass hunt zone confinement (builders) | op       |
+| `headblocks.admin`                   | Access all admin commands               | op       |
 
 {% hint style="info" %}
 Arguments with `<>` are required and `()` are optional parameters.
@@ -39,7 +50,7 @@ Display leaderboard of heads found.
 
 ### /hb leave
 
-Leave the current timed run.
+Leave the current timed run, or the bounded zone you are confined to.
 
 |                |                  |
 |----------------|------------------|

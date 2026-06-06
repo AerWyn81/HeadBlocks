@@ -17,6 +17,7 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -32,6 +33,22 @@ public class OnPlayerInteractEvent implements Listener {
 
     public OnPlayerInteractEvent(ServiceRegistry registry) {
         this.registry = registry;
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onZoneCapture(PlayerInteractEvent e) {
+        if (e.getAction() != Action.LEFT_CLICK_BLOCK || e.getClickedBlock() == null) {
+            return;
+        }
+
+        Player player = e.getPlayer();
+        var zoneConfigManager = registry.getGuiService().getZoneConfigManager();
+        if (!zoneConfigManager.isAwaitingBlockClick(player.getUniqueId())) {
+            return;
+        }
+
+        e.setCancelled(true);
+        zoneConfigManager.handleBlockClick(player, e.getClickedBlock().getLocation());
     }
 
     @EventHandler
@@ -160,6 +177,7 @@ public class OnPlayerInteractEvent implements Listener {
 
                 // Notify behaviors
                 hunt.notifyHeadFound(player, headLocation);
+                registry.getZoneEnforcementService().onHeadFound(player, hunt, huntPlayerHeads.size());
 
                 // Give hunt-specific rewards
                 registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, huntConfig, hunt.getId());

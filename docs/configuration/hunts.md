@@ -274,8 +274,69 @@ behaviors:
 - **repeatable**: if `true`, players can replay after completion (progress is reset)
 - Players can leave a run with `/hb leave`
 
+### Zone
+
+Players are confined to a delimited area. A player who enters the zone is engaged and confined until they complete the hunt — if they try to leave, they are pushed back at the border, and teleported to a return point if they end up outside (ender pearl, portal, respawn…).
+
+The zone can be a **cuboid** (two corners) or a **WorldGuard region** (soft dependency — WorldGuard must be installed for that mode).
+
+```yaml
+# Cuboid zone
+behaviors:
+  zone:
+    blockExit: true
+    resetOnLeave: true
+    messageMode: CHAT
+    zone:
+      type: cuboid
+      world: default
+      min: { x: 0, y: 60, z: 0 }
+      max: { x: 50, y: 90, z: 50 }
+    returnPoint:
+      world: default
+      x: 25.5
+      y: 65.0
+      z: 25.5
+      yaw: 90.0
+      pitch: 0.0
+```
+
+```yaml
+# WorldGuard region zone
+behaviors:
+  zone:
+    zone:
+      type: worldguard
+      world: default
+      region: arena
+    returnPoint:
+      world: default
+      x: 25.5
+      y: 65.0
+      z: 25.5
+      yaw: 90.0
+      pitch: 0.0
+```
+
+- **blockExit** (default `true`): if `true`, players are physically confined (pushed back at the border, teleported to the return point if caught outside). If `false`, players may leave freely — crossing out just triggers the leave consequences below.
+- **resetOnLeave** (default `true`): resets the player's progress in this hunt when they leave — via `/hb leave` **or** by crossing out of the zone.
+- **messageMode** (default `CHAT`): where the entry message is shown — `CHAT`, `ACTION_BAR`, or `TITLE`. In `TITLE` mode, a `\n` in the message splits it: the part before goes to the title, the part after to the subtitle.
+- **zone.type**: `cuboid` or `worldguard`
+- **zone.min / zone.max** (cuboid): opposite corners, inclusive (order does not matter)
+- **zone.region** (worldguard): the WorldGuard region id
+- **returnPoint**: where players are teleported when caught outside — **must be inside the zone**. Required only when `blockExit: true`.
+- Players can leave a zone with `/hb leave`; they can then walk out freely until they re-enter
+- Players with `headblocks.zone.bypass` (and spectators) are never confined
+- If a WorldGuard region is missing or WorldGuard is not loaded, the zone fails open (no confinement) rather than trapping players
+
+{% hint style="warning" %}
+To avoid soft-locking players, a zone behavior is **disabled at load (with a warning)** if it has no zone, no heads, any head located outside the zone, or (when `blockExit: true`) no `returnPoint`. Placing a head outside the selected hunt's zone is blocked, and reassigning a head outside a zoned hunt is refused (mass `assign` skips them).
+{% endhint %}
+
 {% hint style="info" %}
-Behaviors can be combined. For example, `scheduled` + `ordered` means the hunt is date-restricted and heads must be found in order.
+Behaviors can be combined: `zone` + `timed` confines players to an arena during a timed run.
+
+A player can only be confined to **one** zone at a time. If two zone hunts overlap, the engaged hunt is chosen by **highest priority**; on equal priority a **blocking** zone (`blockExit: true`) wins over a non-blocking one. Note that a player who enters through an area covered by only one zone engages that zone and stays engaged until they leave it — so avoid overlapping zones with mixed settings for hunts meant to be played in parallel.
 {% endhint %}
 
 ## Per-Hunt Configuration

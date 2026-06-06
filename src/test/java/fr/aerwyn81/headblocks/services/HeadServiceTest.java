@@ -188,7 +188,7 @@ class HeadServiceTest {
 
                 log.verify(() -> LogUtil.error("The {0} type is not yet supported!", "foobar"));
                 log.verify(() -> LogUtil.error(
-                        eq("Cannot load head {0}: the {1} plugin is not installed or enabled"), any(), any()), never());
+                        eq("Cannot load head {0}: the {1} plugin is not installed or enabled."), any(), any()), never());
             }
         }
 
@@ -198,7 +198,7 @@ class HeadServiceTest {
                 headService.addProviderHead(mock(ItemStack.class), "headdb", "5", "headdb:5", 7);
 
                 log.verify(() -> LogUtil.error(
-                        "Cannot load head {0}: the {1} plugin is not installed or enabled", "headdb:5", "HeadDB"));
+                        "Cannot load head {0}: the {1} plugin is not installed or enabled.", "headdb:5", "HeadDB"));
                 log.verify(() -> LogUtil.error(eq("The {0} type is not yet supported!"), any()), never());
             }
         }
@@ -209,7 +209,7 @@ class HeadServiceTest {
                 headService.addProviderHead(mock(ItemStack.class), "hdb", "abc", "hdb:abc", 2);
 
                 log.verify(() -> LogUtil.error(
-                        "Cannot load head {0}: the {1} plugin is not installed or enabled", "hdb:abc", "HeadDatabase"));
+                        "Cannot load head {0}: the {1} plugin is not installed or enabled.", "hdb:abc", "HeadDatabase"));
             }
         }
 
@@ -225,7 +225,7 @@ class HeadServiceTest {
                 svc.addProviderHead(mock(ItemStack.class), "headdb", "5", "headdb:5", 1);
 
                 log.verify(() -> LogUtil.error(
-                        "Cannot load head {0}: the {1} plugin is not installed or enabled", "headdb:5", "HeadDB"));
+                        "Cannot load head {0}: the {1} plugin is not installed or enabled.", "headdb:5", "HeadDB"));
                 verify(hook, never()).createHead(any(), any());
             }
         }

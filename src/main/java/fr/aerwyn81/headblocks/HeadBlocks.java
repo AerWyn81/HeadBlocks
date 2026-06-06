@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.*;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.runnables.TimedRunTask;
+import fr.aerwyn81.headblocks.runnables.ZoneOutlineTask;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
@@ -147,8 +148,10 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerMoveEvent(serviceRegistry), this);
 
         new TimedRunTask(serviceRegistry).runTaskTimer(this, 0, 2);
+        new ZoneOutlineTask(serviceRegistry).runTaskTimer(this, 20, 10);
 
         if (serviceRegistry.getConfigService().metricsEnabled()) {
             var m = new Metrics(this, 15495);

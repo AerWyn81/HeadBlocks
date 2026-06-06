@@ -30,6 +30,7 @@ public class ServiceRegistry {
     private RewardService rewardService;
     private HologramService hologramService;
     private GuiService guiService;
+    private ZoneEnforcementService zoneEnforcementService;
 
     private final File configFile;
     private final File locationFile;
@@ -101,6 +102,9 @@ public class ServiceRegistry {
         hologramService.load();
 
         this.guiService = new GuiService(configService, languageService, huntService, headService, pluginProvider, this);
+
+        this.zoneEnforcementService = new ZoneEnforcementService(this);
+        this.zoneEnforcementService.sanitizeZoneHunts();
     }
 
     public void reload() {
@@ -124,6 +128,8 @@ public class ServiceRegistry {
         headService.load();
 
         hologramService.load();
+
+        zoneEnforcementService.sanitizeZoneHunts();
     }
 
     public void shutdown() {
@@ -132,6 +138,7 @@ public class ServiceRegistry {
         headService.clearHeadMoves();
         guiService.clearCache();
         TimedRunManager.clearAll();
+        ZoneRunManager.clearAll();
     }
 
     // --- Getters ---
@@ -186,6 +193,10 @@ public class ServiceRegistry {
 
     public GuiService getGuiService() {
         return guiService;
+    }
+
+    public ZoneEnforcementService getZoneEnforcementService() {
+        return zoneEnforcementService;
     }
 
     public HoloEasy getHoloEasyLib() {

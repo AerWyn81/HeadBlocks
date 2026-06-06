@@ -479,6 +479,13 @@ public class Hunt implements Cmd {
             return;
         }
 
+        HBHunt targetHunt = registry.getHuntService().getHuntById(huntId);
+        if (registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, headLocation.getLocation())) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneHeadOutsideAssign")
+                    .replace("%hunt%", huntId));
+            return;
+        }
+
         try {
             registry.getHuntService().transferHead(headLocation, huntId);
         } catch (Exception e) {
@@ -556,6 +563,18 @@ public class Hunt implements Cmd {
 
         int skipped = candidates.size() - headsToAssign.size();
 
+        java.util.List<HeadLocation> insideZone = headsToAssign.stream()
+                .filter(h -> !registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, h.getLocation()))
+                .toList();
+        int outsideZone = headsToAssign.size() - insideZone.size();
+        headsToAssign = insideZone;
+
+        if (outsideZone > 0) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneAssignSkipped")
+                    .replace("%count%", String.valueOf(outsideZone))
+                    .replace("%hunt%", huntId));
+        }
+
         if (headsToAssign.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntAssignAllAlreadyInHunt")
                     .replace("%hunt%", huntId));
@@ -610,6 +629,13 @@ public class Hunt implements Cmd {
 
         if (!registry.getHuntService().huntExists(huntId)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
+                    .replace("%hunt%", huntId));
+            return;
+        }
+
+        HBHunt targetHunt = registry.getHuntService().getHuntById(huntId);
+        if (registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, headLocation.getLocation())) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneHeadOutsideAssign")
                     .replace("%hunt%", huntId));
             return;
         }

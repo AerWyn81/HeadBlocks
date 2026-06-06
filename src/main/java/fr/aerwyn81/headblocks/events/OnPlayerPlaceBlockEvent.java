@@ -45,6 +45,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
+
         if (!hasHeadBlocksItemInHand(player)) {
             return;
         }
@@ -97,6 +98,15 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         // Assign head to selected hunt directly during save
         String selectedHuntId = registry.getHuntService().getSelectedHunt(player.getUniqueId());
+
+        var selectedHunt = registry.getHuntService().getHuntById(selectedHuntId);
+        if (selectedHunt != null
+                && registry.getZoneEnforcementService().isLocationOutsideZone(selectedHunt, headLocation)) {
+            e.setCancelled(true);
+            player.sendMessage(registry.getLanguageService().message("Messages.ZoneHeadOutside")
+                    .replace("%hunt%", selectedHunt.getDisplayName()));
+            return;
+        }
 
         UUID headUuid;
         try {

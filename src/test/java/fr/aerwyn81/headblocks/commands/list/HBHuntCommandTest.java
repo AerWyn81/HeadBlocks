@@ -57,6 +57,9 @@ class HBHuntCommandTest {
     private GuiService guiService;
 
     @Mock
+    private ZoneEnforcementService zoneEnforcementService;
+
+    @Mock
     private CommandSender consoleSender;
 
     @Mock
@@ -73,6 +76,7 @@ class HBHuntCommandTest {
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getHuntConfigService()).thenReturn(huntConfigService);
         lenient().when(registry.getGuiService()).thenReturn(guiService);
+        lenient().when(registry.getZoneEnforcementService()).thenReturn(zoneEnforcementService);
 
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
         lenient().when(languageService.message(anyString(), anyString())).thenReturn("mock-message");

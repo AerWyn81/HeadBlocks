@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -68,5 +69,20 @@ public class OnPlayerClickInventoryEvent implements Listener {
                 clickedGui.getOnClose().accept(clickedGui);
             }
         }
+
+        var zoneConfigManager = registry.getGuiService().getZoneConfigManager();
+        if (!(event.getPlayer() instanceof Player player) || !zoneConfigManager.isOutlineViewer(player.getUniqueId())) {
+            return;
+        }
+
+        registry.getScheduler().runTaskLater(() -> {
+            if (zoneConfigManager.isAwaitingCapture(player.getUniqueId())) {
+                return;
+            }
+            if (player.getOpenInventory().getTopInventory().getHolder() instanceof HBMenu) {
+                return;
+            }
+            zoneConfigManager.clearState(player.getUniqueId());
+        }, 1L);
     }
 }

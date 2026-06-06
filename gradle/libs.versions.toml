@@ -5,6 +5,7 @@ placeholderapi = "2.12.2"
 headdatabase-api = "1.3.2"
 headdb-api = "6.0.0-rc.2"
 packetevents = "2.12.1"
+worldguard = "7.0.9"
 
 # Libraries
 jedis = "7.5.0"
@@ -39,6 +40,7 @@ placeholderapi = { module = "me.clip:placeholderapi", version.ref = "placeholder
 headdatabase-api = { module = "com.arcaniax:HeadDatabase-API", version.ref = "headdatabase-api" }
 headdb-api = { module = "com.github.TheSilentPro.HeadDB:headdb-api", version.ref = "headdb-api" }
 packetevents = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
+worldguard = { module = "com.sk89q.worldguard:worldguard-bukkit", version.ref = "worldguard" }
 
 # Implementation Dependencies
 jedis = { module = "redis.clients:jedis", version.ref = "jedis" }
