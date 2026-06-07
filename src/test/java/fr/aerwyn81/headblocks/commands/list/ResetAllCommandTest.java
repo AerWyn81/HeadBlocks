@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -44,6 +45,9 @@ class ResetAllCommandTest {
 
     @Mock
     private Player playerSender;
+
+    @Mock
+    private CommandSender consoleSender;
 
     private ResetAll command;
 
@@ -194,6 +198,38 @@ class ResetAllCommandTest {
 
             assertThat(result).isTrue();
             verify(languageService).message("Messages.HeadNameNotFound");
+        }
+    }
+
+    @Nested
+    class ConsoleExecution {
+
+        @Test
+        void fullResetAll_worksFromConsole() throws InternalException {
+            UUID p1 = UUID.randomUUID();
+            java.util.List<UUID> players = java.util.List.of(p1);
+            when(storageService.getAllPlayers()).thenReturn(players);
+
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+                 MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
+                bukkit.when(() -> Bukkit.getPlayer(any(UUID.class))).thenReturn(null);
+
+                boolean result = command.perform(consoleSender, new String[]{"resetall", "--confirm"});
+
+                assertThat(result).isTrue();
+                verify(storageService).resetPlayer(p1);
+                verify(languageService).message("Messages.ResetAllSuccess");
+            }
+        }
+
+        @Test
+        void targetedHeadWithoutValue_rejectedFromConsole() throws InternalException {
+            boolean result = command.perform(consoleSender, new String[]{"resetall", "--head", "--confirm"});
+
+            assertThat(result).isTrue();
+            verify(languageService).message("Messages.TargetHeadPlayerOnly");
+            verify(storageService, never()).resetPlayer(any());
+            verify(storageService, never()).getAllPlayers();
         }
     }
 

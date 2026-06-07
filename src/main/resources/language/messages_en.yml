@@ -51,6 +51,7 @@ Messages:
   HeadAlreadyExistHere: "%prefix% &cA HeadBlock already exists at this location."
   ErrorCannotPlaySound: "%prefix% &cSound on head click cannot be played."
   NoTargetHeadBlock: "%prefix% &cNo HeadBlock was found at the targeted location."
+  TargetHeadPlayerOnly: "%prefix% &cThe &e--head &coption without a value targets the block you are looking at and can only be used in-game. Specify a head name or UUID instead, e.g. &e--head <name>&c."
   TargetBlockInfo: "%prefix% &aYou have selected a HeadBlock &7(uuid: %uuid% - %world%, %x%, %y%, %z%)&a. Target the block on which you want to move the HeadBlock and use the command &e/hb move --confirm &ato confirm. Use &e/hb move --cancel &ato cancel."
   TargetBlockInvalid: "%prefix% &cThe block or the block above the targeted block is invalid."
   HeadMoveNoPlayer: "%prefix% &cNo HeadBlock to move was found."

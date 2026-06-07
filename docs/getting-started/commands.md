@@ -89,19 +89,27 @@ Remove all spawned heads.
 
 ### /hb reset
 
-Reset player's progress.
+Reset a player's progress. With `--head` followed by a head name or UUID, only that head is reset; with `--head` and no value, the head you are looking at is reset (in-game only).
 
-|               |            |
-|---------------|------------|
-| **Arguments** | `<player>` |
+|               |                                  |
+|---------------|----------------------------------|
+| **Arguments** | `<player> (--head (name\|uuid))` |
+
+{% hint style="info" %}
+Usable from the console. Only `--head` with no value requires a player, since it targets the block you are looking at.
+{% endhint %}
 
 ### /hb resetAll
 
-Reset all player progress.
+Reset all player progress. With `--head` followed by a head name or UUID, only that head is reset for everyone; with `--head` and no value, the head you are looking at is reset (in-game only).
 
-|               |             |
-|---------------|-------------|
-| **Arguments** | `--confirm` |
+|               |                                   |
+|---------------|-----------------------------------|
+| **Arguments** | `--confirm (--head (name\|uuid))` |
+
+{% hint style="info" %}
+Usable from the console. Only `--head` with no value requires a player, since it targets the block you are looking at.
+{% endhint %}
 
 ### /hb list
 

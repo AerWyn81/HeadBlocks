@@ -13,7 +13,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-@HBAnnotations(command = "reset", permission = "headblocks.admin", args = {"player"}, isPlayerCommand = true)
+@HBAnnotations(command = "reset", permission = "headblocks.admin", args = {"player"})
 public class Reset extends ResetBase {
 
     public Reset(ServiceRegistry registry) {
@@ -22,8 +22,6 @@ public class Reset extends ResetBase {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        var player = (Player) sender;
-
         // In multi-hunt mode, require /hb hunt <name> reset <player> instead
         if (registry.getHuntService().isMultiHunt()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntResetRequireHunt"));
@@ -45,7 +43,7 @@ public class Reset extends ResetBase {
             return true;
         }
 
-        var headUuid = resolveHeadFromArgs(player, args, 2);
+        var headUuid = resolveHeadFromArgs(sender, args, 2);
 
         if (hasHeadParameter(args, 2) && headUuid == null) {
             return true;
