@@ -14,6 +14,7 @@
 
 - Timed start plates are protected from breaking and removed when the hunt is deleted.
 - Head placement/assignment refuses or skips heads outside a hunt's zone.
+- `/hb reset` and `/hb resetAll` can now be run from the console (only `--head` with no value still requires a player, since it targets the looked-at block).
 
 ### 🐛 Bug Fixes
 
