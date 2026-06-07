@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.utils.runnables;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,10 @@ public class BukkitFutureResult<T> {
     }
 
     public void whenComplete(@NotNull Plugin plugin, @NotNull Consumer<? super T> callback, Consumer<Throwable> throwableConsumer) {
-        var executor = (Executor) r -> plugin.getServer().getScheduler().runTask(plugin, r);
+        // Use FoliaLib scheduler for cross-platform compatibility (Folia/Paper/Spigot)
+        var executor = (Executor) r -> {
+            HeadBlocks.getScheduler().runTaskGlobal(r);
+        };
         this.future.thenAcceptAsync(callback, executor).exceptionally(throwable -> {
             throwableConsumer.accept(throwable);
             return null;
@@ -41,7 +45,7 @@ public class BukkitFutureResult<T> {
 
     public void whenComplete(@NotNull Plugin plugin, @NotNull Consumer<? super T> callback) {
         whenComplete(plugin, callback, throwable ->
-                plugin.getLogger().log(Level.SEVERE, "Exception in Future Result", throwable));
+            plugin.getLogger().log(Level.SEVERE, "Exception in Future Result", throwable));
     }
 
     public @Nullable T join() {
