@@ -264,7 +264,7 @@ hangarPublish {
                     hangar("HeadDB") {
                         required = false
                     }
-                    hangar("packetevents") {
+                    url("packetevents", "https://modrinth.com/plugin/packetevents") {
                         required = false
                     }
                 }
