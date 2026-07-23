@@ -75,7 +75,7 @@ public class OnPlayerClickInventoryEvent implements Listener {
             return;
         }
 
-        registry.getScheduler().runTaskLater(() -> {
+        registry.getScheduler().runTaskLater(player, () -> {
             if (zoneConfigManager.isAwaitingCapture(player.getUniqueId())) {
                 return;
             }

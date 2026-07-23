@@ -9,7 +9,7 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.ZoneBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneMessageMode;
 import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -323,7 +323,7 @@ class ZoneEnforcementServiceTest {
         service.evaluate(player, to);
 
         assertThat(TimedRunManager.isInRun(uuid)).isFalse();
-        verify(scheduler).runTaskLater(any(Runnable.class), eq(1L));
+        verify(scheduler).runTaskGlobalLater(any(Runnable.class), eq(1L));
     }
 
     @Test
@@ -336,7 +336,7 @@ class ZoneEnforcementServiceTest {
 
         service.evaluate(player, to);
 
-        verify(scheduler, never()).runTaskLater(any(Runnable.class), anyLong());
+        verify(scheduler, never()).runTaskGlobalLater(any(Runnable.class), anyLong());
     }
 
     @Test
