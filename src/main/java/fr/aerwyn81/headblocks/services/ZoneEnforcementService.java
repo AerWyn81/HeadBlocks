@@ -10,6 +10,7 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.ZoneBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneMessageMode;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.paper.PaperUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
@@ -280,7 +281,7 @@ public class ZoneEnforcementService {
         TimedRunManager.leaveRun(uuid);
 
         Location target = TimedRunManager.buildReturnLocation(timed.startPlateLocation(), yaw);
-        registry.getScheduler().runTaskLater(() -> player.teleport(target), 1L);
+        registry.getScheduler().runTaskLater(player, () -> PaperUtil.teleportAsync(player, target), 1L);
     }
 
     private TimedBehavior findTimedBehavior(HBHunt hunt) {
