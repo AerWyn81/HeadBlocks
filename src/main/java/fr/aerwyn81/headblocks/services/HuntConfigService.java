@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.ZoneBehavior;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -424,6 +425,8 @@ public class HuntConfigService {
 
             if (behavior instanceof TimedBehavior tb) {
                 yaml.set(key + ".repeatable", tb.repeatable());
+                yaml.set(key + ".limitSeconds", tb.limitSeconds());
+                yaml.set(key + ".resetOnExpire", tb.resetOnExpire());
                 if (tb.startPlateLocation() != null) {
                     var loc = tb.startPlateLocation();
                     if (loc.getWorld() != null) {
@@ -432,6 +435,25 @@ public class HuntConfigService {
                         yaml.set(key + ".startPlate.y", loc.getBlockY());
                         yaml.set(key + ".startPlate.z", loc.getBlockZ());
                     }
+                }
+            }
+
+            if (behavior instanceof ZoneBehavior zb) {
+                yaml.set(key + ".blockExit", zb.blockExit());
+                yaml.set(key + ".resetOnLeave", zb.resetOnLeave());
+                yaml.set(key + ".messageMode", zb.messageMode().name());
+                if (zb.zone() != null) {
+                    var zoneSection = yaml.createSection(key + ".zone");
+                    zb.zone().saveTo(zoneSection);
+                }
+                var returnPoint = zb.returnPoint();
+                if (returnPoint != null && returnPoint.getWorld() != null) {
+                    yaml.set(key + ".returnPoint.world", returnPoint.getWorld().getName());
+                    yaml.set(key + ".returnPoint.x", returnPoint.getX());
+                    yaml.set(key + ".returnPoint.y", returnPoint.getY());
+                    yaml.set(key + ".returnPoint.z", returnPoint.getZ());
+                    yaml.set(key + ".returnPoint.yaw", returnPoint.getYaw());
+                    yaml.set(key + ".returnPoint.pitch", returnPoint.getPitch());
                 }
             }
         }

@@ -19,9 +19,15 @@ import java.util.stream.IntStream;
 
 public class TimedConfigGui {
 
+    private static final int LIMIT_MAX = 3600;
+    private static final int STEP_SMALL = 5;
+    private static final int STEP_LARGE = 60;
+
     private final ServiceRegistry registry;
     private final ConcurrentHashMap<UUID, Location> plateLocations = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Boolean> repeatableStates = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Integer> limitSecondsStates = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Boolean> resetOnExpireStates = new ConcurrentHashMap<>();
     private final Set<UUID> pendingPlatePlacements = ConcurrentHashMap.newKeySet();
 
     public TimedConfigGui(ServiceRegistry registry) {
@@ -30,21 +36,21 @@ public class TimedConfigGui {
 
     public void open(Player player) {
         repeatableStates.putIfAbsent(player.getUniqueId(), true);
+        limitSecondsStates.putIfAbsent(player.getUniqueId(), 0);
+        resetOnExpireStates.putIfAbsent(player.getUniqueId(), false);
         buildAndOpenGui(player);
     }
 
     private void buildAndOpenGui(Player player) {
         var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
-                registry.getLanguageService().message("Gui.TimedConfigTitle"), false, 2);
+                registry.getLanguageService().message("Gui.TimedConfigTitle"), false, 4);
 
-        // Borders
-        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17};
-        IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
-                index -> menu.setItem(0, borders[index],
-                        new ItemGUI(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setName("§7").toItemStack()))
-        );
+        IntStream.range(0, 36).forEach(index -> menu.setItem(0, index,
+                new ItemGUI(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setName("§7").toItemStack())));
 
         UUID uuid = player.getUniqueId();
+
+        // --- Setup (row 1) ---
 
         // Slot 11: Set start plate
         Location plateLoc = plateLocations.get(uuid);
@@ -74,18 +80,44 @@ public class TimedConfigGui {
                     p.sendMessage(registry.getLanguageService().message("Gui.TimedConfigPlacePlate"));
                 }));
 
-        // Slot 13: Repeatable toggle
+        // Slot 15: Time limit (left/right click to adjust)
+        int limitSeconds = limitSecondsStates.getOrDefault(uuid, 0);
+        String limitValue = limitSeconds <= 0
+                ? registry.getLanguageService().message("Gui.TimedConfigUnlimited")
+                : limitSeconds + "s";
+
+        List<String> limitLore = registry.getLanguageService().messageList("Gui.TimedConfigTimeLimitLore").stream()
+                .map(s -> s.replace("%value%", limitValue))
+                .collect(Collectors.toList());
+
+        menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.CLOCK)
+                .setName(registry.getLanguageService().message("Gui.TimedConfigTimeLimit"))
+                .setLore(limitLore)
+                .toItemStack(), true)
+                .addOnClickEvent(event -> {
+                    Player p = (Player) event.getWhoClicked();
+                    int step = event.isShiftClick() ? STEP_LARGE : STEP_SMALL;
+                    int sign = event.isRightClick() ? -1 : 1;
+                    int current = limitSecondsStates.getOrDefault(p.getUniqueId(), 0);
+                    int updated = Math.max(0, Math.min(LIMIT_MAX, current + sign * step));
+                    limitSecondsStates.put(p.getUniqueId(), updated);
+                    buildAndOpenGui(p);
+                }));
+
+        // --- Options (row 2) ---
+
+        // Slot 21: Repeatable toggle
         boolean repeatable = repeatableStates.getOrDefault(uuid, true);
         Material repeatableMat = repeatable ? Material.LIME_DYE : Material.GRAY_DYE;
-        String statusText = repeatable
+        String repeatableStatus = repeatable
                 ? registry.getLanguageService().message("Gui.BehaviorEnabled")
                 : registry.getLanguageService().message("Gui.BehaviorDisabled");
 
         List<String> repeatableLore = registry.getLanguageService().messageList("Gui.TimedConfigRepeatableLore").stream()
-                .map(s -> s.replace("%status%", statusText))
+                .map(s -> s.replace("%status%", repeatableStatus))
                 .collect(Collectors.toList());
 
-        menu.setItem(0, 13, new ItemGUI(new ItemBuilder(repeatableMat)
+        menu.setItem(0, 21, new ItemGUI(new ItemBuilder(repeatableMat)
                 .setName(registry.getLanguageService().message("Gui.TimedConfigRepeatable"))
                 .setLore(repeatableLore)
                 .toItemStack(), true)
@@ -96,15 +128,37 @@ public class TimedConfigGui {
                     buildAndOpenGui(p);
                 }));
 
-        // Slot 15: Validate
+        // Slot 23: Reset on expire toggle
+        boolean resetOnExpire = resetOnExpireStates.getOrDefault(uuid, false);
+        Material resetMat = resetOnExpire ? Material.LIME_DYE : Material.GRAY_DYE;
+        String resetStatus = resetOnExpire
+                ? registry.getLanguageService().message("Gui.BehaviorEnabled")
+                : registry.getLanguageService().message("Gui.BehaviorDisabled");
+
+        List<String> resetLore = registry.getLanguageService().messageList("Gui.TimedConfigResetOnExpireLore").stream()
+                .map(s -> s.replace("%status%", resetStatus))
+                .collect(Collectors.toList());
+
+        menu.setItem(0, 23, new ItemGUI(new ItemBuilder(resetMat)
+                .setName(registry.getLanguageService().message("Gui.TimedConfigResetOnExpire"))
+                .setLore(resetLore)
+                .toItemStack(), true)
+                .addOnClickEvent(event -> {
+                    Player p = (Player) event.getWhoClicked();
+                    boolean current = resetOnExpireStates.getOrDefault(p.getUniqueId(), false);
+                    resetOnExpireStates.put(p.getUniqueId(), !current);
+                    buildAndOpenGui(p);
+                }));
+
+        // Slot 31: Validate (row 4)
         if (plateLoc != null) {
-            menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
+            menu.setItem(0, 31, new ItemGUI(new ItemBuilder(Material.DIAMOND)
                     .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
                     .setLore(registry.getLanguageService().messageList("Gui.ValidateCreateLore"))
                     .toItemStack(), true)
                     .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
         } else {
-            menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.BARRIER)
+            menu.setItem(0, 31, new ItemGUI(new ItemBuilder(Material.BARRIER)
                     .setName(registry.getLanguageService().message("Gui.ValidateBlocked"))
                     .setLore(registry.getLanguageService().messageList("Gui.TimedConfigValidateBlockedLore"))
                     .toItemStack()));
@@ -130,14 +184,19 @@ public class TimedConfigGui {
         Location plateLoc = plateLocations.remove(uuid);
         boolean repeatable = repeatableStates.getOrDefault(uuid, true);
         repeatableStates.remove(uuid);
+        int limitSeconds = limitSecondsStates.getOrDefault(uuid, 0);
+        limitSecondsStates.remove(uuid);
+        boolean resetOnExpire = resetOnExpireStates.getOrDefault(uuid, false);
+        resetOnExpireStates.remove(uuid);
 
         var selected = registry.getGuiService().getBehaviorSelectionManager().getSelectedBehaviors(uuid);
         if (selected != null && selected.contains("scheduled")) {
-            registry.getGuiService().getScheduledConfigManager().open(player, plateLoc, repeatable);
+            registry.getGuiService().getScheduledConfigManager().open(player, plateLoc, repeatable, limitSeconds, resetOnExpire);
             return;
         }
 
-        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, plateLoc, repeatable, null);
+        registry.getGuiService().getBehaviorSelectionManager()
+                .createHunt(player, plateLoc, repeatable, limitSeconds, resetOnExpire, null);
     }
 
     public boolean hasPendingPlatePlacement(UUID playerUuid) {
@@ -154,6 +213,8 @@ public class TimedConfigGui {
     public void clearState(UUID playerUuid) {
         plateLocations.remove(playerUuid);
         repeatableStates.remove(playerUuid);
+        limitSecondsStates.remove(playerUuid);
+        resetOnExpireStates.remove(playerUuid);
         pendingPlatePlacements.remove(playerUuid);
     }
 }

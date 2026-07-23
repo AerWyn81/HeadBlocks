@@ -187,7 +187,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // %headblocks_hunt_<huntId>_found% | %headblocks_hunt_<huntId>_total% | %headblocks_hunt_<huntId>_progress% | %headblocks_hunt_<huntId>_left%
         if (identifier.startsWith("hunt_")) {
             var knownSuffixes = Set.of("found", "total", "left", "progress", "name", "state",
-                    "besttime", "timedcount", "timeposition", "timetop");
+                    "besttime", "timedcount", "timeposition", "timetop", "finishers");
 
             // Strip leading "hunt_"
             String remainder = identifier.substring("hunt_".length());
@@ -283,6 +283,19 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 case "timedcount" -> {
                     try {
                         return String.valueOf(registry.getStorageService().getTimedRunCount(player.getUniqueId(), huntId));
+                    } catch (InternalException e) {
+                        return "0";
+                    }
+                }
+                case "finishers" -> {
+                    try {
+                        int total = hunt.getHeadCount();
+                        if (total <= 0) {
+                            return "0";
+                        }
+                        return String.valueOf(registry.getStorageService().getTopPlayersForHunt(huntId).values().stream()
+                                .filter(found -> found >= total)
+                                .count());
                     } catch (InternalException e) {
                         return "0";
                     }

@@ -66,7 +66,7 @@ hint:
   actionBarMessage: "%prefix% &aPssst, a mystery block is near! &7(%arrow%)"
 ```
 
-Audio and visual hints to help players locate unfound heads. To enable hints for a specific head, use `/hb options` → Hint tab.
+Audio and visual hints to help players locate unfound heads. To enable hints for a specific head, use `/hb options` → Hint tab (see the [click/drop reference](options-gui.md#hint-menu-hb-options-hint)).
 
 | Option               | Description                                                                                           |
 |----------------------|-------------------------------------------------------------------------------------------------------|

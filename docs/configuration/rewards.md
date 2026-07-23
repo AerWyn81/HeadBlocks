@@ -73,7 +73,7 @@ When enabled, `headClick` commands are **not** executed if the player's current 
 
 ## Per-Head Rewards
 
-Individual heads can have their own rewards configured via the `/hb options rewards` GUI. Each head supports:
+Individual heads can have their own rewards configured via the `/hb options rewards` GUI ([click/drop reference](options-gui.md#rewards-menu-hb-options-rewards)). Each head supports:
 
 - **MESSAGE**: Send a personal message to the player
 - **COMMAND**: Execute a command as console

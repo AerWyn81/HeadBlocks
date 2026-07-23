@@ -13,10 +13,12 @@ import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -206,6 +208,8 @@ public class Hunt implements Cmd {
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleteInProgress")
                 .replace("%hunt%", huntId));
 
+        removeStartPlate(hunt);
+
         // Collect HeadLocation objects for this hunt
         var headsToRemove = new ArrayList<HeadLocation>();
         for (UUID headUUID : hunt.getHeadUUIDs()) {
@@ -236,6 +240,8 @@ public class Hunt implements Cmd {
     }
 
     private void handleDeleteKeepHeads(CommandSender sender, HBHunt hunt, String huntId, String fallbackHuntId) {
+        removeStartPlate(hunt);
+
         try {
             // Transfer heads to fallback hunt via YAML
             for (UUID headUUID : new ArrayList<>(hunt.getHeadUUIDs())) {
@@ -261,6 +267,15 @@ public class Hunt implements Cmd {
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntDeleted")
                 .replace("%hunt%", huntId));
+    }
+
+    private void removeStartPlate(HBHunt hunt) {
+        for (Behavior behavior : hunt.getBehaviors()) {
+            if (behavior instanceof TimedBehavior tb && tb.startPlateLocation() != null
+                    && tb.startPlateLocation().getWorld() != null) {
+                tb.startPlateLocation().getBlock().setType(Material.AIR);
+            }
+        }
     }
 
     private void handleEnable(CommandSender sender, String[] args) {
@@ -479,6 +494,13 @@ public class Hunt implements Cmd {
             return;
         }
 
+        HBHunt targetHunt = registry.getHuntService().getHuntById(huntId);
+        if (registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, headLocation.getLocation())) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneHeadOutsideAssign")
+                    .replace("%hunt%", huntId));
+            return;
+        }
+
         try {
             registry.getHuntService().transferHead(headLocation, huntId);
         } catch (Exception e) {
@@ -556,6 +578,18 @@ public class Hunt implements Cmd {
 
         int skipped = candidates.size() - headsToAssign.size();
 
+        java.util.List<HeadLocation> insideZone = headsToAssign.stream()
+                .filter(h -> !registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, h.getLocation()))
+                .toList();
+        int outsideZone = headsToAssign.size() - insideZone.size();
+        headsToAssign = insideZone;
+
+        if (outsideZone > 0) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneAssignSkipped")
+                    .replace("%count%", String.valueOf(outsideZone))
+                    .replace("%hunt%", huntId));
+        }
+
         if (headsToAssign.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntAssignAllAlreadyInHunt")
                     .replace("%hunt%", huntId));
@@ -610,6 +644,13 @@ public class Hunt implements Cmd {
 
         if (!registry.getHuntService().huntExists(huntId)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
+                    .replace("%hunt%", huntId));
+            return;
+        }
+
+        HBHunt targetHunt = registry.getHuntService().getHuntById(huntId);
+        if (registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, headLocation.getLocation())) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneHeadOutsideAssign")
                     .replace("%hunt%", huntId));
             return;
         }

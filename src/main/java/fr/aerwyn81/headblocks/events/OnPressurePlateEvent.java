@@ -78,6 +78,12 @@ public class OnPressurePlateEvent implements Listener {
     private void handleStartPlate(Player player, HBHunt hunt) {
         UUID pUuid = player.getUniqueId();
 
+        if (!hunt.isValid()) {
+            player.sendMessage(registry.getLanguageService().message("Messages.TimedNoHeads")
+                    .replace("%hunt%", hunt.getDisplayName()));
+            return;
+        }
+
         // Check if player already completed all heads for this hunt
         try {
             ArrayList<UUID> foundHeads = registry.getStorageService().getHeadsPlayerForHunt(pUuid, hunt.getId());
@@ -106,8 +112,9 @@ public class OnPressurePlateEvent implements Listener {
             }
         }
 
-        // Start/restart the run
-        TimedRunManager.startRun(pUuid, hunt.getId());
+        // Start/restart the run, capturing the player's facing (yaw) so we can face them back
+        // toward the course if the time limit expires
+        TimedRunManager.startRun(pUuid, hunt.getId(), player.getLocation().getYaw());
 
         if (isRestart) {
             player.sendMessage(registry.getLanguageService().message("Messages.TimedRestarted")

@@ -104,7 +104,6 @@ class HeadLocationIntegrationTest {
         HeadLocation original = new HeadLocation("&aGreenHead", uuid, loc, "default");
         original.setOrderIndex(5);
         original.setHintSound(true);
-        original.setHintActionBar(true);
 
         // Save to config
         YamlConfiguration config = new YamlConfiguration();
@@ -123,7 +122,7 @@ class HeadLocationIntegrationTest {
         assertThat(loaded.getLocation().getZ()).isEqualTo(-30.5);
         assertThat(loaded.getOrderIndex()).isEqualTo(5);
         assertThat(loaded.isHintSoundEnabled()).isTrue();
-        assertThat(loaded.isHintActionBarEnabled()).isTrue();
+        assertThat(loaded.isHintActionBarEnabled()).isFalse();
     }
 
     @Test

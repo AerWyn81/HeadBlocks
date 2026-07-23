@@ -28,6 +28,8 @@ public class ScheduledConfigGui {
     // Shared pending state
     private final ConcurrentHashMap<UUID, Location> pendingPlateLocations = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Boolean> pendingRepeatables = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Integer> pendingLimitSeconds = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Boolean> pendingResetOnExpire = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> pendingChatFields = new ConcurrentHashMap<>();
 
     // Mode selection
@@ -54,11 +56,13 @@ public class ScheduledConfigGui {
         this.registry = registry;
     }
 
-    public void open(Player player, Location plateLocation, boolean repeatable) {
+    public void open(Player player, Location plateLocation, boolean repeatable, int limitSeconds, boolean resetOnExpire) {
         if (plateLocation != null) {
             pendingPlateLocations.put(player.getUniqueId(), plateLocation);
         }
         pendingRepeatables.put(player.getUniqueId(), repeatable);
+        pendingLimitSeconds.put(player.getUniqueId(), limitSeconds);
+        pendingResetOnExpire.put(player.getUniqueId(), resetOnExpire);
         buildModeSelectionGui(player);
     }
 
@@ -383,11 +387,16 @@ public class ScheduledConfigGui {
         Location plateLoc = pendingPlateLocations.remove(uuid);
         boolean repeatable = pendingRepeatables.getOrDefault(uuid, true);
         pendingRepeatables.remove(uuid);
+        int limitSeconds = pendingLimitSeconds.getOrDefault(uuid, 0);
+        pendingLimitSeconds.remove(uuid);
+        boolean resetOnExpire = pendingResetOnExpire.getOrDefault(uuid, false);
+        pendingResetOnExpire.remove(uuid);
 
         ScheduleMode scheduleMode = buildScheduleMode(uuid, modeType);
         clearModeState(uuid);
 
-        registry.getGuiService().getBehaviorSelectionManager().createHunt(player, plateLoc, repeatable, scheduleMode);
+        registry.getGuiService().getBehaviorSelectionManager()
+                .createHunt(player, plateLoc, repeatable, limitSeconds, resetOnExpire, scheduleMode);
     }
 
     private ScheduleMode buildScheduleMode(UUID uuid, String modeType) {
@@ -608,5 +617,7 @@ public class ScheduledConfigGui {
         pendingChatFields.remove(playerUuid);
         pendingPlateLocations.remove(playerUuid);
         pendingRepeatables.remove(playerUuid);
+        pendingLimitSeconds.remove(playerUuid);
+        pendingResetOnExpire.remove(playerUuid);
     }
 }

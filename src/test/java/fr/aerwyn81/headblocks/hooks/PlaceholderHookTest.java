@@ -492,6 +492,47 @@ class PlaceholderHookTest {
         }
 
         @Test
+        void huntFinishers_returnsCompletedPlayerCount() throws InternalException {
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getHeadCount()).thenReturn(3);
+            when(huntService.getHuntById("myhunt")).thenReturn(hunt);
+
+            LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
+            top.put(new PlayerProfileLight(UUID.randomUUID(), "Done1", ""), 3);
+            top.put(new PlayerProfileLight(UUID.randomUUID(), "Done2", ""), 4);
+            top.put(new PlayerProfileLight(UUID.randomUUID(), "InProgress", ""), 2);
+            when(storageService.getTopPlayersForHunt("myhunt")).thenReturn(top);
+
+            String result = hook.onRequest(player, "hunt_myhunt_finishers");
+
+            assertThat(result).isEqualTo("2");
+        }
+
+        @Test
+        void huntFinishers_noHeads_returnsZero() {
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getHeadCount()).thenReturn(0);
+            when(huntService.getHuntById("myhunt")).thenReturn(hunt);
+
+            String result = hook.onRequest(player, "hunt_myhunt_finishers");
+
+            assertThat(result).isEqualTo("0");
+        }
+
+        @Test
+        void huntFinishers_storageError_returnsZero() throws InternalException {
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getHeadCount()).thenReturn(3);
+            when(huntService.getHuntById("myhunt")).thenReturn(hunt);
+            when(storageService.getTopPlayersForHunt("myhunt"))
+                    .thenThrow(new InternalException("db error"));
+
+            String result = hook.onRequest(player, "hunt_myhunt_finishers");
+
+            assertThat(result).isEqualTo("0");
+        }
+
+        @Test
         void huntTimedCount_storageError_returnsZero() throws InternalException {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);

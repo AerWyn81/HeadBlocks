@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.hangar.publish)
 }
 
-version = "3.0.1"
+version = "3.1.0"
 
 val coverageExclusions = listOf(
     // Third-party shaded libraries
@@ -72,6 +72,7 @@ repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://jitpack.io")
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://maven.enginehub.org/repo/")
 }
 
 dependencies {
@@ -80,6 +81,7 @@ dependencies {
     compileOnly(libs.headdatabase.api)
     compileOnly(libs.headdb.api)
     compileOnly(libs.packetevents)
+    compileOnly(libs.worldguard)
 
     implementation(libs.jedis)
     implementation(libs.hikaricp)
@@ -201,7 +203,7 @@ bukkit {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents")
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents", "WorldGuard")
     version = project.version.toString()
     website = "https://just2craft.fr"
     foliaSupported = true
@@ -228,6 +230,10 @@ bukkit {
         }
         register("headblocks.admin") {
             description = "Allows access to /headblocks admin commands"
+            default = BukkitPluginDescription.Permission.Default.OP
+        }
+        register("headblocks.zone.bypass") {
+            description = "Allows bypassing hunt zone confinement"
             default = BukkitPluginDescription.Permission.Default.OP
         }
     }
@@ -259,7 +265,7 @@ hangarPublish {
                     hangar("HeadDB") {
                         required = false
                     }
-                    hangar("packetevents") {
+                    url("packetevents", "https://modrinth.com/plugin/packetevents") {
                         required = false
                     }
                 }

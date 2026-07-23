@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.*;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.runnables.TimedRunTask;
+import fr.aerwyn81.headblocks.runnables.ZoneOutlineTask;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
@@ -114,7 +115,6 @@ public final class HeadBlocks extends JavaPlugin {
         PluginProvider pluginProvider = new HeadBlocksPluginProvider(this);
         CommandDispatcher commandDispatcher = new BukkitCommandDispatcher();
 
-        // Providers must exist before SR creation because loadHeads() consults them.
         Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
         if (isHeadDatabaseActive) {
             this.headDatabaseHook = new HeadDatabaseHook(pluginProvider);
@@ -153,16 +153,19 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerClickInventoryEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OnPlayerMoveEvent(serviceRegistry), this);
 
         new TimedRunTask(serviceRegistry).repeatingGlobal(0, 2);
+        new ZoneOutlineTask(serviceRegistry).repeatingGlobal(20, 10);
 
         if (serviceRegistry.getConfigService().metricsEnabled()) {
             var m = new Metrics(this, 15495);
             m.addCustomChart(new SimplePie("database_type", () -> serviceRegistry.getStorageService().selectedStorageType()));
+            m.addCustomChart(new SimplePie("databaseType", () -> serviceRegistry.getStorageService().selectedStorageType()));
             m.addCustomChart(new SingleLineChart("heads", () -> serviceRegistry.getHeadService().getChargedHeadLocations().size()));
             m.addCustomChart(new SimplePie("lang", () -> serviceRegistry.getLanguageService().language()));
-            m.addCustomChart(new SingleLineChart("hunts", () -> serviceRegistry.getHuntService().getAllHunts().size()));
-            m.addCustomChart(new AdvancedBarChart("hunt_behaviors", () -> {
+            m.addCustomChart(new SingleLineChart("hunts", () -> (int) serviceRegistry.getHuntService().getAllHunts().stream().filter(hunt -> !hunt.isDefault()).count()));
+            m.addCustomChart(new AdvancedBarChart("huntBehaviors", () -> {
                 Map<String, int[]> map = new HashMap<>();
                 for (var hunt : serviceRegistry.getHuntService().getAllHunts()) {
                     for (var behavior : hunt.getBehaviors()) {
@@ -176,21 +179,14 @@ public final class HeadBlocks extends JavaPlugin {
                 var heads = serviceRegistry.getHeadService().getChargedHeadLocations();
                 Map<String, int[]> map = new HashMap<>();
 
-                if (heads.stream().anyMatch(h -> h.getOrderIndex() != -1)) {
-                    map.put("Order", new int[]{1});
-                }
-                if (heads.stream().anyMatch(HeadLocation::isHintSoundEnabled)) {
-                    map.put("Hint sound", new int[]{1});
-                }
-                if (heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled)) {
-                    map.put("Hint action bar", new int[]{1});
-                }
-                if (heads.stream().anyMatch(h -> !h.getRewards().isEmpty())) {
-                    map.put("Hint rewards", new int[]{1});
-                }
-                if (serviceRegistry.getConfigService().isHideFoundHeads()) {
-                    map.put("Hide heads", new int[]{1});
-                }
+                var enabled = new int[]{1, 0};
+                var disabled = new int[]{0, 1};
+
+                map.put("Order", heads.stream().anyMatch(h -> h.getOrderIndex() != -1) ? enabled : disabled);
+                map.put("Hint sound", heads.stream().anyMatch(HeadLocation::isHintSoundEnabled) ? enabled : disabled);
+                map.put("Hint action bar", heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled) ? enabled : disabled);
+                map.put("Hint rewards", heads.stream().anyMatch(h -> !h.getRewards().isEmpty()) ? enabled : disabled);
+                map.put("Hide heads", serviceRegistry.getConfigService().isHideFoundHeads() ? enabled : disabled);
 
                 return map;
             }));

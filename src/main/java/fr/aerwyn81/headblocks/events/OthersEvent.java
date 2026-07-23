@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
+import fr.aerwyn81.headblocks.services.ZoneRunManager;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import org.bukkit.Location;
@@ -19,6 +20,7 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
 public class OthersEvent implements Listener {
@@ -79,15 +81,29 @@ public class OthersEvent implements Listener {
         registry.getHeadService().getHeadMoves().remove(e.getPlayer().getUniqueId());
         registry.getHuntService().clearSelectedHunt(e.getPlayer().getUniqueId());
         TimedRunManager.leaveRun(e.getPlayer().getUniqueId());
+        ZoneRunManager.clear(e.getPlayer().getUniqueId());
         registry.getGuiService().getBehaviorSelectionManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getTimedConfigManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getScheduledConfigManager().clearState(e.getPlayer().getUniqueId());
+        registry.getGuiService().getZoneConfigManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getRewardsManager().cancelPendingRewardInput(e.getPlayer());
         registry.getGuiService().getHintManager().clearCache(e.getPlayer().getUniqueId());
 
         var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
         if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
             packetEventsHook.getHeadHidingListener().invalidatePlayerCache(e.getPlayer().getUniqueId());
+        }
+    }
+
+    @EventHandler
+    public void onToggleSneak(PlayerToggleSneakEvent e) {
+        if (!e.isSneaking()) {
+            return;
+        }
+
+        var zoneConfigManager = registry.getGuiService().getZoneConfigManager();
+        if (zoneConfigManager.isAwaitingSneak(e.getPlayer().getUniqueId())) {
+            zoneConfigManager.handleReturnSneak(e.getPlayer());
         }
     }
 

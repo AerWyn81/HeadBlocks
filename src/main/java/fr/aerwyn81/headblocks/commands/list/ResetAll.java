@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-@HBAnnotations(command = "resetall", permission = "headblocks.admin", isPlayerCommand = true)
+@HBAnnotations(command = "resetall", permission = "headblocks.admin")
 public class ResetAll extends ResetBase {
 
     public ResetAll(ServiceRegistry registry) {
@@ -23,20 +23,18 @@ public class ResetAll extends ResetBase {
 
     @Override
     public boolean perform(CommandSender sender, String[] args) {
-        var player = (Player) sender;
-
         boolean hasConfirm = hasParameterConfirm(args);
 
-        var headUuid = resolveHeadFromArgs(player, args, 1);
+        var headUuid = resolveHeadFromArgs(sender, args, 1);
 
         if (hasHeadParameter(args, 1) && headUuid == null) {
             return true;
         }
 
         if (headUuid != null) {
-            resetHeadForAllPlayers(player, headUuid, hasConfirm);
+            resetHeadForAllPlayers(sender, headUuid, hasConfirm);
         } else {
-            resetAllHeadsForAllPlayers(player, hasConfirm);
+            resetAllHeadsForAllPlayers(sender, hasConfirm);
         }
 
         return true;
@@ -51,19 +49,19 @@ public class ResetAll extends ResetBase {
         return false;
     }
 
-    private void resetHeadForAllPlayers(Player player, UUID headUuid, boolean hasConfirm) {
+    private void resetHeadForAllPlayers(CommandSender sender, UUID headUuid, boolean hasConfirm) {
         List<UUID> playersWithHead;
 
         try {
             playersWithHead = registry.getStorageService().getPlayers(headUuid);
         } catch (InternalException ex) {
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while retrieving players from the storage: {0}", ex.getMessage());
             return;
         }
 
         if (playersWithHead.isEmpty()) {
-            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllNoData"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllNoData"));
             return;
         }
 
@@ -82,36 +80,36 @@ public class ResetAll extends ResetBase {
                         }
                     }
                 } catch (InternalException ex) {
-                    player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
                     LogUtil.error("Error while resetting the player UUID \"{0}\" from the storage: {1}", playerUuid.toString(), ex.getMessage());
                     return;
                 }
             }
 
-            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadSuccess")
+            sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadSuccess")
                     .replace("%playerCount%", String.valueOf(playersWithHead.size()))
                     .replace("%headName%", headName));
         } else {
-            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadConfirm")
+            sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadConfirm")
                     .replace("%playerCount%", String.valueOf(playersWithHead.size()))
                     .replace("%headName%", headName));
         }
 
     }
 
-    private void resetAllHeadsForAllPlayers(Player player, boolean hasConfirm) {
+    private void resetAllHeadsForAllPlayers(CommandSender sender, boolean hasConfirm) {
         List<UUID> allPlayers;
 
         try {
             allPlayers = registry.getStorageService().getAllPlayers();
         } catch (InternalException ex) {
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while retrieving all players from the storage: {0}", ex.getMessage());
             return;
         }
 
         if (allPlayers.isEmpty()) {
-            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllNoData"));
+            sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllNoData"));
             return;
         }
 
@@ -128,16 +126,16 @@ public class ResetAll extends ResetBase {
                         }
                     }
                 } catch (InternalException ex) {
-                    player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+                    sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
                     LogUtil.error("Error while resetting the player UUID \"{0}\" from the storage: {1}", uuid.toString(), ex.getMessage());
                     return;
                 }
             }
 
-            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllSuccess")
+            sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllSuccess")
                     .replace("%playerCount%", String.valueOf(allPlayers.size())));
         } else {
-            player.sendMessage(registry.getLanguageService().message("Messages.ResetAllConfirm")
+            sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllConfirm")
                     .replace("%playerCount%", String.valueOf(allPlayers.size())));
         }
 

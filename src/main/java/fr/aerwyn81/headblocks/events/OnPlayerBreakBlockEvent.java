@@ -4,6 +4,9 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -23,6 +26,42 @@ public class OnPlayerBreakBlockEvent implements Listener {
 
     public OnPlayerBreakBlockEvent(ServiceRegistry registry) {
         this.registry = registry;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onStartPlateBreak(BlockBreakEvent e) {
+        if (!isTimedStartPlate(e.getBlock().getLocation())) {
+            return;
+        }
+
+        e.setCancelled(true);
+        var message = registry.getLanguageService().message("Messages.TimedPlateProtected");
+        if (!message.trim().isEmpty()) {
+            e.getPlayer().sendMessage(message);
+        }
+    }
+
+    private boolean isTimedStartPlate(Location location) {
+        for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
+            for (Behavior behavior : hunt.getBehaviors()) {
+                if (!(behavior instanceof TimedBehavior tb)) {
+                    continue;
+                }
+
+                Location plate = tb.startPlateLocation();
+                if (plate == null || plate.getWorld() == null || location.getWorld() == null) {
+                    continue;
+                }
+
+                if (plate.getWorld().equals(location.getWorld())
+                        && plate.getBlockX() == location.getBlockX()
+                        && plate.getBlockY() == location.getBlockY()
+                        && plate.getBlockZ() == location.getBlockZ()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @EventHandler(priority = EventPriority.HIGH)

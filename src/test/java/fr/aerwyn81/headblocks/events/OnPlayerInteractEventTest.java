@@ -66,6 +66,9 @@ class OnPlayerInteractEventTest {
     private ConfigService configService;
 
     @Mock
+    private ZoneEnforcementService zoneEnforcementService;
+
+    @Mock
     private PlayerInteractEvent event;
 
     @Mock
@@ -88,6 +91,7 @@ class OnPlayerInteractEventTest {
         lenient().when(registry.getPlaceholdersService()).thenReturn(placeholdersService);
         lenient().when(registry.getRewardService()).thenReturn(rewardService);
         lenient().when(registry.getConfigService()).thenReturn(configService);
+        lenient().when(registry.getZoneEnforcementService()).thenReturn(zoneEnforcementService);
 
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
 

@@ -116,6 +116,8 @@ public class HuntService {
 
     public void unregisterHunt(String huntId) {
         huntsById.remove(huntId);
+        TimedRunManager.leaveAllForHunt(huntId);
+        ZoneRunManager.clearAllForHunt(huntId);
     }
 
     public List<String> getHuntNames() {

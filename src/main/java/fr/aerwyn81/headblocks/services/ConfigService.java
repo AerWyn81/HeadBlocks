@@ -196,6 +196,10 @@ public class ConfigService {
         return config.getBoolean("hideFoundHeads", false);
     }
 
+    public List<String> hiddenTopPlayers() {
+        return config.getStringList("hiddenTopPlayers");
+    }
+
     public int progressBarBars() {
         return config.getInt("progressBar.totalBars", 100);
     }

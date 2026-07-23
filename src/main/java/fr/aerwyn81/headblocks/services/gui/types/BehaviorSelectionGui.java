@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.*;
 import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.ScheduleMode;
+import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneMessageMode;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
@@ -23,6 +24,7 @@ public class BehaviorSelectionGui {
     private final ServiceRegistry registry;
     private final ConcurrentHashMap<UUID, Set<String>> selectedBehaviors = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> pendingHuntNames = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, ZoneBehavior> pendingZones = new ConcurrentHashMap<>();
 
     public BehaviorSelectionGui(ServiceRegistry registry) {
         this.registry = registry;
@@ -40,13 +42,19 @@ public class BehaviorSelectionGui {
                 registry.getLanguageService().message("Gui.BehaviorSelectionTitle"), false, 2);
 
         // Borders
-        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 16, 17};
+        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> menu.setItem(0, borders[index],
                         new ItemGUI(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setName("§7").toItemStack()))
         );
 
         Set<String> selected = selectedBehaviors.getOrDefault(player.getUniqueId(), new HashSet<>());
+
+        // Slot 10: Zone
+        menu.setItem(0, 10, createBehaviorItem("zone",
+                registry.getLanguageService().message("Gui.BehaviorZoneName"),
+                registry.getLanguageService().messageList("Gui.BehaviorZoneLore"),
+                selected.contains("zone")));
 
         // Slot 11: Ordered
         menu.setItem(0, 11, createBehaviorItem("ordered",
@@ -109,24 +117,31 @@ public class BehaviorSelectionGui {
     private void handleValidate(Player player) {
         Set<String> selected = selectedBehaviors.get(player.getUniqueId());
 
+        if (selected != null && selected.contains("zone")) {
+            registry.getGuiService().getZoneConfigManager().open(player);
+            return;
+        }
+
         if (selected != null && selected.contains("timed")) {
             registry.getGuiService().getTimedConfigManager().open(player);
             return;
         }
 
         if (selected != null && selected.contains("scheduled")) {
-            registry.getGuiService().getScheduledConfigManager().open(player, null, true);
+            registry.getGuiService().getScheduledConfigManager().open(player, null, true, 0, false);
             return;
         }
 
-        createHunt(player, null, true, null);
+        createHunt(player, null, true, 0, false, null);
     }
 
-    public void createHunt(Player player, Location plateLocation, boolean repeatable, ScheduleMode scheduleMode) {
+    public void createHunt(Player player, Location plateLocation, boolean repeatable,
+                           int limitSeconds, boolean resetOnExpire, ScheduleMode scheduleMode) {
         String huntName = pendingHuntNames.remove(player.getUniqueId());
         Set<String> selected = selectedBehaviors.remove(player.getUniqueId());
 
         if (huntName == null) {
+            pendingZones.remove(player.getUniqueId());
             player.closeInventory();
             return;
         }
@@ -143,12 +158,16 @@ public class BehaviorSelectionGui {
                 switch (behaviorId) {
                     case "ordered" -> behaviors.add(new OrderedBehavior(registry));
                     case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, scheduleMode));
-                    case "timed" -> behaviors.add(new TimedBehavior(registry, plateLocation, repeatable));
+                    case "timed" ->
+                            behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
+                    case "zone" -> behaviors.add(pendingZones.getOrDefault(player.getUniqueId(),
+                            new ZoneBehavior(registry, null, null, false, false, ZoneMessageMode.CHAT)));
                 }
             }
         }
 
         hunt.setBehaviors(behaviors);
+        pendingZones.remove(player.getUniqueId());
 
         HuntCreateEvent createEvent = new HuntCreateEvent(hunt);
         Bukkit.getPluginManager().callEvent(createEvent);
@@ -188,8 +207,13 @@ public class BehaviorSelectionGui {
         return selectedBehaviors.get(playerUuid);
     }
 
+    public void setPendingZone(UUID playerUuid, ZoneBehavior zoneBehavior) {
+        pendingZones.put(playerUuid, zoneBehavior);
+    }
+
     public void clearState(UUID playerUuid) {
         pendingHuntNames.remove(playerUuid);
         selectedBehaviors.remove(playerUuid);
+        pendingZones.remove(playerUuid);
     }
 }

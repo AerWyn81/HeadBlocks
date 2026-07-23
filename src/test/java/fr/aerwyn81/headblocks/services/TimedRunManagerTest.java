@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class TimedRunManagerTest {
 
@@ -131,6 +132,85 @@ class TimedRunManagerTest {
     @Test
     void formatTime_subSecond_999ms() {
         assertThat(TimedRunManager.formatTime(999)).isEqualTo("00:00.999");
+    }
+
+    @Test
+    void getRemainingMillis_withNoLimit_returnsMaxValue() {
+        assertThat(TimedRunManager.getRemainingMillis(123_456, 0)).isEqualTo(Long.MAX_VALUE);
+        assertThat(TimedRunManager.getRemainingMillis(0, -5)).isEqualTo(Long.MAX_VALUE);
+    }
+
+    @Test
+    void getRemainingMillis_beforeLimit_returnsPositiveRemaining() {
+        assertThat(TimedRunManager.getRemainingMillis(10_000, 60)).isEqualTo(50_000);
+    }
+
+    @Test
+    void getRemainingMillis_atLimit_returnsZero() {
+        assertThat(TimedRunManager.getRemainingMillis(60_000, 60)).isZero();
+    }
+
+    @Test
+    void getRemainingMillis_pastLimit_returnsNegative() {
+        assertThat(TimedRunManager.getRemainingMillis(61_000, 60)).isEqualTo(-1_000);
+    }
+
+    @Test
+    void backwardOffset_facingSouth_movesNorth() {
+        // yaw 0 = facing south (+z), approach side is north (-z)
+        double[] offset = TimedRunManager.backwardOffset(0f);
+        assertThat(offset[0]).isCloseTo(0.0, within(1e-9));
+        assertThat(offset[1]).isCloseTo(-1.0, within(1e-9));
+    }
+
+    @Test
+    void backwardOffset_facingNorth_movesSouth() {
+        // yaw 180 = facing north (-z), approach side is south (+z)
+        double[] offset = TimedRunManager.backwardOffset(180f);
+        assertThat(offset[0]).isCloseTo(0.0, within(1e-9));
+        assertThat(offset[1]).isCloseTo(1.0, within(1e-9));
+    }
+
+    @Test
+    void backwardOffset_facingWest_movesEast() {
+        // yaw 90 = facing west (-x), approach side is east (+x)
+        double[] offset = TimedRunManager.backwardOffset(90f);
+        assertThat(offset[0]).isCloseTo(1.0, within(1e-9));
+        assertThat(offset[1]).isCloseTo(0.0, within(1e-9));
+    }
+
+    @Test
+    void backwardOffset_facingEast_movesWest() {
+        // yaw 270 = facing east (+x), approach side is west (-x)
+        double[] offset = TimedRunManager.backwardOffset(270f);
+        assertThat(offset[0]).isCloseTo(-1.0, within(1e-9));
+        assertThat(offset[1]).isCloseTo(0.0, within(1e-9));
+    }
+
+    @Test
+    void leaveAllForHunt_removesOnlyMatchingHunt() {
+        UUID p1 = UUID.randomUUID();
+        UUID p2 = UUID.randomUUID();
+        UUID p3 = UUID.randomUUID();
+        TimedRunManager.startRun(p1, "hunt-1");
+        TimedRunManager.startRun(p2, "hunt-1");
+        TimedRunManager.startRun(p3, "hunt-2");
+
+        TimedRunManager.leaveAllForHunt("hunt-1");
+
+        assertThat(TimedRunManager.isInRun(p1)).isFalse();
+        assertThat(TimedRunManager.isInRun(p2)).isFalse();
+        assertThat(TimedRunManager.isInRun(p3)).isTrue();
+    }
+
+    @Test
+    void leaveAllForHunt_unknownHunt_noOp() {
+        UUID player = UUID.randomUUID();
+        TimedRunManager.startRun(player, "hunt-1");
+
+        TimedRunManager.leaveAllForHunt("hunt-X");
+
+        assertThat(TimedRunManager.isInRun(player)).isTrue();
     }
 
     @Test

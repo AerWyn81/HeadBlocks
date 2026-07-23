@@ -1,18 +1,15 @@
-# HeadBlocks v2.8.6
+# HeadBlocks v3.1.1
 
 ## What's New
 
 ### ✨ New Features
 
--
 
 ### 🚀 Improvements
 
--
 
 ### 🐛 Bug Fixes
 
--
 
 ---
 

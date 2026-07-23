@@ -1,4 +1,15 @@
-# Commands and Permissions
+# Permissions and Commands
+
+## Permissions
+
+| Permission                           | Description                             | Default  |
+|--------------------------------------|-----------------------------------------|----------|
+| `headblocks.use`                     | Interact with heads and see progress    | everyone |
+| `headblocks.commands.top`            | See the leaderboard                     | everyone |
+| `headblocks.commands.progress`       | See own progress                        | everyone |
+| `headblocks.commands.progress.other` | See another player's progress           | op       |
+| `headblocks.zone.bypass`             | Bypass hunt zone confinement (builders) | op       |
+| `headblocks.admin`                   | Access all admin commands               | op       |
 
 {% hint style="info" %}
 Arguments with `<>` are required and `()` are optional parameters.
@@ -39,7 +50,7 @@ Display leaderboard of heads found.
 
 ### /hb leave
 
-Leave the current timed run.
+Leave the current timed run, or the bounded zone you are confined to.
 
 |                |                  |
 |----------------|------------------|
@@ -78,19 +89,27 @@ Remove all spawned heads.
 
 ### /hb reset
 
-Reset player's progress.
+Reset a player's progress. With `--head` followed by a head name or UUID, only that head is reset; with `--head` and no value, the head you are looking at is reset (in-game only).
 
-|               |            |
-|---------------|------------|
-| **Arguments** | `<player>` |
+|               |                                  |
+|---------------|----------------------------------|
+| **Arguments** | `<player> (--head (name\|uuid))` |
+
+{% hint style="info" %}
+Usable from the console. Only `--head` with no value requires a player, since it targets the block you are looking at.
+{% endhint %}
 
 ### /hb resetAll
 
-Reset all player progress.
+Reset all player progress. With `--head` followed by a head name or UUID, only that head is reset for everyone; with `--head` and no value, the head you are looking at is reset (in-game only).
 
-|               |             |
-|---------------|-------------|
-| **Arguments** | `--confirm` |
+|               |                                   |
+|---------------|-----------------------------------|
+| **Arguments** | `--confirm (--head (name\|uuid))` |
+
+{% hint style="info" %}
+Usable from the console. Only `--head` with no value requires a player, since it targets the block you are looking at.
+{% endhint %}
 
 ### /hb list
 
@@ -147,11 +166,13 @@ Rename targeted head.
 
 Configure head mechanics via GUI.
 
-|               |                                    |
-|---------------|------------------------------------|
-| **Alias**     | `o`                                |
-| **Arguments** | `counter / hint / order / rewards` |
-| **Sender**    | Player                             |
+|               |                          |
+|---------------|--------------------------|
+| **Alias**     | `o`                      |
+| **Arguments** | `hint / order / rewards` |
+| **Sender**    | Player                   |
+
+See [Options GUI](../configuration/options-gui.md) for every clickable element and its click/drop action.
 
 ### /hb version
 

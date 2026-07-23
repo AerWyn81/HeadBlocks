@@ -17,7 +17,7 @@ New to HeadBlocks? Get up and running in under a minute:
 - **Create treasure hunts** — place unlimited heads across your world with custom textures
 - **Reward players** — configure commands, messages, and milestone rewards when heads are found
 - **Multi-Hunt system** — create independent hunts with their own heads, progression, rewards, and [behaviors](configuration/hunts.md#behaviors)
-- **Hunt behaviors** — free, ordered, scheduled (date-based), or timed (race mode with pressure plate)
+- **Hunt behaviors** — free, ordered, scheduled (date-based), timed (race mode with pressure plate), or zone (confine players to a cuboid or WorldGuard region)
 - **Customize everything** — particles, holograms, sounds, fireworks, titles, and more
 - **Scale up** — works on single servers or multi-server networks with [Redis + MySQL](configuration/storage.md)
 

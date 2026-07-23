@@ -10,6 +10,7 @@ import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -44,6 +45,9 @@ class ResetCommandTest {
 
     @Mock
     private Player playerSender;
+
+    @Mock
+    private CommandSender consoleSender;
 
     private Reset command;
 
@@ -171,6 +175,69 @@ class ResetCommandTest {
 
             assertThat(result).isTrue();
             verify(languageService).message("Messages.HeadNameNotFound");
+        }
+    }
+
+    @Nested
+    class ConsoleExecution {
+
+        @Test
+        void fullReset_worksFromConsole() throws InternalException {
+            UUID playerUuid = UUID.randomUUID();
+            PlayerProfileLight profile = new PlayerProfileLight(playerUuid, "player1", "");
+            when(huntService.isMultiHunt()).thenReturn(false);
+            when(storageService.getPlayerByName("player1")).thenReturn(profile);
+
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+                 MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
+                bukkit.when(() -> Bukkit.getPlayer(playerUuid)).thenReturn(null);
+
+                boolean result = command.perform(consoleSender, new String[]{"reset", "player1"});
+
+                assertThat(result).isTrue();
+                verify(storageService).resetPlayer(playerUuid);
+                verify(languageService).message("Messages.PlayerReset", "player1");
+            }
+        }
+
+        @Test
+        void namedHeadReset_worksFromConsole() throws InternalException {
+            UUID playerUuid = UUID.randomUUID();
+            UUID headUuid = UUID.randomUUID();
+            PlayerProfileLight profile = new PlayerProfileLight(playerUuid, "player1", "");
+            HeadLocation headLocation = mock(HeadLocation.class);
+
+            when(huntService.isMultiHunt()).thenReturn(false);
+            when(storageService.getPlayerByName("player1")).thenReturn(profile);
+            when(headService.resolveHeadIdentifier(headUuid.toString())).thenReturn(headLocation);
+            when(headLocation.getUuid()).thenReturn(headUuid);
+            when(headService.getHeadByUUID(headUuid)).thenReturn(headLocation);
+            when(headLocation.getNameOrUnnamed(anyString())).thenReturn("myHead");
+
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+                 MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
+                bukkit.when(() -> Bukkit.getPlayer(playerUuid)).thenReturn(null);
+
+                boolean result = command.perform(consoleSender, new String[]{"reset", "player1", "--head", headUuid.toString()});
+
+                assertThat(result).isTrue();
+                verify(storageService).resetPlayerHead(playerUuid, headUuid);
+            }
+        }
+
+        @Test
+        void targetedHeadWithoutValue_rejectedFromConsole() throws InternalException {
+            UUID playerUuid = UUID.randomUUID();
+            PlayerProfileLight profile = new PlayerProfileLight(playerUuid, "player1", "");
+            when(huntService.isMultiHunt()).thenReturn(false);
+            when(storageService.getPlayerByName("player1")).thenReturn(profile);
+
+            boolean result = command.perform(consoleSender, new String[]{"reset", "player1", "--head"});
+
+            assertThat(result).isTrue();
+            verify(languageService).message("Messages.TargetHeadPlayerOnly");
+            verify(storageService, never()).resetPlayer(any());
+            verify(storageService, never()).resetPlayerHead(any(), any());
         }
     }
 

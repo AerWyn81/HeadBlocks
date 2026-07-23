@@ -17,6 +17,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @HBAnnotations(command = "top", permission = "headblocks.commands.top", alias = "t")
@@ -38,6 +39,11 @@ public class Top implements Cmd {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while retrieving top players from the storage: {0}", ex.getMessage());
             return true;
+        }
+
+        List<String> hiddenPlayers = registry.getConfigService().hiddenTopPlayers();
+        if (!hiddenPlayers.isEmpty()) {
+            top.removeIf(entry -> hiddenPlayers.stream().anyMatch(hidden -> hidden.equalsIgnoreCase(entry.getKey().name())));
         }
 
         if (top.isEmpty()) {

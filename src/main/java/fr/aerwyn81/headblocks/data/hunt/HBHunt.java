@@ -150,6 +150,10 @@ public class HBHunt {
         return headUUIDs.size();
     }
 
+    public boolean isValid() {
+        return !headUUIDs.isEmpty();
+    }
+
     public boolean containsHead(UUID headUUID) {
         return headUUIDs.contains(headUUID);
     }

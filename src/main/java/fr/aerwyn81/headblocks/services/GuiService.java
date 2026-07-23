@@ -29,6 +29,7 @@ public class GuiService {
     private final BehaviorSelectionGui behaviorSelectionManager;
     private final TimedConfigGui timedConfigManager;
     private final ScheduledConfigGui scheduledConfigManager;
+    private final ZoneConfigGui zoneConfigManager;
 
     // --- Constructor ---
 
@@ -47,6 +48,7 @@ public class GuiService {
         this.behaviorSelectionManager = new BehaviorSelectionGui(registry);
         this.timedConfigManager = new TimedConfigGui(registry);
         this.scheduledConfigManager = new ScheduledConfigGui(registry);
+        this.zoneConfigManager = new ZoneConfigGui(registry);
     }
 
     // --- Instance methods ---
@@ -80,6 +82,10 @@ public class GuiService {
 
     public ScheduledConfigGui getScheduledConfigManager() {
         return scheduledConfigManager;
+    }
+
+    public ZoneConfigGui getZoneConfigManager() {
+        return zoneConfigManager;
     }
 
     public void openHuntSelectionOrDirect(Player player, BiConsumer<Player, HBHunt> callback) {
