@@ -74,7 +74,7 @@ jobs:
 
   publish-modrinth:
     needs: release
-    if: always() && (needs.release.result == 'success' || inputs.jobs == 'all' || inputs.jobs == 'modrinth')
+    if: always() && github.event_name == 'workflow_dispatch' && (inputs.jobs == 'all' || inputs.jobs == 'modrinth')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -184,7 +184,7 @@ jobs:
 
   publish-hangar:
     needs: release
-    if: always() && (needs.release.result == 'success' || inputs.jobs == 'all' || inputs.jobs == 'hangar')
+    if: always() && github.event_name == 'workflow_dispatch' && (inputs.jobs == 'all' || inputs.jobs == 'hangar')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -224,7 +224,7 @@ jobs:
 
   generate-bbcode:
     needs: release
-    if: always() && (needs.release.result == 'success' || inputs.jobs == 'all' || inputs.jobs == 'bbcode')
+    if: always() && github.event_name == 'workflow_dispatch' && (inputs.jobs == 'all' || inputs.jobs == 'bbcode')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -250,7 +250,7 @@ jobs:
 
   publish-discord:
     needs: release
-    if: always() && (needs.release.result == 'success' || inputs.jobs == 'all' || inputs.jobs == 'discord')
+    if: always() && github.event_name == 'workflow_dispatch' && (inputs.jobs == 'all' || inputs.jobs == 'discord')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
