@@ -7,9 +7,11 @@
 
 ### 🚀 Improvements
 
+- Added support for Minecraft 26.2.
 
 ### 🐛 Bug Fixes
 
+- Fixed a per-head reward loading error after `/hb reload`.
 
 ---
 
