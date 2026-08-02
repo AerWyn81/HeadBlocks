@@ -27,7 +27,8 @@ public enum VersionUtils {
     v1_21_R11(12111, 12111),
     v26_1(26010000, 261, 26),
     v26_1_1(26010001, 2611),
-    v26_1_2(26010002, 2612);
+    v26_1_2(26010002, 2612),
+    v26_2(26020000, 262);
 
     private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
 
@@ -53,8 +54,8 @@ public enum VersionUtils {
         try {
             version = extractFromString(Bukkit.getBukkitVersion());
         } catch (Exception e) {
-            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), v26_1_2.name());
-            version = v26_1_2;
+            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), v26_2.name());
+            version = v26_2;
         }
 
         return version;

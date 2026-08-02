@@ -107,7 +107,7 @@ dependencies {
 
 tasks {
     runServer {
-        minecraftVersion("26.1.2")
+        minecraftVersion("26.2")
 
         systemProperty("com.mojang.eula.agree", "true")
         systemProperty("terminal.ansi", true)

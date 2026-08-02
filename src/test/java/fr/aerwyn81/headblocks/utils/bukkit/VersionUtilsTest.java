@@ -105,7 +105,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_1_2);
+            assertThat(result).isEqualTo(VersionUtils.v26_2);
         }
     }
 
@@ -118,7 +118,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_1_2);
+            assertThat(result).isEqualTo(VersionUtils.v26_2);
         }
     }
 
@@ -132,6 +132,17 @@ class VersionUtilsTest {
             VersionUtils result = VersionUtils.getVersion();
 
             assertThat(result).isEqualTo(VersionUtils.v26_1_2);
+        }
+    }
+
+    @Test
+    void getVersion_26_2_returnsV26_2() {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(Bukkit::getBukkitVersion).thenReturn("26.2.build.65-beta");
+
+            VersionUtils result = VersionUtils.getVersion();
+
+            assertThat(result).isEqualTo(VersionUtils.v26_2);
         }
     }
 
