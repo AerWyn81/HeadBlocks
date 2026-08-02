@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 public record Reward(RewardType type, String value) {
 
@@ -23,7 +23,7 @@ public record Reward(RewardType type, String value) {
             var type = RewardType.UNKNOWN;
             var value = "";
 
-            var map = (LinkedHashMap<?, ?>) object;
+            var map = (Map<?, ?>) object;
             for (var entry : map.entrySet()) {
                 if (entry.getKey().equals("type")) {
                     type = RewardType.valueOf(entry.getValue().toString().toUpperCase());

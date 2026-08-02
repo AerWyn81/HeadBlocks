@@ -74,12 +74,22 @@ class RewardSerializationTest {
     }
 
     @Test
+    void deserialize_validHashMap_producesCorrectReward() {
+        HashMap<String, String> map = new HashMap<>();
+        map.put("type", "MESSAGE");
+        map.put("value", "Hello world");
+
+        Reward reward = Reward.deserialize(map);
+
+        assertThat(reward.type()).isEqualTo(RewardType.MESSAGE);
+        assertThat(reward.value()).isEqualTo("Hello world");
+    }
+
+    @Test
     void roundTrip_deserializeOfSerialize_returnsEquivalentReward() {
         Reward original = new Reward(RewardType.BROADCAST, "Server message");
 
-        // serialize returns HashMap; deserialize expects LinkedHashMap
-        LinkedHashMap<String, String> serialized = new LinkedHashMap<>(original.serialize());
-        Reward deserialized = Reward.deserialize(serialized);
+        Reward deserialized = Reward.deserialize(original.serialize());
 
         assertThat(deserialized).isEqualTo(original);
     }
