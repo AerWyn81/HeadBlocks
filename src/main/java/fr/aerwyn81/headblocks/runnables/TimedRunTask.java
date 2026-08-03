@@ -107,7 +107,8 @@ public class TimedRunTask extends BukkitRunnable {
 
         if (behavior != null && behavior.startPlateLocation() != null
                 && behavior.startPlateLocation().getWorld() != null) {
-            player.teleport(TimedRunManager.buildReturnLocation(behavior.startPlateLocation(), data.startYaw()));
+            registry.getPlatform().teleportAsync(player,
+                    TimedRunManager.buildReturnLocation(behavior.startPlateLocation(), data.startYaw()));
         }
 
         String huntName = hunt != null ? hunt.getDisplayName() : data.huntId();

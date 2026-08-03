@@ -31,7 +31,7 @@ public class Tp implements Cmd {
                     Float.parseFloat(args[5]),
                     Float.parseFloat(args[6]));
 
-            player.teleport(loc);
+            registry.getPlatform().teleportAsync(player, loc);
         } catch (Exception ignored) {
         }
 

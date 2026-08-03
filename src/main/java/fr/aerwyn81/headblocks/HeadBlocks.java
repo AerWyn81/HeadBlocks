@@ -7,6 +7,8 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.*;
+import fr.aerwyn81.headblocks.platform.Platform;
+import fr.aerwyn81.headblocks.platform.Platforms;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.runnables.TimedRunTask;
 import fr.aerwyn81.headblocks.runnables.ZoneOutlineTask;
@@ -109,6 +111,9 @@ public final class HeadBlocks extends JavaPlugin {
         PluginProvider pluginProvider = new HeadBlocksPluginProvider(this);
         SchedulerAdapter scheduler = new BukkitSchedulerAdapter(this);
         CommandDispatcher commandDispatcher = new BukkitCommandDispatcher();
+        Platform platform = Platforms.load();
+
+        LogUtil.info("Platform: {0}", platform.name());
 
         Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
         if (isHeadDatabaseActive) {
@@ -121,7 +126,7 @@ public final class HeadBlocks extends JavaPlugin {
         }
 
         this.serviceRegistry = new ServiceRegistry(
-                pluginProvider, scheduler, commandDispatcher,
+                pluginProvider, scheduler, commandDispatcher, platform,
                 configFile, locationFile, holoEasyLib, earlyConfigService, providers);
 
         packetEventsHook.init(serviceRegistry);

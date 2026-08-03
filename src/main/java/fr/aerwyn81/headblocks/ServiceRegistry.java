@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.databases.Requests;
 import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
+import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
@@ -18,6 +19,7 @@ public class ServiceRegistry {
     private final PluginProvider pluginProvider;
     private final SchedulerAdapter scheduler;
     private final CommandDispatcher commandDispatcher;
+    private final Platform platform;
     private final HoloEasy holoEasyLib;
 
     private ConfigService configService;
@@ -38,24 +40,25 @@ public class ServiceRegistry {
     private final Map<String, HeadProviderHook> headProviders;
 
     public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
-                           CommandDispatcher commandDispatcher, File configFile, File locationFile,
+                           CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
                            HoloEasy holoEasyLib) {
-        this(pluginProvider, scheduler, commandDispatcher, configFile, locationFile, holoEasyLib, null, Collections.emptyMap());
+        this(pluginProvider, scheduler, commandDispatcher, platform, configFile, locationFile, holoEasyLib, null, Collections.emptyMap());
     }
 
     public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
-                           CommandDispatcher commandDispatcher, File configFile, File locationFile,
+                           CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
                            HoloEasy holoEasyLib, ConfigService existingConfigService) {
-        this(pluginProvider, scheduler, commandDispatcher, configFile, locationFile, holoEasyLib, existingConfigService, Collections.emptyMap());
+        this(pluginProvider, scheduler, commandDispatcher, platform, configFile, locationFile, holoEasyLib, existingConfigService, Collections.emptyMap());
     }
 
     public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
-                           CommandDispatcher commandDispatcher, File configFile, File locationFile,
+                           CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
                            HoloEasy holoEasyLib, ConfigService existingConfigService,
                            Map<String, HeadProviderHook> headProviders) {
         this.pluginProvider = pluginProvider;
         this.scheduler = scheduler;
         this.commandDispatcher = commandDispatcher;
+        this.platform = platform;
         this.configFile = configFile;
         this.locationFile = locationFile;
         this.holoEasyLib = holoEasyLib;
@@ -153,6 +156,10 @@ public class ServiceRegistry {
 
     public CommandDispatcher getCommandDispatcher() {
         return commandDispatcher;
+    }
+
+    public Platform getPlatform() {
+        return platform;
     }
 
     public ConfigService getConfigService() {

@@ -61,7 +61,7 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
-      - name: Upload Release Jar
+      - name: Upload Release Jar (Paper)
         id: upload-release-jar
         uses: actions/upload-release-asset@v1
         env:
@@ -70,6 +70,17 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./build/HeadBlocks.jar
           asset_name: HeadBlocks-${{ steps.get_version.outputs.VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      - name: Upload Release Jar (Spigot)
+        id: upload-release-jar-spigot
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/HeadBlocks-spigot.jar
+          asset_name: HeadBlocks-${{ steps.get_version.outputs.VERSION }}-spigot.jar
           asset_content_type: application/java-archive
 
   publish-modrinth:
@@ -90,7 +101,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew shadowJar --no-daemon
+        run: ./gradlew paperJar --no-daemon
 
       - name: Get version
         id: get_version
@@ -112,7 +123,7 @@ jobs:
       - name: Find built JAR
         id: find_jar
         run: |
-          JAR_FILE=$(find build -name "HeadBlocks-*.jar" -type f | head -n 1)
+          JAR_FILE=$(find build -name "HeadBlocks-*.jar" ! -name "*-spigot.jar" -type f | head -n 1)
           echo "JAR_PATH=$JAR_FILE" >> $GITHUB_OUTPUT
           echo "Found JAR: $JAR_FILE"
 
@@ -167,9 +178,8 @@ jobs:
             1.21.10
             1.21.11
 
-          # Loaders
+          # Loaders — this job publishes the Paper build; the Spigot build goes to SpigotMC
           loaders: |
-            spigot
             paper
             purpur
 
