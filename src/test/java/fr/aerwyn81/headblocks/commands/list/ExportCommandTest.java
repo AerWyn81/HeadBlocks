@@ -4,9 +4,9 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -81,13 +81,13 @@ class ExportCommandTest {
             hb.when(HeadBlocks::getInstance).thenReturn(plugin);
             lenient().when(plugin.getName()).thenReturn("HeadBlocks");
 
-            BukkitScheduler scheduler = mock(BukkitScheduler.class);
-            bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
+            SchedulerAdapter scheduler = mock(SchedulerAdapter.class);
+            hb.when(HeadBlocks::getScheduler).thenReturn(scheduler);
 
             boolean result = command.perform(sender, new String[]{"export", "database", "SQLite"});
 
             assertThat(result).isTrue();
-            verify(scheduler).runTaskAsynchronously(eq(plugin), any(Runnable.class));
+            verify(scheduler).runTaskAsync(any(Runnable.class));
             verify(languageService).message("Messages.ExportInProgress");
         }
     }

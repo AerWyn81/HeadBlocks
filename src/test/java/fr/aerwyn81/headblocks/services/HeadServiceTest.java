@@ -9,10 +9,11 @@ import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.Task;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -33,8 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,7 +76,7 @@ class HeadServiceTest {
 
         setField("headLocations", new CopyOnWriteArrayList<HeadLocation>());
         setField("headMoves", new ConcurrentHashMap<UUID, HeadMove>());
-        setField("tasksHeadSpin", new ConcurrentHashMap<UUID, Integer>());
+        setField("tasksHeadSpin", new ConcurrentHashMap<UUID, Task>());
 
         // saveConfig uses runTaskLater + runTaskAsync — execute immediately in tests
         lenient().doAnswer(invocation -> {
@@ -93,6 +93,12 @@ class HeadServiceTest {
     }
 
     // --- Helpers ---
+
+    private final Map<Integer, Task> taskStubs = new HashMap<>();
+
+    private Task task(int id) {
+        return taskStubs.computeIfAbsent(id, k -> mock(Task.class));
+    }
 
     private void setField(String name, Object value) throws Exception {
         Field field = HeadService.class.getDeclaredField(name);
@@ -115,10 +121,10 @@ class HeadServiceTest {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<UUID, Integer> tasksHeadSpin() throws Exception {
+    private Map<UUID, Task> tasksHeadSpin() throws Exception {
         Field field = HeadService.class.getDeclaredField("tasksHeadSpin");
         field.setAccessible(true);
-        return (Map<UUID, Integer>) field.get(headService);
+        return (Map<UUID, Task>) field.get(headService);
     }
 
     private HeadLocation createHeadLocation(UUID uuid, String name, Location location, boolean charged) {
@@ -880,13 +886,13 @@ class HeadServiceTest {
             HeadLocation hl = createHeadLocation(uuid, "SpinHead", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
-            tasksHeadSpin().put(uuid, 42);
+            tasksHeadSpin().put(uuid, task(42));
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
             headService.removeHeadLocation(hl, true);
 
-            verify(scheduler).cancelTask(42);
+            verify(task(42)).cancel();
             assertThat(tasksHeadSpin()).doesNotContainKey(uuid);
         }
 
@@ -905,7 +911,7 @@ class HeadServiceTest {
 
             headService.removeHeadLocation(hl, true);
 
-            verify(scheduler, never()).cancelTask(anyInt());
+            assertThat(tasksHeadSpin()).isEmpty();
         }
 
         @Test
@@ -1227,17 +1233,17 @@ class HeadServiceTest {
             HeadLocation hl1 = createHeadLocation(uuid1, "Spin1", loc, true);
             lenient().when(hl1.getHuntId()).thenReturn("default");
             headLocations().add(hl1);
-            tasksHeadSpin().put(uuid1, 10);
-            tasksHeadSpin().put(uuid2, 20);
+            tasksHeadSpin().put(uuid1, task(10));
+            tasksHeadSpin().put(uuid2, task(20));
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
             headService.removeHeadLocation(hl1, true);
 
-            verify(scheduler).cancelTask(10);
-            verify(scheduler, never()).cancelTask(20);
+            verify(task(10)).cancel();
+            verify(task(20), never()).cancel();
             assertThat(tasksHeadSpin()).doesNotContainKey(uuid1);
-            assertThat(tasksHeadSpin()).containsEntry(uuid2, 20);
+            assertThat(tasksHeadSpin()).containsEntry(uuid2, task(20));
         }
     }
 
@@ -1458,12 +1464,12 @@ class HeadServiceTest {
             when(configService.spinEnabled()).thenReturn(true);
             when(configService.spinLinked()).thenReturn(false);
             when(configService.spinSpeed()).thenReturn(5);
-            when(scheduler.runTaskTimer(any(Runnable.class), eq(5L), eq(5L))).thenReturn(99);
+            when(scheduler.runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(5L))).thenReturn(task(99));
 
             headService.loadLocations();
 
-            verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(5L));
-            assertThat(tasksHeadSpin()).containsEntry(uuid, 99);
+            verify(scheduler).runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(5L));
+            assertThat(tasksHeadSpin()).containsEntry(uuid, task(99));
         }
 
         @Test
@@ -1483,7 +1489,7 @@ class HeadServiceTest {
 
             headService.loadLocations();
 
-            verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
+            verify(scheduler, never()).runTaskTimer(nullable(Location.class), any(Runnable.class), anyLong(), anyLong());
             assertThat(tasksHeadSpin()).isEmpty();
         }
 
@@ -1505,7 +1511,7 @@ class HeadServiceTest {
 
             headService.loadLocations();
 
-            verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
+            verify(scheduler, never()).runTaskTimer(nullable(Location.class), any(Runnable.class), anyLong(), anyLong());
         }
 
         @Test
@@ -1527,14 +1533,14 @@ class HeadServiceTest {
             when(configService.spinEnabled()).thenReturn(true);
             when(configService.spinLinked()).thenReturn(false);
             when(configService.spinSpeed()).thenReturn(3);
-            when(scheduler.runTaskTimer(any(Runnable.class), eq(5L), eq(3L))).thenReturn(10);
-            when(scheduler.runTaskTimer(any(Runnable.class), eq(10L), eq(3L))).thenReturn(20);
+            when(scheduler.runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(3L))).thenReturn(task(10));
+            when(scheduler.runTaskTimer(nullable(Location.class), any(Runnable.class), eq(10L), eq(3L))).thenReturn(task(20));
 
             headService.loadLocations();
 
             // offset 1 -> 5L*1 = 5, offset 2 -> 5L*2 = 10
-            verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(3L));
-            verify(scheduler).runTaskTimer(any(Runnable.class), eq(10L), eq(3L));
+            verify(scheduler).runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(3L));
+            verify(scheduler).runTaskTimer(nullable(Location.class), any(Runnable.class), eq(10L), eq(3L));
         }
 
         @Test
@@ -1915,7 +1921,7 @@ class HeadServiceTest {
             HeadLocation hl = createHeadLocation(uuid, "SpinRemove", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
             headLocations().add(hl);
-            tasksHeadSpin().put(uuid, 77);
+            tasksHeadSpin().put(uuid, task(77));
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -1937,7 +1943,7 @@ class HeadServiceTest {
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
 
-            verify(scheduler).cancelTask(77);
+            verify(task(77)).cancel();
             assertThat(tasksHeadSpin()).doesNotContainKey(uuid);
         }
 
@@ -2051,7 +2057,7 @@ class HeadServiceTest {
             when(configService.spinEnabled()).thenReturn(true);
             when(configService.spinLinked()).thenReturn(false);
             when(configService.spinSpeed()).thenReturn(7);
-            when(scheduler.runTaskTimer(any(Runnable.class), eq(5L), eq(7L))).thenReturn(55);
+            when(scheduler.runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(7L))).thenReturn(task(55));
 
             try (MockedStatic<InternalUtils> mocked = mockStatic(InternalUtils.class)) {
                 UUID generatedUuid = UUID.randomUUID();
@@ -2059,8 +2065,8 @@ class HeadServiceTest {
 
                 headService.saveHeadLocation(loc, "tex", "default");
 
-                verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(7L));
-                assertThat(tasksHeadSpin()).containsEntry(generatedUuid, 55);
+                verify(scheduler).runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(7L));
+                assertThat(tasksHeadSpin()).containsEntry(generatedUuid, task(55));
             }
         }
 
@@ -2077,7 +2083,7 @@ class HeadServiceTest {
 
                 headService.saveHeadLocation(loc, "tex", "default");
 
-                verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
+                verify(scheduler, never()).runTaskTimer(nullable(Location.class), any(Runnable.class), anyLong(), anyLong());
                 assertThat(tasksHeadSpin()).isEmpty();
             }
         }
@@ -2096,7 +2102,7 @@ class HeadServiceTest {
 
                 headService.saveHeadLocation(loc, "tex", "default");
 
-                verify(scheduler, never()).runTaskTimer(any(Runnable.class), anyLong(), anyLong());
+                verify(scheduler, never()).runTaskTimer(nullable(Location.class), any(Runnable.class), anyLong(), anyLong());
             }
         }
     }
@@ -2247,8 +2253,8 @@ class HeadServiceTest {
         void cancels_all_existing_tasks() throws Exception {
             UUID uuid1 = UUID.randomUUID();
             UUID uuid2 = UUID.randomUUID();
-            tasksHeadSpin().put(uuid1, 100);
-            tasksHeadSpin().put(uuid2, 200);
+            tasksHeadSpin().put(uuid1, task(100));
+            tasksHeadSpin().put(uuid2, task(200));
 
             // Use loadLocations with null locations section to trigger cancelAllSpinTasks indirectly
             // Actually cancelAllSpinTasks is private and called by load(),
@@ -2259,8 +2265,8 @@ class HeadServiceTest {
             cancelMethod.setAccessible(true);
             cancelMethod.invoke(headService);
 
-            verify(scheduler).cancelTask(100);
-            verify(scheduler).cancelTask(200);
+            verify(task(100)).cancel();
+            verify(task(200)).cancel();
         }
 
         @Test
@@ -2269,18 +2275,15 @@ class HeadServiceTest {
 
             java.lang.reflect.Method cancelMethod = HeadService.class.getDeclaredMethod("cancelAllSpinTasks");
             cancelMethod.setAccessible(true);
-            cancelMethod.invoke(headService);
-
-            verify(scheduler, never()).cancelTask(anyInt());
+            assertThatNoException().isThrownBy(() -> cancelMethod.invoke(headService));
         }
 
         @Test
         void handles_empty_tasks_without_error() throws Exception {
             java.lang.reflect.Method cancelMethod = HeadService.class.getDeclaredMethod("cancelAllSpinTasks");
             cancelMethod.setAccessible(true);
-            cancelMethod.invoke(headService);
-
-            verify(scheduler, never()).cancelTask(anyInt());
+            assertThatNoException().isThrownBy(() -> cancelMethod.invoke(headService));
+            assertThat(tasksHeadSpin()).isEmpty();
         }
     }
 
@@ -2300,7 +2303,7 @@ class HeadServiceTest {
             when(configService.spinEnabled()).thenReturn(true);
             when(configService.spinLinked()).thenReturn(false);
             when(configService.spinSpeed()).thenReturn(10);
-            when(scheduler.runTaskTimer(any(Runnable.class), eq(5L), eq(10L))).thenReturn(42);
+            when(scheduler.runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(10L))).thenReturn(task(42));
 
             try (MockedStatic<InternalUtils> mocked = mockStatic(InternalUtils.class)) {
                 UUID generatedUuid = UUID.randomUUID();
@@ -2310,7 +2313,7 @@ class HeadServiceTest {
                 headService.saveHeadLocation(loc, "tex", "default");
 
                 // delay = 5L * 1 = 5
-                verify(scheduler).runTaskTimer(any(Runnable.class), eq(5L), eq(10L));
+                verify(scheduler).runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(10L));
             }
         }
     }

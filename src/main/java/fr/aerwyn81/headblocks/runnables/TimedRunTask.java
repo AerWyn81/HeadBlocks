@@ -12,12 +12,11 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Map;
 import java.util.UUID;
 
-public class TimedRunTask extends BukkitRunnable {
+public class TimedRunTask implements Runnable {
 
     private final ServiceRegistry registry;
 

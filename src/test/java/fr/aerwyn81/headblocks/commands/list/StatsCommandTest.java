@@ -157,6 +157,7 @@ class StatsCommandTest {
         }
     }
 
+    @SuppressWarnings("RedundantSuppression")
     @Nested
     class SuccessfulLookup {
 

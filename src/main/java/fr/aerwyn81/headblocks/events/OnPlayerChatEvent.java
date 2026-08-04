@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks.events;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -23,19 +22,19 @@ public class OnPlayerChatEvent implements Listener {
         if (registry.getGuiService().getRewardsManager().hasPendingRewardInput(player)) {
             event.setCancelled(true);
 
-            player.getServer().getScheduler().runTask(HeadBlocks.getInstance(),
+            registry.getScheduler().runTask(player,
                     () -> registry.getGuiService().getRewardsManager().processPendingRewardInput(player, event.getMessage())
             );
         } else if (registry.getGuiService().getScheduledConfigManager().hasPendingChatInput(player)) {
             event.setCancelled(true);
 
-            player.getServer().getScheduler().runTask(HeadBlocks.getInstance(),
+            registry.getScheduler().runTask(player,
                     () -> registry.getGuiService().getScheduledConfigManager().processPendingChatInput(player, event.getMessage())
             );
         } else if (registry.getGuiService().getZoneConfigManager().hasPendingChatInput(player)) {
             event.setCancelled(true);
 
-            player.getServer().getScheduler().runTask(HeadBlocks.getInstance(),
+            registry.getScheduler().runTask(player,
                     () -> registry.getGuiService().getZoneConfigManager().processPendingChatInput(player, event.getMessage())
             );
         }

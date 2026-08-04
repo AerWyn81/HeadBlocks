@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.utils.bukkit;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -33,11 +32,10 @@ public class ParticlesUtils {
             }
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getScheduler().runTask(player, () -> {
             if (!dustOptions.isEmpty()) {
-                Bukkit.getScheduler().runTaskAsynchronously(HeadBlocks.getInstance(), () -> dustOptions.forEach(dustOpt ->
-                        player.spawnParticle(particle, location, amount, size, size, size, dustOpt)));
-
+                dustOptions.forEach(dustOpt ->
+                        player.spawnParticle(particle, location, amount, size, size, size, dustOpt));
                 return;
             }
 

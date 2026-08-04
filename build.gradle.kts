@@ -1,5 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import io.papermc.hangarpublishplugin.model.Platforms
+import net.minecrell.pluginyml.GeneratePluginDescription
 import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
 import xyz.jpenilla.runpaper.task.RunServer
 
@@ -26,7 +27,6 @@ val coverageExclusions = listOf(
 
     // Plugin main class & Bukkit infrastructure
     "**/HeadBlocks.java",
-    "**/utils/bukkit/BukkitSchedulerAdapter.java",
     "**/utils/bukkit/HeadBlocksPluginProvider.java",
     "**/utils/bukkit/BukkitCommandDispatcher.java",
     "**/utils/bukkit/FireworkUtils.java",
@@ -123,6 +123,65 @@ dependencies {
     paper.compileOnlyConfigurationName(libs.paper.api)
 }
 
+fun BukkitPluginDescription.describeHeadBlocks() {
+    name = "HeadBlocks"
+    main = "fr.aerwyn81.headblocks.HeadBlocks"
+    authors = listOf("AerWyn81")
+    apiVersion = "1.13"
+    description = "Challenge your players to find all the heads and earn rewards"
+    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents", "WorldGuard")
+    version = project.version.toString()
+    website = "https://just2craft.fr"
+
+    commands {
+        register("headblocks") {
+            description = "Plugin command"
+            aliases = listOf("hb")
+        }
+    }
+
+    permissions {
+        register("headblocks.use") {
+            description = "Allows players to interact with heads and see their progress"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.commands.top") {
+            description = "Allows players to see leaderboard"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.commands.progress") {
+            description = "Allows players to see his or player score"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.admin") {
+            description = "Allows access to /headblocks admin commands"
+            default = BukkitPluginDescription.Permission.Default.OP
+        }
+        register("headblocks.zone.bypass") {
+            description = "Allows bypassing hunt zone confinement"
+            default = BukkitPluginDescription.Permission.Default.OP
+        }
+    }
+}
+
+// The extension feeds the shared descriptor; folia-supported must not reach the Spigot jar, so the
+// Paper flavour gets its own description and its own generation task.
+bukkit {
+    describeHeadBlocks()
+}
+
+val paperPluginDescription = BukkitPluginDescription(project).apply {
+    describeHeadBlocks()
+    foliaSupported = true
+}
+
+val generatePaperPluginDescription = tasks.register<GeneratePluginDescription>("generatePaperPluginDescription") {
+    fileName.set("plugin.yml")
+    librariesJsonFileName.set("paper-libraries.json")
+    pluginDescription.set(paperPluginDescription)
+    outputDirectory.set(layout.buildDirectory.dir("generated/paper-plugin-yml"))
+}
+
 val mcVersion = "26.2"
 
 // Minecraft 26.1+ refuses to boot below Java 25, whatever JDK happens to run Gradle.
@@ -177,12 +236,14 @@ fun ShadowJar.applySharedShadowConfig() {
     }
 }
 
-fun registerPlatformJar(taskName: String, platform: SourceSet, classifier: String) =
+fun registerPlatformJar(taskName: String, platform: SourceSet, classifier: String, pluginDescription: Any) =
     tasks.register<ShadowJar>(taskName) {
         group = "shadow"
         description = "Builds the ${platform.name} flavoured plugin jar."
 
-        from(sourceSets.main.get().output, platform.output)
+        from(sourceSets.main.get().output) { exclude("plugin.yml") }
+        from(platform.output)
+        from(pluginDescription)
         configurations.set(setOf(project.configurations.getByName("runtimeClasspath")))
         sourceSetsClassesDirs.from(sourceSets.main.get().output.classesDirs, platform.output.classesDirs)
 
@@ -197,8 +258,8 @@ fun registerPlatformJar(taskName: String, platform: SourceSet, classifier: Strin
         }
     }
 
-val paperJar = registerPlatformJar("paperJar", paper, "")
-val spigotJar = registerPlatformJar("spigotJar", spigot, "spigot")
+val paperJar = registerPlatformJar("paperJar", paper, "", generatePaperPluginDescription)
+val spigotJar = registerPlatformJar("spigotJar", spigot, "spigot", tasks.named("generateBukkitPluginDescription"))
 
 // Tests for one platform only. MockBukkit is deliberately absent: it drags in paper-api, which
 // would put Paper on the spigotTest classpath and defeat the isolation.
@@ -312,47 +373,6 @@ sonar {
         property("sonar.projectKey", "AerWyn81_HeadBlocks")
         property("sonar.organization", "aerwyn81")
         property("sonar.coverage.exclusions", coverageExclusions.joinToString(","))
-    }
-}
-
-bukkit {
-    name = "HeadBlocks"
-    main = "fr.aerwyn81.headblocks.HeadBlocks"
-    authors = listOf("AerWyn81")
-    apiVersion = "1.13"
-    description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents", "WorldGuard")
-    version = project.version.toString()
-    website = "https://just2craft.fr"
-
-    commands {
-        register("headblocks") {
-            description = "Plugin command"
-            aliases = listOf("hb")
-        }
-    }
-
-    permissions {
-        register("headblocks.use") {
-            description = "Allows players to interact with heads and see their progress"
-            default = BukkitPluginDescription.Permission.Default.TRUE
-        }
-        register("headblocks.commands.top") {
-            description = "Allows players to see leaderboard"
-            default = BukkitPluginDescription.Permission.Default.TRUE
-        }
-        register("headblocks.commands.progress") {
-            description = "Allows players to see his or player score"
-            default = BukkitPluginDescription.Permission.Default.TRUE
-        }
-        register("headblocks.admin") {
-            description = "Allows access to /headblocks admin commands"
-            default = BukkitPluginDescription.Permission.Default.OP
-        }
-        register("headblocks.zone.bypass") {
-            description = "Allows bypassing hunt zone confinement"
-            default = BukkitPluginDescription.Permission.Default.OP
-        }
     }
 }
 

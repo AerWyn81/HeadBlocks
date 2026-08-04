@@ -10,7 +10,6 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCh
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +106,7 @@ public class HeadHidingPacketListener implements PacketListener {
         }
 
         // Schedule a task to send block changes after the chunk is loaded on the client side
-        Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getScheduler().runTaskLater(player, () -> {
             for (var headUuid : headsInChunk) {
                 var headLocation = registry.getHeadService().getHeadByUUID(headUuid);
                 if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
@@ -147,7 +146,7 @@ public class HeadHidingPacketListener implements PacketListener {
                 }
                 playerChunkHeadsCache.put(player.getUniqueId(), chunkHeadsMap);
 
-                Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
+                HeadBlocks.getScheduler().runTaskLater(player, () -> {
                     for (var headUuid : foundHeads) {
                         var headLocation = registry.getHeadService().getHeadByUUID(headUuid);
                         if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
@@ -215,14 +214,7 @@ public class HeadHidingPacketListener implements PacketListener {
             }
 
             if (player.getWorld().equals(loc.getWorld())) {
-                Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-                    player.sendBlockChange(loc, loc.getBlock().getBlockData());
-                    var world = loc.getWorld();
-                    if (world != null) {
-                        var blockState = loc.getBlock().getState();
-                        blockState.update(true, false);
-                    }
-                }, 1L);
+                restoreBlockFor(player, loc);
             }
         }
     }
@@ -238,21 +230,23 @@ public class HeadHidingPacketListener implements PacketListener {
         playerChunkHeadsCache.remove(player.getUniqueId());
 
         if (previouslyHiddenHeads != null && !previouslyHiddenHeads.isEmpty()) {
-            Bukkit.getScheduler().runTaskLater(HeadBlocks.getInstance(), () -> {
-                for (var headUuid : previouslyHiddenHeads) {
-                    var headLocation = registry.getHeadService().getHeadByUUID(headUuid);
-                    if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
-                        var location = headLocation.getLocation();
-                        player.sendBlockChange(location, location.getBlock().getBlockData());
-                        var world = location.getWorld();
-                        if (world != null) {
-                            var blockState = location.getBlock().getState();
-                            blockState.update(true, false);
-                        }
-                    }
+            for (var headUuid : previouslyHiddenHeads) {
+                var headLocation = registry.getHeadService().getHeadByUUID(headUuid);
+                if (headLocation != null && player.getWorld().equals(headLocation.getLocation().getWorld())) {
+                    restoreBlockFor(player, headLocation.getLocation());
                 }
-            }, 1L);
+            }
         }
+    }
+
+    // Block data must be read in the block's region, the packet sent in the player's.
+    private void restoreBlockFor(Player player, Location location) {
+        HeadBlocks.getScheduler().runTaskLater(location, () -> {
+            var blockData = location.getBlock().getBlockData();
+            location.getBlock().getState().update(true, false);
+
+            HeadBlocks.getScheduler().runTask(player, () -> player.sendBlockChange(location, blockData));
+        }, 1L);
     }
 
     public void clearCache() {

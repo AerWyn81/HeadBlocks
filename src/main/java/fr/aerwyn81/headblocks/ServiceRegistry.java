@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.holoeasy.HoloEasy;
 import org.jetbrains.annotations.NotNull;
 
@@ -138,6 +138,7 @@ public class ServiceRegistry {
     public void shutdown() {
         hologramService.unload();
         storageService.close();
+        headService.cancelAllSpinTasks();
         headService.clearHeadMoves();
         guiService.clearCache();
         TimedRunManager.clearAll();

@@ -386,7 +386,7 @@ public class Debug implements Cmd {
                 .replace("%count%", String.valueOf(headLocations.size())));
 
         // Run on main thread since we're modifying blocks
-        Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> {
+        HeadBlocks.getScheduler().runTask(() -> {
             int restored = 0;
             int textureApplied = 0;
             int skipped = 0;

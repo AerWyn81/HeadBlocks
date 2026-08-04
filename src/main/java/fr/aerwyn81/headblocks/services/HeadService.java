@@ -13,10 +13,11 @@ import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.Task;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Skull;
@@ -45,7 +46,7 @@ public class HeadService {
     private ArrayList<HBHead> heads;
     private Map<UUID, HeadMove> headMoves;
     private List<HeadLocation> headLocations;
-    private Map<UUID, Integer> tasksHeadSpin;
+    private Map<UUID, Task> tasksHeadSpin;
 
     public static String HB_KEY = "HB_HEAD";
 
@@ -104,9 +105,10 @@ public class HeadService {
         loadLocations();
     }
 
-    private void cancelAllSpinTasks() {
+    public void cancelAllSpinTasks() {
         if (tasksHeadSpin != null) {
-            tasksHeadSpin.values().forEach(scheduler::cancelTask);
+            tasksHeadSpin.values().forEach(Task::cancel);
+            tasksHeadSpin.clear();
         }
     }
 
@@ -178,9 +180,9 @@ public class HeadService {
             return;
         }
 
-        var taskId = scheduler.runTaskTimer(
+        var task = scheduler.runTaskTimer(headLoc.getLocation(),
                 () -> rotateHead(headLoc), 5L * offset, configService.spinSpeed());
-        tasksHeadSpin.put(headLoc.getUuid(), taskId);
+        tasksHeadSpin.put(headLoc.getUuid(), task);
     }
 
     public UUID saveHeadLocation(Location location, String texture, String huntId) throws InternalException {
@@ -237,7 +239,7 @@ public class HeadService {
             headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
             var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
             if (spinTaskId != null) {
-                scheduler.cancelTask(spinTaskId);
+                spinTaskId.cancel();
             }
         }
     }
@@ -274,7 +276,7 @@ public class HeadService {
                 headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
                 var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
                 if (spinTaskId != null) {
-                    scheduler.cancelTask(spinTaskId);
+                    spinTaskId.cancel();
                 }
 
                 removed++;
