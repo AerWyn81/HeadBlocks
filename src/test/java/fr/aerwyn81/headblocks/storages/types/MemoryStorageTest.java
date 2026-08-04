@@ -5,10 +5,9 @@ import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedHashMap;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -188,6 +187,52 @@ class MemoryStorageTest {
 
         storage.clearCachedTopPlayers();
 
+        assertThat(storage.getCachedTopPlayers()).isEmpty();
+    }
+
+    @Test
+    void setCachedTopPlayers_doesNotMutateAPreviouslyReturnedMap() throws InternalException {
+        LinkedHashMap<PlayerProfileLight, Integer> first = new LinkedHashMap<>();
+        first.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 5);
+        storage.setCachedTopPlayers(first);
+
+        Map<PlayerProfileLight, Integer> held = storage.getCachedTopPlayers();
+
+        LinkedHashMap<PlayerProfileLight, Integer> second = new LinkedHashMap<>();
+        second.put(new PlayerProfileLight(UUID.randomUUID(), "B", ""), 9);
+        second.put(new PlayerProfileLight(UUID.randomUUID(), "C", ""), 7);
+        storage.setCachedTopPlayers(second);
+
+        assertThat(held).hasSize(1);
+        assertThat(storage.getCachedTopPlayers()).hasSize(2);
+    }
+
+    @Test
+    void setCachedTopPlayers_preservesRankingOrderAndCopiesTheSource() throws InternalException {
+        LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
+        var first = new PlayerProfileLight(UUID.randomUUID(), "First", "");
+        var second = new PlayerProfileLight(UUID.randomUUID(), "Second", "");
+        var third = new PlayerProfileLight(UUID.randomUUID(), "Third", "");
+        top.put(first, 30);
+        top.put(second, 20);
+        top.put(third, 10);
+
+        storage.setCachedTopPlayers(top);
+        top.clear();
+
+        assertThat(storage.getCachedTopPlayers().keySet()).containsExactly(first, second, third);
+    }
+
+    @Test
+    void clearCachedTopPlayers_doesNotMutateAPreviouslyReturnedMap() throws InternalException {
+        LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
+        top.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 5);
+        storage.setCachedTopPlayers(top);
+
+        Map<PlayerProfileLight, Integer> held = storage.getCachedTopPlayers();
+        storage.clearCachedTopPlayers();
+
+        assertThat(held).hasSize(1);
         assertThat(storage.getCachedTopPlayers()).isEmpty();
     }
 
@@ -410,10 +455,41 @@ class MemoryStorageTest {
         UUID unknownPlayer = UUID.randomUUID();
         UUID someHead = UUID.randomUUID();
 
-        // containsPlayer is false → resetPlayerHead should be a no-op
         storage.resetPlayerHead(unknownPlayer, someHead);
 
         assertThat(storage.containsPlayer(unknownPlayer)).isFalse();
+    }
+
+    @Test
+    void getHeadsPlayer_toleratesConcurrentAddHead() throws Exception {
+        UUID player = UUID.randomUUID();
+        storage.addHead(player, UUID.randomUUID());
+
+        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+        AtomicBoolean running = new AtomicBoolean(true);
+
+        Thread writer = new Thread(() -> {
+            while (running.get()) {
+                storage.addHead(player, UUID.randomUUID());
+            }
+        });
+        writer.start();
+
+        try {
+            for (int i = 0; i < 2_000; i++) {
+                try {
+                    storage.getHeadsPlayer(player);
+                } catch (Throwable t) {
+                    failures.add(t);
+                    break;
+                }
+            }
+        } finally {
+            running.set(false);
+            writer.join(5_000);
+        }
+
+        assertThat(failures).isEmpty();
     }
 
     @Test

@@ -28,6 +28,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,9 +74,9 @@ class HeadServiceTest {
         headService.setHuntService(huntService);
         headService.setHuntConfigService(huntConfigService);
 
-        setField("headLocations", new ArrayList<HeadLocation>());
-        setField("headMoves", new HashMap<UUID, HeadMove>());
-        setField("tasksHeadSpin", new HashMap<UUID, Integer>());
+        setField("headLocations", new CopyOnWriteArrayList<HeadLocation>());
+        setField("headMoves", new ConcurrentHashMap<UUID, HeadMove>());
+        setField("tasksHeadSpin", new ConcurrentHashMap<UUID, Integer>());
 
         // saveConfig uses runTaskLater + runTaskAsync — execute immediately in tests
         lenient().doAnswer(invocation -> {
@@ -98,24 +101,24 @@ class HeadServiceTest {
     }
 
     @SuppressWarnings("unchecked")
-    private ArrayList<HeadLocation> headLocations() throws Exception {
+    private List<HeadLocation> headLocations() throws Exception {
         Field field = HeadService.class.getDeclaredField("headLocations");
         field.setAccessible(true);
-        return (ArrayList<HeadLocation>) field.get(headService);
+        return (List<HeadLocation>) field.get(headService);
     }
 
     @SuppressWarnings("unchecked")
-    private HashMap<UUID, HeadMove> headMoves() throws Exception {
+    private Map<UUID, HeadMove> headMoves() throws Exception {
         Field field = HeadService.class.getDeclaredField("headMoves");
         field.setAccessible(true);
-        return (HashMap<UUID, HeadMove>) field.get(headService);
+        return (Map<UUID, HeadMove>) field.get(headService);
     }
 
     @SuppressWarnings("unchecked")
-    private HashMap<UUID, Integer> tasksHeadSpin() throws Exception {
+    private Map<UUID, Integer> tasksHeadSpin() throws Exception {
         Field field = HeadService.class.getDeclaredField("tasksHeadSpin");
         field.setAccessible(true);
-        return (HashMap<UUID, Integer>) field.get(headService);
+        return (Map<UUID, Integer>) field.get(headService);
     }
 
     private HeadLocation createHeadLocation(UUID uuid, String name, Location location, boolean charged) {
@@ -655,7 +658,7 @@ class HeadServiceTest {
             HeadMove move = new HeadMove(uuid, loc);
             headMoves().put(uuid, move);
 
-            HashMap<UUID, HeadMove> result = headService.getHeadMoves();
+            Map<UUID, HeadMove> result = headService.getHeadMoves();
 
             assertThat(result).hasSize(1);
             assertThat(result.get(uuid)).isEqualTo(move);
@@ -691,7 +694,7 @@ class HeadServiceTest {
 
         @Test
         void getHeadMoves_returns_same_reference() throws Exception {
-            HashMap<UUID, HeadMove> map = headMoves();
+            Map<UUID, HeadMove> map = headMoves();
 
             assertThat(headService.getHeadMoves()).isSameAs(map);
         }
@@ -705,7 +708,7 @@ class HeadServiceTest {
             headMoves().put(uuid1, new HeadMove(uuid1, loc1));
             headMoves().put(uuid2, new HeadMove(uuid2, loc2));
 
-            HashMap<UUID, HeadMove> result = headService.getHeadMoves();
+            Map<UUID, HeadMove> result = headService.getHeadMoves();
 
             assertThat(result).hasSize(2);
             assertThat(result).containsKey(uuid1);
@@ -749,7 +752,7 @@ class HeadServiceTest {
 
         @Test
         void returns_same_reference() throws Exception {
-            ArrayList<HeadLocation> list = headLocations();
+            List<HeadLocation> list = headLocations();
 
             assertThat(headService.getHeadLocations()).isSameAs(list);
         }
@@ -2542,6 +2545,53 @@ class HeadServiceTest {
             headService.loadLocations();
 
             assertThat(headService.getHeadLocations()).isEmpty();
+        }
+    }
+
+    @Nested
+    class ConcurrentAccess {
+
+        @Test
+        void lookups_tolerate_concurrent_mutation() throws Exception {
+            List<UUID> uuids = new ArrayList<>();
+            for (int i = 0; i < 200; i++) {
+                UUID uuid = UUID.randomUUID();
+                uuids.add(uuid);
+                headLocations().add(createHeadLocation(uuid, "head-" + i, null, true));
+            }
+
+            List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+            AtomicBoolean running = new AtomicBoolean(true);
+            List<Thread> readers = new ArrayList<>();
+
+            for (int r = 0; r < 4; r++) {
+                Thread reader = new Thread(() -> {
+                    try {
+                        while (running.get()) {
+                            for (UUID uuid : uuids) {
+                                headService.getHeadByUUID(uuid);
+                            }
+                        }
+                    } catch (Throwable t) {
+                        failures.add(t);
+                    }
+                });
+                readers.add(reader);
+                reader.start();
+            }
+
+            for (int i = 0; i < 300; i++) {
+                HeadLocation extra = createHeadLocation(UUID.randomUUID(), "extra-" + i, null, true);
+                headLocations().add(extra);
+                headLocations().remove(extra);
+            }
+
+            running.set(false);
+            for (Thread reader : readers) {
+                reader.join(5_000);
+            }
+
+            assertThat(failures).isEmpty();
         }
     }
 }

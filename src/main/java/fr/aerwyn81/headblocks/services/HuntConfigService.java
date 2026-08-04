@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HuntConfigService {
     private final PluginProvider pluginProvider;
@@ -28,8 +29,8 @@ public class HuntConfigService {
     private final SchedulerAdapter scheduler;
     private File huntsDir;
 
-    private final Map<String, YamlConfiguration> yamlCache = new HashMap<>();
-    private final Set<String> savePendingHunts = new HashSet<>();
+    private final Map<String, YamlConfiguration> yamlCache = new ConcurrentHashMap<>();
+    private final Set<String> savePendingHunts = ConcurrentHashMap.newKeySet();
 
     // --- Constructor ---
 
@@ -365,10 +366,9 @@ public class HuntConfigService {
     }
 
     private void debouncedSave(String huntId, YamlConfiguration yaml) {
-        if (savePendingHunts.contains(huntId)) {
+        if (!savePendingHunts.add(huntId)) {
             return;
         }
-        savePendingHunts.add(huntId);
 
         scheduler.runTaskLater(() -> {
             savePendingHunts.remove(huntId);

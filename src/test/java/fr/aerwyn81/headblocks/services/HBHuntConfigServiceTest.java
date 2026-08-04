@@ -33,6 +33,7 @@ import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -975,6 +976,40 @@ class HBHuntConfigServiceTest {
             // Note: the actual save is debounced, so read back the hunt file
             // which was modified by saveHunt (the location is in the cached yaml)
             assertThat(file.exists()).isTrue();
+        }
+
+        @Test
+        void saveLocationInHunt_debouncesConcurrentSavesForTheSameHunt() throws Exception {
+            HBHunt hunt = new HBHunt(configService, "loc-race", "Loc Race", HuntState.ACTIVE, 1, "CHEST");
+            huntConfigService.saveHunt(hunt);
+            clearInvocations(scheduler);
+
+            int threads = 8;
+            CountDownLatch start = new CountDownLatch(1);
+            List<Thread> workers = new ArrayList<>();
+
+            for (int i = 0; i < threads; i++) {
+                HeadLocation headLoc = new HeadLocation("h" + i, UUID.randomUUID(), "loc-race", "world",
+                        10.5, 64.0, 20.5, -1, false, false, new ArrayList<>());
+                Thread worker = new Thread(() -> {
+                    try {
+                        start.await();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                    huntConfigService.saveLocationInHunt("loc-race", headLoc);
+                });
+                workers.add(worker);
+                worker.start();
+            }
+
+            start.countDown();
+            for (Thread worker : workers) {
+                worker.join(5_000);
+            }
+
+            verify(scheduler, times(1)).runTaskLater(any(Runnable.class), anyLong());
         }
 
         @Test

@@ -28,6 +28,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 public class HeadService {
@@ -41,9 +43,9 @@ public class HeadService {
     private HuntConfigService huntConfigService; // setter-injected
 
     private ArrayList<HBHead> heads;
-    private HashMap<UUID, HeadMove> headMoves;
-    private ArrayList<HeadLocation> headLocations;
-    private HashMap<UUID, Integer> tasksHeadSpin;
+    private Map<UUID, HeadMove> headMoves;
+    private List<HeadLocation> headLocations;
+    private Map<UUID, Integer> tasksHeadSpin;
 
     public static String HB_KEY = "HB_HEAD";
 
@@ -85,9 +87,9 @@ public class HeadService {
 
     public void initialize() {
         heads = new ArrayList<>();
-        headLocations = new ArrayList<>();
-        headMoves = new HashMap<>();
-        tasksHeadSpin = new HashMap<>();
+        headLocations = new CopyOnWriteArrayList<>();
+        headMoves = new ConcurrentHashMap<>();
+        tasksHeadSpin = new ConcurrentHashMap<>();
 
         load();
     }
@@ -233,10 +235,9 @@ public class HeadService {
             headLocations.remove(headLocation);
 
             headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-            var spinTaskId = tasksHeadSpin.get(headLocation.getUuid());
+            var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
             if (spinTaskId != null) {
                 scheduler.cancelTask(spinTaskId);
-                tasksHeadSpin.remove(headLocation.getUuid());
             }
         }
     }
@@ -271,10 +272,9 @@ public class HeadService {
                 huntConfigService.removeLocationFromHunt(headLocation.getHuntId(), headLocation.getUuid());
 
                 headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-                var spinTaskId = tasksHeadSpin.get(headLocation.getUuid());
+                var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
                 if (spinTaskId != null) {
                     scheduler.cancelTask(spinTaskId);
-                    tasksHeadSpin.remove(headLocation.getUuid());
                 }
 
                 removed++;
@@ -423,7 +423,7 @@ public class HeadService {
         return headLocations.stream().filter(HeadLocation::isCharged).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public ArrayList<HeadLocation> getHeadLocations() {
+    public List<HeadLocation> getHeadLocations() {
         return headLocations;
     }
 
@@ -437,7 +437,7 @@ public class HeadService {
         return headLocations.stream().map(HeadLocation::getRawNameOrUuid).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public HashMap<UUID, HeadMove> getHeadMoves() {
+    public Map<UUID, HeadMove> getHeadMoves() {
         return headMoves;
     }
 

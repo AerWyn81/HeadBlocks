@@ -6,12 +6,13 @@ import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Memory implements Storage {
 
     private ConcurrentHashMap<UUID, java.util.List<UUID>> headsFound;
     private ConcurrentHashMap<UUID, Set<UUID>> cachePlayerHeads;
-    private LinkedHashMap<PlayerProfileLight, Integer> cacheTopPlayers;
+    private volatile LinkedHashMap<PlayerProfileLight, Integer> cacheTopPlayers;
     private Set<UUID> cacheHeads;
 
     // Hunt-specific caches
@@ -42,7 +43,7 @@ public class Memory implements Storage {
     public void close() throws InternalException {
         headsFound.clear();
         cachePlayerHeads.clear();
-        cacheTopPlayers.clear();
+        cacheTopPlayers = new LinkedHashMap<>();
         cacheHeads.clear();
 
         cacheHuntPlayerHeads.clear();
@@ -65,7 +66,7 @@ public class Memory implements Storage {
 
     @Override
     public void addHead(UUID playerUuid, UUID headUuid) {
-        headsFound.computeIfAbsent(playerUuid, k -> Collections.synchronizedList(new ArrayList<>())).add(headUuid);
+        headsFound.computeIfAbsent(playerUuid, k -> new CopyOnWriteArrayList<>()).add(headUuid);
     }
 
     @Override
@@ -75,8 +76,9 @@ public class Memory implements Storage {
 
     @Override
     public void resetPlayerHead(UUID playerUuid, UUID headUuid) {
-        if (containsPlayer(playerUuid)) {
-            headsFound.get(playerUuid).remove(headUuid);
+        var heads = headsFound.get(playerUuid);
+        if (heads != null) {
+            heads.remove(headUuid);
         }
     }
 
@@ -118,13 +120,12 @@ public class Memory implements Storage {
 
     @Override
     public void setCachedTopPlayers(LinkedHashMap<PlayerProfileLight, Integer> topPlayers) {
-        cacheTopPlayers.clear();
-        cacheTopPlayers.putAll(topPlayers);
+        cacheTopPlayers = new LinkedHashMap<>(topPlayers);
     }
 
     @Override
     public void clearCachedTopPlayers() {
-        cacheTopPlayers.clear();
+        cacheTopPlayers = new LinkedHashMap<>();
     }
 
     @Override
