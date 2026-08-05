@@ -28,10 +28,7 @@ import org.holoeasy.HoloEasy;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
@@ -45,6 +42,7 @@ public final class HeadBlocks extends JavaPlugin {
 
     private ServiceRegistry serviceRegistry;
     private ConfigService earlyConfigService;
+    private Platform platform;
     private SchedulerAdapter scheduler;
     private Task globalTask;
     private Task timedRunTask;
@@ -113,7 +111,7 @@ public final class HeadBlocks extends JavaPlugin {
         isPacketEventsActive = Bukkit.getPluginManager().isPluginEnabled("packetevents");
 
         // --- Create ServiceRegistry (DI wiring) ---
-        Platform platform = Platforms.load();
+        this.platform = Platforms.load();
         LogUtil.info("Platform: {0}", platform.name());
 
         PluginProvider pluginProvider = new HeadBlocksPluginProvider(this);
@@ -149,7 +147,12 @@ public final class HeadBlocks extends JavaPlugin {
             isHeadDBActive = false;
         }
 
-        getCommand("headblocks").setExecutor(new HBCommandExecutor(serviceRegistry));
+        if (!platform.registerCommand(this, "headblocks", List.of("hb"),
+                "Plugin command", new HBCommandExecutor(serviceRegistry))) {
+            LogUtil.error("Cannot register the /headblocks command, disabling the plugin.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(serviceRegistry), this);
@@ -209,6 +212,10 @@ public final class HeadBlocks extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (platform != null) {
+            platform.unregisterCommands();
+        }
+
         cancelTask(globalTask);
         cancelTask(timedRunTask);
         cancelTask(zoneOutlineTask);

@@ -3,7 +3,10 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
-import fr.aerwyn81.headblocks.utils.bukkit.*;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -14,7 +17,6 @@ import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -117,11 +119,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
-            ParticlesUtils.spawn(headLocation, Particle.valueOf("HAPPY_VILLAGER"), 10, null, player);
-        } else {
-            ParticlesUtils.spawn(headLocation, Particle.VILLAGER_HAPPY, 10, null, player);
-        }
+        ParticlesUtils.spawn(headLocation, ParticlesUtils.resolve("HAPPY_VILLAGER"), 10, null, player);
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadPlaced"), headLocation));
 

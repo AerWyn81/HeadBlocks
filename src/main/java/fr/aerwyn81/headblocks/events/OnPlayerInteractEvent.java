@@ -269,7 +269,7 @@ public class OnPlayerInteractEvent implements Listener {
             ArrayList<String> colors = registry.getConfigService().headClickParticlesColors();
 
             try {
-                ParticlesUtils.spawn(clickedLocation, Particle.valueOf(particleName), amount, colors, player);
+                ParticlesUtils.spawn(clickedLocation, ParticlesUtils.resolve(particleName), amount, colors, player);
             } catch (Exception ex) {
                 LogUtil.error("Error particle name {0} cannot be parsed!", particleName);
             }

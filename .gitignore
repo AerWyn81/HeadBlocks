@@ -116,6 +116,7 @@ run/
 
 # Spigot dev server (jar comes from BuildTools) and per-platform Gradle caches
 run-spigot/
+run-folia/
 .gradle-paper/
 .gradle-spigot/
 

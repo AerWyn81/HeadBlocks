@@ -12,7 +12,6 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -87,8 +86,8 @@ public class GlobalTask implements Runnable {
             return;
         }
 
-        var particle = isFound ? Particle.valueOf(huntConfig.getParticlesFoundType())
-                : Particle.valueOf(huntConfig.getParticlesNotFoundType());
+        var particleName = isFound ? huntConfig.getParticlesFoundType()
+                : huntConfig.getParticlesNotFoundType();
 
         var amount = isFound ? huntConfig.getParticlesFoundAmount()
                 : huntConfig.getParticlesNotFoundAmount();
@@ -96,10 +95,12 @@ public class GlobalTask implements Runnable {
         var colors = isFound ? registry.getConfigService().particlesFoundColors()
                 : registry.getConfigService().particlesNotFoundColors();
 
+        // Resolution is inside the guard on purpose: an unknown particle name used to throw here on
+        // every head, for every player, every tick.
         try {
-            ParticlesUtils.spawn(location, particle, amount, colors, player);
+            ParticlesUtils.spawn(location, ParticlesUtils.resolve(particleName), amount, colors, player);
         } catch (Exception ex) {
-            LogUtil.error("Cannot spawn particle {0}... {1}", particle.name(), ex.getMessage());
+            LogUtil.error("Cannot spawn particle {0}... {1}", particleName, ex.getMessage());
             LogUtil.error("To prevent log spamming, particles are disabled until reload");
             particlesDisabled = true;
         }

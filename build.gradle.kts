@@ -2,6 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import io.papermc.hangarpublishplugin.model.Platforms
 import net.minecrell.pluginyml.GeneratePluginDescription
 import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
+import net.minecrell.pluginyml.paper.PaperPluginDescription
 import xyz.jpenilla.runpaper.RunPaperExtension
 import xyz.jpenilla.runpaper.task.RunServer
 
@@ -166,19 +167,62 @@ fun BukkitPluginDescription.describeHeadBlocks() {
     }
 }
 
-// The extension feeds the shared descriptor; folia-supported must not reach the Spigot jar, so the
-// Paper flavour gets its own description and its own generation task.
+// The extension feeds the Spigot descriptor only. The Paper flavour ships a paper-plugin.yml
+// instead, which is a different format with its own description type and generation task.
 bukkit {
     describeHeadBlocks()
 }
 
-val paperPluginDescription = BukkitPluginDescription(project).apply {
-    describeHeadBlocks()
+// paper-plugin.yml deliberately has no commands section: the command is registered at runtime by
+// PaperPlatform. Dependencies move from softDepend to serverDependencies because Paper plugins get
+// an isolated classloader — joinClasspath is what keeps the optional hooks able to see their API.
+val paperPluginDescription = PaperPluginDescription(project).apply {
+    name = "HeadBlocks"
+    main = "fr.aerwyn81.headblocks.HeadBlocks"
+    authors = listOf("AerWyn81")
+    // Paper plugins require at least 1.19; the runtime check in HeadBlocks already demands 1.20+.
+    apiVersion = "1.20"
+    description = "Challenge your players to find all the heads and earn rewards"
+    version = project.version.toString()
+    website = "https://just2craft.fr"
     foliaSupported = true
+
+    serverDependencies {
+        for (optional in listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents", "WorldGuard")) {
+            register(optional) {
+                required = false
+                joinClasspath = true
+                load = PaperPluginDescription.RelativeLoadOrder.BEFORE
+            }
+        }
+    }
+
+    permissions {
+        register("headblocks.use") {
+            description = "Allows players to interact with heads and see their progress"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.commands.top") {
+            description = "Allows players to see leaderboard"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.commands.progress") {
+            description = "Allows players to see his or player score"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("headblocks.admin") {
+            description = "Allows access to /headblocks admin commands"
+            default = BukkitPluginDescription.Permission.Default.OP
+        }
+        register("headblocks.zone.bypass") {
+            description = "Allows bypassing hunt zone confinement"
+            default = BukkitPluginDescription.Permission.Default.OP
+        }
+    }
 }
 
 val generatePaperPluginDescription = tasks.register<GeneratePluginDescription>("generatePaperPluginDescription") {
-    fileName.set("plugin.yml")
+    fileName.set("paper-plugin.yml")
     librariesJsonFileName.set("paper-libraries.json")
     pluginDescription.set(paperPluginDescription)
     outputDirectory.set(layout.buildDirectory.dir("generated/paper-plugin-yml"))
@@ -214,7 +258,7 @@ fun ShadowJar.applySharedShadowConfig() {
     relocate("org.bstats", "fr.aerwyn81.libs.bstats")
     relocate("com.cryptomorin.xseries", "fr.aerwyn81.libs.xseries")
 
-    // Exclude unused XSeries modules (only XSound is used)
+    // Exclude unused XSeries modules (only XSound and XParticle are used)
     exclude("com/cryptomorin/xseries/XAttribute*")
     exclude("com/cryptomorin/xseries/XBiome*")
     exclude("com/cryptomorin/xseries/XBlock*")
@@ -222,11 +266,9 @@ fun ShadowJar.applySharedShadowConfig() {
     exclude("com/cryptomorin/xseries/XEntityType*")
     exclude("com/cryptomorin/xseries/XItemFlag*")
     exclude("com/cryptomorin/xseries/XMaterial*")
-    exclude("com/cryptomorin/xseries/XParticle*")
     exclude("com/cryptomorin/xseries/XPotion*")
     exclude("com/cryptomorin/xseries/XTag*")
     exclude("com/cryptomorin/xseries/XWorldBorder*")
-    exclude("com/cryptomorin/xseries/particles/**")
 
     destinationDirectory.set(file(System.getenv("outputDir") ?: "$rootDir/build/"))
 
@@ -389,6 +431,13 @@ runPaper {
             systemProperty("com.mojang.eula.agree", "true")
             systemProperty("terminal.ansi", true)
 
+            // A heap exhaustion here dies without reaching the server log, so leave the evidence on disk.
+            jvmArgs(
+                "-XX:+HeapDumpOnOutOfMemoryError",
+                "-XX:HeapDumpPath=${file("run-folia").absolutePath}",
+                "-Xlog:gc*:file=${file("run-folia/gc.log").absolutePath}:time,uptime:filecount=3,filesize=10M"
+            )
+
             enableDebugPortIfRequested(5007)
         }
     }
@@ -416,7 +465,8 @@ hangarPublish {
                 platformVersions = listOf(
                     "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6",
                     "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6",
-                    "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"
+                    "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11",
+                    "26.1", "26.1.1", "26.1.2", "26.2"
                 )
                 dependencies {
                     hangar("PlaceholderAPI") {
