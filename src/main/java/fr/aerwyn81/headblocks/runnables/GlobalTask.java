@@ -20,17 +20,17 @@ import java.util.concurrent.ThreadLocalRandom;
 public class GlobalTask implements Runnable {
 
     private static final int CHUNK_SIZE = 16;
-    private static int VIEW_RADIUS_CHUNKS = 1;
 
     private static final int HUNT_SYNC_INTERVAL = 100; // ~5 seconds at 20 TPS
-    private boolean particlesDisabled = false;
+    private volatile boolean particlesDisabled = false;
     private int tickCounter = 0;
 
+    private final int viewRadiusChunks;
     private final ServiceRegistry registry;
 
     public GlobalTask(ServiceRegistry registry) {
         this.registry = registry;
-        VIEW_RADIUS_CHUNKS = (int) Math.ceil(registry.getConfigService().hologramParticlePlayerViewDistance() / (double) CHUNK_SIZE);
+        this.viewRadiusChunks = (int) Math.ceil(registry.getConfigService().hologramParticlePlayerViewDistance() / (double) CHUNK_SIZE);
     }
 
     @Override
@@ -142,7 +142,7 @@ public class GlobalTask implements Runnable {
         var chunkDistanceX = Math.abs(hologramChunkX - playerChunkX);
         var chunkDistanceZ = Math.abs(hologramChunkZ - playerChunkZ);
 
-        if (chunkDistanceX <= VIEW_RADIUS_CHUNKS && chunkDistanceZ <= VIEW_RADIUS_CHUNKS) {
+        if (chunkDistanceX <= viewRadiusChunks && chunkDistanceZ <= viewRadiusChunks) {
             var distanceSq = location.distanceSquared(playerLoc);
 
             if (distanceSq <= rangeParticlesSq || distanceSq <= rangeHintSq) {

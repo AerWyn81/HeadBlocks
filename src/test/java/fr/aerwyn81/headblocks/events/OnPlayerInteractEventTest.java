@@ -595,7 +595,7 @@ class OnPlayerInteractEventTest {
 
                 // Capture the Consumer passed to whenComplete and invoke it
                 ArgumentCaptor<Consumer<Set<UUID>>> captor = ArgumentCaptor.forClass(Consumer.class);
-                verify(futureResult).whenComplete(captor.capture());
+                verify(futureResult).whenComplete(eq(player), captor.capture());
                 captor.getValue().accept(playerHeads);
             }
         }
@@ -817,7 +817,7 @@ class OnPlayerInteractEventTest {
 
                     @SuppressWarnings("unchecked")
                     ArgumentCaptor<Consumer<Set<UUID>>> captor = ArgumentCaptor.forClass(Consumer.class);
-                    verify(futureResult).whenComplete(captor.capture());
+                    verify(futureResult).whenComplete(eq(player), captor.capture());
                     captor.getValue().accept(new HashSet<>());
 
                     verify(peHook.getHeadHidingListener()).addFoundHead(player, headUuid);
@@ -871,7 +871,7 @@ class OnPlayerInteractEventTest {
 
                     @SuppressWarnings("unchecked")
                     ArgumentCaptor<Consumer<Set<UUID>>> captor = ArgumentCaptor.forClass(Consumer.class);
-                    verify(futureResult).whenComplete(captor.capture());
+                    verify(futureResult).whenComplete(eq(player), captor.capture());
                     captor.getValue().accept(new HashSet<>());
 
                     verify(peHook, never()).getHeadHidingListener();

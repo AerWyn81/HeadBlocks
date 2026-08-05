@@ -18,7 +18,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,6 +50,11 @@ public class HuntConfigService {
     // --- Instance methods ---
 
     public void initialize() {
+        // A reload must read the hunt files back from disk, so the cache is dropped here. Pending
+        // location writes are flushed first: invalidating alone would discard them.
+        flushPendingSaves();
+        invalidateAllYamlCaches();
+
         huntsDir = new File(pluginProvider.getDataFolder(), "hunts");
         if (!huntsDir.exists() && !huntsDir.mkdirs()) {
             LogUtil.error("Failed to create hunts directory: {0}", huntsDir.getAbsolutePath());
@@ -55,6 +63,24 @@ public class HuntConfigService {
         if (!huntFileExists("default")) {
             generateDefaultFromConfig();
         }
+    }
+
+    private void flushPendingSaves() {
+        for (String huntId : savePendingHunts) {
+            YamlConfiguration yaml = yamlCache.get(huntId);
+            if (yaml == null) {
+                continue;
+            }
+
+            String content;
+            synchronized (yaml) {
+                content = yaml.saveToString();
+            }
+
+            writeAtomically(new File(huntsDir, huntId + ".yml"), content);
+        }
+
+        savePendingHunts.clear();
     }
 
     public List<HBHunt> loadHunts() {
@@ -104,26 +130,23 @@ public class HuntConfigService {
     }
 
     public void saveHunt(HBHunt hunt) {
-        File file = new File(huntsDir, hunt.getId() + ".yml");
-        YamlConfiguration yaml;
+        YamlConfiguration yaml = getOrCreateHuntYaml(hunt.getId());
+        String content;
 
-        // Load existing file to preserve locations section
-        if (file.exists()) {
-            yaml = YamlConfiguration.loadConfiguration(file);
-        } else {
-            yaml = new YamlConfiguration();
+        synchronized (yaml) {
+            yaml.set("id", hunt.getId());
+            yaml.set("displayName", hunt.getDisplayName());
+            yaml.set("state", hunt.getState().name());
+            yaml.set("priority", hunt.getPriority());
+            yaml.set("icon", hunt.getIcon());
+
+            saveBehaviors(yaml, hunt.getBehaviors());
+            saveHuntConfig(yaml, hunt.getConfig());
+
+            content = yaml.saveToString();
         }
 
-        yaml.set("id", hunt.getId());
-        yaml.set("displayName", hunt.getDisplayName());
-        yaml.set("state", hunt.getState().name());
-        yaml.set("priority", hunt.getPriority());
-        yaml.set("icon", hunt.getIcon());
-
-        saveBehaviors(yaml, hunt.getBehaviors());
-        saveHuntConfig(yaml, hunt.getConfig());
-
-        saveYamlFile(yaml, file);
+        writeAtomically(new File(huntsDir, hunt.getId() + ".yml"), content);
     }
 
     public boolean huntFileExists(String huntId) {
@@ -131,6 +154,9 @@ public class HuntConfigService {
     }
 
     public void deleteHuntFile(String huntId) {
+        yamlCache.remove(huntId);
+        savePendingHunts.remove(huntId);
+
         File file = new File(huntsDir, huntId + ".yml");
         if (file.exists()) {
             if (!file.delete()) {
@@ -312,18 +338,20 @@ public class HuntConfigService {
             return locations;
         }
 
-        ConfigurationSection section = yaml.getConfigurationSection("locations");
-        if (section == null) {
-            return locations;
-        }
+        synchronized (yaml) {
+            ConfigurationSection section = yaml.getConfigurationSection("locations");
+            if (section == null) {
+                return locations;
+            }
 
-        for (String uuid : section.getKeys(false)) {
-            try {
-                UUID headUuid = UUID.fromString(uuid);
-                HeadLocation headLoc = HeadLocation.fromConfig(yaml, headUuid, huntId);
-                locations.add(headLoc);
-            } catch (Exception e) {
-                LogUtil.error("Cannot deserialize location {0} in hunt {1}: {2}", uuid, huntId, e.getMessage());
+            for (String uuid : section.getKeys(false)) {
+                try {
+                    UUID headUuid = UUID.fromString(uuid);
+                    HeadLocation headLoc = HeadLocation.fromConfig(yaml, headUuid, huntId);
+                    locations.add(headLoc);
+                } catch (Exception e) {
+                    LogUtil.error("Cannot deserialize location {0} in hunt {1}: {2}", uuid, huntId, e.getMessage());
+                }
             }
         }
 
@@ -337,7 +365,10 @@ public class HuntConfigService {
             return;
         }
 
-        headLocation.saveInConfig(yaml);
+        synchronized (yaml) {
+            headLocation.saveInConfig(yaml);
+        }
+
         debouncedSave(huntId, yaml);
     }
 
@@ -347,7 +378,10 @@ public class HuntConfigService {
             return;
         }
 
-        yaml.set("locations." + headUuid, null);
+        synchronized (yaml) {
+            yaml.set("locations." + headUuid, null);
+        }
+
         debouncedSave(huntId, yaml);
     }
 
@@ -356,6 +390,16 @@ public class HuntConfigService {
             File file = new File(huntsDir, id + ".yml");
             if (!file.exists()) {
                 return null;
+            }
+            return YamlConfiguration.loadConfiguration(file);
+        });
+    }
+
+    private YamlConfiguration getOrCreateHuntYaml(String huntId) {
+        return yamlCache.computeIfAbsent(huntId, id -> {
+            File file = new File(huntsDir, id + ".yml");
+            if (!file.exists()) {
+                return new YamlConfiguration();
             }
             return YamlConfiguration.loadConfiguration(file);
         });
@@ -372,23 +416,53 @@ public class HuntConfigService {
 
         scheduler.runTaskLater(() -> {
             savePendingHunts.remove(huntId);
-            String content = yaml.saveToString();
-            File file = new File(huntsDir, huntId + ".yml");
-            scheduler.runTaskAsync(() -> {
-                try {
-                    Files.writeString(file.toPath(), content);
-                } catch (Exception e) {
-                    LogUtil.error("Cannot save hunt file {0}: {1}", file.getName(), e.getMessage());
+
+            // Superseded since it was queued: either the hunt was deleted, or initialize() flushed
+            // this write and dropped the cache. Only the former loses data worth reporting.
+            if (yamlCache.get(huntId) != yaml) {
+                if (!huntFileExists(huntId)) {
+                    LogUtil.warning("Dropped a pending save for hunt {0}: the hunt was deleted.", huntId);
                 }
-            });
+                return;
+            }
+
+            String content;
+            synchronized (yaml) {
+                content = yaml.saveToString();
+            }
+
+            File file = new File(huntsDir, huntId + ".yml");
+            scheduler.runTaskAsync(() -> writeAtomically(file, content));
         }, 1L);
     }
 
-    private void saveYamlFile(YamlConfiguration yaml, File file) {
+    private void writeAtomically(File file, String content) {
+        Path target = file.toPath();
+        Path temp = null;
+
         try {
-            yaml.save(file);
-        } catch (IOException e) {
-            LogUtil.error("Failed to save hunt file {0}: {1}", file.getName(), e.getMessage());
+            temp = Files.createTempFile(target.getParent(), file.getName(), ".tmp");
+            Files.writeString(temp, content);
+
+            try {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException ex) {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (Exception e) {
+            LogUtil.error("Cannot save hunt file {0}: {1}", file.getName(), e.getMessage());
+            deleteQuietly(temp);
+        }
+    }
+
+    private void deleteQuietly(Path path) {
+        if (path == null) {
+            return;
+        }
+
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException ignored) {
         }
     }
 

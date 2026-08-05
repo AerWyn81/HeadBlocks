@@ -75,12 +75,12 @@ IntelliJ's Gradle output view is read-only, so **server commands must be typed i
 
 Add `-PdebugServer` to also open JDWP (5005 for Paper, 5006 for Spigot) and attach a *Remote JVM Debug* configuration — that is how you get both a usable console and a debugger. The flag is opt-in precisely so it stays out of the way of the IDE's own Debug button.
 
-The Spigot server jar cannot be downloaded automatically; build it once per Minecraft version:
+The Spigot server jar cannot be downloaded automatically; build it once per Minecraft version. Use the same version as `mcVersion` in `build.gradle.kts` — both dev servers are configured from it, and a mismatch means the two servers no longer run the same Minecraft:
 
 ```bash
 mkdir -p run-spigot && cd run-spigot
 curl -O https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
-java -jar BuildTools.jar --rev 1.21.11 --remapped
+java -jar BuildTools.jar --rev 26.2 --remapped
 mv spigot-*.jar spigot.jar
 ```
 

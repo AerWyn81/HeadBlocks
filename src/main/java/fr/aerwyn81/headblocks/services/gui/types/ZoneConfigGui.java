@@ -415,7 +415,8 @@ public class ZoneConfigGui {
             if (player == null || !player.isOnline()) {
                 continue;
             }
-            renderOutline(player, uuid);
+
+            registry.getScheduler().runNow(player, () -> renderOutline(player, uuid));
         }
     }
 

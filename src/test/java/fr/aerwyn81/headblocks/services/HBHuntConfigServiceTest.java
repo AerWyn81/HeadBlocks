@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,11 +32,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -1010,6 +1014,243 @@ class HBHuntConfigServiceTest {
             }
 
             verify(scheduler, times(1)).runTaskLater(any(Runnable.class), anyLong());
+        }
+
+        @Test
+        void debouncedSave_snapshotDoesNotRaceWithConcurrentMutations() throws Exception {
+            HBHunt hunt = new HBHunt(configService, "snap-race", "Snap Race", HuntState.ACTIVE, 1, "CHEST");
+            huntConfigService.saveHunt(hunt);
+            clearInvocations(scheduler);
+
+            ArgumentCaptor<Runnable> debounced = ArgumentCaptor.forClass(Runnable.class);
+            doAnswer(invocation -> null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
+
+            huntConfigService.saveLocationInHunt("snap-race",
+                    new HeadLocation("seed", UUID.randomUUID(), "snap-race", "world",
+                            1.5, 64.0, 2.5, -1, false, false, new ArrayList<>()));
+
+            List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+            AtomicBoolean running = new AtomicBoolean(true);
+
+            Thread mutator = new Thread(() -> {
+                try {
+                    while (running.get()) {
+                        UUID headUuid = UUID.randomUUID();
+                        huntConfigService.saveLocationInHunt("snap-race",
+                                new HeadLocation("h", headUuid, "snap-race", "world",
+                                        1.5, 64.0, 2.5, -1, false, false, new ArrayList<>()));
+                        huntConfigService.removeLocationFromHunt("snap-race", headUuid);
+                    }
+                } catch (Throwable t) {
+                    failures.add(t);
+                }
+            });
+            mutator.start();
+
+            try {
+                for (int i = 0; i < 300; i++) {
+                    debounced.getValue().run();
+                }
+            } catch (Throwable t) {
+                failures.add(t);
+            } finally {
+                running.set(false);
+                mutator.join(5_000);
+            }
+
+            assertThat(mutator.isAlive()).isFalse();
+            assertThat(failures).isEmpty();
+        }
+
+        @Test
+        void debouncedSave_writesCompleteYamlAtomically() throws Exception {
+            HBHunt hunt = new HBHunt(configService, "atomic-write", "Atomic", HuntState.ACTIVE, 1, "CHEST");
+            huntConfigService.saveHunt(hunt);
+
+            doAnswer(invocation -> {
+                ((Runnable) invocation.getArgument(0)).run();
+                return null;
+            }).when(scheduler).runTaskLater(any(Runnable.class), anyLong());
+
+            doAnswer(invocation -> {
+                ((Runnable) invocation.getArgument(0)).run();
+                return null;
+            }).when(scheduler).runTaskAsync(any(Runnable.class));
+
+            UUID headUuid = UUID.randomUUID();
+            huntConfigService.saveLocationInHunt("atomic-write",
+                    new HeadLocation("head", headUuid, "atomic-write", "world",
+                            10.5, 64.0, 20.5, -1, false, false, new ArrayList<>()));
+
+            File file = new File(tempDir.toFile(), "hunts/atomic-write.yml");
+            YamlConfiguration written = YamlConfiguration.loadConfiguration(file);
+
+            assertThat(written.getString("id")).isEqualTo("atomic-write");
+            assertThat(written.contains("locations." + headUuid)).isTrue();
+            assertThat(file.getParentFile().listFiles((dir, name) -> name.endsWith(".tmp"))).isEmpty();
+        }
+
+        @Test
+        void saveHunt_duringPendingLocationSave_keepsBothRenameAndLocation() {
+            huntConfigService.saveHunt(new HBHunt(configService, "rename-race", "Original", HuntState.ACTIVE, 1, "CHEST"));
+
+            ArgumentCaptor<Runnable> debounced = ArgumentCaptor.forClass(Runnable.class);
+            doAnswer(invocation -> null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
+            doAnswer(invocation -> {
+                ((Runnable) invocation.getArgument(0)).run();
+                return null;
+            }).when(scheduler).runTaskAsync(any(Runnable.class));
+
+            UUID headUuid = UUID.randomUUID();
+            huntConfigService.saveLocationInHunt("rename-race",
+                    new HeadLocation("head", headUuid, "rename-race", "world",
+                            10.5, 64.0, 20.5, -1, false, false, new ArrayList<>()));
+
+            huntConfigService.saveHunt(new HBHunt(configService, "rename-race", "Renamed", HuntState.ACTIVE, 1, "CHEST"));
+
+            debounced.getValue().run();
+
+            File file = new File(tempDir.toFile(), "hunts/rename-race.yml");
+            YamlConfiguration written = YamlConfiguration.loadConfiguration(file);
+
+            assertThat(written.getString("displayName")).isEqualTo("Renamed");
+            assertThat(written.contains("locations." + headUuid)).isTrue();
+        }
+
+        @Test
+        void deleteHuntFile_withPendingLocationSave_doesNotRecreateFile() {
+            huntConfigService.saveHunt(new HBHunt(configService, "doomed", "Doomed", HuntState.ACTIVE, 1, "CHEST"));
+
+            ArgumentCaptor<Runnable> debounced = ArgumentCaptor.forClass(Runnable.class);
+            doAnswer(invocation -> null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
+
+            lenient().doAnswer(invocation -> {
+                ((Runnable) invocation.getArgument(0)).run();
+                return null;
+            }).when(scheduler).runTaskAsync(any(Runnable.class));
+
+            huntConfigService.saveLocationInHunt("doomed",
+                    new HeadLocation("head", UUID.randomUUID(), "doomed", "world",
+                            1.5, 64.0, 2.5, -1, false, false, new ArrayList<>()));
+
+            File file = new File(tempDir.toFile(), "hunts/doomed.yml");
+            huntConfigService.deleteHuntFile("doomed");
+            assertThat(file).doesNotExist();
+
+            debounced.getValue().run();
+
+            assertThat(file).doesNotExist();
+        }
+
+        @Test
+        void deleteHuntFile_thenReadLocations_doesNotServeDeletedHuntFromCache() {
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getWorld(anyString())).thenReturn(null);
+
+                huntConfigService.saveHunt(new HBHunt(configService, "reused", "Reused", HuntState.ACTIVE, 1, "CHEST"));
+
+                doAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(0)).run();
+                    return null;
+                }).when(scheduler).runTaskLater(any(Runnable.class), anyLong());
+                doAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(0)).run();
+                    return null;
+                }).when(scheduler).runTaskAsync(any(Runnable.class));
+
+                huntConfigService.saveLocationInHunt("reused",
+                        new HeadLocation("head", UUID.randomUUID(), "reused", "world",
+                                1.5, 64.0, 2.5, -1, false, false, new ArrayList<>()));
+                assertThat(huntConfigService.loadLocationsFromHunt("reused")).hasSize(1);
+
+                huntConfigService.deleteHuntFile("reused");
+                huntConfigService.saveHunt(new HBHunt(configService, "reused", "Reused", HuntState.ACTIVE, 1, "CHEST"));
+
+                assertThat(huntConfigService.loadLocationsFromHunt("reused")).isEmpty();
+            }
+        }
+
+        @Test
+        void initialize_flushesPendingLocationSaveBeforeDroppingTheCache() {
+            huntConfigService.saveHunt(new HBHunt(configService, "flushed", "Flushed", HuntState.ACTIVE, 1, "CHEST"));
+
+            ArgumentCaptor<Runnable> debounced = ArgumentCaptor.forClass(Runnable.class);
+            doAnswer(invocation -> null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
+
+            UUID headUuid = UUID.randomUUID();
+            huntConfigService.saveLocationInHunt("flushed",
+                    new HeadLocation("head", headUuid, "flushed", "world",
+                            1.5, 64.0, 2.5, -1, false, false, new ArrayList<>()));
+
+            File file = new File(tempDir.toFile(), "hunts/flushed.yml");
+            assertThat(YamlConfiguration.loadConfiguration(file).contains("locations." + headUuid)).isFalse();
+
+            huntConfigService.initialize();
+
+            assertThat(YamlConfiguration.loadConfiguration(file).contains("locations." + headUuid)).isTrue();
+
+            // The debounced task still fires afterwards; it must not undo the flush.
+            debounced.getValue().run();
+            assertThat(YamlConfiguration.loadConfiguration(file).contains("locations." + headUuid)).isTrue();
+        }
+
+        @Test
+        void initialize_reloadsLocationsEditedOnDisk() {
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getWorld(anyString())).thenReturn(null);
+
+                huntConfigService.saveHunt(new HBHunt(configService, "edited", "Edited", HuntState.ACTIVE, 1, "CHEST"));
+
+                doAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(0)).run();
+                    return null;
+                }).when(scheduler).runTaskLater(any(Runnable.class), anyLong());
+                doAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(0)).run();
+                    return null;
+                }).when(scheduler).runTaskAsync(any(Runnable.class));
+
+                huntConfigService.saveLocationInHunt("edited",
+                        new HeadLocation("head", UUID.randomUUID(), "edited", "world",
+                                1.5, 64.0, 2.5, -1, false, false, new ArrayList<>()));
+                assertThat(huntConfigService.loadLocationsFromHunt("edited")).hasSize(1);
+
+                File file = new File(tempDir.toFile(), "hunts/edited.yml");
+                YamlConfiguration onDisk = YamlConfiguration.loadConfiguration(file);
+                UUID addedByHand = UUID.randomUUID();
+                new HeadLocation("byHand", addedByHand, "edited", "world",
+                        9.5, 70.0, 9.5, -1, false, false, new ArrayList<>()).saveInConfig(onDisk);
+                assertThatCode(() -> onDisk.save(file)).doesNotThrowAnyException();
+
+                huntConfigService.initialize();
+
+                assertThat(huntConfigService.loadLocationsFromHunt("edited"))
+                        .extracting(HeadLocation::getUuid)
+                        .contains(addedByHand);
+            }
+        }
+
+        @Test
+        void saveHunt_afterInitialize_keepsLocationsEditedOnDisk() {
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getWorld(anyString())).thenReturn(null);
+
+                huntConfigService.saveHunt(new HBHunt(configService, "kept", "Kept", HuntState.ACTIVE, 1, "CHEST"));
+
+                File file = new File(tempDir.toFile(), "hunts/kept.yml");
+                YamlConfiguration onDisk = YamlConfiguration.loadConfiguration(file);
+                UUID addedByHand = UUID.randomUUID();
+                new HeadLocation("byHand", addedByHand, "kept", "world",
+                        9.5, 70.0, 9.5, -1, false, false, new ArrayList<>()).saveInConfig(onDisk);
+                assertThatCode(() -> onDisk.save(file)).doesNotThrowAnyException();
+
+                huntConfigService.initialize();
+                huntConfigService.saveHunt(new HBHunt(configService, "kept", "Renamed", HuntState.ACTIVE, 1, "CHEST"));
+
+                YamlConfiguration written = YamlConfiguration.loadConfiguration(file);
+                assertThat(written.getString("displayName")).isEqualTo("Renamed");
+                assertThat(written.contains("locations." + addedByHand)).isTrue();
+            }
         }
 
         @Test

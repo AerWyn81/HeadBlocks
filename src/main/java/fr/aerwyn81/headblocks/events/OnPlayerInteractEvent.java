@@ -128,7 +128,7 @@ public class OnPlayerInteractEvent implements Listener {
                                  Block block, HBHunt hunt) {
         HuntConfig huntConfig = hunt.getConfig();
 
-        registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(allPlayerHeads -> {
+        registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(player, allPlayerHeads -> {
             try {
                 ArrayList<UUID> huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
                         player.getUniqueId(), hunt.getId());

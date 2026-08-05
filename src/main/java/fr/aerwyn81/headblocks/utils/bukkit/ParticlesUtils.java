@@ -32,7 +32,7 @@ public class ParticlesUtils {
             }
         }
 
-        HeadBlocks.getScheduler().runTask(player, () -> {
+        HeadBlocks.getScheduler().runNow(player, () -> {
             if (!dustOptions.isEmpty()) {
                 dustOptions.forEach(dustOpt ->
                         player.spawnParticle(particle, location, amount, size, size, size, dustOpt));

@@ -90,6 +90,18 @@ class HeadServiceTest {
             task.run();
             return null;
         }).when(scheduler).runTaskAsync(any(Runnable.class));
+
+        lenient().doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(1);
+            task.run();
+            return null;
+        }).when(scheduler).runNow(nullable(Location.class), any(Runnable.class));
+
+        lenient().doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(1);
+            task.run();
+            return null;
+        }).when(scheduler).runTask(nullable(Location.class), any(Runnable.class));
     }
 
     // --- Helpers ---
@@ -1451,7 +1463,7 @@ class HeadServiceTest {
         @Test
         void adds_spin_task_when_spin_enabled_and_not_linked() throws Exception {
             UUID uuid = UUID.randomUUID();
-            HeadLocation mockHL = createHeadLocation(uuid, "SpinHead", null, true);
+            HeadLocation mockHL = createHeadLocation(uuid, "SpinHead", mock(Location.class), true);
 
             HBHunt hunt = mock(HBHunt.class);
             when(hunt.getId()).thenReturn("hunt1");
@@ -1470,6 +1482,54 @@ class HeadServiceTest {
 
             verify(scheduler).runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(5L));
             assertThat(tasksHeadSpin()).containsEntry(uuid, task(99));
+        }
+
+        @Test
+        void does_not_add_spin_task_when_location_is_null() throws Exception {
+            UUID uuid = UUID.randomUUID();
+            HeadLocation mockHL = createHeadLocation(uuid, "UnloadedWorld", null, true);
+
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
+            when(storageService.isStorageError()).thenReturn(false);
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
+            lenient().when(configService.databaseEnabled()).thenReturn(false);
+            when(configService.spinEnabled()).thenReturn(true);
+            when(configService.spinLinked()).thenReturn(false);
+
+            headService.loadLocations();
+
+            verify(scheduler, never()).runTaskTimer(nullable(Location.class), any(Runnable.class), anyLong(), anyLong());
+            assertThat(tasksHeadSpin()).isEmpty();
+        }
+
+        @Test
+        void re_spinning_the_same_head_cancels_the_previous_task() throws Exception {
+            UUID uuid = UUID.randomUUID();
+            tasksHeadSpin().put(uuid, task(1));
+
+            HeadLocation mockHL = createHeadLocation(uuid, "Respun", mock(Location.class), true);
+
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("hunt1");
+
+            when(storageService.isStorageError()).thenReturn(false);
+            when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+            when(huntConfigService.loadLocationsFromHunt("hunt1")).thenReturn(List.of(mockHL));
+            when(storageService.isHeadExist(uuid)).thenReturn(true);
+            lenient().when(configService.databaseEnabled()).thenReturn(false);
+            when(configService.spinEnabled()).thenReturn(true);
+            when(configService.spinLinked()).thenReturn(false);
+            when(configService.spinSpeed()).thenReturn(5);
+            when(scheduler.runTaskTimer(nullable(Location.class), any(Runnable.class), eq(5L), eq(5L))).thenReturn(task(2));
+
+            headService.loadLocations();
+
+            verify(task(1)).cancel();
+            assertThat(tasksHeadSpin()).containsEntry(uuid, task(2));
         }
 
         @Test
@@ -1518,8 +1578,8 @@ class HeadServiceTest {
         void multiple_locations_get_incrementing_spin_offsets() throws Exception {
             UUID uuid1 = UUID.randomUUID();
             UUID uuid2 = UUID.randomUUID();
-            HeadLocation mockHL1 = createHeadLocation(uuid1, "S1", null, true);
-            HeadLocation mockHL2 = createHeadLocation(uuid2, "S2", null, true);
+            HeadLocation mockHL1 = createHeadLocation(uuid1, "S1", mock(Location.class), true);
+            HeadLocation mockHL2 = createHeadLocation(uuid2, "S2", mock(Location.class), true);
 
             HBHunt hunt = mock(HBHunt.class);
             when(hunt.getId()).thenReturn("hunt1");

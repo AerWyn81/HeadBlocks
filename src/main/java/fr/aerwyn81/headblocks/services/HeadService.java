@@ -180,9 +180,17 @@ public class HeadService {
             return;
         }
 
+        if (headLoc.getLocation() == null) {
+            return;
+        }
+
         var task = scheduler.runTaskTimer(headLoc.getLocation(),
                 () -> rotateHead(headLoc), 5L * offset, configService.spinSpeed());
-        tasksHeadSpin.put(headLoc.getUuid(), task);
+
+        var previous = tasksHeadSpin.put(headLoc.getUuid(), task);
+        if (previous != null) {
+            previous.cancel();
+        }
     }
 
     public UUID saveHeadLocation(Location location, String texture, String huntId) throws InternalException {
@@ -222,10 +230,15 @@ public class HeadService {
         if (headLocation != null) {
             storageService.removeHead(headLocation.getUuid(), withDelete);
 
-            headLocation.getLocation().getBlock().setType(Material.AIR);
+            var location = headLocation.getLocation();
+            if (location != null) {
+                scheduler.runNow(location, () -> {
+                    location.getBlock().setType(Material.AIR);
 
-            if (configService.hologramsEnabled() && hologramService != null) {
-                hologramService.removeHolograms(headLocation.getLocation());
+                    if (configService.hologramsEnabled() && hologramService != null) {
+                        hologramService.removeHolograms(location);
+                    }
+                });
             }
 
             var hunt = huntService.getHuntById(headLocation.getHuntId());
@@ -261,13 +274,16 @@ public class HeadService {
                     continue;
                 }
 
-                scheduler.runTask(() -> {
-                    headLocation.getLocation().getBlock().setType(Material.AIR);
+                var location = headLocation.getLocation();
+                if (location != null) {
+                    scheduler.runTask(location, () -> {
+                        location.getBlock().setType(Material.AIR);
 
-                    if (configService.hologramsEnabled() && hologramService != null) {
-                        hologramService.removeHolograms(headLocation.getLocation());
-                    }
-                });
+                        if (configService.hologramsEnabled() && hologramService != null) {
+                            hologramService.removeHolograms(location);
+                        }
+                    });
+                }
 
                 headLocations.remove(headLocation);
 

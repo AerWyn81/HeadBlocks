@@ -4,6 +4,9 @@
 
 ### ✨ New Features
 
+- Added Folia support.
+- The plugin now ships as two jars. Paper, Purpur and Folia servers use `HeadBlocks-<version>.jar`
+  (Modrinth, Hangar, GitHub); Spigot servers use `HeadBlocks-<version>-spigot.jar` (SpigotMC). The two are not interchangeable — download the one matching your server.
 
 ### 🚀 Improvements
 
@@ -12,6 +15,9 @@
 ### 🐛 Bug Fixes
 
 - Fixed a per-head reward loading error after `/hb reload`.
+- Fixed hunt files not being rewritten when heads were removed in bulk, which made removed heads reappear after a restart. Hunt files are now written atomically.
+- Fixed a head rotation task leaking on every `/hb move`, which made moved heads spin twice as fast.
+- Fixed heads in an unloaded world scheduling a rotation task that errored on every tick.
 
 ---
 

@@ -7,9 +7,14 @@ import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class FoliaSchedulerAdapter implements SchedulerAdapter {
 
     private final Plugin plugin;
+
+    private final Set<Task> repeatingTasks = ConcurrentHashMap.newKeySet();
 
     public FoliaSchedulerAdapter(Plugin plugin) {
         this.plugin = plugin;
@@ -27,8 +32,8 @@ public class FoliaSchedulerAdapter implements SchedulerAdapter {
 
     @Override
     public Task runTaskTimer(@NotNull Runnable task, long delayTicks, long periodTicks) {
-        return wrap(Bukkit.getGlobalRegionScheduler()
-                .runAtFixedRate(plugin, t -> task.run(), atLeastOneTick(delayTicks), atLeastOneTick(periodTicks)));
+        return track(wrap(Bukkit.getGlobalRegionScheduler()
+                .runAtFixedRate(plugin, t -> task.run(), atLeastOneTick(delayTicks), atLeastOneTick(periodTicks))));
     }
 
     @Override
@@ -55,8 +60,8 @@ public class FoliaSchedulerAdapter implements SchedulerAdapter {
             return runTaskTimer(task, delayTicks, periodTicks);
         }
 
-        return wrap(Bukkit.getRegionScheduler()
-                .runAtFixedRate(plugin, location, t -> task.run(), atLeastOneTick(delayTicks), atLeastOneTick(periodTicks)));
+        return track(wrap(Bukkit.getRegionScheduler()
+                .runAtFixedRate(plugin, location, t -> task.run(), atLeastOneTick(delayTicks), atLeastOneTick(periodTicks))));
     }
 
     @Override
@@ -104,8 +109,32 @@ public class FoliaSchedulerAdapter implements SchedulerAdapter {
 
     @Override
     public void cancelAllTasks() {
+        repeatingTasks.forEach(Task::cancel);
+        repeatingTasks.clear();
+
         Bukkit.getGlobalRegionScheduler().cancelTasks(plugin);
         Bukkit.getAsyncScheduler().cancelTasks(plugin);
+    }
+
+    private Task track(Task task) {
+        if (task == Task.NONE) {
+            return task;
+        }
+
+        repeatingTasks.add(task);
+
+        return new Task() {
+            @Override
+            public void cancel() {
+                repeatingTasks.remove(task);
+                task.cancel();
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return task.isCancelled();
+            }
+        };
     }
 
     private boolean hasNoRegion(Location location) {

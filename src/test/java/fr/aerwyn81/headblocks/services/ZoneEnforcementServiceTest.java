@@ -323,7 +323,7 @@ class ZoneEnforcementServiceTest {
         service.evaluate(player, to);
 
         assertThat(TimedRunManager.isInRun(uuid)).isFalse();
-        verify(scheduler).runTaskLater(any(Runnable.class), eq(1L));
+        verify(scheduler).runTaskLater(eq(player), any(Runnable.class), eq(1L));
     }
 
     @Test

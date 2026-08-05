@@ -280,7 +280,7 @@ public class ZoneEnforcementService {
         TimedRunManager.leaveRun(uuid);
 
         Location target = TimedRunManager.buildReturnLocation(timed.startPlateLocation(), yaw);
-        registry.getScheduler().runTaskLater(() -> registry.getPlatform().teleportAsync(player, target), 1L);
+        registry.getScheduler().runTaskLater(player, () -> registry.getPlatform().teleportAsync(player, target), 1L);
     }
 
     private TimedBehavior findTimedBehavior(HBHunt hunt) {

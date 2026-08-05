@@ -2,6 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import io.papermc.hangarpublishplugin.model.Platforms
 import net.minecrell.pluginyml.GeneratePluginDescription
 import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
+import xyz.jpenilla.runpaper.RunPaperExtension
 import xyz.jpenilla.runpaper.task.RunServer
 
 plugins {
@@ -27,6 +28,7 @@ val coverageExclusions = listOf(
 
     // Plugin main class & Bukkit infrastructure
     "**/HeadBlocks.java",
+    "**/utils/scheduler/BukkitSchedulerAdapter.java",
     "**/utils/bukkit/HeadBlocksPluginProvider.java",
     "**/utils/bukkit/BukkitCommandDispatcher.java",
     "**/utils/bukkit/FireworkUtils.java",
@@ -193,7 +195,7 @@ val serverJavaLauncher = javaToolchains.launcherFor {
 // setting debugOptions unconditionally finalizes the property and breaks the IDE's Debug button.
 fun JavaExec.enableDebugPortIfRequested(port: Int) {
     if (project.hasProperty("debugServer")) {
-        jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$port")
+        jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:$port")
     }
 }
 
@@ -201,7 +203,7 @@ fun ShadowJar.applySharedShadowConfig() {
     mergeServiceFiles()
 
     relocate("com.google.gson", "fr.aerwyn81.libs.gson")
-    relocate("com.jetbrains.annotations", "fr.headblocks.libs.gson")
+    relocate("org.jetbrains.annotations", "fr.aerwyn81.libs.annotations")
     relocate("redis.clients.jedis", "fr.aerwyn81.libs.jedis")
     relocate("org.apache.commons", "fr.aerwyn81.libs.commons-lang3")
     relocate("de.tr7zw.changeme.nbtapi", "fr.aerwyn81.libs.nbtapi")
@@ -311,6 +313,7 @@ tasks {
     // Server jar is not downloadable: build it once with BuildTools (see README).
     register<RunServer>("runSpigotServer") {
         minecraftVersion(mcVersion)
+        javaLauncher.set(serverJavaLauncher)
         serverJar(file("run-spigot/spigot.jar"))
         runDirectory.set(file("run-spigot"))
         pluginJars.setFrom(spigotJar.flatMap { it.archiveFile })
@@ -355,6 +358,7 @@ tasks {
     }
 
     jar {
+        enabled = false
         dependsOn(paperJar, spigotJar)
     }
 
@@ -365,6 +369,28 @@ tasks {
     // Superseded by paperJar / spigotJar.
     shadowJar {
         enabled = false
+    }
+}
+
+// Folia is the whole point of the paper flavour, so it needs its own dev server. INHERIT_NONE
+// because runServer's config is not reusable here: the plugin jar has to be set explicitly (the
+// auto-detected shadowJar is disabled) and the run directory must not be shared with Paper.
+runPaper {
+    folia {
+        pluginsMode.set(RunPaperExtension.Folia.PluginsMode.INHERIT_NONE)
+
+        registerTask {
+            minecraftVersion(mcVersion)
+            javaLauncher.set(serverJavaLauncher)
+            pluginJars.setFrom(paperJar.flatMap { it.archiveFile })
+            runDirectory.set(file("run-folia"))
+
+            args("--port", "25567")
+            systemProperty("com.mojang.eula.agree", "true")
+            systemProperty("terminal.ansi", true)
+
+            enableDebugPortIfRequested(5007)
+        }
     }
 }
 

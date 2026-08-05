@@ -90,7 +90,9 @@ public class Stats implements Cmd {
             return true;
         }
 
-        registry.getStorageService().getHeadsPlayer(playerProfileLight.uuid()).whenComplete(pHeads -> {
+        Player senderPlayer = sender instanceof Player p ? p : null;
+
+        registry.getStorageService().getHeadsPlayer(playerProfileLight.uuid()).whenComplete(senderPlayer, pHeads -> {
             var playerHeads = new ArrayList<>(pHeads);
 
             ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService())

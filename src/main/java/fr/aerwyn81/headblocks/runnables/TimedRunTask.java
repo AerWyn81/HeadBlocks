@@ -65,12 +65,13 @@ public class TimedRunTask implements Runnable {
                         .replace("%time%", TimedRunManager.formatTime(elapsed));
             }
 
-            message = message
+            String actionBar = message
                     .replace("%hunt%", huntName)
                     .replace("%found%", String.valueOf(foundHeads))
                     .replace("%total%", String.valueOf(totalHeads));
 
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+            registry.getScheduler().runNow(player, () ->
+                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(actionBar)));
         }
     }
 
@@ -104,14 +105,17 @@ public class TimedRunTask implements Runnable {
             return;
         }
 
-        if (behavior != null && behavior.startPlateLocation() != null
-                && behavior.startPlateLocation().getWorld() != null) {
-            registry.getPlatform().teleportAsync(player,
-                    TimedRunManager.buildReturnLocation(behavior.startPlateLocation(), data.startYaw()));
-        }
-
         String huntName = hunt != null ? hunt.getDisplayName() : data.huntId();
-        player.sendMessage(registry.getLanguageService().message("Messages.TimedExpired")
-                .replace("%hunt%", huntName));
+
+        registry.getScheduler().runNow(player, () -> {
+            if (behavior != null && behavior.startPlateLocation() != null
+                    && behavior.startPlateLocation().getWorld() != null) {
+                registry.getPlatform().teleportAsync(player,
+                        TimedRunManager.buildReturnLocation(behavior.startPlateLocation(), data.startYaw()));
+            }
+
+            player.sendMessage(registry.getLanguageService().message("Messages.TimedExpired")
+                    .replace("%hunt%", huntName));
+        });
     }
 }

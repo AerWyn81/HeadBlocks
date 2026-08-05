@@ -17,6 +17,7 @@ import org.holoeasy.hologram.Hologram;
 import org.holoeasy.pool.IHologramPool;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class HologramService {
@@ -36,8 +37,8 @@ public class HologramService {
     private IHologramPool<Hologram> hologramPool;
 
     private static class HologramMap {
-        private final HashMap<UUID, InternalHologram> byUuid = new HashMap<>();
-        private final HashMap<String, UUID> byLocation = new HashMap<>();
+        private final Map<UUID, InternalHologram> byUuid = new ConcurrentHashMap<>();
+        private final Map<String, UUID> byLocation = new ConcurrentHashMap<>();
 
         private static String locationKey(Location loc) {
             return (loc.getWorld() == null
