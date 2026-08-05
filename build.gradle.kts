@@ -16,7 +16,7 @@ plugins {
     alias(libs.plugins.hangar.publish)
 }
 
-version = "3.1.0"
+version = "3.2.0"
 
 val coverageExclusions = listOf(
     // Third-party shaded libraries
