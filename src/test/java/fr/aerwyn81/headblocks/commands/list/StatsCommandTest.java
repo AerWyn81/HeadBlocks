@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -193,12 +194,12 @@ class StatsCommandTest {
 
                 doAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
-                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(0);
+                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(1);
                     if (consumer != null) {
                         consumer.accept(playerHeads);
                     }
                     return null;
-                }).when(futureResult).whenComplete(any());
+                }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
                 boolean result = command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
 
@@ -236,12 +237,12 @@ class StatsCommandTest {
 
                 doAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
-                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(0);
+                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(1);
                     if (consumer != null) {
                         consumer.accept(playerHeads);
                     }
                     return null;
-                }).when(futureResult).whenComplete(any());
+                }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
                 boolean result = command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
 
@@ -280,12 +281,12 @@ class StatsCommandTest {
 
                 doAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
-                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(0);
+                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(1);
                     if (consumer != null) {
                         consumer.accept(playerHeads);
                     }
                     return null;
-                }).when(futureResult).whenComplete(any());
+                }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
                 boolean result = command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
 
@@ -327,12 +328,12 @@ class StatsCommandTest {
 
                 doAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
-                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(0);
+                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(1);
                     if (consumer != null) {
                         consumer.accept(playerHeads);
                     }
                     return null;
-                }).when(futureResult).whenComplete(any());
+                }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
@@ -377,12 +378,12 @@ class StatsCommandTest {
 
                 doAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
-                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(0);
+                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(1);
                     if (consumer != null) {
                         consumer.accept(playerHeads);
                     }
                     return null;
-                }).when(futureResult).whenComplete(any());
+                }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
@@ -423,12 +424,12 @@ class StatsCommandTest {
 
                 doAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
-                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(0);
+                    java.util.function.Consumer<Set<UUID>> consumer = invocation.getArgument(1);
                     if (consumer != null) {
                         consumer.accept(playerHeads);
                     }
                     return null;
-                }).when(futureResult).whenComplete(any());
+                }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);

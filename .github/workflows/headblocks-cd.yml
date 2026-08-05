@@ -61,7 +61,7 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
-      - name: Upload Release Jar
+      - name: Upload Release Jar (Paper)
         id: upload-release-jar
         uses: actions/upload-release-asset@v1
         env:
@@ -70,6 +70,17 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./build/HeadBlocks.jar
           asset_name: HeadBlocks-${{ steps.get_version.outputs.VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      - name: Upload Release Jar (Spigot)
+        id: upload-release-jar-spigot
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/HeadBlocks-spigot.jar
+          asset_name: HeadBlocks-${{ steps.get_version.outputs.VERSION }}-spigot.jar
           asset_content_type: application/java-archive
 
   publish-modrinth:
@@ -90,7 +101,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew shadowJar --no-daemon
+        run: ./gradlew paperJar spigotJar --no-daemon
 
       - name: Get version
         id: get_version
@@ -109,12 +120,15 @@ jobs:
             echo "CHANGELOG=No changelog provided." >> $GITHUB_OUTPUT
           fi
 
-      - name: Find built JAR
+      - name: Find built JARs
         id: find_jar
         run: |
-          JAR_FILE=$(find build -name "HeadBlocks-*.jar" -type f | head -n 1)
+          JAR_FILE=$(find build -name "HeadBlocks-*.jar" ! -name "*-spigot.jar" -type f | head -n 1)
+          SPIGOT_JAR_FILE=$(find build -name "HeadBlocks-*-spigot.jar" -type f | head -n 1)
           echo "JAR_PATH=$JAR_FILE" >> $GITHUB_OUTPUT
-          echo "Found JAR: $JAR_FILE"
+          echo "SPIGOT_JAR_PATH=$SPIGOT_JAR_FILE" >> $GITHUB_OUTPUT
+          echo "Found Paper JAR: $JAR_FILE"
+          echo "Found Spigot JAR: $SPIGOT_JAR_FILE"
 
       - name: Determine version type
         id: version_type
@@ -128,7 +142,9 @@ jobs:
             echo "TYPE=release" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish to Modrinth
+      # Modrinth carries loaders on the version, not on the file, and only one file per version is
+      # primary — so a per-loader download means one version per jar, not two files on one version.
+      - name: Publish to Modrinth (Paper / Folia / Purpur)
         uses: Kir-Antipov/mc-publish@81d6d71ffaab1fb4f8d8a11cf574eac578e3e9d1 # v3.3
         with:
           modrinth-id: bpD0tpKu
@@ -138,7 +154,7 @@ jobs:
           files: ${{ steps.find_jar.outputs.JAR_PATH }}
 
           # Version details
-          name: HeadBlocks ${{ steps.get_version.outputs.VERSION }}
+          name: HeadBlocks ${{ steps.get_version.outputs.VERSION }} (Paper/Folia)
           version: ${{ steps.get_version.outputs.VERSION }}
           version-type: ${{ steps.version_type.outputs.TYPE }}
 
@@ -166,12 +182,75 @@ jobs:
             1.21.9
             1.21.10
             1.21.11
+            26.1
+            26.1.1
+            26.1.2
+            26.2
 
-          # Loaders
+          # The Paper jar ships paper-plugin.yml, so it will not load on plain Bukkit/Spigot at all.
           loaders: |
-            spigot
             paper
+            folia
             purpur
+
+          # Dependencies (optional)
+          dependencies: |
+            PlaceholderAPI(optional)
+            HeadDatabase(optional)
+            PacketEvents(optional)
+
+          # Java version
+          java: 17
+
+      # Not featured: the Paper build stays the headline download, while filtering on Spigot or
+      # Bukkit still surfaces this one.
+      - name: Publish to Modrinth (Spigot / Bukkit)
+        uses: Kir-Antipov/mc-publish@81d6d71ffaab1fb4f8d8a11cf574eac578e3e9d1 # v3.3
+        with:
+          modrinth-id: bpD0tpKu
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          # Files to upload
+          files: ${{ steps.find_jar.outputs.SPIGOT_JAR_PATH }}
+
+          # Version details
+          name: HeadBlocks ${{ steps.get_version.outputs.VERSION }} (Spigot)
+          version: ${{ steps.get_version.outputs.VERSION }}+spigot
+          version-type: ${{ steps.version_type.outputs.TYPE }}
+          modrinth-featured: false
+
+          # Changelog from Changelog.md
+          changelog: ${{ steps.changelog.outputs.CHANGELOG }}
+
+          # Game versions (adjust as needed)
+          game-versions: |
+            1.20
+            1.20.1
+            1.20.2
+            1.20.3
+            1.20.4
+            1.20.5
+            1.20.6
+            1.21
+            1.21.1
+            1.21.2
+            1.21.3
+            1.21.4
+            1.21.5
+            1.21.6
+            1.21.7
+            1.21.8
+            1.21.9
+            1.21.10
+            1.21.11
+            26.1
+            26.1.1
+            26.1.2
+            26.2
+
+          loaders: |
+            bukkit
+            spigot
 
           # Dependencies (optional)
           dependencies: |

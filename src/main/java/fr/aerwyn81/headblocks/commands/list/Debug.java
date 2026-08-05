@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -375,7 +376,9 @@ public class Debug implements Cmd {
     }
 
     private void handleResyncLocations(CommandSender sender) {
-        var headLocations = registry.getHeadService().getHeadLocations();
+        // Snapshot: the live list can be mutated while the per-region tasks are being scheduled,
+        // which would desynchronize the completion counter from the number of scheduled tasks.
+        var headLocations = new ArrayList<>(registry.getHeadService().getHeadLocations());
 
         if (headLocations.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
@@ -385,64 +388,82 @@ public class Debug implements Cmd {
         sender.sendMessage(registry.getLanguageService().message("Messages.ResyncLocationsStarting")
                 .replace("%count%", String.valueOf(headLocations.size())));
 
-        // Run on main thread since we're modifying blocks
-        Bukkit.getScheduler().runTask(HeadBlocks.getInstance(), () -> {
-            int restored = 0;
-            int textureApplied = 0;
-            int skipped = 0;
-            int failed = 0;
+        AtomicInteger restored = new AtomicInteger();
+        AtomicInteger textureApplied = new AtomicInteger();
+        AtomicInteger skipped = new AtomicInteger();
+        AtomicInteger failed = new AtomicInteger();
+        AtomicInteger remaining = new AtomicInteger(headLocations.size());
 
-            for (var headLocation : headLocations) {
-                var location = headLocation.getLocation();
-                if (location == null || location.getWorld() == null) {
-                    failed++;
-                    continue;
-                }
+        Runnable reportWhenDone = () -> {
+            if (remaining.decrementAndGet() > 0) {
+                return;
+            }
 
+            reportResync(sender, restored.get(), textureApplied.get(), skipped.get(), failed.get());
+        };
+
+        for (var headLocation : headLocations) {
+            var location = headLocation.getLocation();
+            if (location == null || location.getWorld() == null) {
+                failed.incrementAndGet();
+                reportWhenDone.run();
+                continue;
+            }
+
+            HeadBlocks.getScheduler().runTask(location, () -> {
                 try {
                     var texture = registry.getStorageService().getHeadTexture(headLocation.getUuid());
                     if (texture == null || texture.isEmpty()) {
                         LogUtil.warning("Resync locations: No texture found for head {0}", headLocation.getUuid());
-                        failed++;
-                        continue;
+                        failed.incrementAndGet();
+                        return;
                     }
 
                     var block = location.getBlock();
 
                     if (HeadUtils.isPlayerHead(block)) {
-                        // Block is already a head, check if texture matches
                         var currentTexture = HeadUtils.getHeadTexture(block);
                         if (texture.equals(currentTexture)) {
-                            skipped++;
-                            continue;
+                            skipped.incrementAndGet();
+                            return;
                         }
 
                         if (HeadUtils.applyTextureToBlock(block, texture)) {
-                            textureApplied++;
+                            textureApplied.incrementAndGet();
                         } else {
-                            failed++;
+                            failed.incrementAndGet();
                         }
                     } else {
-                        // Block is not a head, create it
                         block.setType(Material.PLAYER_HEAD);
                         if (HeadUtils.applyTextureToBlock(block, texture)) {
-                            restored++;
+                            restored.incrementAndGet();
                         } else {
-                            failed++;
+                            failed.incrementAndGet();
                         }
                     }
                 } catch (InternalException e) {
                     LogUtil.error("Resync locations: Error processing head {0}: {1}", headLocation.getUuid(), e.getMessage());
-                    failed++;
+                    failed.incrementAndGet();
+                } finally {
+                    reportWhenDone.run();
                 }
-            }
+            });
+        }
+    }
 
-            sender.sendMessage(registry.getLanguageService().message("Messages.ResyncLocationsSuccess")
-                    .replace("%restored%", String.valueOf(restored))
-                    .replace("%textureApplied%", String.valueOf(textureApplied))
-                    .replace("%skipped%", String.valueOf(skipped))
-                    .replace("%failed%", String.valueOf(failed)));
-        });
+    private void reportResync(CommandSender sender, int restored, int textureApplied, int skipped, int failed) {
+        String message = registry.getLanguageService().message("Messages.ResyncLocationsSuccess")
+                .replace("%restored%", String.valueOf(restored))
+                .replace("%textureApplied%", String.valueOf(textureApplied))
+                .replace("%skipped%", String.valueOf(skipped))
+                .replace("%failed%", String.valueOf(failed));
+
+        if (sender instanceof Player player) {
+            HeadBlocks.getScheduler().runNow(player, () -> player.sendMessage(message));
+            return;
+        }
+
+        sender.sendMessage(message);
     }
 
     public static List<UUID> pickRandomUUIDs(List<UUID> uuidList, int numberOfElements) {

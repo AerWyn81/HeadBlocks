@@ -12,12 +12,11 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Map;
 import java.util.UUID;
 
-public class TimedRunTask extends BukkitRunnable {
+public class TimedRunTask implements Runnable {
 
     private final ServiceRegistry registry;
 
@@ -66,12 +65,13 @@ public class TimedRunTask extends BukkitRunnable {
                         .replace("%time%", TimedRunManager.formatTime(elapsed));
             }
 
-            message = message
+            String actionBar = message
                     .replace("%hunt%", huntName)
                     .replace("%found%", String.valueOf(foundHeads))
                     .replace("%total%", String.valueOf(totalHeads));
 
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+            registry.getScheduler().runNow(player, () ->
+                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(actionBar)));
         }
     }
 
@@ -105,13 +105,17 @@ public class TimedRunTask extends BukkitRunnable {
             return;
         }
 
-        if (behavior != null && behavior.startPlateLocation() != null
-                && behavior.startPlateLocation().getWorld() != null) {
-            player.teleport(TimedRunManager.buildReturnLocation(behavior.startPlateLocation(), data.startYaw()));
-        }
-
         String huntName = hunt != null ? hunt.getDisplayName() : data.huntId();
-        player.sendMessage(registry.getLanguageService().message("Messages.TimedExpired")
-                .replace("%hunt%", huntName));
+
+        registry.getScheduler().runNow(player, () -> {
+            if (behavior != null && behavior.startPlateLocation() != null
+                    && behavior.startPlateLocation().getWorld() != null) {
+                registry.getPlatform().teleportAsync(player,
+                        TimedRunManager.buildReturnLocation(behavior.startPlateLocation(), data.startYaw()));
+            }
+
+            player.sendMessage(registry.getLanguageService().message("Messages.TimedExpired")
+                    .replace("%hunt%", huntName));
+        });
     }
 }

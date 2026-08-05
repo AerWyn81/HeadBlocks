@@ -7,6 +7,8 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.*;
+import fr.aerwyn81.headblocks.platform.Platform;
+import fr.aerwyn81.headblocks.platform.Platforms;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.runnables.TimedRunTask;
 import fr.aerwyn81.headblocks.runnables.ZoneOutlineTask;
@@ -14,6 +16,8 @@ import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.Task;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedBarChart;
 import org.bstats.charts.SimplePie;
@@ -24,10 +28,7 @@ import org.holoeasy.HoloEasy;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
@@ -41,7 +42,11 @@ public final class HeadBlocks extends JavaPlugin {
 
     private ServiceRegistry serviceRegistry;
     private ConfigService earlyConfigService;
-    private GlobalTask globalTask;
+    private Platform platform;
+    private SchedulerAdapter scheduler;
+    private Task globalTask;
+    private Task timedRunTask;
+    private Task zoneOutlineTask;
     private HeadDatabaseHook headDatabaseHook;
     private HeadDBHook headDBHook;
     private PacketEventsHook packetEventsHook;
@@ -106,9 +111,12 @@ public final class HeadBlocks extends JavaPlugin {
         isPacketEventsActive = Bukkit.getPluginManager().isPluginEnabled("packetevents");
 
         // --- Create ServiceRegistry (DI wiring) ---
+        this.platform = Platforms.load();
+        LogUtil.info("Platform: {0}", platform.name());
+
         PluginProvider pluginProvider = new HeadBlocksPluginProvider(this);
-        SchedulerAdapter scheduler = new BukkitSchedulerAdapter(this);
         CommandDispatcher commandDispatcher = new BukkitCommandDispatcher();
+        this.scheduler = platform.createScheduler(this);
 
         Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
         if (isHeadDatabaseActive) {
@@ -121,7 +129,7 @@ public final class HeadBlocks extends JavaPlugin {
         }
 
         this.serviceRegistry = new ServiceRegistry(
-                pluginProvider, scheduler, commandDispatcher,
+                pluginProvider, scheduler, commandDispatcher, platform,
                 configFile, locationFile, holoEasyLib, earlyConfigService, providers);
 
         packetEventsHook.init(serviceRegistry);
@@ -139,7 +147,12 @@ public final class HeadBlocks extends JavaPlugin {
             isHeadDBActive = false;
         }
 
-        getCommand("headblocks").setExecutor(new HBCommandExecutor(serviceRegistry));
+        if (!platform.registerCommand(this, "headblocks", List.of("hb"),
+                "Plugin command", new HBCommandExecutor(serviceRegistry))) {
+            LogUtil.error("Cannot register the /headblocks command, disabling the plugin.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(serviceRegistry), this);
@@ -150,8 +163,8 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerMoveEvent(serviceRegistry), this);
 
-        new TimedRunTask(serviceRegistry).runTaskTimer(this, 0, 2);
-        new ZoneOutlineTask(serviceRegistry).runTaskTimer(this, 20, 10);
+        timedRunTask = scheduler.runTaskTimer(new TimedRunTask(serviceRegistry), 0, 2);
+        zoneOutlineTask = scheduler.runTaskTimer(new ZoneOutlineTask(serviceRegistry), 20, 10);
 
         if (serviceRegistry.getConfigService().metricsEnabled()) {
             var m = new Metrics(this, 15495);
@@ -182,6 +195,7 @@ public final class HeadBlocks extends JavaPlugin {
                 map.put("Hint action bar", heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled) ? enabled : disabled);
                 map.put("Hint rewards", heads.stream().anyMatch(h -> !h.getRewards().isEmpty()) ? enabled : disabled);
                 map.put("Hide heads", serviceRegistry.getConfigService().isHideFoundHeads() ? enabled : disabled);
+                map.put("Spin mode", serviceRegistry.getConfigService().spinEnabled() ? enabled : disabled);
 
                 return map;
             }));
@@ -198,7 +212,18 @@ public final class HeadBlocks extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        Bukkit.getScheduler().cancelTasks(this);
+        if (platform != null) {
+            platform.unregisterCommands();
+        }
+
+        cancelTask(globalTask);
+        cancelTask(timedRunTask);
+        cancelTask(zoneOutlineTask);
+        globalTask = timedRunTask = zoneOutlineTask = null;
+
+        if (scheduler != null) {
+            scheduler.cancelAllTasks();
+        }
 
         if (serviceRegistry != null) {
             serviceRegistry.shutdown();
@@ -214,29 +239,32 @@ public final class HeadBlocks extends JavaPlugin {
         LogUtil.info("HeadBlocks disabled!");
     }
 
+    private void cancelTask(Task task) {
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
     public void startInternalTaskTimer() {
         if (this.globalTask != null) {
-            try {
-                this.globalTask.cancel();
-            } catch (IllegalStateException ignored) {
-            } // Not scheduled yet
-            finally {
-                this.globalTask = null;
-            }
+            this.globalTask.cancel();
+            this.globalTask = null;
         }
-
-        this.globalTask = new GlobalTask(serviceRegistry);
 
         var configSvc = serviceRegistry.getConfigService();
         if (!configSvc.hologramsEnabled() && !configSvc.particlesEnabled()) {
             return;
         }
 
-        globalTask.runTaskTimer(this, 0, configSvc.delayGlobalTask());
+        this.globalTask = scheduler.runTaskTimer(new GlobalTask(serviceRegistry), 0, configSvc.delayGlobalTask());
     }
 
     public static HeadBlocks getInstance() {
         return instance;
+    }
+
+    public static SchedulerAdapter getScheduler() {
+        return instance.scheduler;
     }
 
     public ServiceRegistry getServiceRegistry() {

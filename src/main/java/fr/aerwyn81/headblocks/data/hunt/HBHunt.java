@@ -8,6 +8,7 @@ import fr.aerwyn81.headblocks.services.ConfigService;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HBHunt {
     private final String id;
@@ -30,7 +31,7 @@ public class HBHunt {
         this.behaviors = new ArrayList<>();
         this.behaviors.add(new FreeBehavior());
         this.config = new HuntConfig(configService);
-        this.headUUIDs = new HashSet<>();
+        this.headUUIDs = ConcurrentHashMap.newKeySet();
     }
 
     // --- Core identity ---

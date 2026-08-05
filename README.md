@@ -33,6 +33,62 @@ Thanks for contributing! ❤️
 
 ___
 
+### BUILDING:
+
+The plugin ships as two jars built from one source tree:
+
+| Source set   | Compiles against | Goes into                                             |
+|--------------|------------------|-------------------------------------------------------|
+| `src/main`   | `spigot-api`     | both jars                                             |
+| `src/paper`  | `paper-api`      | `HeadBlocks-<version>.jar` — Modrinth, Hangar, GitHub |
+| `src/spigot` | `spigot-api`     | `HeadBlocks-<version>-spigot.jar` — SpigotMC          |
+
+The two jars also carry different plugin descriptors: the Spigot jar ships `plugin.yml`, the Paper jar ships `paper-plugin.yml` and is loaded by Paper as a *Paper plugin*. That format has no `commands` section, so `PaperPlatform` registers `/headblocks` into the server's `CommandMap` at runtime, and the optional hooks are declared as `serverDependencies` with `join-classpath` — Paper plugins get an isolated classloader and would not see their API otherwise.
+
+`src/main` compiles against the Spigot API on purpose: it is what physically prevents Paper-only API from leaking into common code. Anything platform-specific goes behind `platform.Platform`, implemented once per source set (`SpigotPlatform`, `PaperPlatform`) and declared through
+`META-INF/services`, so each jar resolves its own provider via `ServiceLoader`.
+
+```bash
+./gradlew build          # both jars + all three test suites
+./gradlew paperJar       # Paper jar only
+./gradlew spigotJar      # Spigot jar only
+```
+
+#### Tests
+
+`src/test` holds the platform-agnostic suite. It pulls `paper-api` transitively through MockBukkit, so the `src/main` guardrail does not apply there — keep platform-specific assertions out of it.
+
+Tests that need a given platform go in `src/paperTest` or `src/spigotTest` (tasks `paperTest` /
+`spigotTest`, both wired into `check`); each sees only its own platform source set and API. MockBukkit is deliberately absent from both: it would put `paper-api` on the `spigotTest`
+classpath and defeat the isolation.
+
+#### Dev servers
+
+`runServer` (Paper, port 25565, `run/`), `runSpigotServer` (Spigot, port 25566, `run-spigot/`) and `runFolia` (Folia, port 25567, `run-folia/`).
+
+`runFolia` runs the *paper* jar — it is the flavour that carries `folia-supported` and the region schedulers, so it is the one worth exercising there. Its Folia server jar is downloaded automatically, like Paper's.
+
+In IntelliJ, debug either one with the Debug button on its run configuration — the IDE injects and attaches the debugger itself, so the build script must not configure `debugOptions` (doing so finalizes the property and the IDE fails with *"the value for property 'enabled' is final"*). To start both at once without a debugger, run the *Servers (Paper + Spigot)* compound configuration; compound configurations have no Debug button, so debug the two servers individually instead.
+
+IntelliJ's Gradle output view is read-only, so **server commands must be typed in a terminal**:
+
+```bash
+./gradlew runServer --console=plain
+./gradlew runSpigotServer --console=plain
+./gradlew runFolia --console=plain
+```
+
+Add `-PdebugServer` to also open JDWP (5005 for Paper, 5006 for Spigot, 5007 for Folia) and attach a *Remote JVM Debug* configuration — that is how you get both a usable console and a debugger. The flag is opt-in precisely so it stays out of the way of the IDE's own Debug button.
+
+The Spigot server jar cannot be downloaded automatically; build it once per Minecraft version. Use the same version as `mcVersion` in `build.gradle.kts` — both dev servers are configured from it, and a mismatch means the two servers no longer run the same Minecraft:
+
+```bash
+mkdir -p run-spigot && cd run-spigot
+curl -O https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
+java -jar BuildTools.jar --rev 26.2 --remapped
+mv spigot-*.jar spigot.jar
+```
+
 ### THIRD PARTY:
 
 I'm using some third party libraries:

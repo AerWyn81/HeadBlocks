@@ -13,10 +13,11 @@ import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
-import fr.aerwyn81.headblocks.utils.bukkit.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
+import fr.aerwyn81.headblocks.utils.scheduler.Task;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Skull;
@@ -28,6 +29,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 public class HeadService {
@@ -41,9 +44,9 @@ public class HeadService {
     private HuntConfigService huntConfigService; // setter-injected
 
     private ArrayList<HBHead> heads;
-    private HashMap<UUID, HeadMove> headMoves;
-    private ArrayList<HeadLocation> headLocations;
-    private HashMap<UUID, Integer> tasksHeadSpin;
+    private Map<UUID, HeadMove> headMoves;
+    private List<HeadLocation> headLocations;
+    private Map<UUID, Task> tasksHeadSpin;
 
     public static String HB_KEY = "HB_HEAD";
 
@@ -85,9 +88,9 @@ public class HeadService {
 
     public void initialize() {
         heads = new ArrayList<>();
-        headLocations = new ArrayList<>();
-        headMoves = new HashMap<>();
-        tasksHeadSpin = new HashMap<>();
+        headLocations = new CopyOnWriteArrayList<>();
+        headMoves = new ConcurrentHashMap<>();
+        tasksHeadSpin = new ConcurrentHashMap<>();
 
         load();
     }
@@ -102,9 +105,10 @@ public class HeadService {
         loadLocations();
     }
 
-    private void cancelAllSpinTasks() {
+    public void cancelAllSpinTasks() {
         if (tasksHeadSpin != null) {
-            tasksHeadSpin.values().forEach(scheduler::cancelTask);
+            tasksHeadSpin.values().forEach(Task::cancel);
+            tasksHeadSpin.clear();
         }
     }
 
@@ -176,9 +180,17 @@ public class HeadService {
             return;
         }
 
-        var taskId = scheduler.runTaskTimer(
+        if (headLoc.getLocation() == null) {
+            return;
+        }
+
+        var task = scheduler.runTaskTimer(headLoc.getLocation(),
                 () -> rotateHead(headLoc), 5L * offset, configService.spinSpeed());
-        tasksHeadSpin.put(headLoc.getUuid(), taskId);
+
+        var previous = tasksHeadSpin.put(headLoc.getUuid(), task);
+        if (previous != null) {
+            previous.cancel();
+        }
     }
 
     public UUID saveHeadLocation(Location location, String texture, String huntId) throws InternalException {
@@ -218,10 +230,15 @@ public class HeadService {
         if (headLocation != null) {
             storageService.removeHead(headLocation.getUuid(), withDelete);
 
-            headLocation.getLocation().getBlock().setType(Material.AIR);
+            var location = headLocation.getLocation();
+            if (location != null) {
+                scheduler.runNow(location, () -> {
+                    location.getBlock().setType(Material.AIR);
 
-            if (configService.hologramsEnabled() && hologramService != null) {
-                hologramService.removeHolograms(headLocation.getLocation());
+                    if (configService.hologramsEnabled() && hologramService != null) {
+                        hologramService.removeHolograms(location);
+                    }
+                });
             }
 
             var hunt = huntService.getHuntById(headLocation.getHuntId());
@@ -233,10 +250,9 @@ public class HeadService {
             headLocations.remove(headLocation);
 
             headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-            var spinTaskId = tasksHeadSpin.get(headLocation.getUuid());
+            var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
             if (spinTaskId != null) {
-                scheduler.cancelTask(spinTaskId);
-                tasksHeadSpin.remove(headLocation.getUuid());
+                spinTaskId.cancel();
             }
         }
     }
@@ -258,23 +274,25 @@ public class HeadService {
                     continue;
                 }
 
-                scheduler.runTask(() -> {
-                    headLocation.getLocation().getBlock().setType(Material.AIR);
+                var location = headLocation.getLocation();
+                if (location != null) {
+                    scheduler.runTask(location, () -> {
+                        location.getBlock().setType(Material.AIR);
 
-                    if (configService.hologramsEnabled() && hologramService != null) {
-                        hologramService.removeHolograms(headLocation.getLocation());
-                    }
-                });
+                        if (configService.hologramsEnabled() && hologramService != null) {
+                            hologramService.removeHolograms(location);
+                        }
+                    });
+                }
 
                 headLocations.remove(headLocation);
 
                 huntConfigService.removeLocationFromHunt(headLocation.getHuntId(), headLocation.getUuid());
 
                 headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-                var spinTaskId = tasksHeadSpin.get(headLocation.getUuid());
+                var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
                 if (spinTaskId != null) {
-                    scheduler.cancelTask(spinTaskId);
-                    tasksHeadSpin.remove(headLocation.getUuid());
+                    spinTaskId.cancel();
                 }
 
                 removed++;
@@ -423,7 +441,7 @@ public class HeadService {
         return headLocations.stream().filter(HeadLocation::isCharged).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public ArrayList<HeadLocation> getHeadLocations() {
+    public List<HeadLocation> getHeadLocations() {
         return headLocations;
     }
 
@@ -437,7 +455,7 @@ public class HeadService {
         return headLocations.stream().map(HeadLocation::getRawNameOrUuid).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public HashMap<UUID, HeadMove> getHeadMoves() {
+    public Map<UUID, HeadMove> getHeadMoves() {
         return headMoves;
     }
 

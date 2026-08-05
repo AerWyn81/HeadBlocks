@@ -1,5 +1,7 @@
 package fr.aerwyn81.headblocks.utils.runnables;
 
+import fr.aerwyn81.headblocks.HeadBlocks;
+import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,16 +34,28 @@ public class BukkitFutureResult<T> {
     }
 
     public void whenComplete(@NotNull Plugin plugin, @NotNull Consumer<? super T> callback, Consumer<Throwable> throwableConsumer) {
-        var executor = (Executor) r -> plugin.getServer().getScheduler().runTask(plugin, r);
-        this.future.thenAcceptAsync(callback, executor).exceptionally(throwable -> {
-            throwableConsumer.accept(throwable);
-            return null;
-        });
+        dispatch(r -> HeadBlocks.getScheduler().runTask(r), callback, throwableConsumer);
     }
 
     public void whenComplete(@NotNull Plugin plugin, @NotNull Consumer<? super T> callback) {
         whenComplete(plugin, callback, throwable ->
                 plugin.getLogger().log(Level.SEVERE, "Exception in Future Result", throwable));
+    }
+
+    public void whenComplete(@Nullable Entity entity, @NotNull Consumer<? super T> callback) {
+        whenComplete(entity, callback, throwable ->
+                plugin.getLogger().log(Level.SEVERE, "Exception in Future Result", throwable));
+    }
+
+    public void whenComplete(@Nullable Entity entity, @NotNull Consumer<? super T> callback, Consumer<Throwable> throwableConsumer) {
+        dispatch(r -> HeadBlocks.getScheduler().runTask(entity, r), callback, throwableConsumer);
+    }
+
+    private void dispatch(Executor executor, Consumer<? super T> callback, Consumer<Throwable> throwableConsumer) {
+        this.future.thenAcceptAsync(callback, executor).exceptionally(throwable -> {
+            throwableConsumer.accept(throwable);
+            return null;
+        });
     }
 
     public @Nullable T join() {

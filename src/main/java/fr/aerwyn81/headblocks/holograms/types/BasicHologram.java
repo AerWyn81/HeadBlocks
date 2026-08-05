@@ -47,12 +47,15 @@ public class BasicHologram implements IHologram {
             return this;
         }
 
-        hologram = world.spawn(location, TextDisplay.class, entity -> {
-            entity.setText(lines.stream().map(MessageUtils::colorize).collect(Collectors.joining("\n")));
-            entity.setVisibleByDefault(false);
-            entity.setPersistent(false);
-            entity.setBillboard(Display.Billboard.CENTER);
-        });
+        // Deliberately not the spawn(Location, Class, Consumer) overload: it took org.bukkit.util.Consumer
+        // up to 1.20.4 and java.util.function.Consumer from 1.20.5 on, so compiling against either one
+        // yields a NoSuchMethodError on the other. Configuring right after spawn is equivalent for the
+        // client, since the entity tracker only broadcasts at the end of the tick.
+        hologram = world.spawn(location, TextDisplay.class);
+        hologram.setText(lines.stream().map(MessageUtils::colorize).collect(Collectors.joining("\n")));
+        hologram.setVisibleByDefault(false);
+        hologram.setPersistent(false);
+        hologram.setBillboard(Display.Billboard.CENTER);
 
         return this;
     }

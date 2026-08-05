@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
+import fr.aerwyn81.headblocks.platform.Platform;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -25,6 +26,9 @@ class TpCommandTest {
     @Mock
     private Player player;
 
+    @Mock
+    private Platform platform;
+
     private Tp command;
 
     @BeforeEach
@@ -34,6 +38,8 @@ class TpCommandTest {
 
     @Test
     void perform_validArgs_teleportsPlayer() {
+        when(registry.getPlatform()).thenReturn(platform);
+
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             World world = mock(World.class);
             bukkit.when(() -> Bukkit.getWorld("overworld")).thenReturn(world);
@@ -45,7 +51,8 @@ class TpCommandTest {
             assertThat(result).isTrue();
 
             ArgumentCaptor<Location> captor = ArgumentCaptor.forClass(Location.class);
-            verify(player).teleport(captor.capture());
+            verify(platform).teleportAsync(eq(player), captor.capture());
+            verify(player, never()).teleport(any(Location.class));
 
             Location loc = captor.getValue();
             assertThat(loc.getWorld()).isSameAs(world);
@@ -60,6 +67,7 @@ class TpCommandTest {
         boolean result = command.perform(player, new String[]{"tp", "bad"});
 
         assertThat(result).isTrue();
+        verify(platform, never()).teleportAsync(any(), any());
         verify(player, never()).teleport(any(Location.class));
     }
 
