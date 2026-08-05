@@ -1,17 +1,16 @@
-# HeadBlocks v3.1.1
+# HeadBlocks v3.2.0
 
 ## What's New
 
 ### ✨ New Features
 
 - Added Folia support.
-- The plugin now ships as two jars. Paper, Purpur and Folia servers use `HeadBlocks-<version>.jar`
-  (Modrinth, Hangar, GitHub); Spigot servers use `HeadBlocks-<version>-spigot.jar` (SpigotMC). The two are not interchangeable — download the one matching your server.
+- The plugin now ships as two jars. Paper, Purpur and Folia servers use `HeadBlocks-<version>.jar`; Spigot servers use `HeadBlocks-<version>-spigot.jar` (SpigotMC).
 
 ### 🚀 Improvements
 
 - Added support for Minecraft 26.2.
-- The Paper jar is now a native Paper plugin (`paper-plugin.yml`), which gives it an isolated classloader and an explicit dependency declaration. The Spigot jar is unchanged.
+- Headblocks paper jar is now a native Paper plugin (`paper-plugin.yml`), which gives it an isolated classloader and an explicit dependency declaration. The Spigot jar is unchanged.
 
 ### 🐛 Bug Fixes
 
