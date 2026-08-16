@@ -12,17 +12,11 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 /**
- * The player must have spent a minimum time on the server, read from the vanilla play time
- * statistic.
+ * Have played long enough on the server to claim a head.
  */
 public class PlaytimeRequirement implements Requirement {
-
     private static final int TICKS_PER_MINUTE = 20 * 60;
 
-    /**
-     * The play time statistic was renamed across Minecraft versions; resolve whichever the running
-     * server exposes instead of pinning the one the plugin compiled against.
-     */
     private static final Statistic PLAY_TIME = resolvePlayTimeStatistic();
 
     private final ServiceRegistry registry;
@@ -75,9 +69,6 @@ public class PlaytimeRequirement implements Requirement {
         section.set("minutes", minutes);
     }
 
-    /**
-     * Formats a minute count as {@code 3h20} / {@code 45min}.
-     */
     public static String format(int totalMinutes) {
         int safe = Math.max(0, totalMinutes);
         int hours = safe / 60;
@@ -105,7 +96,6 @@ public class PlaytimeRequirement implements Requirement {
             try {
                 return Statistic.valueOf(name);
             } catch (Exception ignored) {
-                // Try the next spelling.
             }
         }
 

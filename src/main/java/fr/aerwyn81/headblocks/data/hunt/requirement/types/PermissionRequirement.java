@@ -10,13 +10,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 /**
- * The player must hold a permission node.
- * <p>
- * The node is checked as-is: unlike the plugin own permissions, no {@code headblocks.admin} or
- * wildcard fallback applies, so admins keep full control over who passes.
+ * Hold a permission node to claim a head.
  */
 public class PermissionRequirement implements Requirement {
-
     private final ServiceRegistry registry;
     private final String node;
 

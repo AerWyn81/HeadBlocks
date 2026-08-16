@@ -32,7 +32,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AreaEnforcementServiceTest {
-
     @Mock
     ServiceRegistry registry;
 
@@ -308,7 +307,7 @@ class AreaEnforcementServiceTest {
     }
 
     @Test
-    void evaluate_engaged_outside_withTimedRun_endsRunAndSchedulesTeleport() throws Exception {
+    void evaluate_engaged_outside_withTimedRun_endsRunAndSchedulesTeleport() {
         Location plate = mock(Location.class);
         when(plate.getWorld()).thenReturn(world);
 
@@ -331,7 +330,7 @@ class AreaEnforcementServiceTest {
     }
 
     @Test
-    void evaluate_engaged_outside_noTimedRun_doesNotScheduleTeleport() throws Exception {
+    void evaluate_engaged_outside_noTimedRun_doesNotScheduleTeleport() {
         HBHunt hunt = hunt(HUNT_ID, 1, 3, area, returnPoint, false, true);
         registerSingle(hunt);
         when(area.contains(to)).thenReturn(false);
@@ -572,7 +571,6 @@ class AreaEnforcementServiceTest {
 
         service.sanitizeAreaHunts();
 
-        // The configuration must survive: dropping it would erase the area from the hunt file.
         assertThat(hunt.getRequirements().find(AreaRequirement.class))
                 .map(AreaRequirement::isDisabled)
                 .contains(true);
@@ -610,13 +608,8 @@ class AreaEnforcementServiceTest {
 
     // --- Full cycles ---
 
-    /**
-     * The tests above each pin one decision. These replay the sequences an actual player walks
-     * through, where every step reads the state the previous one left behind.
-     */
     @Nested
     class FullCycle {
-
         private Location outside;
 
         @BeforeEach
@@ -636,7 +629,6 @@ class AreaEnforcementServiceTest {
             assertThat(service.evaluate(player, to)).isEqualTo(AreaEnforcementService.Decision.NONE);
             assertThat(AreaRunManager.getEngaged(uuid)).isEqualTo(HUNT_ID);
 
-            // Moving around inside must not re-engage nor message a second time.
             assertThat(service.evaluate(player, to)).isEqualTo(AreaEnforcementService.Decision.NONE);
 
             assertThat(service.evaluate(player, outside)).isEqualTo(AreaEnforcementService.Decision.CONFINE);
@@ -650,7 +642,6 @@ class AreaEnforcementServiceTest {
             foundHeads(1);
             service.evaluate(player, to);
 
-            // Ender pearl, portal, respawn: the move event never fires, the recovery point does.
             assertThat(service.getRecoveryPoint(player, outside)).isEqualTo(returnPoint);
             assertThat(service.getRecoveryPoint(player, to)).isNull();
         }
@@ -665,11 +656,9 @@ class AreaEnforcementServiceTest {
             verify(storageService).resetPlayerHunt(uuid, HUNT_ID);
             assertThat(AreaRunManager.isEngaged(uuid)).isFalse();
 
-            // Still standing inside: the release must hold, or leaving would re-engage instantly.
             service.evaluate(player, to);
             assertThat(AreaRunManager.isEngaged(uuid)).isFalse();
 
-            // Stepping out clears the release, stepping back in engages again.
             service.evaluate(player, outside);
             service.evaluate(player, to);
             assertThat(AreaRunManager.getEngaged(uuid)).isEqualTo(HUNT_ID);
@@ -697,7 +686,6 @@ class AreaEnforcementServiceTest {
 
             service.onHeadFound(player, hunt, 2);
 
-            // Finishing must free the player, otherwise the last head traps them in the area.
             assertThat(AreaRunManager.isEngaged(uuid)).isFalse();
             assertThat(service.evaluate(player, outside)).isEqualTo(AreaEnforcementService.Decision.NONE);
         }
@@ -709,7 +697,6 @@ class AreaEnforcementServiceTest {
             service.evaluate(player, to);
             assertThat(AreaRunManager.getEngaged(uuid)).isEqualTo(HUNT_ID);
 
-            // The world unloads, or the WorldGuard region is deleted, while the player is confined.
             when(area.isAvailable()).thenReturn(false);
 
             assertThat(service.evaluate(player, outside)).isEqualTo(AreaEnforcementService.Decision.NONE);

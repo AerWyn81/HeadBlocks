@@ -12,11 +12,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 /**
- * The player must satisfy a comparison on a PlaceholderAPI value, e.g.
- * {@code %vault_eco_balance% >= 500}.
+ * Satisfy a comparison on a PlaceholderAPI value to claim a head.
  */
 public class PlaceholderRequirement implements Requirement {
-
     private final ServiceRegistry registry;
     private final String placeholder;
     private final ComparisonOperator operator;
@@ -49,8 +47,6 @@ public class PlaceholderRequirement implements Requirement {
 
     @Override
     public RequirementResult check(Player player, HeadLocation head, HBHunt hunt) {
-        // PlaceholderAPI may have been removed since the requirement was configured: blocking every
-        // click on an expression nobody can resolve would lock the hunt down.
         if (!registry.getPluginProvider().isPlaceholderApiActive()) {
             LogUtil.warning("Hunt {0} has a placeholder requirement but PlaceholderAPI is missing, ignoring it.",
                     hunt.getId());
@@ -66,7 +62,7 @@ public class PlaceholderRequirement implements Requirement {
                 .replace("%placeholder%", placeholder)
                 .replace("%operator%", operator.getSymbol())
                 .replace("%expected%", String.valueOf(expected))
-                .replace("%actual%", String.valueOf(actual)));
+                .replace("%actual%", actual));
     }
 
     @Override

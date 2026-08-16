@@ -133,8 +133,6 @@ public class HuntConfigService {
         boolean hadLegacyZone = yaml.contains("behaviors.zone");
         if (hadLegacyZone) {
             if (hasRequirements) {
-                // Already converted at some point: the leftover section is inert, loadBehaviors does
-                // not read it either. The rewrite below clears it, so say it out loud.
                 LogUtil.warning("Hunt {0}: the leftover bounded zone was dropped, "
                         + "the requirements section takes precedence.", id);
             } else {
@@ -148,8 +146,6 @@ public class HuntConfigService {
         hunt.setConfig(huntConfig);
 
         if (hadLegacyZone) {
-            // Rewrites the file without the legacy behaviour section, so the conversion happens once.
-            // Seeding the cache with the document just parsed keeps saveHunt from reading it again.
             yamlCache.put(id, yaml);
             saveHunt(hunt);
         }
@@ -157,12 +153,6 @@ public class HuntConfigService {
         return hunt;
     }
 
-    /**
-     * Converts the pre-3.3 {@code behaviors.zone} section into an area requirement.
-     * <p>
-     * The returned set always carries the zone one way or another, because the caller rewrites the
-     * file right after: returning nothing would erase the configuration instead of converting it.
-     */
     private RequirementSet migrateLegacyZone(YamlConfiguration yaml, String huntId) {
         ConfigurationSection zone = yaml.getConfigurationSection("behaviors.zone");
         if (zone == null) {
@@ -176,9 +166,6 @@ public class HuntConfigService {
             return new RequirementSet(registry, RequirementMode.ALL, List.of(area));
         }
 
-        // Nothing usable right now, an unloaded return point world being the usual cause. The section
-        // is carried over as an unparsed entry rather than deleted: its keys are already the ones the
-        // area requirement reads, so the next load retries it once the world is there.
         LogUtil.warning("Hunt {0}: the bounded zone could not be read, it was carried over as is.", huntId);
 
         Map<String, Object> raw = RequirementSet.snapshot(zone);
@@ -536,7 +523,6 @@ public class HuntConfigService {
         }
 
         for (String type : section.getKeys(false)) {
-            // Zones are requirements now; the legacy key is handled by the migration.
             if ("zone".equalsIgnoreCase(type)) {
                 continue;
             }
@@ -549,8 +535,6 @@ public class HuntConfigService {
     }
 
     private void saveRequirements(YamlConfiguration yaml, RequirementSet requirements) {
-        // Rewritten from scratch: keeping the previous keys would resurrect requirements the admin
-        // just removed. Entries the loader could not read are part of the set and come back with it.
         yaml.set("requirements", null);
 
         if (requirements == null || (requirements.isEmpty() && requirements.getPreserved().isEmpty())) {
@@ -589,7 +573,6 @@ public class HuntConfigService {
                     }
                 }
             }
-
         }
     }
 
@@ -776,5 +759,4 @@ public class HuntConfigService {
             }
         }
     }
-
 }

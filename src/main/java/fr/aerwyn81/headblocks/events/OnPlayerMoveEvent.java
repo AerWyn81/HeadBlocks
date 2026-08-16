@@ -13,7 +13,6 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 public class OnPlayerMoveEvent implements Listener {
-
     private final ServiceRegistry registry;
 
     public OnPlayerMoveEvent(ServiceRegistry registry) {
@@ -99,8 +98,6 @@ public class OnPlayerMoveEvent implements Listener {
         if (player.getGameMode() == GameMode.SPECTATOR) {
             return true;
         }
-        // The node was renamed with the area refactor; the old one still works so existing
-        // permission setups keep behaving the same after an update.
         return PlayerUtils.hasPermission(player, "headblocks.area.bypass")
                 || PlayerUtils.hasPermission(player, "headblocks.zone.bypass");
     }

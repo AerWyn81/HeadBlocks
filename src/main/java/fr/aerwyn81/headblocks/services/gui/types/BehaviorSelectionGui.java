@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class BehaviorSelectionGui {
-
     private final ServiceRegistry registry;
     private final ConcurrentHashMap<UUID, Set<String>> selectedBehaviors = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> pendingHuntNames = new ConcurrentHashMap<>();
@@ -52,7 +51,6 @@ public class BehaviorSelectionGui {
 
         Set<String> selected = selectedBehaviors.getOrDefault(player.getUniqueId(), new HashSet<>());
 
-        // Slot 10: Requirements (not a behavior: it opens its own menu)
         menu.setItem(0, 10, createRequirementsItem(player));
 
         // Slot 11: Ordered
@@ -185,7 +183,6 @@ public class BehaviorSelectionGui {
                     case "timed" ->
                             behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
                     default -> {
-                        // Unknown toggle, nothing to build.
                     }
                 }
             }

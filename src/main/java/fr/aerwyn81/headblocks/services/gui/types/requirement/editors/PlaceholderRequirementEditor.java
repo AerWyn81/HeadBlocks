@@ -15,10 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
- * Editor of the PlaceholderAPI requirement: a placeholder, a comparison and the expected value.
+ * Asks for the placeholder, the operator and the expected value.
  */
 public class PlaceholderRequirementEditor extends AbstractRequirementEditor {
-
     private static final int ROWS = 3;
     private static final int PLACEHOLDER_SLOT = 11;
     private static final int OPERATOR_SLOT = 13;

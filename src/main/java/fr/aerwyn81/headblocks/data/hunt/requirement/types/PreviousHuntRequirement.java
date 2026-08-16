@@ -12,13 +12,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 /**
- * The player must have progressed far enough in another hunt.
- * <p>
- * {@code requiredHeads} is the number of heads to find there; {@code 0} means the whole hunt, which
- * keeps following the target hunt as heads are added to it.
+ * Have progressed far enough in another hunt to claim a head.
  */
 public class PreviousHuntRequirement implements Requirement {
-
     public static final int ALL_HEADS = 0;
 
     private final ServiceRegistry registry;
@@ -48,8 +44,6 @@ public class PreviousHuntRequirement implements Requirement {
     public RequirementResult check(Player player, HeadLocation head, HBHunt hunt) {
         HBHunt target = registry.getHuntService().getHuntById(huntId);
         if (target == null) {
-            // The referenced hunt is gone: blocking players on a hunt that no longer exists would be
-            // a dead end nobody can resolve.
             LogUtil.warning("Hunt {0} requires the unknown hunt {1}, ignoring that requirement.",
                     hunt.getId(), huntId);
             return RequirementResult.unresolvable();

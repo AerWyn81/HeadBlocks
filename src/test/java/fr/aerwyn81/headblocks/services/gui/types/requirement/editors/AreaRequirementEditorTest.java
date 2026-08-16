@@ -36,14 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-/**
- * The area editor, driven through its menu items and its chat prompt.
- * <p>
- * Both regressions this covers were invisible in the menu: a value silently overwritten when a
- * prompt opened, and a value silently dropped when its slot was hidden.
- */
 class AreaRequirementEditorTest {
-
     private static final int TYPE_SLOT = 10;
     private static final int REGION_SLOT = 12;
     private static final int BLOCK_EXIT_SLOT = 15;
@@ -86,7 +79,6 @@ class AreaRequirementEditorTest {
         lenient().when(registry.getGuiService()).thenReturn(mock(GuiService.class));
         lenient().when(registry.getChatPromptService()).thenReturn(prompts);
 
-        // The admin is deliberately somewhere else than the area being edited.
         player = mock(Player.class);
         lenient().when(player.getUniqueId()).thenReturn(UUID.randomUUID());
         lenient().when(player.getWorld()).thenReturn(server.getWorld(ADMIN_WORLD));
@@ -152,10 +144,6 @@ class AreaRequirementEditorTest {
                 null, false, false, AreaMessageMode.CHAT);
     }
 
-    // =========================================================================
-    // 1. Seeding an existing requirement
-    // =========================================================================
-
     @Test
     void open_existingCuboid_keepsItOnValidateWithoutTouchingAnything() {
         open(cuboidRequirement(false, null));
@@ -182,17 +170,11 @@ class AreaRequirementEditorTest {
         assertThat(result.messageMode()).isEqualTo(AreaMessageMode.TITLE);
     }
 
-    // =========================================================================
-    // 2. The return point outlives a hidden slot
-    // =========================================================================
-
     @Test
     void blockExit_toggledOffThenOn_keepsTheReturnPoint() {
         Location point = returnPoint();
         open(cuboidRequirement(true, point));
 
-        // The return point slot is only drawn while the exit is blocked, so this hides it and
-        // brings it back. The draft holds the point on its own, so it survives the round trip.
         click(BLOCK_EXIT_SLOT);
         click(BLOCK_EXIT_SLOT);
 
@@ -212,8 +194,6 @@ class AreaRequirementEditorTest {
 
         AreaRequirement result = validate();
 
-        // The point is unused while the exit is not blocked, but it is kept so that turning the
-        // option back on in a later edition does not ask the admin to pick it again.
         assertThat(result.blockExit()).isFalse();
         assertThat(result.returnPoint()).isEqualTo(point);
     }
@@ -228,10 +208,6 @@ class AreaRequirementEditorTest {
         assertThat(validateItem.getIcon().getType()).isEqualTo(Material.BARRIER);
     }
 
-    // =========================================================================
-    // 3. The WorldGuard region keeps its own world
-    // =========================================================================
-
     @Test
     void promptRegion_existingRegion_keepsItsWorldRatherThanTheAdminsOne() {
         open(worldGuardRequirement(AREA_WORLD, "spawn_hunt"));
@@ -241,10 +217,8 @@ class AreaRequirementEditorTest {
 
         AreaProvider provider = validate().area();
 
-        // Rebinding to the admin's world would point at a region that does not exist there, which
-        // makes the area unavailable and stops it gating anything — silently.
         assertThat(provider).isInstanceOf(WorldGuardAreaProvider.class);
-        assertThat(((WorldGuardAreaProvider) provider).getWorldName()).isEqualTo(AREA_WORLD);
+        assertThat(provider.getWorldName()).isEqualTo(AREA_WORLD);
         assertThat(((WorldGuardAreaProvider) provider).getRegionId()).isEqualTo("spawn_hunt");
     }
 
@@ -288,10 +262,6 @@ class AreaRequirementEditorTest {
         assertThat(provider.getRegionId()).isEqualTo("spawn_hunt");
     }
 
-    // =========================================================================
-    // 4. Type switch and state hygiene
-    // =========================================================================
-
     @Test
     void typeToggle_switchesBetweenCuboidAndWorldGuard() {
         open(null);
@@ -319,7 +289,6 @@ class AreaRequirementEditorTest {
 
         open(null);
 
-        // A fresh draft: no region carried over from the edition that was abandoned.
         assertThat(lastMenu().getItem(0, VALIDATE_SLOT).getOnClickEvent()).isNull();
     }
 }

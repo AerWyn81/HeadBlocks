@@ -19,11 +19,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Runtime side of the area requirement: confinement, entry and exit messages, and progress reset
- * for whoever leaves. The click check itself lives in {@link AreaRequirement}.
+ * Runtime side of the area: confinement, entry and exit messages, progress reset for whoever leaves.
  */
 public class AreaEnforcementService {
-
     public enum Decision {
         NONE,
         CONFINE
@@ -188,17 +186,8 @@ public class AreaEnforcementService {
         return findArea(hunt) != null;
     }
 
-    /**
-     * Switches off the area requirement of any hunt it cannot enforce, so a half configured area
-     * never silently blocks players.
-     * <p>
-     * The requirement stays on the hunt: it is only marked as disabled, which keeps the admin
-     * configuration in the file and lets a reload bring it back as soon as it becomes valid again.
-     */
     public void sanitizeAreaHunts() {
         for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
-            // Disabled areas are looked up too: a reload is what brings them back when they became
-            // valid again.
             AreaRequirement area = hunt.getRequirements().findOrNull(AreaRequirement.class);
             if (area == null) {
                 continue;
@@ -240,10 +229,6 @@ public class AreaEnforcementService {
         return null;
     }
 
-    /**
-     * Whether the area is complete enough to confine a player and can be resolved right now. No
-     * caller wants one without the other, so the availability check is part of the answer.
-     */
     private boolean isEnforceable(AreaRequirement area) {
         return area != null && area.area() != null && area.area().isAvailable()
                 && (area.returnPoint() != null || !area.blockExit());
@@ -267,8 +252,6 @@ public class AreaEnforcementService {
         return area == null || area.isDisabled() ? null : area;
     }
 
-    // When a hunt combines an area with a timed run, leaving the area ends the run and sends the
-    // player back to the start plate (same spot as a time-limit expiration).
     private void teleportBackTimed(Player player, HBHunt hunt) {
         UUID uuid = player.getUniqueId();
         if (hunt == null || !TimedRunManager.isInRun(uuid, hunt.getId())) {

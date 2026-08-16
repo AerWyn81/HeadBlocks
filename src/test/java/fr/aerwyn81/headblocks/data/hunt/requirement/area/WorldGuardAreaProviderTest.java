@@ -22,23 +22,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * The provider that decides whether a WorldGuard area can be enforced at all.
- * <p>
- * Its {@code isAvailable()} is what makes {@code AreaRequirement} answer {@code unresolvable}, so an
- * unresolvable region silently stops gating a hunt. Every path that returns false matters.
- */
 class WorldGuardAreaProviderTest {
-
     private static final String WORLD = "world";
     private static final String REGION = "spawn_hunt";
 
     private MockedStaticBundle statics;
 
-    /**
-     * The three static entry points the provider goes through, opened and closed as one so no test
-     * can leak a mock into the next.
-     */
     private static final class MockedStaticBundle implements AutoCloseable {
         private final org.mockito.MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
         private final org.mockito.MockedStatic<WorldGuard> worldGuard = mockStatic(WorldGuard.class);
@@ -77,16 +66,12 @@ class WorldGuardAreaProviderTest {
         return world;
     }
 
-    /**
-     * Wires the whole WorldGuard chain down to a region, or to its absence when {@code region} is null.
-     */
     private void regionContainerReturns(World world, ProtectedRegion region) {
         RegionManager regionManager = mock(RegionManager.class);
         lenient().when(regionManager.getRegion(REGION)).thenReturn(region);
 
         RegionContainer container = mock(RegionContainer.class);
-        RegionManager finalManager = regionManager;
-        lenient().when(container.get(any())).thenReturn(finalManager);
+        lenient().when(container.get(any())).thenReturn(regionManager);
 
         WorldGuardPlatform platform = mock(WorldGuardPlatform.class);
         lenient().when(platform.getRegionContainer()).thenReturn(container);
@@ -114,13 +99,8 @@ class WorldGuardAreaProviderTest {
         return new WorldGuardAreaProvider(WORLD, REGION);
     }
 
-    // =========================================================================
-    // 1. Serialization, no WorldGuard involved
-    // =========================================================================
-
     @Nested
     class Serialization {
-
         @Test
         void getType_isTheWorldGuardType() {
             assertThat(provider().getType()).isEqualTo(WorldGuardAreaProvider.TYPE);
@@ -154,14 +134,8 @@ class WorldGuardAreaProviderTest {
         }
     }
 
-    // =========================================================================
-    // 2. WorldGuard missing — everything must fail closed on contains, and
-    //    report unavailable so the requirement can fail open on its own terms
-    // =========================================================================
-
     @Nested
     class WithoutWorldGuard {
-
         @BeforeEach
         void noWorldGuard() {
             worldGuardEnabled(false);
@@ -186,13 +160,8 @@ class WorldGuardAreaProviderTest {
         }
     }
 
-    // =========================================================================
-    // 3. WorldGuard present
-    // =========================================================================
-
     @Nested
     class WithWorldGuard {
-
         @BeforeEach
         void worldGuardIsThere() {
             worldGuardEnabled(true);
@@ -245,8 +214,6 @@ class WorldGuardAreaProviderTest {
 
             provider().contains(new Location(world, 5.9, 65.4, -0.2));
 
-            // -0.2 floors to -1, not truncates to 0: a player standing just outside must not be
-            // reported one block inside.
             verify(region).contains(BlockVector3.at(5, 65, -1));
         }
 
@@ -280,7 +247,6 @@ class WorldGuardAreaProviderTest {
             statics.adapter.when(() -> BukkitAdapter.adapt(world))
                     .thenReturn(mock(com.sk89q.worldedit.world.World.class));
 
-            // A WorldGuard that is present but not initialized must not propagate out of a click.
             assertThat(provider().isAvailable()).isFalse();
         }
 

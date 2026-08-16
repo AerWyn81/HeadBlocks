@@ -15,11 +15,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Shared plumbing of the requirement editors: the callbacks of the current edition and the few
- * items every editor draws the same way.
+ * The plumbing every requirement editor shares: the callbacks of the current edition, the common items.
  */
 public abstract class AbstractRequirementEditor implements RequirementEditor {
-
     protected final ServiceRegistry registry;
 
     private record Callbacks(Consumer<Requirement> onDone, Consumer<Player> onCancel) {
@@ -35,9 +33,6 @@ public abstract class AbstractRequirementEditor implements RequirementEditor {
         callbacks.put(player.getUniqueId(), new Callbacks(onDone, onCancel));
     }
 
-    /**
-     * Hands the finished requirement back to the caller and forgets the edition.
-     */
     protected void finish(Player player, Requirement requirement) {
         Callbacks pending = callbacks.remove(player.getUniqueId());
         clearState(player.getUniqueId());
@@ -47,9 +42,6 @@ public abstract class AbstractRequirementEditor implements RequirementEditor {
         }
     }
 
-    /**
-     * Aborts the edition and returns to the caller.
-     */
     protected void cancel(Player player) {
         Callbacks pending = callbacks.remove(player.getUniqueId());
         clearState(player.getUniqueId());
@@ -59,18 +51,12 @@ public abstract class AbstractRequirementEditor implements RequirementEditor {
         }
     }
 
-    /**
-     * Forgets everything about a player: the edition in progress and the fields being filled.
-     */
     @Override
     public void clearState(UUID playerUuid) {
         callbacks.remove(playerUuid);
         clearFields(playerUuid);
     }
 
-    /**
-     * Drops the per-player values of this editor.
-     */
     protected abstract void clearFields(UUID playerUuid);
 
     protected HBMenu newMenu(String titleKey, int rows) {
@@ -81,9 +67,6 @@ public abstract class AbstractRequirementEditor implements RequirementEditor {
         RequirementMenus.fillBorders(registry, menu, rows);
     }
 
-    /**
-     * Back button, drawn in place of the pagination close button like the other config menus.
-     */
     protected void attachBackButton(HBMenu menu) {
         RequirementMenus.attachBackButton(registry, menu, this::cancel);
     }

@@ -7,14 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
- * One-shot chat questions asked by the configuration menus.
- * <p>
- * A menu closes itself, registers what to do with the answer, and gets called back on the main
- * thread. Typing {@code cancel} aborts and runs the cancel branch instead, so no menu has to wire
- * itself into the chat listener.
+ * Asks a player something a menu cannot: a region id, a permission node, a free number.
  */
 public class ChatPromptService {
-
     private static final String CANCEL_KEYWORD = "cancel";
 
     private record Prompt(Consumer<String> onInput, Consumer<Player> onCancel) {
@@ -35,9 +30,6 @@ public class ChatPromptService {
         return pending.containsKey(player.getUniqueId());
     }
 
-    /**
-     * Consumes the answer of a player. Must run on the main thread: the callbacks open inventories.
-     */
     public void process(Player player, String message) {
         Prompt prompt = pending.remove(player.getUniqueId());
         if (prompt == null) {

@@ -2,6 +2,9 @@ package fr.aerwyn81.headblocks.data.hunt.requirement.area;
 
 import fr.aerwyn81.headblocks.services.LanguageService;
 
+/**
+ * How an area tells a player they walked in: chat, title, action bar, or not at all.
+ */
 public enum AreaMessageMode {
     CHAT,
     ACTION_BAR,

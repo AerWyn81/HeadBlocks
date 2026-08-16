@@ -19,11 +19,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Editor of the previous hunt requirement: pick the hunt to complete first, then how many of its
- * heads are needed.
+ * Asks which hunt has to be progressed, and by how many heads.
  */
 public class PreviousHuntRequirementEditor extends AbstractRequirementEditor {
-
     private static final int ROWS = 2;
     private static final int PICKER_ROWS = 5;
     private static final int HUNT_SLOT = 11;

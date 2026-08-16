@@ -23,14 +23,9 @@ import java.util.function.Consumer;
 import java.util.function.DoubleFunction;
 
 /**
- * Editor of the area requirement: the area itself (cuboid or WorldGuard region) and the
- * confinement options enforced once the player is inside.
- * <p>
- * While the menu is open the area is outlined with particles, which is why this editor also owns
- * the block, sneak and outline callbacks fed by the listeners.
+ * Editor of the area: its shape, and what happens to a player once they are inside.
  */
 public class AreaRequirementEditor extends AbstractRequirementEditor {
-
     private static final int ROWS = 4;
 
     private enum Capture {
@@ -39,10 +34,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
         RETURN
     }
 
-    /**
-     * The area being filled by one player. Kept as a single object so opening, clearing and reading
-     * the edition all touch the same place: a new option is a field here, not a twelfth map.
-     */
     private static final class Draft {
         private String areaType = CuboidAreaProvider.TYPE;
         private Location corner1;
@@ -123,7 +114,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
                 ? "Gui.AreaConfigTypeWorldGuard"
                 : "Gui.AreaConfigTypeCuboid");
 
-        // Slot 10: area type toggle
         menu.setItem(0, 10, fieldItem(worldGuard ? Material.MAP : Material.STRUCTURE_VOID,
                 "Gui.AreaConfigType", "Gui.AreaConfigTypeLore", "%type%", typeLabel)
                 .addOnClickEvent(event -> {
@@ -140,7 +130,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
             buildCuboidItems(menu, draft);
         }
 
-        // Slot 13: return point, only relevant when the exit is blocked
         if (draft.blockExit) {
             menu.setItem(0, 13, fieldItem(Material.ENDER_PEARL,
                     "Gui.AreaConfigReturnPoint", "Gui.AreaConfigReturnPointLore", "%location%",
@@ -148,7 +137,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
                     .addOnClickEvent(event -> beginCapture((Player) event.getWhoClicked(), Capture.RETURN)));
         }
 
-        // Slot 15: block exit toggle
         menu.setItem(0, 15, toggleItem("Gui.AreaConfigBlockExit", "Gui.AreaConfigBlockExitLore", draft.blockExit)
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
@@ -156,7 +144,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
                     reopen(p);
                 }));
 
-        // Slot 24: reset on leave toggle
         menu.setItem(0, 24, toggleItem("Gui.AreaConfigResetOnLeave", "Gui.AreaConfigResetOnLeaveLore", draft.resetOnLeave)
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
@@ -164,7 +151,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
                     reopen(p);
                 }));
 
-        // Slot 16: entry message display mode
         menu.setItem(0, 16, fieldItem(Material.OAK_SIGN,
                 "Gui.AreaConfigMessageMode", "Gui.AreaConfigMessageModeLore", "%mode%",
                 draft.messageMode.getLocalizedName(registry.getLanguageService()))
@@ -174,7 +160,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
                     reopen(p);
                 }));
 
-        // Slot 31: validate
         menu.setItem(0, 31, isReady(draft)
                 ? validateItem(() -> handleValidate(player))
                 : blockedValidateItem("Gui.AreaConfigValidateBlockedLore"));
@@ -210,9 +195,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
                 input -> {
                     draft.wgRegion = input;
 
-                    // Only a region being named for the first time is bound to the world the admin
-                    // stands in: an existing one keeps its own, which they may be editing from
-                    // anywhere. Rebinding it would silently point at a region that does not exist.
                     if (draft.wgWorld == null) {
                         draft.wgWorld = player.getWorld().getName();
                     }
@@ -311,8 +293,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
             return false;
         }
 
-        // A WorldGuard region can only be tested once the plugin can resolve it; a cuboid is
-        // self contained and always testable.
         return (provider instanceof CuboidAreaProvider || provider.isAvailable()) && provider.contains(rp);
     }
 
@@ -342,8 +322,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
         Draft draft = draft(player.getUniqueId());
         AreaProvider provider = buildProvider(draft);
 
-        // The return point is kept even when the exit is not blocked. It is unused then, but
-        // dropping it would ask the admin to pick it again the next time they turn the option on.
         finish(player, new AreaRequirement(registry, provider, draft.returnPoint,
                 draft.blockExit, draft.resetOnLeave, draft.messageMode));
     }
@@ -373,8 +351,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
 
     private void renderOutline(Player player, Draft draft) {
         if (draft.isWorldGuard()) {
-            // getBounds() already answers "the region cannot be resolved" with null, so it stands in
-            // for the availability check instead of resolving the region a second time.
             if (!(buildProvider(draft) instanceof WorldGuardAreaProvider wg)) {
                 return;
             }
@@ -385,7 +361,7 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
                 return;
             }
 
-            drawBox(player, world, b[0], b[1], b[2], b[3] + 1, b[4] + 1, b[5] + 1);
+            drawBox(player, b[0], b[1], b[2], b[3] + 1, b[4] + 1, b[5] + 1);
             return;
         }
 
@@ -401,10 +377,10 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
         double maxX = Math.max(c1.getBlockX(), c2.getBlockX()) + 1;
         double maxY = Math.max(c1.getBlockY(), c2.getBlockY()) + 1;
         double maxZ = Math.max(c1.getBlockZ(), c2.getBlockZ()) + 1;
-        drawBox(player, c1.getWorld(), minX, minY, minZ, maxX, maxY, maxZ);
+        drawBox(player, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private void drawBox(Player player, World world, double minX, double minY, double minZ,
+    private void drawBox(Player player, double minX, double minY, double minZ,
                          double maxX, double maxY, double maxZ) {
         double[][] edges = {
                 {minX, minY, minZ, maxX, minY, minZ}, {minX, minY, maxZ, maxX, minY, maxZ},
@@ -430,10 +406,6 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
 
     // --- Rendering helpers ---
 
-    /**
-     * Renders a location for the menu: block coordinates for the corners of a cuboid, one decimal
-     * for the return point where the half block offset matters.
-     */
     private String describe(Location location, boolean precise) {
         if (location == null) {
             return notDefined();

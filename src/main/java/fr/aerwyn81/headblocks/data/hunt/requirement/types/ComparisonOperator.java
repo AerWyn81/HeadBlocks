@@ -1,12 +1,9 @@
 package fr.aerwyn81.headblocks.data.hunt.requirement.types;
 
 /**
- * Comparison used by the value based requirements.
- * <p>
- * The ordering comparisons need numbers on both sides; the others work on plain text.
+ * How a placeholder requirement compares: numerically when both sides are numbers, as text otherwise.
  */
 public enum ComparisonOperator {
-
     EQUALS("=", false),
     NOT_EQUALS("!=", false),
     GREATER_THAN(">", true),
@@ -27,18 +24,10 @@ public enum ComparisonOperator {
         return symbol;
     }
 
-    public boolean isNumeric() {
-        return numeric;
-    }
-
     public ComparisonOperator next() {
         return values()[(ordinal() + 1) % values().length];
     }
 
-    /**
-     * Compares two raw values. Ordering operators return {@code false} when either side is not a
-     * number: a placeholder that failed to resolve must not silently satisfy the requirement.
-     */
     public boolean test(String actual, String expected) {
         String left = actual == null ? "" : actual.trim();
         String right = expected == null ? "" : expected.trim();

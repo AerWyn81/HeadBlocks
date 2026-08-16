@@ -3,6 +3,9 @@ package fr.aerwyn81.headblocks.services;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Who is currently held by an area, and who was just let out of one.
+ */
 public class AreaRunManager {
     private static final ConcurrentHashMap<UUID, String> engaged = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, String> released = new ConcurrentHashMap<>();

@@ -11,6 +11,9 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 
+/**
+ * An area delegated to a WorldGuard region, which may not resolve at all.
+ */
 public class WorldGuardAreaProvider implements AreaProvider {
 
     public static final String TYPE = "worldguard";

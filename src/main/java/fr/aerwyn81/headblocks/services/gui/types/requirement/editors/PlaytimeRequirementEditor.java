@@ -14,10 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
- * Editor of the playtime requirement: a duration in minutes, adjusted by clicking.
+ * Asks for the number of minutes.
  */
 public class PlaytimeRequirementEditor extends AbstractRequirementEditor {
-
     private static final int ROWS = 2;
     private static final int DURATION_SLOT = 11;
     private static final int VALIDATE_SLOT = 15;

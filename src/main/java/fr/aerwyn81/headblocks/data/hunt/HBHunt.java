@@ -87,10 +87,6 @@ public class HBHunt {
         this.icon = icon;
     }
 
-    /**
-     * The configured icon as a material, falling back to the default one when the name does not
-     * resolve (a typo in the file, or a material removed by a server version).
-     */
     public Material getIconMaterial() {
         try {
             return Material.valueOf(icon.toUpperCase());
@@ -149,10 +145,6 @@ public class HBHunt {
         this.requirements = requirements != null ? requirements : RequirementSet.empty();
     }
 
-    /**
-     * Evaluates the conditions the player must meet to claim a head of this hunt.
-     * The denial carries every blocking reason at once, so the player knows what is missing.
-     */
     public RequirementResult evaluateRequirements(Player player, HeadLocation head) {
         return requirements.evaluate(player, head, this);
     }

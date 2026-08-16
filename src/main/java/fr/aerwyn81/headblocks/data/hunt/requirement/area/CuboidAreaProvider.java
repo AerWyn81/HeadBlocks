@@ -4,6 +4,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 
+/**
+ * An area drawn from two corners: self contained, and resolvable as long as its world is loaded.
+ */
 public class CuboidAreaProvider implements AreaProvider {
 
     public static final String TYPE = "cuboid";

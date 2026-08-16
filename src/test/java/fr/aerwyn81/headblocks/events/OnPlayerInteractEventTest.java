@@ -41,7 +41,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OnPlayerInteractEventTest {
-
     @Mock
     private ServiceRegistry registry;
 
@@ -110,7 +109,6 @@ class OnPlayerInteractEventTest {
 
     @Nested
     class EarlyExitGuards {
-
         @Test
         void nullBlock_ignored() {
             when(event.getClickedBlock()).thenReturn(null);
@@ -221,7 +219,6 @@ class OnPlayerInteractEventTest {
 
     @Nested
     class ReloadInProgress {
-
         @Test
         void reloadInProgress_cancelledAndSendsMessage() {
             HeadBlocks.isReloadInProgress = true;
@@ -249,7 +246,6 @@ class OnPlayerInteractEventTest {
 
     @Nested
     class HeadNotPluginHead {
-
         @Test
         void headNotPluginHead_ignored() {
             when(event.getClickedBlock()).thenReturn(block);
@@ -276,7 +272,6 @@ class OnPlayerInteractEventTest {
 
     @Nested
     class StorageError {
-
         @Test
         void storageError_cancelledAndSendsMessage() {
             HeadLocation headLocation = mock(HeadLocation.class);
@@ -307,7 +302,6 @@ class OnPlayerInteractEventTest {
 
     @Nested
     class NoPermission {
-
         @Test
         void noPermission_doesNotReachHuntLookup() {
             HeadLocation headLocation = mock(HeadLocation.class);
@@ -386,7 +380,6 @@ class OnPlayerInteractEventTest {
 
     @Nested
     class HBHuntLookup {
-
         @Test
         void noActiveHunts_allInactive_sendMessage() {
             HeadLocation headLocation = mock(HeadLocation.class);
@@ -512,7 +505,6 @@ class OnPlayerInteractEventTest {
 
     @Nested
     class HandleHBHuntClick {
-
         private UUID headUuid;
         private UUID playerUuid;
         private HeadLocation headLocation;
@@ -548,7 +540,6 @@ class OnPlayerInteractEventTest {
             lenient().when(headLocation.getHuntId()).thenReturn("default");
             lenient().when(huntService.getHuntById("default")).thenReturn(activeHunt);
 
-            // Default behavior and requirement evaluation — allow by default
             lenient().when(activeHunt.evaluateAccessGates(any(), any()))
                     .thenReturn(BehaviorResult.allow());
             lenient().when(activeHunt.evaluateBehaviors(any(), any()))
@@ -583,7 +574,6 @@ class OnPlayerInteractEventTest {
                  MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
                  MockedStatic<HeadBlocks> headBlocksStatic = mockStatic(HeadBlocks.class);
                  MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
-
                 headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
                 playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.use")).thenReturn(true);
 
@@ -607,7 +597,6 @@ class OnPlayerInteractEventTest {
 
         @Nested
         class AccessGateDeny {
-
             @Test
             void accessGateDenied_alreadyFoundHead_showsScheduleMessageNotAlreadyClaimed() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>(List.of(headUuid));
@@ -649,7 +638,6 @@ class OnPlayerInteractEventTest {
 
         @Nested
         class AlreadyFoundHead {
-
             @Test
             void alreadyFound_sendsAlreadyClaimedMessage() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>(List.of(headUuid));
@@ -704,7 +692,6 @@ class OnPlayerInteractEventTest {
 
         @Nested
         class SuccessfulFind {
-
             @Test
             void newFind_addsHeadForHunt() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
@@ -802,7 +789,6 @@ class OnPlayerInteractEventTest {
                      MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
                      MockedStatic<HeadBlocks> headBlocksStatic = mockStatic(HeadBlocks.class);
                      MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
-
                     headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
                     playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.use")).thenReturn(true);
 
@@ -856,7 +842,6 @@ class OnPlayerInteractEventTest {
                      MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
                      MockedStatic<HeadBlocks> headBlocksStatic = mockStatic(HeadBlocks.class);
                      MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
-
                     headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
                     playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.use")).thenReturn(true);
 
@@ -886,7 +871,6 @@ class OnPlayerInteractEventTest {
 
         @Nested
         class RequirementDeny {
-
             @Test
             void requirementUnmet_doesNotAddHead() throws InternalException {
                 when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(new ArrayList<>());
@@ -934,7 +918,6 @@ class OnPlayerInteractEventTest {
 
         @Nested
         class BehaviorDeny {
-
             @Test
             void behaviorDenied_doesNotAddHead() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
@@ -1006,7 +989,6 @@ class OnPlayerInteractEventTest {
 
         @Nested
         class InsufficientInventory {
-
             @Test
             void insufficientSlots_doesNotAddHead() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
@@ -1050,7 +1032,6 @@ class OnPlayerInteractEventTest {
 
         @Nested
         class ExceptionHandling {
-
             @Test
             void internalException_continuesProcessing() throws InternalException {
                 when(storageService.getHeadsPlayerForHunt(playerUuid, "default"))

@@ -10,14 +10,9 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 /**
- * The pieces every requirement menu draws the same way.
- * <p>
- * Shared by {@link RequirementsGui} and, through {@link AbstractRequirementEditor}, by the
- * per-type editors: the two would otherwise each carry their own copy of the border and of the
- * back button.
+ * The pieces every requirement menu draws the same way: the border and the back button.
  */
 final class RequirementMenus {
-
     private RequirementMenus() {
     }
 
@@ -34,9 +29,6 @@ final class RequirementMenus {
         IntStream.range(0, rows * 9).forEach(index -> menu.setItem(0, index, borderItem(registry)));
     }
 
-    /**
-     * Back button, drawn in place of the pagination close button like the other config menus.
-     */
     static void attachBackButton(ServiceRegistry registry, HBMenu menu, Consumer<Player> onBack) {
         menu.setPaginationButtonBuilder((type, inv) -> {
             if (type == HBPaginationButtonType.CLOSE_BUTTON) {

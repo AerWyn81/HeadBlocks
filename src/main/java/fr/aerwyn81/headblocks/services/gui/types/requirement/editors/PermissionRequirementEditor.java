@@ -14,10 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
- * Editor of the permission requirement: a single node, typed in chat.
+ * Asks for the permission node.
  */
 public class PermissionRequirementEditor extends AbstractRequirementEditor {
-
     private static final int ROWS = 2;
     private static final int NODE_SLOT = 11;
     private static final int VALIDATE_SLOT = 15;

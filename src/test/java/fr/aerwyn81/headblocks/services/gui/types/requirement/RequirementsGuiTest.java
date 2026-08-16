@@ -35,19 +35,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-/**
- * The Requirements menu, driven the way a player drives it: open, click an item, read the menu that
- * comes back. The items expose their click handler, so the whole flow runs without a real server.
- */
 class RequirementsGuiTest {
-
     private static final int FIRST_ENTRY_SLOT = 9;
     private static final int ADD_SLOT = 30;
     private static final int VALIDATE_SLOT = 32;
 
-    /**
-     * The picker lays the types out from slot 10, in declaration order.
-     */
     private static final int PICKER_FIRST_SLOT = 10;
 
     private ServiceRegistry registry;
@@ -98,10 +90,6 @@ class RequirementsGuiTest {
         gui.open(player, initial, validated::set, cancelled::set);
     }
 
-    /**
-     * The menu behind the last inventory the player was shown. {@code HBMenu} is the holder of the
-     * inventory it builds, which is how a click finds its way back to the item handlers.
-     */
     private HBMenu lastMenu() {
         ArgumentCaptor<Inventory> captor = ArgumentCaptor.forClass(Inventory.class);
         verify(player, atLeastOnce()).openInventory(captor.capture());
@@ -139,10 +127,6 @@ class RequirementsGuiTest {
         return new RequirementSet(registry, RequirementMode.ALL, List.of(requirements));
     }
 
-    // =========================================================================
-    // 1. Single-instance types
-    // =========================================================================
-
     @Test
     void picker_areaNotAddedYet_isSelectable() {
         open(setOf(new PermissionRequirement(registry, "hb.vip")));
@@ -159,8 +143,6 @@ class RequirementsGuiTest {
 
         ItemGUI item = pickerItem(RequirementType.AREA);
 
-        // Everything downstream reads a single area per hunt: a second one would be evaluated on
-        // click but never enforced, and never reported.
         assertThat(item.getOnClickEvent()).isNull();
         assertThat(item.getIcon().getType()).isEqualTo(Material.BARRIER);
     }
@@ -178,7 +160,6 @@ class RequirementsGuiTest {
     void picker_repeatableTypes_staySelectableWhenAlreadyAdded() {
         open(setOf(new PermissionRequirement(registry, "hb.vip")));
 
-        // Only the area is single-instance; stacking permissions is a legitimate configuration.
         assertThat(pickerItem(RequirementType.PERMISSION).getOnClickEvent()).isNotNull();
     }
 
@@ -192,10 +173,6 @@ class RequirementsGuiTest {
         assertThat(item.getOnClickEvent()).isNull();
         assertThat(item.getIcon().getType()).isEqualTo(Material.BARRIER);
     }
-
-    // =========================================================================
-    // 2. Validation hands back what the menu was given
-    // =========================================================================
 
     @Test
     void validate_returnsTheRequirementsAndTheMode() {
@@ -217,8 +194,6 @@ class RequirementsGuiTest {
 
         click(lastMenu().getItem(0, VALIDATE_SLOT));
 
-        // Saving rewrites the whole section from this set: dropping what the menu could not display
-        // would delete it from the hunt file.
         assertThat(validated.get().getPreserved()).containsExactly(unreadable);
     }
 
@@ -231,10 +206,6 @@ class RequirementsGuiTest {
 
         assertThat(validated.get().isEmpty()).isTrue();
     }
-
-    // =========================================================================
-    // 3. Mode switch and session hygiene
-    // =========================================================================
 
     @Test
     void modeItem_cyclesBetweenAllAndAny() {
@@ -254,7 +225,6 @@ class RequirementsGuiTest {
         gui.clearState(player.getUniqueId());
         click(menu.getItem(0, VALIDATE_SLOT));
 
-        // No session left: the menu closes instead of validating a set nobody owns anymore.
         assertThat(validated.get()).isNull();
         verify(player).closeInventory();
     }

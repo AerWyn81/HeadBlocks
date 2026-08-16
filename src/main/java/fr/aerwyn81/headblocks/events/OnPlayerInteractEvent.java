@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class OnPlayerInteractEvent implements Listener {
-
     private final ServiceRegistry registry;
 
     public OnPlayerInteractEvent(ServiceRegistry registry) {
@@ -151,7 +150,6 @@ public class OnPlayerInteractEvent implements Listener {
                     return;
                 }
 
-                // Check the requirements of the hunt (area, permission, playtime, ...)
                 var requirementResult = hunt.evaluateRequirements(player, headLocation);
                 if (!requirementResult.satisfied()) {
                     if (requirementResult.reason() != null && !requirementResult.reason().isEmpty()) {

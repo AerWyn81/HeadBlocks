@@ -10,14 +10,9 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 /**
- * Catalogue of the requirement kinds an admin can pick from.
- * <p>
- * Declaration order is the order shown in the picker GUI. A new requirement kind only has to be
- * added here to become loadable, saveable and selectable; the GUI resolves its editor from
- * {@code RequirementEditors} and its labels from {@code Gui.Requirement<key>Name/Lore}.
+ * Catalogue of the requirement kinds: add one here and it becomes loadable, saveable and selectable.
  */
 public enum RequirementType {
-
     AREA("area", Material.STRUCTURE_VOID, AreaRequirement::fromConfig, provider -> true, true),
     PREVIOUS_HUNT("hunt", Material.CHEST_MINECART, PreviousHuntRequirement::fromConfig),
     PERMISSION("permission", Material.NAME_TAG, PermissionRequirement::fromConfig),
@@ -58,9 +53,6 @@ public enum RequirementType {
         return id;
     }
 
-    /**
-     * Suffix of the {@code Gui.Requirement*} translation keys describing this type.
-     */
     public String getLangKey() {
         return langKey;
     }
@@ -69,19 +61,10 @@ public enum RequirementType {
         return icon;
     }
 
-    /**
-     * Whether the type can be used on this server: some kinds need an optional plugin.
-     */
     public boolean isAvailable(PluginProvider pluginProvider) {
         return pluginProvider != null && availability.test(pluginProvider);
     }
 
-    /**
-     * Whether a hunt may hold at most one requirement of this kind.
-     * <p>
-     * Areas are unique: confinement, the head placement checks and the sanity pass all read a single
-     * area per hunt, so a second one would be evaluated on click but never enforced nor validated.
-     */
     public boolean isUnique() {
         return unique;
     }

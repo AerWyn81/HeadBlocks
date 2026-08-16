@@ -16,14 +16,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 /**
- * The player must stand inside a delimited area to claim the heads of the hunt.
- * <p>
- * On top of the click check, this requirement carries the confinement options enforced by
- * {@code AreaEnforcementService}: blocking the exit, sending the player back to a return point and
- * wiping the progress of whoever leaves.
+ * Stand inside the area to claim a head. Also carries the confinement options enforced elsewhere.
  */
 public class AreaRequirement implements Requirement {
-
     private final ServiceRegistry registry;
     private final AreaProvider area;
     private final Location returnPoint;
@@ -31,10 +26,6 @@ public class AreaRequirement implements Requirement {
     private final boolean resetOnLeave;
     private final AreaMessageMode messageMode;
 
-    /**
-     * Runtime state, not persisted: an area the server cannot enforce (no head assigned yet, heads
-     * outside of it, ...) is switched off rather than dropped, so the admin configuration survives.
-     */
     private volatile boolean disabled;
 
     public AreaRequirement(ServiceRegistry registry, AreaProvider area, Location returnPoint,
@@ -83,8 +74,6 @@ public class AreaRequirement implements Requirement {
 
     @Override
     public RequirementResult check(Player player, HeadLocation head, HBHunt hunt) {
-        // An unresolvable area (unloaded world, missing WorldGuard region) or one the server refused
-        // to enforce would lock the hunt for everyone: let the click through instead.
         if (disabled || area == null || !area.isAvailable()) {
             return RequirementResult.unresolvable();
         }
@@ -137,7 +126,6 @@ public class AreaRequirement implements Requirement {
             return null;
         }
 
-        // "zone" is the key used before areas became requirements; still read for migrated files.
         ConfigurationSection areaSection = section.getConfigurationSection("area");
         if (areaSection == null) {
             areaSection = section.getConfigurationSection("zone");

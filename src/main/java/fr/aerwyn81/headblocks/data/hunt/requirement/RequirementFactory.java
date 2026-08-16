@@ -5,12 +5,9 @@ import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import org.bukkit.configuration.ConfigurationSection;
 
 /**
- * Reads and writes a single requirement in its configuration section, dispatching on the
- * {@code type} key. The envelope (the {@code type} key itself) lives here so both directions of the
- * conversion stay in one place; implementations only deal with their own fields.
+ * Reads and writes the {@code type} envelope, so both directions of the conversion stay together.
  */
 public final class RequirementFactory {
-
     private RequirementFactory() {
     }
 

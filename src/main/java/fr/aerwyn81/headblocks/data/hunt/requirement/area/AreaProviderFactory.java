@@ -2,6 +2,9 @@ package fr.aerwyn81.headblocks.data.hunt.requirement.area;
 
 import org.bukkit.configuration.ConfigurationSection;
 
+/**
+ * Builds the right kind of area from its configuration section.
+ */
 public final class AreaProviderFactory {
 
     private AreaProviderFactory() {

@@ -17,14 +17,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Menu listing the requirements of a hunt, with the AND/OR switch and the entry points to the
- * per-type editors.
- * <p>
- * It is driven by callbacks rather than by the hunt creation flow: {@link #open} takes the current
- * set and returns the edited one, so any caller (creation today, hunt edition later) can plug in.
+ * The menu listing the requirements of a hunt. Callback driven, so any caller can plug into it.
  */
 public class RequirementsGui {
-
     private static final int MAX_REQUIREMENTS = 18;
     private static final int FIRST_ENTRY_SLOT = 9;
     private static final int MODE_SLOT = 4;
@@ -36,10 +31,6 @@ public class RequirementsGui {
     private static final class Session {
         private RequirementMode mode;
         private final List<Requirement> requirements;
-        /**
-         * Entries the loader could not read. The menu never shows them, so it must hand them back
-         * untouched: rebuilding the set without them would delete them from the hunt file.
-         */
         private final List<Map<String, Object>> preserved;
         private final Consumer<RequirementSet> onValidate;
         private final Consumer<Player> onCancel;
@@ -81,10 +72,6 @@ public class RequirementsGui {
         return areaEditor;
     }
 
-    /**
-     * Opens the menu on a copy of {@code initial}. Nothing is written back until the admin
-     * validates: backing out calls {@code onCancel} and drops the edits.
-     */
     public void open(Player player, RequirementSet initial,
                      Consumer<RequirementSet> onValidate, Consumer<Player> onCancel) {
         sessions.put(player.getUniqueId(), new Session(initial, onValidate, onCancel));
@@ -229,7 +216,6 @@ public class RequirementsGui {
         Session opening = sessions.get(player.getUniqueId());
         RequirementEditor editor = editors.get(type);
 
-        // The picker greys the item out already; this guards the menu being clicked from a stale view.
         if (editor == null || opening == null || (type.isUnique() && opening.has(type))) {
             buildAndOpenGui(player);
             return;

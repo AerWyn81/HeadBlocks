@@ -50,7 +50,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class HBHuntConfigServiceTest {
-
     @TempDir
     Path tempDir;
 
@@ -149,7 +148,7 @@ class HBHuntConfigServiceTest {
     // --- loadHunts ---
 
     @Test
-    void loadHunts_emptyDirectory_returnsEmptyList() throws IOException {
+    void loadHunts_emptyDirectory_returnsEmptyList() {
         // Delete the generated default.yml so hunts dir is empty
         File defaultFile = new File(tempDir.toFile(), "hunts/default.yml");
         assertThat(defaultFile.delete()).isTrue();
@@ -284,7 +283,7 @@ class HBHuntConfigServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getBehaviors()).isNotEmpty();
-        assertThat(result.getBehaviors().get(0).getId()).isEqualTo("free");
+        assertThat(result.getBehaviors().getFirst().getId()).isEqualTo("free");
     }
 
     @Test
@@ -299,7 +298,7 @@ class HBHuntConfigServiceTest {
         assertThat(result).isNotNull();
         // setBehaviors with empty list should fall back to FreeBehavior
         assertThat(result.getBehaviors()).isNotEmpty();
-        assertThat(result.getBehaviors().get(0).getId()).isEqualTo("free");
+        assertThat(result.getBehaviors().getFirst().getId()).isEqualTo("free");
     }
 
     // --- Requirements ---
@@ -393,13 +392,9 @@ class HBHuntConfigServiceTest {
             result = huntConfigService.loadHunt(file);
         }
 
-        // Blocking the exit without a return point is not a complete requirement, so nothing gates
-        // the hunt for now...
         assertThat(result).isNotNull();
         assertThat(result.getRequirements().isEmpty()).isTrue();
 
-        // ... but the rewrite must not throw the admin configuration away: it is written back under
-        // the new shape, ready to be read again once it is completed.
         YamlConfiguration rewritten = YamlConfiguration.loadConfiguration(file);
         assertThat(rewritten.contains("behaviors.zone")).isFalse();
         assertThat(rewritten.getString("requirements.list.0.type")).isEqualTo("area");
@@ -423,7 +418,6 @@ class HBHuntConfigServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getRequirements().getRequirements()).hasSize(1);
 
-        // An unrelated save (a rename, a schedule change, ...) rewrites the whole section.
         huntConfigService.saveHunt(result);
 
         YamlConfiguration rewritten = YamlConfiguration.loadConfiguration(file);
@@ -852,7 +846,7 @@ class HBHuntConfigServiceTest {
     // --- generateDefaultFromConfig with non-empty values ---
 
     @Test
-    void generateDefaultFromConfig_populatesFieldsFromConfigService() throws IOException {
+    void generateDefaultFromConfig_populatesFieldsFromConfigService() {
         // Delete existing default.yml, set up rich ConfigService stubs, then regenerate
         File defaultFile = new File(tempDir.toFile(), "hunts/default.yml");
         assertThat(defaultFile.delete()).isTrue();
@@ -1019,14 +1013,13 @@ class HBHuntConfigServiceTest {
         List<TieredReward> rewards = hunt.getConfig().getTieredRewards();
         // Only the valid tier should be loaded
         assertThat(rewards).hasSize(1);
-        assertThat(rewards.get(0).level()).isEqualTo(5);
+        assertThat(rewards.getFirst().level()).isEqualTo(5);
     }
 
     // --- Behavior serialization round-trips ---
 
     @Nested
     class BehaviorSerialization {
-
         @Test
         void saveAndLoad_scheduledBehavior_rangeMode() {
             HBHunt hunt = new HBHunt(configService, "sched-range", "Scheduled Range", HuntState.ACTIVE, 1, "CHEST");
@@ -1042,7 +1035,7 @@ class HBHuntConfigServiceTest {
 
             assertThat(loaded).isNotNull();
             assertThat(loaded.getBehaviors()).hasSize(1);
-            Behavior behavior = loaded.getBehaviors().get(0);
+            Behavior behavior = loaded.getBehaviors().getFirst();
             assertThat(behavior).isInstanceOf(ScheduledBehavior.class);
             ScheduledBehavior sb = (ScheduledBehavior) behavior;
             assertThat(sb.getScheduleMode()).isInstanceOf(RangeScheduleMode.class);
@@ -1066,7 +1059,7 @@ class HBHuntConfigServiceTest {
             HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/sched-slots.yml"));
 
             assertThat(loaded).isNotNull();
-            ScheduledBehavior sb = (ScheduledBehavior) loaded.getBehaviors().get(0);
+            ScheduledBehavior sb = (ScheduledBehavior) loaded.getBehaviors().getFirst();
             assertThat(sb.getScheduleMode()).isInstanceOf(SlotsScheduleMode.class);
             SlotsScheduleMode ssm = (SlotsScheduleMode) sb.getScheduleMode();
             assertThat(ssm.slots()).hasSize(1);
@@ -1085,7 +1078,7 @@ class HBHuntConfigServiceTest {
             HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/sched-rec.yml"));
 
             assertThat(loaded).isNotNull();
-            ScheduledBehavior sb = (ScheduledBehavior) loaded.getBehaviors().get(0);
+            ScheduledBehavior sb = (ScheduledBehavior) loaded.getBehaviors().getFirst();
             assertThat(sb.getScheduleMode()).isInstanceOf(RecurringScheduleMode.class);
             RecurringScheduleMode rsm = (RecurringScheduleMode) sb.getScheduleMode();
             assertThat(rsm.every()).isEqualTo(RecurrenceUnit.WEEK);
@@ -1094,7 +1087,7 @@ class HBHuntConfigServiceTest {
         }
 
         @Test
-        void saveAndLoad_timedBehavior_withStartPlate() throws IOException {
+        void saveAndLoad_timedBehavior_withStartPlate() {
             // Write the YAML manually to test saveBehaviors output
             HBHunt hunt = new HBHunt(configService, "timed", "Timed", HuntState.ACTIVE, 1, "CHEST");
             World world = mock(World.class);
@@ -1146,7 +1139,6 @@ class HBHuntConfigServiceTest {
 
     @Nested
     class LocationManagement {
-
         @Test
         void loadLocationsFromHunt_emptyHunt_returnsEmpty() {
             HBHunt hunt = new HBHunt(configService, "empty-loc", "Empty", HuntState.ACTIVE, 1, "CHEST");
@@ -1222,7 +1214,7 @@ class HBHuntConfigServiceTest {
             clearInvocations(scheduler);
 
             ArgumentCaptor<Runnable> debounced = ArgumentCaptor.forClass(Runnable.class);
-            doAnswer(invocation -> null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
+            doReturn(null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
 
             huntConfigService.saveLocationInHunt("snap-race",
                     new HeadLocation("seed", UUID.randomUUID(), "snap-race", "world",
@@ -1262,7 +1254,7 @@ class HBHuntConfigServiceTest {
         }
 
         @Test
-        void debouncedSave_writesCompleteYamlAtomically() throws Exception {
+        void debouncedSave_writesCompleteYamlAtomically() {
             HBHunt hunt = new HBHunt(configService, "atomic-write", "Atomic", HuntState.ACTIVE, 1, "CHEST");
             huntConfigService.saveHunt(hunt);
 
@@ -1294,7 +1286,7 @@ class HBHuntConfigServiceTest {
             huntConfigService.saveHunt(new HBHunt(configService, "rename-race", "Original", HuntState.ACTIVE, 1, "CHEST"));
 
             ArgumentCaptor<Runnable> debounced = ArgumentCaptor.forClass(Runnable.class);
-            doAnswer(invocation -> null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
+            doReturn(null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
             doAnswer(invocation -> {
                 ((Runnable) invocation.getArgument(0)).run();
                 return null;
@@ -1321,7 +1313,7 @@ class HBHuntConfigServiceTest {
             huntConfigService.saveHunt(new HBHunt(configService, "doomed", "Doomed", HuntState.ACTIVE, 1, "CHEST"));
 
             ArgumentCaptor<Runnable> debounced = ArgumentCaptor.forClass(Runnable.class);
-            doAnswer(invocation -> null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
+            doReturn(null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
 
             lenient().doAnswer(invocation -> {
                 ((Runnable) invocation.getArgument(0)).run();
@@ -1374,7 +1366,7 @@ class HBHuntConfigServiceTest {
             huntConfigService.saveHunt(new HBHunt(configService, "flushed", "Flushed", HuntState.ACTIVE, 1, "CHEST"));
 
             ArgumentCaptor<Runnable> debounced = ArgumentCaptor.forClass(Runnable.class);
-            doAnswer(invocation -> null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
+            doReturn(null).when(scheduler).runTaskLater(debounced.capture(), anyLong());
 
             UUID headUuid = UUID.randomUUID();
             huntConfigService.saveLocationInHunt("flushed",
@@ -1466,7 +1458,6 @@ class HBHuntConfigServiceTest {
 
     @Nested
     class Migration {
-
         @Test
         void migrateLocationsFromLegacy_nullFile_noOp() {
             huntConfigService.migrateLocationsFromLegacy(null);
@@ -1598,7 +1589,6 @@ class HBHuntConfigServiceTest {
 
     @Nested
     class LoadLocationsWithData {
-
         @Test
         void loadLocationsFromHunt_withValidLocations_returnsHeadLocations() throws IOException {
             try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
@@ -1657,7 +1647,7 @@ class HBHuntConfigServiceTest {
                 List<HeadLocation> locations = huntConfigService.loadLocationsFromHunt("inv-uuid");
 
                 assertThat(locations).hasSize(1);
-                assertThat(locations.get(0).getUuid()).isEqualTo(validHead);
+                assertThat(locations.getFirst().getUuid()).isEqualTo(validHead);
             }
         }
 
@@ -1683,7 +1673,7 @@ class HBHuntConfigServiceTest {
                 List<HeadLocation> locations = huntConfigService.loadLocationsFromHunt("order-test");
 
                 assertThat(locations).hasSize(1);
-                assertThat(locations.get(0).getOrderIndex()).isEqualTo(3);
+                assertThat(locations.getFirst().getOrderIndex()).isEqualTo(3);
             }
         }
     }
@@ -1694,7 +1684,6 @@ class HBHuntConfigServiceTest {
 
     @Nested
     class RemoveLocation {
-
         @Test
         void removeLocationFromHunt_existingLocation_removesFromYaml() throws IOException {
             try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
@@ -1756,7 +1745,7 @@ class HBHuntConfigServiceTest {
                 // Existing location should still be present (cache not invalidated, same yaml)
                 List<HeadLocation> remaining = huntConfigService.loadLocationsFromHunt("rem-safe");
                 assertThat(remaining).hasSize(1);
-                assertThat(remaining.get(0).getUuid()).isEqualTo(existing);
+                assertThat(remaining.getFirst().getUuid()).isEqualTo(existing);
             }
         }
     }

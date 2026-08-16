@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RequirementSetTest {
-
     @Mock
     ServiceRegistry registry;
 
@@ -188,7 +187,7 @@ class RequirementSetTest {
 
         assertThat(loaded.getMode()).isEqualTo(RequirementMode.ANY);
         assertThat(loaded.getRequirements()).hasSize(2);
-        assertThat(loaded.getRequirements().get(0)).isInstanceOf(PermissionRequirement.class);
+        assertThat(loaded.getRequirements().getFirst()).isInstanceOf(PermissionRequirement.class);
         assertThat(((PermissionRequirement) loaded.getRequirements().get(0)).node()).isEqualTo("hb.vip");
         assertThat(loaded.getRequirements().get(1)).isInstanceOf(PlaytimeRequirement.class);
         assertThat(((PlaytimeRequirement) loaded.getRequirements().get(1)).minutes()).isEqualTo(120);
@@ -211,7 +210,7 @@ class RequirementSetTest {
         RequirementSet loaded = RequirementSet.fromSection(registry, section);
 
         assertThat(loaded.getRequirements()).hasSize(1);
-        assertThat(loaded.getRequirements().get(0)).isInstanceOf(PermissionRequirement.class);
+        assertThat(loaded.getRequirements().getFirst()).isInstanceOf(PermissionRequirement.class);
     }
 
     @Test
@@ -239,7 +238,6 @@ class RequirementSetTest {
         YamlConfiguration rewritten = new YamlConfiguration();
         loaded.saveTo(rewritten.createSection("requirements"));
 
-        // The understood entry comes first, the untouched one right after it.
         assertThat(rewritten.getString("requirements.list.0.type")).isEqualTo("permission");
         assertThat(rewritten.getString("requirements.list.1.type")).isEqualTo("does-not-exist");
         assertThat(rewritten.getInt("requirements.list.1.nested.value")).isEqualTo(7);

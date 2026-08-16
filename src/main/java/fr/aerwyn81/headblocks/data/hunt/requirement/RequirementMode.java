@@ -3,16 +3,10 @@ package fr.aerwyn81.headblocks.data.hunt.requirement;
 import fr.aerwyn81.headblocks.services.LanguageService;
 
 /**
- * How the requirements of a {@link RequirementSet} combine.
+ * Whether a hunt needs all of its requirements or just one of them.
  */
 public enum RequirementMode {
-    /**
-     * Every requirement must be met (AND).
-     */
     ALL,
-    /**
-     * At least one requirement must be met (OR).
-     */
     ANY;
 
     public String getLocalizedName(LanguageService ls) {
