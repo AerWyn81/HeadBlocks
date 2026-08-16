@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.data.hunt.behavior.zone;
+package fr.aerwyn81.headblocks.data.hunt.requirement.area;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -6,26 +6,26 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ZoneProviderFactoryTest {
+class AreaProviderFactoryTest {
 
     @Test
     void fromSection_null_returnsNull() {
-        assertThat(ZoneProviderFactory.fromSection(null)).isNull();
+        assertThat(AreaProviderFactory.fromSection(null)).isNull();
     }
 
     @Test
     void fromSection_unknownType_returnsNull() {
         YamlConfiguration yaml = new YamlConfiguration();
-        ConfigurationSection section = yaml.createSection("zone");
+        ConfigurationSection section = yaml.createSection("area");
         section.set("type", "sphere");
 
-        assertThat(ZoneProviderFactory.fromSection(section)).isNull();
+        assertThat(AreaProviderFactory.fromSection(section)).isNull();
     }
 
     @Test
     void fromSection_cuboid_returnsCuboidProvider() {
         YamlConfiguration yaml = new YamlConfiguration();
-        ConfigurationSection section = yaml.createSection("zone");
+        ConfigurationSection section = yaml.createSection("area");
         section.set("type", "cuboid");
         section.set("world", "world");
         section.set("min.x", 0);
@@ -35,23 +35,23 @@ class ZoneProviderFactoryTest {
         section.set("max.y", 70);
         section.set("max.z", 10);
 
-        ZoneProvider provider = ZoneProviderFactory.fromSection(section);
+        AreaProvider provider = AreaProviderFactory.fromSection(section);
 
-        assertThat(provider).isInstanceOf(CuboidZoneProvider.class);
+        assertThat(provider).isInstanceOf(CuboidAreaProvider.class);
         assertThat(provider.getType()).isEqualTo("cuboid");
     }
 
     @Test
     void fromSection_worldguard_returnsWorldGuardProvider() {
         YamlConfiguration yaml = new YamlConfiguration();
-        ConfigurationSection section = yaml.createSection("zone");
+        ConfigurationSection section = yaml.createSection("area");
         section.set("type", "worldguard");
         section.set("world", "world");
         section.set("region", "spawn");
 
-        ZoneProvider provider = ZoneProviderFactory.fromSection(section);
+        AreaProvider provider = AreaProviderFactory.fromSection(section);
 
-        assertThat(provider).isInstanceOf(WorldGuardZoneProvider.class);
-        assertThat(((WorldGuardZoneProvider) provider).getRegionId()).isEqualTo("spawn");
+        assertThat(provider).isInstanceOf(WorldGuardAreaProvider.class);
+        assertThat(((WorldGuardAreaProvider) provider).getRegionId()).isEqualTo("spawn");
     }
 }

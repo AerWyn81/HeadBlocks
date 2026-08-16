@@ -31,11 +31,11 @@ public class OnPlayerChatEvent implements Listener {
             registry.getScheduler().runTask(player,
                     () -> registry.getGuiService().getScheduledConfigManager().processPendingChatInput(player, event.getMessage())
             );
-        } else if (registry.getGuiService().getZoneConfigManager().hasPendingChatInput(player)) {
+        } else if (registry.getChatPromptService().hasPending(player)) {
             event.setCancelled(true);
 
             registry.getScheduler().runTask(player,
-                    () -> registry.getGuiService().getZoneConfigManager().processPendingChatInput(player, event.getMessage())
+                    () -> registry.getChatPromptService().process(player, event.getMessage())
             );
         }
     }

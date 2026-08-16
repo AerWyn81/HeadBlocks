@@ -33,6 +33,13 @@ behaviors:
       date: "12/31/2026"
       time: "23:59"
 
+requirements:
+  mode: ALL
+  list:
+    '0':
+      type: permission
+      permission: headblocks.christmas
+
 config:
   headClick:
     messages:
@@ -125,6 +132,8 @@ Use `/hb hunt enable <name>` and `/hb hunt disable <name>` to change state at ru
 Behaviors control how players can interact with a hunt's heads. They are evaluated as a chain — if any behavior denies a click, the entire chain denies it.
 
 Behaviors are normally selected and configured through the in-game menus opened by `/hb hunt create` — see the [Behavior GUI](behaviors-gui.md) for every clickable element. The YAML below is the on-disk result you can also edit by hand.
+
+Behaviors describe *how the hunt plays*; the conditions a player must meet to claim a head live in [Requirements](#requirements) instead.
 
 ### Free
 
@@ -276,70 +285,161 @@ behaviors:
 - **repeatable**: if `true`, players can replay after completion (progress is reset)
 - Players can leave a run with `/hb leave`
 
-### Zone
+{% hint style="info" %} The **bounded zone** behavior of earlier versions is now the [area requirement](#requirements). Existing hunt files are converted automatically the first time they are loaded. {% endhint %}
 
-Players are confined to a delimited area. A player who enters the zone is engaged and confined until they complete the hunt — if they try to leave, they are pushed back at the border, and teleported to a return point if they end up outside (ender pearl, portal, respawn…).
+## Requirements
 
-The zone can be a **cuboid** (two corners) or a **WorldGuard region** (soft dependency — WorldGuard must be installed for that mode).
+Requirements are the conditions checked when a player **clicks a head** of the hunt. They live in their own `requirements` section, and are configured through the Requirements menu of `/hb hunt create` (see [Behavior GUI](behaviors-gui.md)).
 
 ```yaml
-# Cuboid zone
-behaviors:
-  zone:
-    blockExit: true
-    resetOnLeave: true
-    messageMode: CHAT
-    zone:
-      type: cuboid
-      world: default
-      min: { x: 0, y: 60, z: 0 }
-      max: { x: 50, y: 90, z: 50 }
-    returnPoint:
-      world: default
-      x: 25.5
-      y: 65.0
-      z: 25.5
-      yaw: 90.0
-      pitch: 0.0
+requirements:
+  mode: ALL
+  list:
+    '0':
+      type: permission
+      permission: headblocks.vip
+    '1':
+      type: playtime
+      minutes: 120
+```
+
+- **mode**: `ALL` (every requirement must be met, default) or `ANY` (at least one)
+- **list**: the requirements, under numeric keys; each has a `type` plus its own fields
+
+When a player is blocked, the click sends **every** blocking reason at once, so they know exactly what is missing.
+
+A requirement the server cannot check right now — an area whose world is not loaded, a deleted previous hunt, a missing PlaceholderAPI — never blocks a click, and under `ANY` it does not count as met either. A requirement the plugin cannot read at all is left in the file untouched rather than removed.
+
+### Area
+
+The player must stand inside a delimited area. It can be a **cuboid** (two corners) or a **WorldGuard region** (soft dependency — WorldGuard must be installed for that mode). A hunt holds at most one area requirement.
+
+On top of the click check, the area carries the confinement options: a player who enters is engaged and confined until they complete the hunt — if they try to leave, they are pushed back at the border, and teleported to a return point if they end up outside (ender pearl, portal, respawn…).
+
+```yaml
+# Cuboid area
+requirements:
+  mode: ALL
+  list:
+    '0':
+      type: area
+      blockExit: true
+      resetOnLeave: true
+      messageMode: CHAT
+      area:
+        type: cuboid
+        world: default
+        min: { x: 0, y: 60, z: 0 }
+        max: { x: 50, y: 90, z: 50 }
+      returnPoint:
+        world: default
+        x: 25.5
+        y: 65.0
+        z: 25.5
+        yaw: 90.0
+        pitch: 0.0
 ```
 
 ```yaml
-# WorldGuard region zone
-behaviors:
-  zone:
-    zone:
-      type: worldguard
-      world: default
-      region: arena
-    returnPoint:
-      world: default
-      x: 25.5
-      y: 65.0
-      z: 25.5
-      yaw: 90.0
-      pitch: 0.0
+# WorldGuard region area
+requirements:
+  mode: ALL
+  list:
+    '0':
+      type: area
+      area:
+        type: worldguard
+        world: default
+        region: arena
 ```
 
-- **blockExit** (default `true`): if `true`, players are physically confined (pushed back at the border, teleported to the return point if caught outside). If `false`, players may leave freely — crossing out just triggers the leave consequences below.
-- **resetOnLeave** (default `true`): resets the player's progress in this hunt when they leave — via `/hb leave` **or** by crossing out of the zone.
+- **blockExit** (default `false`): if `true`, players are physically confined (pushed back at the border, teleported to the return point if caught outside). If `false`, players may leave freely — crossing out just triggers the leave consequences below.
+- **resetOnLeave** (default `false`): resets the player's progress in this hunt when they leave — via `/hb leave` **or** by crossing out of the area.
 - **messageMode** (default `CHAT`): where the entry message is shown — `CHAT`, `ACTION_BAR`, or `TITLE`. In `TITLE` mode, a `\n` in the message splits it: the part before goes to the title, the part after to the subtitle.
-- **zone.type**: `cuboid` or `worldguard`
-- **zone.min / zone.max** (cuboid): opposite corners, inclusive (order does not matter)
-- **zone.region** (worldguard): the WorldGuard region id
-- **returnPoint**: where players are teleported when caught outside — **must be inside the zone**. Required only when `blockExit: true`.
-- Players can leave a zone with `/hb leave`; they can then walk out freely until they re-enter
-- Players with `headblocks.zone.bypass` (and spectators) are never confined
-- If a WorldGuard region is missing or WorldGuard is not loaded, the zone fails open (no confinement) rather than trapping players
+- **area.type**: `cuboid` or `worldguard`
+- **area.min / area.max** (cuboid): opposite corners, inclusive (order does not matter)
+- **area.region** (worldguard): the WorldGuard region id
+- **returnPoint**: where players are teleported when caught outside — **must be inside the area**. Required only when `blockExit: true`.
+- Players can leave an area with `/hb leave`; they can then walk out freely until they re-enter
+- Players with `headblocks.area.bypass` (and spectators) are never confined
+- If a WorldGuard region is missing or WorldGuard is not loaded, the area fails open (no confinement, click allowed) rather than trapping players
 
-{% hint style="warning" %}
-To avoid soft-locking players, a zone behavior is **disabled at load (with a warning)** if it has no zone, no heads, any head located outside the zone, or (when `blockExit: true`) no `returnPoint`. Placing a head outside the selected hunt's zone is blocked, and reassigning a head outside a zoned hunt is refused (mass `assign` skips them).
+{% hint style="warning" %} To avoid soft-locking players, an area requirement is **disabled at load (with a warning)** if it has no area, no heads, any head located outside the area, or (when `blockExit: true`) no `returnPoint`. Placing a head outside the selected hunt's area is blocked, and reassigning a head outside such a hunt is refused (mass `assign` skips them).
 {% endhint %}
 
-{% hint style="info" %}
-Behaviors can be combined: `zone` + `timed` confines players to an arena during a timed run.
+{% hint style="info" %} An area combines with the behaviors: area + `timed` confines players to an arena during a timed run.
 
-A player can only be confined to **one** zone at a time. If two zone hunts overlap, the engaged hunt is chosen by **highest priority**; on equal priority a **blocking** zone (`blockExit: true`) wins over a non-blocking one. Note that a player who enters through an area covered by only one zone engages that zone and stays engaged until they leave it — so avoid overlapping zones with mixed settings for hunts meant to be played in parallel.
+A player can only be confined to **one** area at a time. If two hunt areas overlap, the engaged hunt is chosen by **highest priority**; on equal priority a **blocking** area (`blockExit: true`) wins over a non-blocking one. Note that a player who enters through a spot covered by only one area engages that one and stays engaged until they leave it — so avoid overlapping areas with mixed settings for hunts meant to be played in parallel.
 {% endhint %}
+
+### Previous hunt
+
+The player must have progressed in another hunt first.
+
+```yaml
+requirements:
+  mode: ALL
+  list:
+    '0':
+      type: hunt
+      hunt: tutorial
+      heads: 0
+```
+
+- **hunt**: id of the hunt to progress in
+- **heads** (default `0`): number of heads to find there. `0` means the whole hunt, and keeps following the target hunt as heads are added to it.
+- If the referenced hunt no longer exists, the requirement is ignored (with a warning) rather than blocking players forever
+
+### Permission
+
+The player must hold a permission node.
+
+```yaml
+requirements:
+  mode: ALL
+  list:
+    '0':
+      type: permission
+      permission: headblocks.vip
+```
+
+The node is checked as-is: no `headblocks.admin` or wildcard fallback applies, so you keep full control over who passes.
+
+### Playtime
+
+The player must have spent a minimum time on the server, read from the vanilla play time statistic.
+
+```yaml
+requirements:
+  mode: ALL
+  list:
+    '0':
+      type: playtime
+      minutes: 120
+```
+
+- **minutes**: required playtime, in minutes
+
+### PlaceholderAPI
+
+Compares a PlaceholderAPI value with the expected one. Requires **PlaceholderAPI** to be installed — the type is hidden from the menu otherwise.
+
+```yaml
+requirements:
+  mode: ALL
+  list:
+    '0':
+      type: placeholder
+      placeholder: "%vault_eco_balance%"
+      operator: ">="
+      value: "1000"
+```
+
+- **placeholder**: the placeholder to resolve for the clicking player
+- **operator**: `=`, `!=`, `>`, `>=`, `<`, `<=`, or `contains`
+- **value**: the expected value
+
+The ordering operators (`>`, `>=`, `<`, `<=`) need numbers on both sides: a placeholder that fails to resolve never satisfies the requirement. If PlaceholderAPI is uninstalled after the fact, the requirement is ignored (with a warning).
 
 ## Per-Hunt Configuration
 

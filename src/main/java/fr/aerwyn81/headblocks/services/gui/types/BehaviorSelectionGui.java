@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.*;
 import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.ScheduleMode;
-import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneMessageMode;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class BehaviorSelectionGui {
@@ -24,7 +25,7 @@ public class BehaviorSelectionGui {
     private final ServiceRegistry registry;
     private final ConcurrentHashMap<UUID, Set<String>> selectedBehaviors = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> pendingHuntNames = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, ZoneBehavior> pendingZones = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, RequirementSet> pendingRequirements = new ConcurrentHashMap<>();
 
     public BehaviorSelectionGui(ServiceRegistry registry) {
         this.registry = registry;
@@ -33,11 +34,12 @@ public class BehaviorSelectionGui {
     public void open(Player player, String huntName) {
         pendingHuntNames.put(player.getUniqueId(), huntName);
         selectedBehaviors.put(player.getUniqueId(), new HashSet<>());
+        pendingRequirements.remove(player.getUniqueId());
 
         buildAndOpenGui(player);
     }
 
-    void buildAndOpenGui(Player player) {
+    public void buildAndOpenGui(Player player) {
         var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
                 registry.getLanguageService().message("Gui.BehaviorSelectionTitle"), false, 2);
 
@@ -50,11 +52,8 @@ public class BehaviorSelectionGui {
 
         Set<String> selected = selectedBehaviors.getOrDefault(player.getUniqueId(), new HashSet<>());
 
-        // Slot 10: Zone
-        menu.setItem(0, 10, createBehaviorItem("zone",
-                registry.getLanguageService().message("Gui.BehaviorZoneName"),
-                registry.getLanguageService().messageList("Gui.BehaviorZoneLore"),
-                selected.contains("zone")));
+        // Slot 10: Requirements (not a behavior: it opens its own menu)
+        menu.setItem(0, 10, createRequirementsItem(player));
 
         // Slot 11: Ordered
         menu.setItem(0, 11, createBehaviorItem("ordered",
@@ -82,6 +81,36 @@ public class BehaviorSelectionGui {
                 .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
 
         player.openInventory(menu.getInventory());
+    }
+
+    private ItemGUI createRequirementsItem(Player player) {
+        RequirementSet requirements = pendingRequirements.get(player.getUniqueId());
+        int count = requirements != null ? requirements.size() : 0;
+
+        List<String> lore = registry.getLanguageService().messageList("Gui.BehaviorRequirementsLore").stream()
+                .map(line -> line.replace("%count%", String.valueOf(count)))
+                .collect(Collectors.toList());
+
+        return new ItemGUI(new ItemBuilder(count > 0 ? Material.WRITTEN_BOOK : Material.BOOK)
+                .setName(registry.getLanguageService().message("Gui.BehaviorRequirementsName"))
+                .setLore(lore)
+                .toItemStack(), true)
+                .addOnClickEvent(event -> openRequirements((Player) event.getWhoClicked()));
+    }
+
+    private void openRequirements(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        registry.getGuiService().getRequirementsGui().open(player, pendingRequirements.get(uuid),
+                set -> {
+                    if (set == null || set.isEmpty()) {
+                        pendingRequirements.remove(uuid);
+                    } else {
+                        pendingRequirements.put(uuid, set);
+                    }
+                    buildAndOpenGui(player);
+                },
+                this::buildAndOpenGui);
     }
 
     private ItemGUI createBehaviorItem(String behaviorId, String name, List<String> lore, boolean isSelected) {
@@ -117,11 +146,6 @@ public class BehaviorSelectionGui {
     private void handleValidate(Player player) {
         Set<String> selected = selectedBehaviors.get(player.getUniqueId());
 
-        if (selected != null && selected.contains("zone")) {
-            registry.getGuiService().getZoneConfigManager().open(player);
-            return;
-        }
-
         if (selected != null && selected.contains("timed")) {
             registry.getGuiService().getTimedConfigManager().open(player);
             return;
@@ -139,9 +163,9 @@ public class BehaviorSelectionGui {
                            int limitSeconds, boolean resetOnExpire, ScheduleMode scheduleMode) {
         String huntName = pendingHuntNames.remove(player.getUniqueId());
         Set<String> selected = selectedBehaviors.remove(player.getUniqueId());
+        RequirementSet requirements = pendingRequirements.remove(player.getUniqueId());
 
         if (huntName == null) {
-            pendingZones.remove(player.getUniqueId());
             player.closeInventory();
             return;
         }
@@ -160,14 +184,15 @@ public class BehaviorSelectionGui {
                     case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, scheduleMode));
                     case "timed" ->
                             behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
-                    case "zone" -> behaviors.add(pendingZones.getOrDefault(player.getUniqueId(),
-                            new ZoneBehavior(registry, null, null, false, false, ZoneMessageMode.CHAT)));
+                    default -> {
+                        // Unknown toggle, nothing to build.
+                    }
                 }
             }
         }
 
         hunt.setBehaviors(behaviors);
-        pendingZones.remove(player.getUniqueId());
+        hunt.setRequirements(requirements);
 
         HuntCreateEvent createEvent = new HuntCreateEvent(hunt);
         Bukkit.getPluginManager().callEvent(createEvent);
@@ -207,13 +232,9 @@ public class BehaviorSelectionGui {
         return selectedBehaviors.get(playerUuid);
     }
 
-    public void setPendingZone(UUID playerUuid, ZoneBehavior zoneBehavior) {
-        pendingZones.put(playerUuid, zoneBehavior);
-    }
-
     public void clearState(UUID playerUuid) {
         pendingHuntNames.remove(playerUuid);
         selectedBehaviors.remove(playerUuid);
-        pendingZones.remove(playerUuid);
+        pendingRequirements.remove(playerUuid);
     }
 }

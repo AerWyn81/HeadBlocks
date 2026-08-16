@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.services;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ZoneRunManager {
+public class AreaRunManager {
     private static final ConcurrentHashMap<UUID, String> engaged = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, String> released = new ConcurrentHashMap<>();
 

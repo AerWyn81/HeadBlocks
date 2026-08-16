@@ -36,19 +36,19 @@ public class OnPlayerInteractEvent implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOW)
-    public void onZoneCapture(PlayerInteractEvent e) {
+    public void onAreaCapture(PlayerInteractEvent e) {
         if (e.getAction() != Action.LEFT_CLICK_BLOCK || e.getClickedBlock() == null) {
             return;
         }
 
         Player player = e.getPlayer();
-        var zoneConfigManager = registry.getGuiService().getZoneConfigManager();
-        if (!zoneConfigManager.isAwaitingBlockClick(player.getUniqueId())) {
+        var areaEditor = registry.getGuiService().getRequirementsGui().getAreaEditor();
+        if (!areaEditor.isAwaitingBlockClick(player.getUniqueId())) {
             return;
         }
 
         e.setCancelled(true);
-        zoneConfigManager.handleBlockClick(player, e.getClickedBlock().getLocation());
+        areaEditor.handleBlockClick(player, e.getClickedBlock().getLocation());
     }
 
     @EventHandler
@@ -151,6 +151,15 @@ public class OnPlayerInteractEvent implements Listener {
                     return;
                 }
 
+                // Check the requirements of the hunt (area, permission, playtime, ...)
+                var requirementResult = hunt.evaluateRequirements(player, headLocation);
+                if (!requirementResult.satisfied()) {
+                    if (requirementResult.reason() != null && !requirementResult.reason().isEmpty()) {
+                        player.sendMessage(requirementResult.reason());
+                    }
+                    return;
+                }
+
                 // Check remaining behaviors (ordered, timed, etc.)
                 var behaviorResult = hunt.evaluateBehaviors(player, headLocation);
                 if (!behaviorResult.allowed()) {
@@ -177,7 +186,7 @@ public class OnPlayerInteractEvent implements Listener {
 
                 // Notify behaviors
                 hunt.notifyHeadFound(player, headLocation);
-                registry.getZoneEnforcementService().onHeadFound(player, hunt, huntPlayerHeads.size());
+                registry.getAreaEnforcementService().onHeadFound(player, hunt, huntPlayerHeads.size());
 
                 // Give hunt-specific rewards
                 registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, huntConfig, hunt.getId());

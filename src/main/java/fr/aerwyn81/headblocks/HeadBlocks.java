@@ -9,9 +9,9 @@ import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.*;
 import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.platform.Platforms;
+import fr.aerwyn81.headblocks.runnables.AreaOutlineTask;
 import fr.aerwyn81.headblocks.runnables.GlobalTask;
 import fr.aerwyn81.headblocks.runnables.TimedRunTask;
-import fr.aerwyn81.headblocks.runnables.ZoneOutlineTask;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
 import fr.aerwyn81.headblocks.utils.config.ConfigUpdater;
@@ -46,7 +46,7 @@ public final class HeadBlocks extends JavaPlugin {
     private SchedulerAdapter scheduler;
     private Task globalTask;
     private Task timedRunTask;
-    private Task zoneOutlineTask;
+    private Task areaOutlineTask;
     private HeadDatabaseHook headDatabaseHook;
     private HeadDBHook headDBHook;
     private PacketEventsHook packetEventsHook;
@@ -164,7 +164,7 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerMoveEvent(serviceRegistry), this);
 
         timedRunTask = scheduler.runTaskTimer(new TimedRunTask(serviceRegistry), 0, 2);
-        zoneOutlineTask = scheduler.runTaskTimer(new ZoneOutlineTask(serviceRegistry), 20, 10);
+        areaOutlineTask = scheduler.runTaskTimer(new AreaOutlineTask(serviceRegistry), 20, 10);
 
         if (serviceRegistry.getConfigService().metricsEnabled()) {
             var m = new Metrics(this, 15495);
@@ -218,8 +218,8 @@ public final class HeadBlocks extends JavaPlugin {
 
         cancelTask(globalTask);
         cancelTask(timedRunTask);
-        cancelTask(zoneOutlineTask);
-        globalTask = timedRunTask = zoneOutlineTask = null;
+        cancelTask(areaOutlineTask);
+        globalTask = timedRunTask = areaOutlineTask = null;
 
         if (scheduler != null) {
             scheduler.cancelAllTasks();

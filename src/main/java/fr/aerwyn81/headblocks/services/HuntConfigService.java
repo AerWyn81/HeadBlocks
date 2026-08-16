@@ -9,7 +9,10 @@ import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.ZoneBehavior;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementMode;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementType;
+import fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
@@ -123,10 +126,65 @@ public class HuntConfigService {
         List<Behavior> behaviors = loadBehaviors(yaml);
         hunt.setBehaviors(behaviors);
 
+        boolean hasRequirements = yaml.contains("requirements");
+        RequirementSet requirements = RequirementSet.fromSection(
+                registry, yaml.getConfigurationSection("requirements"));
+
+        boolean hadLegacyZone = yaml.contains("behaviors.zone");
+        if (hadLegacyZone) {
+            if (hasRequirements) {
+                // Already converted at some point: the leftover section is inert, loadBehaviors does
+                // not read it either. The rewrite below clears it, so say it out loud.
+                LogUtil.warning("Hunt {0}: the leftover bounded zone was dropped, "
+                        + "the requirements section takes precedence.", id);
+            } else {
+                requirements = migrateLegacyZone(yaml, id);
+            }
+        }
+
+        hunt.setRequirements(requirements);
+
         HuntConfig huntConfig = loadHuntConfig(yaml);
         hunt.setConfig(huntConfig);
 
+        if (hadLegacyZone) {
+            // Rewrites the file without the legacy behaviour section, so the conversion happens once.
+            // Seeding the cache with the document just parsed keeps saveHunt from reading it again.
+            yamlCache.put(id, yaml);
+            saveHunt(hunt);
+        }
+
         return hunt;
+    }
+
+    /**
+     * Converts the pre-3.3 {@code behaviors.zone} section into an area requirement.
+     * <p>
+     * The returned set always carries the zone one way or another, because the caller rewrites the
+     * file right after: returning nothing would erase the configuration instead of converting it.
+     */
+    private RequirementSet migrateLegacyZone(YamlConfiguration yaml, String huntId) {
+        ConfigurationSection zone = yaml.getConfigurationSection("behaviors.zone");
+        if (zone == null) {
+            LogUtil.warning("Hunt {0}: the bounded zone is not a section, it was dropped.", huntId);
+            return new RequirementSet(registry);
+        }
+
+        AreaRequirement area = AreaRequirement.fromConfig(registry, zone);
+        if (area != null && area.isComplete()) {
+            LogUtil.success("Hunt {0}: the bounded zone became an area requirement.", huntId);
+            return new RequirementSet(registry, RequirementMode.ALL, List.of(area));
+        }
+
+        // Nothing usable right now, an unloaded return point world being the usual cause. The section
+        // is carried over as an unparsed entry rather than deleted: its keys are already the ones the
+        // area requirement reads, so the next load retries it once the world is there.
+        LogUtil.warning("Hunt {0}: the bounded zone could not be read, it was carried over as is.", huntId);
+
+        Map<String, Object> raw = RequirementSet.snapshot(zone);
+        raw.put("type", RequirementType.AREA.getId());
+
+        return new RequirementSet(registry, RequirementMode.ALL, List.of(), List.of(raw));
     }
 
     public void saveHunt(HBHunt hunt) {
@@ -141,6 +199,7 @@ public class HuntConfigService {
             yaml.set("icon", hunt.getIcon());
 
             saveBehaviors(yaml, hunt.getBehaviors());
+            saveRequirements(yaml, hunt.getRequirements());
             saveHuntConfig(yaml, hunt.getConfig());
 
             content = yaml.saveToString();
@@ -477,6 +536,11 @@ public class HuntConfigService {
         }
 
         for (String type : section.getKeys(false)) {
+            // Zones are requirements now; the legacy key is handled by the migration.
+            if ("zone".equalsIgnoreCase(type)) {
+                continue;
+            }
+
             ConfigurationSection behaviorSection = section.getConfigurationSection(type);
             behaviors.add(Behavior.fromConfig(type, registry, behaviorSection));
         }
@@ -484,7 +548,21 @@ public class HuntConfigService {
         return behaviors;
     }
 
+    private void saveRequirements(YamlConfiguration yaml, RequirementSet requirements) {
+        // Rewritten from scratch: keeping the previous keys would resurrect requirements the admin
+        // just removed. Entries the loader could not read are part of the set and come back with it.
+        yaml.set("requirements", null);
+
+        if (requirements == null || (requirements.isEmpty() && requirements.getPreserved().isEmpty())) {
+            return;
+        }
+
+        requirements.saveTo(yaml.createSection("requirements"));
+    }
+
     private void saveBehaviors(YamlConfiguration yaml, List<Behavior> behaviors) {
+        yaml.set("behaviors", null);
+
         for (Behavior behavior : behaviors) {
             String key = "behaviors." + behavior.getId();
             yaml.createSection(key);
@@ -512,24 +590,6 @@ public class HuntConfigService {
                 }
             }
 
-            if (behavior instanceof ZoneBehavior zb) {
-                yaml.set(key + ".blockExit", zb.blockExit());
-                yaml.set(key + ".resetOnLeave", zb.resetOnLeave());
-                yaml.set(key + ".messageMode", zb.messageMode().name());
-                if (zb.zone() != null) {
-                    var zoneSection = yaml.createSection(key + ".zone");
-                    zb.zone().saveTo(zoneSection);
-                }
-                var returnPoint = zb.returnPoint();
-                if (returnPoint != null && returnPoint.getWorld() != null) {
-                    yaml.set(key + ".returnPoint.world", returnPoint.getWorld().getName());
-                    yaml.set(key + ".returnPoint.x", returnPoint.getX());
-                    yaml.set(key + ".returnPoint.y", returnPoint.getY());
-                    yaml.set(key + ".returnPoint.z", returnPoint.getZ());
-                    yaml.set(key + ".returnPoint.yaw", returnPoint.getYaw());
-                    yaml.set(key + ".returnPoint.pitch", returnPoint.getPitch());
-                }
-            }
         }
     }
 

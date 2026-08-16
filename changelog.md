@@ -1,3 +1,19 @@
+# HeadBlocks v3.3.0
+
+## What's New
+
+### ✨ New Features
+
+- **Hunt requirements.** A **Requirements** menu in `/hb hunt create` to stack the conditions to claim a head: area, previous hunt, permission, playtime and PlaceholderAPI, combined with `ALL` or `ANY`. See the [documentation](https://github.com/AerWyn81/HeadBlocks/blob/master/docs/configuration/hunts.md#requirements).
+
+### 🚀 Improvements
+
+- The bounded zone became the **area** requirement, with every option it had. Existing hunt files are migrated on load.
+- The `headblocks.zone.bypass` permission is now `headblocks.area.bypass`. The old node keeps working.
+- Hunt files no longer keep the keys of a behavior or a requirement that was removed.
+
+---
+
 # HeadBlocks v3.2.0
 
 ## What's New

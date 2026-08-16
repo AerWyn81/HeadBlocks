@@ -70,19 +70,20 @@ public class OnPlayerClickInventoryEvent implements Listener {
             }
         }
 
-        var zoneConfigManager = registry.getGuiService().getZoneConfigManager();
-        if (!(event.getPlayer() instanceof Player player) || !zoneConfigManager.isOutlineViewer(player.getUniqueId())) {
+        var areaEditor = registry.getGuiService().getRequirementsGui().getAreaEditor();
+        if (!(event.getPlayer() instanceof Player player) || !areaEditor.isOutlineViewer(player.getUniqueId())) {
             return;
         }
 
         registry.getScheduler().runTaskLater(() -> {
-            if (zoneConfigManager.isAwaitingCapture(player.getUniqueId())) {
+            if (areaEditor.isAwaitingCapture(player.getUniqueId())
+                    || registry.getChatPromptService().hasPending(player)) {
                 return;
             }
             if (player.getOpenInventory().getTopInventory().getHolder() instanceof HBMenu) {
                 return;
             }
-            zoneConfigManager.clearState(player.getUniqueId());
+            areaEditor.clearState(player.getUniqueId());
         }, 1L);
     }
 }

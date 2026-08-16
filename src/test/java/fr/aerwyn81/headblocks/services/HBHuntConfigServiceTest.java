@@ -11,11 +11,17 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.*;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementMode;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
+import fr.aerwyn81.headblocks.data.hunt.requirement.area.AreaMessageMode;
+import fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement;
+import fr.aerwyn81.headblocks.data.hunt.requirement.types.PermissionRequirement;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -294,6 +300,199 @@ class HBHuntConfigServiceTest {
         // setBehaviors with empty list should fall back to FreeBehavior
         assertThat(result.getBehaviors()).isNotEmpty();
         assertThat(result.getBehaviors().get(0).getId()).isEqualTo("free");
+    }
+
+    // --- Requirements ---
+
+    private ConfigurationSection writeLegacyZone(YamlConfiguration yaml) {
+        ConfigurationSection zone = yaml.createSection("behaviors.zone");
+        ConfigurationSection area = zone.createSection("zone");
+        area.set("type", "cuboid");
+        area.set("world", "world");
+        area.set("min.x", 0);
+        area.set("min.y", 60);
+        area.set("min.z", 0);
+        area.set("max.x", 10);
+        area.set("max.y", 70);
+        area.set("max.z", 10);
+        return zone;
+    }
+
+    @Test
+    void loadHunt_legacyZoneBehavior_becomesAnAreaRequirement() throws IOException {
+        File file = new File(tempDir.toFile(), "hunts/legacy.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("id", "legacy");
+        yaml.createSection("behaviors.free");
+        ConfigurationSection zone = writeLegacyZone(yaml);
+        zone.set("blockExit", true);
+        zone.set("resetOnLeave", true);
+        zone.set("messageMode", "TITLE");
+        zone.set("returnPoint.world", "world");
+        zone.set("returnPoint.x", 5.0);
+        zone.set("returnPoint.y", 65.0);
+        zone.set("returnPoint.z", 5.0);
+        yaml.save(file);
+
+        World world = mock(World.class);
+        lenient().when(world.getName()).thenReturn("world");
+
+        HBHunt result;
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+            result = huntConfigService.loadHunt(file);
+        }
+
+        assertThat(result).isNotNull();
+        assertThat(result.getBehaviors()).extracting(Behavior::getId).containsExactly("free");
+
+        var area = result.getRequirements().find(AreaRequirement.class);
+        assertThat(area).isPresent();
+        assertThat(area.get().blockExit()).isTrue();
+        assertThat(area.get().resetOnLeave()).isTrue();
+        assertThat(area.get().messageMode()).isEqualTo(AreaMessageMode.TITLE);
+        assertThat(result.getRequirements().getMode()).isEqualTo(RequirementMode.ALL);
+    }
+
+    @Test
+    void loadHunt_legacyZoneBehavior_rewritesTheFileOnce() throws IOException {
+        File file = new File(tempDir.toFile(), "hunts/legacy2.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("id", "legacy2");
+        writeLegacyZone(yaml);
+        yaml.save(file);
+
+        World world = mock(World.class);
+        lenient().when(world.getName()).thenReturn("world");
+
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+            huntConfigService.loadHunt(file);
+        }
+
+        YamlConfiguration rewritten = YamlConfiguration.loadConfiguration(file);
+        assertThat(rewritten.contains("behaviors.zone")).isFalse();
+        assertThat(rewritten.getString("requirements.list.0.type")).isEqualTo("area");
+        assertThat(rewritten.getString("requirements.list.0.area.world")).isEqualTo("world");
+    }
+
+    @Test
+    void loadHunt_legacyZoneThatCannotBeRead_isCarriedOverInsteadOfDeleted() throws IOException {
+        File file = new File(tempDir.toFile(), "hunts/legacy3.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("id", "legacy3");
+        writeLegacyZone(yaml).set("blockExit", true);
+        yaml.save(file);
+
+        World world = mock(World.class);
+        lenient().when(world.getName()).thenReturn("world");
+
+        HBHunt result;
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+            result = huntConfigService.loadHunt(file);
+        }
+
+        // Blocking the exit without a return point is not a complete requirement, so nothing gates
+        // the hunt for now...
+        assertThat(result).isNotNull();
+        assertThat(result.getRequirements().isEmpty()).isTrue();
+
+        // ... but the rewrite must not throw the admin configuration away: it is written back under
+        // the new shape, ready to be read again once it is completed.
+        YamlConfiguration rewritten = YamlConfiguration.loadConfiguration(file);
+        assertThat(rewritten.contains("behaviors.zone")).isFalse();
+        assertThat(rewritten.getString("requirements.list.0.type")).isEqualTo("area");
+        assertThat(rewritten.getString("requirements.list.0.zone.world")).isEqualTo("world");
+        assertThat(rewritten.getBoolean("requirements.list.0.blockExit")).isTrue();
+    }
+
+    @Test
+    void loadHunt_unreadableRequirement_survivesTheNextSave() throws IOException {
+        File file = new File(tempDir.toFile(), "hunts/keep.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("id", "keep");
+        yaml.set("requirements.mode", "ALL");
+        yaml.set("requirements.list.0.type", "written-by-a-newer-version");
+        yaml.set("requirements.list.0.someField", 42);
+        yaml.set("requirements.list.1.type", "permission");
+        yaml.set("requirements.list.1.permission", "hb.vip");
+        yaml.save(file);
+
+        HBHunt result = huntConfigService.loadHunt(file);
+        assertThat(result).isNotNull();
+        assertThat(result.getRequirements().getRequirements()).hasSize(1);
+
+        // An unrelated save (a rename, a schedule change, ...) rewrites the whole section.
+        huntConfigService.saveHunt(result);
+
+        YamlConfiguration rewritten = YamlConfiguration.loadConfiguration(file);
+        assertThat(rewritten.getString("requirements.list.0.type")).isEqualTo("permission");
+        assertThat(rewritten.getString("requirements.list.1.type")).isEqualTo("written-by-a-newer-version");
+        assertThat(rewritten.getInt("requirements.list.1.someField")).isEqualTo(42);
+    }
+
+    @Test
+    void loadHunt_alreadyMigrated_keepsTheRequirementsSection() throws IOException {
+        File file = new File(tempDir.toFile(), "hunts/migrated.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("id", "migrated");
+        yaml.set("requirements.mode", "ANY");
+        yaml.set("requirements.list.0.type", "permission");
+        yaml.set("requirements.list.0.permission", "hb.vip");
+        writeLegacyZone(yaml);
+        yaml.save(file);
+
+        HBHunt result = huntConfigService.loadHunt(file);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getRequirements().getMode()).isEqualTo(RequirementMode.ANY);
+        assertThat(result.getRequirements().getRequirements()).hasSize(1);
+        assertThat(result.getRequirements().find(AreaRequirement.class)).isEmpty();
+    }
+
+    @Test
+    void saveHunt_writesTheRequirements() {
+        HBHunt hunt = new HBHunt(configService, "reqs", "Reqs", HuntState.ACTIVE, 1, "STONE");
+        hunt.setRequirements(new RequirementSet(registry, RequirementMode.ANY,
+                List.of(new PermissionRequirement(registry, "hb.vip"))));
+
+        huntConfigService.saveHunt(hunt);
+
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(new File(tempDir.toFile(), "hunts/reqs.yml"));
+        assertThat(yaml.getString("requirements.mode")).isEqualTo("ANY");
+        assertThat(yaml.getString("requirements.list.0.type")).isEqualTo("permission");
+        assertThat(yaml.getString("requirements.list.0.permission")).isEqualTo("hb.vip");
+    }
+
+    @Test
+    void saveHunt_removedRequirements_areErasedFromTheFile() {
+        HBHunt hunt = new HBHunt(configService, "cleared", "Cleared", HuntState.ACTIVE, 1, "STONE");
+        hunt.setRequirements(new RequirementSet(registry, RequirementMode.ALL,
+                List.of(new PermissionRequirement(registry, "hb.vip"))));
+        huntConfigService.saveHunt(hunt);
+
+        hunt.setRequirements(RequirementSet.empty());
+        huntConfigService.saveHunt(hunt);
+
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(new File(tempDir.toFile(), "hunts/cleared.yml"));
+        assertThat(yaml.contains("requirements")).isFalse();
+    }
+
+    @Test
+    void saveAndLoad_roundTripsTheRequirements() {
+        HBHunt original = new HBHunt(configService, "rtreq", "RT", HuntState.ACTIVE, 1, "STONE");
+        original.setRequirements(new RequirementSet(registry, RequirementMode.ANY,
+                List.of(new PermissionRequirement(registry, "hb.vip"))));
+
+        huntConfigService.saveHunt(original);
+        HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/rtreq.yml"));
+
+        assertThat(loaded).isNotNull();
+        assertThat(loaded.getRequirements().getMode()).isEqualTo(RequirementMode.ANY);
+        assertThat(loaded.getRequirements().find(PermissionRequirement.class))
+                .map(PermissionRequirement::node)
+                .contains("hb.vip");
     }
 
     // --- saveHunt and round-trip ---

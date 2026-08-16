@@ -1,6 +1,6 @@
 # Behavior GUI
 
-Creating a hunt with **`/hb hunt create <name>`** opens the **Behaviors** menu, which chains into the Timed, Zone, and Scheduled configuration menus depending on what you select. This page lists every clickable element and its exact click/drop action.
+Creating a hunt with **`/hb hunt create <name>`** opens the **Behaviors** menu, which chains into the Timed and Scheduled configuration menus depending on what you select, and gives access to the **Requirements** menu. This page lists every clickable element and its exact click/drop action.
 
 For the per-head menus opened by `/hb options` (Hint, Order, Rewards), see [Options GUI](options-gui.md). For what each behavior does at runtime, see [Hunt Files](hunts.md).
 
@@ -20,13 +20,97 @@ Toggle the behaviors you want, then validate.
 
 | Element          | Icon          | Action                                                            |
 |------------------|---------------|-------------------------------------------------------------------|
-| **Bounded Zone** | Lime/Gray Dye | LEFT CLICK → toggle the Zone behavior                             |
+| **Requirements** | Book          | LEFT CLICK → open the Requirements menu                           |
 | **Ordered**      | Lime/Gray Dye | LEFT CLICK → toggle the Ordered behavior                          |
 | **Scheduled**    | Lime/Gray Dye | LEFT CLICK → toggle the Scheduled behavior                        |
 | **Timed**        | Lime/Gray Dye | LEFT CLICK → toggle the Timed behavior                            |
 | **Validate**     | Diamond       | LEFT CLICK → create the hunt (chains into the config menus below) |
 
-A green dye means selected, gray means not selected. If Zone, Timed, or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created.
+A green dye means selected, gray means not selected. If Timed or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created. Requirements are configured in their own menu and the item shows how many are set.
+
+---
+
+## Requirements
+
+The conditions checked when a player clicks a head of the hunt. See [Hunt Files](hunts.md#requirements) for what each one does at runtime.
+
+| Element               | Icon                | Action                                                                             |
+|-----------------------|---------------------|------------------------------------------------------------------------------------|
+| **Combination**       | Comparator/Repeater | LEFT CLICK → switch between **ALL** (every requirement) and **ANY** (at least one) |
+| Requirement entry     | Type icon           | **LEFT CLICK** → edit &nbsp;·&nbsp; **RIGHT CLICK** → remove                       |
+| **Add a requirement** | Lime Dye            | LEFT CLICK → open the type picker                                                  |
+| **Validate**          | Diamond             | LEFT CLICK → save the requirements and go back to the Behaviors menu               |
+| **Back**              | Back icon           | LEFT CLICK → discard the changes and go back to the Behaviors menu                 |
+
+The default combination is **ALL**. When a player is blocked, the click lists every blocking requirement at once.
+
+### Type picker
+
+| Element            | Icon           | Action                                          |
+|--------------------|----------------|-------------------------------------------------|
+| **Area**           | Structure Void | LEFT CLICK → configure an area                  |
+| **Previous hunt**  | Chest Minecart | LEFT CLICK → configure a hunt to progress in    |
+| **Permission**     | Name Tag       | LEFT CLICK → configure a permission node        |
+| **Playtime**       | Clock          | LEFT CLICK → configure a required playtime      |
+| **PlaceholderAPI** | Paper          | LEFT CLICK → configure a placeholder comparison |
+
+A type whose plugin is missing shows as a Barrier and cannot be picked (PlaceholderAPI needs the plugin installed).
+
+### Area configuration
+
+While this menu is open, the selected area is outlined with particles in the world.
+
+| Element               | Icon                     | Input      | Action                                                                                              |
+|-----------------------|--------------------------|------------|-----------------------------------------------------------------------------------------------------|
+| **Area type**         | Structure Void / Map     | LEFT CLICK | Toggle between **Cuboid** (2 corners) and **WorldGuard region**                                     |
+| **Corner 1**          | Lime Concrete *(cuboid)* | LEFT CLICK | Close the menu, then click a block to set the first corner                                          |
+| **Corner 2**          | Red Concrete *(cuboid)*  | LEFT CLICK | Close the menu, then click a block to set the second corner                                         |
+| **WorldGuard region** | Name Tag *(WG)*          | LEFT CLICK | Close the menu, then type the region id in chat                                                     |
+| **Return point**      | Ender Pearl              | LEFT CLICK | Close the menu, then sneak at the spot to set the return point *(only shown when Block exit is on)* |
+| **Block exit**        | Lime/Gray Dye            | LEFT CLICK | Toggle physical confinement (push-back / teleport)                                                  |
+| **Reset on leave**    | Lime/Gray Dye            | LEFT CLICK | Toggle wiping progress when the player leaves the area                                              |
+| **Message display**   | Oak Sign                 | LEFT CLICK | Cycle the entry message mode: Chat → Action bar → Title                                             |
+| **Validate**          | Diamond / Barrier        | LEFT CLICK | Confirm (Barrier = blocked until the area, and the return point if exit is blocked, are defined)    |
+| **Back**              | Back icon                | LEFT CLICK | Discard and return to the Requirements menu                                                         |
+
+### Previous hunt configuration
+
+First pick the hunt in the paginated list, then set the threshold.
+
+| Element            | Icon           | Input                   | Action                                 |
+|--------------------|----------------|-------------------------|----------------------------------------|
+| **Hunt**           | Chest Minecart | LEFT CLICK              | Reopen the hunt picker                 |
+| **Heads required** | Player Head    | **LEFT CLICK**          | +1 head *(0 = the whole hunt)*         |
+| **Heads required** | Player Head    | **RIGHT CLICK**         | −1 head                                |
+| **Heads required** | Player Head    | **SHIFT + LEFT CLICK**  | +10 heads                              |
+| **Heads required** | Player Head    | **SHIFT + RIGHT CLICK** | −10 heads                              |
+| **Validate**       | Diamond        | LEFT CLICK              | Confirm (only once a hunt is selected) |
+
+### Permission configuration
+
+| Element             | Icon     | Action                                          |
+|---------------------|----------|-------------------------------------------------|
+| **Permission node** | Name Tag | LEFT CLICK → close the menu and type it in chat |
+| **Validate**        | Diamond  | LEFT CLICK → confirm (needs a node)             |
+
+### Playtime configuration
+
+| Element               | Icon    | Input                   | Action                                |
+|-----------------------|---------|-------------------------|---------------------------------------|
+| **Required playtime** | Clock   | **LEFT CLICK**          | +10 min                               |
+| **Required playtime** | Clock   | **RIGHT CLICK**         | −10 min                               |
+| **Required playtime** | Clock   | **SHIFT + LEFT CLICK**  | +1 hour                               |
+| **Required playtime** | Clock   | **SHIFT + RIGHT CLICK** | −1 hour                               |
+| **Validate**          | Diamond | LEFT CLICK              | Confirm (needs a duration above zero) |
+
+### PlaceholderAPI configuration
+
+| Element            | Icon       | Action                                                               |
+|--------------------|------------|----------------------------------------------------------------------|
+| **Placeholder**    | Paper      | LEFT CLICK → close the menu and type the placeholder in chat         |
+| **Comparison**     | Comparator | LEFT CLICK → cycle `=` → `!=` → `>` → `>=` → `<` → `<=` → `contains` |
+| **Expected value** | Name Tag   | LEFT CLICK → close the menu and type the value in chat               |
+| **Validate**       | Diamond    | LEFT CLICK → confirm (needs the placeholder and the value)           |
 
 ---
 
@@ -50,24 +134,6 @@ Time limit is `0` (Unlimited) by default, clamped to `0–3600` seconds.
 
 ---
 
-## Zone configuration
-
-Opened when **Bounded Zone** is selected. While this menu is open, the selected zone is outlined with particles in the world.
-
-| Element               | Icon                     | Input      | Action                                                                                              |
-|-----------------------|--------------------------|------------|-----------------------------------------------------------------------------------------------------|
-| **Zone type**         | Structure Void / Map     | LEFT CLICK | Toggle between **Cuboid** (2 corners) and **WorldGuard region**                                     |
-| **Corner 1**          | Lime Concrete *(cuboid)* | LEFT CLICK | Close the menu, then click a block to set the first corner                                          |
-| **Corner 2**          | Red Concrete *(cuboid)*  | LEFT CLICK | Close the menu, then click a block to set the second corner                                         |
-| **WorldGuard region** | Name Tag *(WG)*          | LEFT CLICK | Close the menu, then type the region id in chat                                                     |
-| **Return point**      | Ender Pearl              | LEFT CLICK | Close the menu, then sneak at the spot to set the return point *(only shown when Block exit is on)* |
-| **Block exit**        | Lime/Gray Dye            | LEFT CLICK | Toggle physical confinement (push-back / teleport)                                                  |
-| **Reset on leave**    | Lime/Gray Dye            | LEFT CLICK | Toggle wiping progress when the player leaves the zone                                              |
-| **Message display**   | Oak Sign                 | LEFT CLICK | Cycle the entry message mode: Chat → Action bar → Title                                             |
-| **Validate**          | Diamond / Barrier        | LEFT CLICK | Confirm (Barrier = blocked until the zone, and the return point if exit is blocked, are defined)    |
-| **Back**              | Back icon                | LEFT CLICK | Discard and return to the Behaviors menu                                                            |
-
----
 
 ## Scheduled configuration
 

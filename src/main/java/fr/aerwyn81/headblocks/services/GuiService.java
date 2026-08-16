@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
 import fr.aerwyn81.headblocks.services.gui.types.*;
+import fr.aerwyn81.headblocks.services.gui.types.requirement.RequirementsGui;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
@@ -29,7 +30,7 @@ public class GuiService {
     private final BehaviorSelectionGui behaviorSelectionManager;
     private final TimedConfigGui timedConfigManager;
     private final ScheduledConfigGui scheduledConfigManager;
-    private final ZoneConfigGui zoneConfigManager;
+    private final RequirementsGui requirementsGui;
 
     // --- Constructor ---
 
@@ -48,7 +49,7 @@ public class GuiService {
         this.behaviorSelectionManager = new BehaviorSelectionGui(registry);
         this.timedConfigManager = new TimedConfigGui(registry);
         this.scheduledConfigManager = new ScheduledConfigGui(registry);
-        this.zoneConfigManager = new ZoneConfigGui(registry);
+        this.requirementsGui = new RequirementsGui(registry);
     }
 
     // --- Instance methods ---
@@ -84,8 +85,8 @@ public class GuiService {
         return scheduledConfigManager;
     }
 
-    public ZoneConfigGui getZoneConfigManager() {
-        return zoneConfigManager;
+    public RequirementsGui getRequirementsGui() {
+        return requirementsGui;
     }
 
     public void openHuntSelectionOrDirect(Player player, BiConsumer<Player, HBHunt> callback) {
@@ -101,16 +102,9 @@ public class GuiService {
 
         int index = 0;
         for (HBHunt hunt : hunts) {
-            Material iconMaterial;
-            try {
-                iconMaterial = Material.valueOf(hunt.getIcon().toUpperCase());
-            } catch (Exception e) {
-                iconMaterial = Material.CHEST_MINECART;
-            }
-
             var headCount = headService.getHeadLocationsForHunt(hunt).size();
 
-            var huntItemGui = new ItemGUI(new ItemBuilder(iconMaterial)
+            var huntItemGui = new ItemGUI(new ItemBuilder(hunt.getIconMaterial())
                     .setName(languageService.message("Gui.HuntSelectionItemName")
                             .replace("%huntName%", hunt.getDisplayName()))
                     .setLore(languageService.messageList("Gui.HuntSelectionItemLore").stream().map(s -> s

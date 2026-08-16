@@ -6,8 +6,8 @@ import fr.aerwyn81.headblocks.data.TimedRunData;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.ZoneBehavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.zone.ZoneMessageMode;
+import fr.aerwyn81.headblocks.data.hunt.requirement.area.AreaMessageMode;
+import fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import net.md_5.bungee.api.ChatMessageType;
@@ -17,9 +17,12 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-public class ZoneEnforcementService {
+/**
+ * Runtime side of the area requirement: confinement, entry and exit messages, and progress reset
+ * for whoever leaves. The click check itself lives in {@link AreaRequirement}.
+ */
+public class AreaEnforcementService {
 
     public enum Decision {
         NONE,
@@ -28,32 +31,32 @@ public class ZoneEnforcementService {
 
     private final ServiceRegistry registry;
 
-    public ZoneEnforcementService(ServiceRegistry registry) {
+    public AreaEnforcementService(ServiceRegistry registry) {
         this.registry = registry;
     }
 
     public Decision evaluate(Player player, Location to) {
         UUID uuid = player.getUniqueId();
-        String engagedId = ZoneRunManager.getEngaged(uuid);
+        String engagedId = AreaRunManager.getEngaged(uuid);
 
         if (engagedId != null) {
-            ZoneBehavior zb = findZoneBehavior(engagedId);
-            if (!isEnforceable(zb) || !zb.zone().isAvailable()) {
-                ZoneRunManager.disengage(uuid);
+            AreaRequirement area = findArea(engagedId);
+            if (!isEnforceable(area)) {
+                AreaRunManager.disengage(uuid);
                 return Decision.NONE;
             }
 
-            if (zb.zone().contains(to)) {
+            if (area.area().contains(to)) {
                 return Decision.NONE;
             }
 
-            if (zb.blockExit()) {
+            if (area.blockExit()) {
                 return Decision.CONFINE;
             }
 
-            ZoneRunManager.disengage(uuid);
+            AreaRunManager.disengage(uuid);
             HBHunt engagedHunt = registry.getHuntService().getHuntById(engagedId);
-            boolean reset = zb.resetOnLeave();
+            boolean reset = area.resetOnLeave();
             if (reset) {
                 resetProgress(uuid, engagedId);
             }
@@ -65,36 +68,36 @@ public class ZoneEnforcementService {
         }
 
         HBHunt best = null;
-        ZoneBehavior bestZone = null;
+        AreaRequirement bestArea = null;
         for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
             if (!hunt.isActive()) {
                 continue;
             }
 
-            ZoneBehavior zb = findZoneBehavior(hunt);
-            if (!isEnforceable(zb) || !worldMatches(zb, to) || !zb.zone().isAvailable()) {
+            AreaRequirement area = findArea(hunt);
+            if (!isEnforceable(area) || !worldMatches(area, to)) {
                 continue;
             }
 
-            if (!zb.zone().contains(to)) {
+            if (!area.area().contains(to)) {
                 continue;
             }
 
             boolean higherPriority = best == null || hunt.getPriority() > best.getPriority();
             boolean blockingTieBreak = best != null && hunt.getPriority() == best.getPriority()
-                    && zb.blockExit() && !bestZone.blockExit();
+                    && area.blockExit() && !bestArea.blockExit();
             if (higherPriority || blockingTieBreak) {
                 best = hunt;
-                bestZone = zb;
+                bestArea = area;
             }
         }
 
         if (best == null) {
-            ZoneRunManager.clearReleased(uuid);
+            AreaRunManager.clearReleased(uuid);
             return Decision.NONE;
         }
 
-        if (ZoneRunManager.isReleased(uuid, best.getId())) {
+        if (AreaRunManager.isReleased(uuid, best.getId())) {
             return Decision.NONE;
         }
 
@@ -102,121 +105,123 @@ public class ZoneEnforcementService {
             return Decision.NONE;
         }
 
-        ZoneRunManager.engage(uuid, best.getId());
+        AreaRunManager.engage(uuid, best.getId());
         sendEntered(player, best);
         return Decision.NONE;
     }
 
     public Location getRecoveryPoint(Player player, Location reference) {
         UUID uuid = player.getUniqueId();
-        String engagedId = ZoneRunManager.getEngaged(uuid);
+        String engagedId = AreaRunManager.getEngaged(uuid);
         if (engagedId == null) {
             return null;
         }
 
-        ZoneBehavior zb = findZoneBehavior(engagedId);
-        if (!isEnforceable(zb) || !zb.zone().isAvailable()) {
-            ZoneRunManager.disengage(uuid);
+        AreaRequirement area = findArea(engagedId);
+        if (!isEnforceable(area)) {
+            AreaRunManager.disengage(uuid);
             return null;
         }
 
-        if (zb.zone().contains(reference)) {
+        if (area.area().contains(reference)) {
             return null;
         }
 
-        return zb.returnPoint();
+        return area.returnPoint();
     }
 
     public Location getReturnPoint(Player player) {
-        String engagedId = ZoneRunManager.getEngaged(player.getUniqueId());
+        String engagedId = AreaRunManager.getEngaged(player.getUniqueId());
         if (engagedId == null) {
             return null;
         }
-        ZoneBehavior zb = findZoneBehavior(engagedId);
-        return zb == null ? null : zb.returnPoint();
+        AreaRequirement area = findArea(engagedId);
+        return area == null ? null : area.returnPoint();
     }
 
     public boolean leave(Player player) {
         UUID uuid = player.getUniqueId();
-        String engagedId = ZoneRunManager.getEngaged(uuid);
+        String engagedId = AreaRunManager.getEngaged(uuid);
         if (engagedId == null) {
             return false;
         }
 
-        ZoneBehavior zb = findZoneBehavior(engagedId);
-        ZoneRunManager.disengage(uuid);
-        ZoneRunManager.markReleased(uuid, engagedId);
+        AreaRequirement area = findArea(engagedId);
+        HBHunt hunt = registry.getHuntService().getHuntById(engagedId);
+        AreaRunManager.disengage(uuid);
+        AreaRunManager.markReleased(uuid, engagedId);
 
-        if (zb != null && zb.resetOnLeave()) {
+        if (area != null && area.resetOnLeave()) {
             resetProgress(uuid, engagedId);
-            String reset = registry.getLanguageService().message("Messages.ZoneProgressReset")
-                    .replace("%hunt%", huntName(engagedId));
-            if (!reset.trim().isEmpty()) {
-                player.sendMessage(reset);
-            }
+            sendResetMessage(player, hunt != null ? hunt.getDisplayName() : engagedId);
         }
 
-        teleportBackTimed(player, registry.getHuntService().getHuntById(engagedId));
+        teleportBackTimed(player, hunt);
         return true;
     }
 
     public void onHeadFound(Player player, HBHunt hunt, int foundCount) {
         UUID uuid = player.getUniqueId();
-        if (!hunt.getId().equals(ZoneRunManager.getEngaged(uuid))) {
+        if (!hunt.getId().equals(AreaRunManager.getEngaged(uuid))) {
             return;
         }
 
         int total = hunt.getHeadCount();
         if (total > 0 && foundCount >= total) {
-            ZoneRunManager.disengage(uuid);
-            ZoneRunManager.markReleased(uuid, hunt.getId());
+            AreaRunManager.disengage(uuid);
+            AreaRunManager.markReleased(uuid, hunt.getId());
         }
     }
 
-    public boolean isLocationOutsideZone(HBHunt hunt, Location location) {
+    public boolean isLocationOutsideArea(HBHunt hunt, Location location) {
         if (location == null) {
             return false;
         }
-        ZoneBehavior zb = findZoneBehavior(hunt);
-        if (zb == null || zb.zone() == null || !zb.zone().isAvailable()) {
+        AreaRequirement area = findArea(hunt);
+        if (area == null || area.area() == null || !area.area().isAvailable()) {
             return false;
         }
-        return !zb.zone().contains(location);
+        return !area.area().contains(location);
     }
 
-    public boolean hasZoneBehavior(HBHunt hunt) {
-        return findZoneBehavior(hunt) != null;
+    public boolean hasArea(HBHunt hunt) {
+        return findArea(hunt) != null;
     }
 
-    public void sanitizeZoneHunts() {
+    /**
+     * Switches off the area requirement of any hunt it cannot enforce, so a half configured area
+     * never silently blocks players.
+     * <p>
+     * The requirement stays on the hunt: it is only marked as disabled, which keeps the admin
+     * configuration in the file and lets a reload bring it back as soon as it becomes valid again.
+     */
+    public void sanitizeAreaHunts() {
         for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
-            ZoneBehavior zb = findZoneBehavior(hunt);
-            if (zb == null) {
+            // Disabled areas are looked up too: a reload is what brings them back when they became
+            // valid again.
+            AreaRequirement area = hunt.getRequirements().findOrNull(AreaRequirement.class);
+            if (area == null) {
                 continue;
             }
 
-            String reason = invalidZoneReason(hunt, zb);
-            if (reason == null) {
-                continue;
-            }
+            String reason = invalidAreaReason(hunt, area);
+            area.setDisabled(reason != null);
 
-            LogUtil.warning("Zone behavior disabled for hunt {0}: {1}", hunt.getId(), reason);
-            List<Behavior> kept = hunt.getBehaviors().stream()
-                    .filter(b -> !(b instanceof ZoneBehavior))
-                    .collect(Collectors.toList());
-            hunt.setBehaviors(kept);
+            if (reason != null) {
+                LogUtil.warning("Area requirement disabled for hunt {0}: {1}", hunt.getId(), reason);
+            }
         }
     }
 
-    private String invalidZoneReason(HBHunt hunt, ZoneBehavior zb) {
-        if (zb.zone() == null) {
-            return "no zone defined";
+    private String invalidAreaReason(HBHunt hunt, AreaRequirement area) {
+        if (area.area() == null) {
+            return "no area defined";
         }
-        if (zb.blockExit() && zb.returnPoint() == null) {
+        if (area.blockExit() && area.returnPoint() == null) {
             return "no return point defined";
         }
 
-        if (!zb.zone().isAvailable()) {
+        if (!area.area().isAvailable()) {
             return null;
         }
 
@@ -226,42 +231,43 @@ public class ZoneEnforcementService {
         }
 
         long outside = heads.stream()
-                .filter(h -> h.getLocation() != null && !zb.zone().contains(h.getLocation()))
+                .filter(h -> h.getLocation() != null && !area.area().contains(h.getLocation()))
                 .count();
         if (outside > 0) {
-            return outside + " head(s) outside the zone";
+            return outside + " head(s) outside the area";
         }
 
         return null;
     }
 
-    private boolean isEnforceable(ZoneBehavior zb) {
-        return zb != null && zb.zone() != null && (zb.returnPoint() != null || !zb.blockExit());
+    /**
+     * Whether the area is complete enough to confine a player and can be resolved right now. No
+     * caller wants one without the other, so the availability check is part of the answer.
+     */
+    private boolean isEnforceable(AreaRequirement area) {
+        return area != null && area.area() != null && area.area().isAvailable()
+                && (area.returnPoint() != null || !area.blockExit());
     }
 
-    private boolean worldMatches(ZoneBehavior zb, Location location) {
+    private boolean worldMatches(AreaRequirement area, Location location) {
         return location != null && location.getWorld() != null
-                && location.getWorld().getName().equals(zb.zone().getWorldName());
+                && location.getWorld().getName().equals(area.area().getWorldName());
     }
 
-    private ZoneBehavior findZoneBehavior(String huntId) {
+    private AreaRequirement findArea(String huntId) {
         HBHunt hunt = registry.getHuntService().getHuntById(huntId);
         if (hunt == null || !hunt.isActive()) {
             return null;
         }
-        return findZoneBehavior(hunt);
+        return findArea(hunt);
     }
 
-    private ZoneBehavior findZoneBehavior(HBHunt hunt) {
-        for (Behavior behavior : hunt.getBehaviors()) {
-            if (behavior instanceof ZoneBehavior zb) {
-                return zb;
-            }
-        }
-        return null;
+    private AreaRequirement findArea(HBHunt hunt) {
+        AreaRequirement area = hunt.getRequirements().findOrNull(AreaRequirement.class);
+        return area == null || area.isDisabled() ? null : area;
     }
 
-    // When a hunt combines a zone with a timed run, leaving the zone ends the run and sends the
+    // When a hunt combines an area with a timed run, leaving the area ends the run and sends the
     // player back to the start plate (same spot as a time-limit expiration).
     private void teleportBackTimed(Player player, HBHunt hunt) {
         UUID uuid = player.getUniqueId();
@@ -301,20 +307,20 @@ public class ZoneEnforcementService {
         try {
             return registry.getStorageService().getHeadsPlayerForHunt(uuid, huntId).size() >= total;
         } catch (InternalException e) {
-            LogUtil.error("Error checking zone completion for hunt {0}: {1}", huntId, e.getMessage());
+            LogUtil.error("Error checking area completion for hunt {0}: {1}", huntId, e.getMessage());
             return false;
         }
     }
 
     private void sendEntered(Player player, HBHunt hunt) {
-        String message = registry.getLanguageService().message("Messages.ZoneEntered")
+        String message = registry.getLanguageService().message("Messages.AreaEntered")
                 .replace("%hunt%", hunt.getDisplayName());
         if (message.trim().isEmpty()) {
             return;
         }
 
-        ZoneBehavior zb = findZoneBehavior(hunt);
-        ZoneMessageMode mode = zb != null ? zb.messageMode() : ZoneMessageMode.CHAT;
+        AreaRequirement area = findArea(hunt);
+        AreaMessageMode mode = area != null ? area.messageMode() : AreaMessageMode.CHAT;
 
         switch (mode) {
             case ACTION_BAR ->
@@ -331,18 +337,22 @@ public class ZoneEnforcementService {
     }
 
     private void sendExited(Player player, HBHunt hunt, boolean reset) {
-        String message = registry.getLanguageService().message("Messages.ZoneExited")
+        String message = registry.getLanguageService().message("Messages.AreaExited")
                 .replace("%hunt%", hunt.getDisplayName());
         if (!message.trim().isEmpty()) {
             player.sendMessage(message);
         }
 
         if (reset) {
-            String resetMessage = registry.getLanguageService().message("Messages.ZoneProgressReset")
-                    .replace("%hunt%", hunt.getDisplayName());
-            if (!resetMessage.trim().isEmpty()) {
-                player.sendMessage(resetMessage);
-            }
+            sendResetMessage(player, hunt.getDisplayName());
+        }
+    }
+
+    private void sendResetMessage(Player player, String huntName) {
+        String message = registry.getLanguageService().message("Messages.AreaProgressReset")
+                .replace("%hunt%", huntName);
+        if (!message.trim().isEmpty()) {
+            player.sendMessage(message);
         }
     }
 
@@ -350,12 +360,7 @@ public class ZoneEnforcementService {
         try {
             registry.getStorageService().resetPlayerHunt(uuid, huntId);
         } catch (InternalException e) {
-            LogUtil.error("Error resetting zone progress for hunt {0}: {1}", huntId, e.getMessage());
+            LogUtil.error("Error resetting area progress for hunt {0}: {1}", huntId, e.getMessage());
         }
-    }
-
-    private String huntName(String huntId) {
-        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
-        return hunt != null ? hunt.getDisplayName() : huntId;
     }
 }

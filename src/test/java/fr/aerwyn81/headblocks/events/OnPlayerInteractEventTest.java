@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.behavior.BehaviorResult;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementResult;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.hooks.PacketEventsHook;
 import fr.aerwyn81.headblocks.services.*;
@@ -66,7 +67,7 @@ class OnPlayerInteractEventTest {
     private ConfigService configService;
 
     @Mock
-    private ZoneEnforcementService zoneEnforcementService;
+    private AreaEnforcementService areaEnforcementService;
 
     @Mock
     private PlayerInteractEvent event;
@@ -91,7 +92,7 @@ class OnPlayerInteractEventTest {
         lenient().when(registry.getPlaceholdersService()).thenReturn(placeholdersService);
         lenient().when(registry.getRewardService()).thenReturn(rewardService);
         lenient().when(registry.getConfigService()).thenReturn(configService);
-        lenient().when(registry.getZoneEnforcementService()).thenReturn(zoneEnforcementService);
+        lenient().when(registry.getAreaEnforcementService()).thenReturn(areaEnforcementService);
 
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
 
@@ -547,11 +548,13 @@ class OnPlayerInteractEventTest {
             lenient().when(headLocation.getHuntId()).thenReturn("default");
             lenient().when(huntService.getHuntById("default")).thenReturn(activeHunt);
 
-            // Default behavior evaluation — allow by default
+            // Default behavior and requirement evaluation — allow by default
             lenient().when(activeHunt.evaluateAccessGates(any(), any()))
                     .thenReturn(BehaviorResult.allow());
             lenient().when(activeHunt.evaluateBehaviors(any(), any()))
                     .thenReturn(BehaviorResult.allow());
+            lenient().when(activeHunt.evaluateRequirements(any(), any()))
+                    .thenReturn(RequirementResult.ok());
 
             // Default HuntConfig stubs for the "already claimed" path
             lenient().when(huntConfig.getHeadClickSoundFound()).thenReturn("");
@@ -880,6 +883,54 @@ class OnPlayerInteractEventTest {
         }
 
         // --- Behavior deny ---
+
+        @Nested
+        class RequirementDeny {
+
+            @Test
+            void requirementUnmet_doesNotAddHead() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(new ArrayList<>());
+                when(activeHunt.evaluateRequirements(player, headLocation))
+                        .thenReturn(RequirementResult.unmet("Missing:\n- stay inside the area"));
+
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(storageService, never()).addHeadForHunt(any(), any(), anyString());
+            }
+
+            @Test
+            void requirementUnmet_sendsEveryBlockingReason() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(new ArrayList<>());
+                when(activeHunt.evaluateRequirements(player, headLocation))
+                        .thenReturn(RequirementResult.unmet("Missing:\n- stay inside the area\n- play longer"));
+
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(player).sendMessage("Missing:\n- stay inside the area\n- play longer");
+            }
+
+            @Test
+            void requirementUnmet_skipsTheBehaviorChain() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(new ArrayList<>());
+                when(activeHunt.evaluateRequirements(player, headLocation))
+                        .thenReturn(RequirementResult.unmet("nope"));
+
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(activeHunt, never()).evaluateBehaviors(any(), any());
+            }
+
+            @Test
+            void requirementUnmet_emptyReason_sendsNothing() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(new ArrayList<>());
+                when(activeHunt.evaluateRequirements(player, headLocation))
+                        .thenReturn(RequirementResult.unmet(""));
+
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(player, never()).sendMessage("");
+            }
+        }
 
         @Nested
         class BehaviorDeny {

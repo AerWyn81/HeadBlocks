@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.data.hunt.behavior.zone;
+package fr.aerwyn81.headblocks.data.hunt.requirement.area;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CuboidZoneProviderTest {
+class CuboidAreaProviderTest {
 
     private Location locationIn(String worldName, double x, double y, double z) {
         World world = mock(World.class);
@@ -24,7 +24,7 @@ class CuboidZoneProviderTest {
 
     @Test
     void constructor_normalizesCorners() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 10, 70, 30, 0, 60, 5);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 10, 70, 30, 0, 60, 5);
 
         assertThat(provider.getMinX()).isEqualTo(0);
         assertThat(provider.getMinY()).isEqualTo(60);
@@ -36,14 +36,14 @@ class CuboidZoneProviderTest {
 
     @Test
     void contains_pointInside_returnsTrue() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 0, 60, 0, 10, 70, 10);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 0, 10, 70, 10);
 
         assertThat(provider.contains(locationIn("world", 5, 65, 5))).isTrue();
     }
 
     @Test
     void contains_pointOnBorder_returnsTrue() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 0, 60, 0, 10, 70, 10);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 0, 10, 70, 10);
 
         assertThat(provider.contains(locationIn("world", 0, 60, 0))).isTrue();
         assertThat(provider.contains(locationIn("world", 10, 70, 10))).isTrue();
@@ -51,7 +51,7 @@ class CuboidZoneProviderTest {
 
     @Test
     void contains_pointOutside_returnsFalse() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 0, 60, 0, 10, 70, 10);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 0, 10, 70, 10);
 
         assertThat(provider.contains(locationIn("world", 11, 65, 5))).isFalse();
         assertThat(provider.contains(locationIn("world", 5, 59, 5))).isFalse();
@@ -59,21 +59,21 @@ class CuboidZoneProviderTest {
 
     @Test
     void contains_wrongWorld_returnsFalse() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 0, 60, 0, 10, 70, 10);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 0, 10, 70, 10);
 
         assertThat(provider.contains(locationIn("nether", 5, 65, 5))).isFalse();
     }
 
     @Test
     void contains_nullLocation_returnsFalse() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 0, 60, 0, 10, 70, 10);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 0, 10, 70, 10);
 
         assertThat(provider.contains(null)).isFalse();
     }
 
     @Test
     void isAvailable_worldLoaded_returnsTrue() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 0, 60, 0, 10, 70, 10);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 0, 10, 70, 10);
 
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
@@ -83,7 +83,7 @@ class CuboidZoneProviderTest {
 
     @Test
     void isAvailable_worldMissing_returnsFalse() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 0, 60, 0, 10, 70, 10);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 0, 10, 70, 10);
 
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(null);
@@ -93,15 +93,15 @@ class CuboidZoneProviderTest {
 
     @Test
     void saveTo_andFromSection_roundTrip() {
-        CuboidZoneProvider provider = new CuboidZoneProvider("world", 0, 60, 5, 10, 70, 30);
+        CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 5, 10, 70, 30);
 
         YamlConfiguration yaml = new YamlConfiguration();
-        ConfigurationSection section = yaml.createSection("zone");
+        ConfigurationSection section = yaml.createSection("area");
         provider.saveTo(section);
 
         assertThat(section.getString("type")).isEqualTo("cuboid");
 
-        CuboidZoneProvider loaded = CuboidZoneProvider.fromSection(section);
+        CuboidAreaProvider loaded = CuboidAreaProvider.fromSection(section);
         assertThat(loaded.getWorldName()).isEqualTo("world");
         assertThat(loaded.getMinX()).isEqualTo(0);
         assertThat(loaded.getMinY()).isEqualTo(60);

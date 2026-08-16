@@ -1,4 +1,4 @@
-package fr.aerwyn81.headblocks.data.hunt.behavior.zone;
+package fr.aerwyn81.headblocks.data.hunt.requirement.area;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector3;
@@ -11,14 +11,14 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 
-public class WorldGuardZoneProvider implements ZoneProvider {
+public class WorldGuardAreaProvider implements AreaProvider {
 
     public static final String TYPE = "worldguard";
 
     private final String worldName;
     private final String regionId;
 
-    public WorldGuardZoneProvider(String worldName, String regionId) {
+    public WorldGuardAreaProvider(String worldName, String regionId) {
         this.worldName = worldName;
         this.regionId = regionId;
     }
@@ -58,6 +58,11 @@ public class WorldGuardZoneProvider implements ZoneProvider {
         }
 
         return getRegion(world) != null;
+    }
+
+    @Override
+    public String getDescription() {
+        return regionId + " (" + worldName + ")";
     }
 
     @Override
@@ -112,10 +117,10 @@ public class WorldGuardZoneProvider implements ZoneProvider {
         }
     }
 
-    public static WorldGuardZoneProvider fromSection(ConfigurationSection section) {
+    public static WorldGuardAreaProvider fromSection(ConfigurationSection section) {
         String worldName = section.getString("world", "");
         String regionId = section.getString("region", "");
 
-        return new WorldGuardZoneProvider(worldName, regionId);
+        return new WorldGuardAreaProvider(worldName, regionId);
     }
 }

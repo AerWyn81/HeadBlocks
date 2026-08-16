@@ -495,8 +495,8 @@ public class Hunt implements Cmd {
         }
 
         HBHunt targetHunt = registry.getHuntService().getHuntById(huntId);
-        if (registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, headLocation.getLocation())) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneHeadOutsideAssign")
+        if (registry.getAreaEnforcementService().isLocationOutsideArea(targetHunt, headLocation.getLocation())) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.AreaHeadOutsideAssign")
                     .replace("%hunt%", huntId));
             return;
         }
@@ -578,15 +578,15 @@ public class Hunt implements Cmd {
 
         int skipped = candidates.size() - headsToAssign.size();
 
-        java.util.List<HeadLocation> insideZone = headsToAssign.stream()
-                .filter(h -> !registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, h.getLocation()))
+        java.util.List<HeadLocation> insideArea = headsToAssign.stream()
+                .filter(h -> !registry.getAreaEnforcementService().isLocationOutsideArea(targetHunt, h.getLocation()))
                 .toList();
-        int outsideZone = headsToAssign.size() - insideZone.size();
-        headsToAssign = insideZone;
+        int outsideArea = headsToAssign.size() - insideArea.size();
+        headsToAssign = insideArea;
 
-        if (outsideZone > 0) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneAssignSkipped")
-                    .replace("%count%", String.valueOf(outsideZone))
+        if (outsideArea > 0) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.AreaAssignSkipped")
+                    .replace("%count%", String.valueOf(outsideArea))
                     .replace("%hunt%", huntId));
         }
 
@@ -649,8 +649,8 @@ public class Hunt implements Cmd {
         }
 
         HBHunt targetHunt = registry.getHuntService().getHuntById(huntId);
-        if (registry.getZoneEnforcementService().isLocationOutsideZone(targetHunt, headLocation.getLocation())) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.ZoneHeadOutsideAssign")
+        if (registry.getAreaEnforcementService().isLocationOutsideArea(targetHunt, headLocation.getLocation())) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.AreaHeadOutsideAssign")
                     .replace("%hunt%", huntId));
             return;
         }

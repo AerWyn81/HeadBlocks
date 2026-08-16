@@ -4,7 +4,10 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.BehaviorResult;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementResult;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
 import fr.aerwyn81.headblocks.services.ConfigService;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -18,6 +21,7 @@ public class HBHunt {
     private int priority;
     private String icon;
     private List<Behavior> behaviors;
+    private RequirementSet requirements;
     private HuntConfig config;
     private final Set<UUID> headUUIDs;
 
@@ -30,6 +34,7 @@ public class HBHunt {
         this.icon = icon;
         this.behaviors = new ArrayList<>();
         this.behaviors.add(new FreeBehavior());
+        this.requirements = RequirementSet.empty();
         this.config = new HuntConfig(configService);
         this.headUUIDs = ConcurrentHashMap.newKeySet();
     }
@@ -82,6 +87,18 @@ public class HBHunt {
         this.icon = icon;
     }
 
+    /**
+     * The configured icon as a material, falling back to the default one when the name does not
+     * resolve (a typo in the file, or a material removed by a server version).
+     */
+    public Material getIconMaterial() {
+        try {
+            return Material.valueOf(icon.toUpperCase());
+        } catch (Exception e) {
+            return Material.CHEST_MINECART;
+        }
+    }
+
     // --- Behaviors ---
 
     public List<Behavior> getBehaviors() {
@@ -120,6 +137,24 @@ public class HBHunt {
             }
         }
         return BehaviorResult.allow();
+    }
+
+    // --- Requirements ---
+
+    public RequirementSet getRequirements() {
+        return requirements;
+    }
+
+    public void setRequirements(RequirementSet requirements) {
+        this.requirements = requirements != null ? requirements : RequirementSet.empty();
+    }
+
+    /**
+     * Evaluates the conditions the player must meet to claim a head of this hunt.
+     * The denial carries every blocking reason at once, so the player knows what is missing.
+     */
+    public RequirementResult evaluateRequirements(Player player, HeadLocation head) {
+        return requirements.evaluate(player, head, this);
     }
 
     /**

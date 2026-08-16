@@ -103,9 +103,9 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         var selectedHunt = registry.getHuntService().getHuntById(selectedHuntId);
         if (selectedHunt != null
-                && registry.getZoneEnforcementService().isLocationOutsideZone(selectedHunt, headLocation)) {
+                && registry.getAreaEnforcementService().isLocationOutsideArea(selectedHunt, headLocation)) {
             e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.ZoneHeadOutside")
+            player.sendMessage(registry.getLanguageService().message("Messages.AreaHeadOutside")
                     .replace("%hunt%", selectedHunt.getDisplayName()));
             return;
         }

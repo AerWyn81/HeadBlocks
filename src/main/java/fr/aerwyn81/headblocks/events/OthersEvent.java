@@ -5,8 +5,8 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
+import fr.aerwyn81.headblocks.services.AreaRunManager;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
-import fr.aerwyn81.headblocks.services.ZoneRunManager;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import org.bukkit.Location;
@@ -81,11 +81,12 @@ public class OthersEvent implements Listener {
         registry.getHeadService().getHeadMoves().remove(e.getPlayer().getUniqueId());
         registry.getHuntService().clearSelectedHunt(e.getPlayer().getUniqueId());
         TimedRunManager.leaveRun(e.getPlayer().getUniqueId());
-        ZoneRunManager.clear(e.getPlayer().getUniqueId());
+        AreaRunManager.clear(e.getPlayer().getUniqueId());
         registry.getGuiService().getBehaviorSelectionManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getTimedConfigManager().clearState(e.getPlayer().getUniqueId());
         registry.getGuiService().getScheduledConfigManager().clearState(e.getPlayer().getUniqueId());
-        registry.getGuiService().getZoneConfigManager().clearState(e.getPlayer().getUniqueId());
+        registry.getGuiService().getRequirementsGui().clearState(e.getPlayer().getUniqueId());
+        registry.getChatPromptService().cancel(e.getPlayer().getUniqueId());
         registry.getGuiService().getRewardsManager().cancelPendingRewardInput(e.getPlayer());
         registry.getGuiService().getHintManager().clearCache(e.getPlayer().getUniqueId());
 
@@ -101,9 +102,9 @@ public class OthersEvent implements Listener {
             return;
         }
 
-        var zoneConfigManager = registry.getGuiService().getZoneConfigManager();
-        if (zoneConfigManager.isAwaitingSneak(e.getPlayer().getUniqueId())) {
-            zoneConfigManager.handleReturnSneak(e.getPlayer());
+        var areaEditor = registry.getGuiService().getRequirementsGui().getAreaEditor();
+        if (areaEditor.isAwaitingSneak(e.getPlayer().getUniqueId())) {
+            areaEditor.handleReturnSneak(e.getPlayer());
         }
     }
 

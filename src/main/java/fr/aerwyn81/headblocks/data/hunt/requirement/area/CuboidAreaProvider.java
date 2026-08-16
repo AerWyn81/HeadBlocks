@@ -1,11 +1,10 @@
-package fr.aerwyn81.headblocks.data.hunt.behavior.zone;
+package fr.aerwyn81.headblocks.data.hunt.requirement.area;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 
-public class CuboidZoneProvider implements ZoneProvider {
+public class CuboidAreaProvider implements AreaProvider {
 
     public static final String TYPE = "cuboid";
 
@@ -17,7 +16,7 @@ public class CuboidZoneProvider implements ZoneProvider {
     private final int maxY;
     private final int maxZ;
 
-    public CuboidZoneProvider(String worldName, int x1, int y1, int z1, int x2, int y2, int z2) {
+    public CuboidAreaProvider(String worldName, int x1, int y1, int z1, int x2, int y2, int z2) {
         this.worldName = worldName;
         this.minX = Math.min(x1, x2);
         this.minY = Math.min(y1, y2);
@@ -57,6 +56,11 @@ public class CuboidZoneProvider implements ZoneProvider {
     }
 
     @Override
+    public String getDescription() {
+        return worldName + " (" + minX + ", " + minY + ", " + minZ + " → " + maxX + ", " + maxY + ", " + maxZ + ")";
+    }
+
+    @Override
     public void saveTo(ConfigurationSection section) {
         section.set("type", TYPE);
         section.set("world", worldName);
@@ -70,10 +74,6 @@ public class CuboidZoneProvider implements ZoneProvider {
 
     public String getWorldName() {
         return worldName;
-    }
-
-    public World getWorld() {
-        return Bukkit.getWorld(worldName);
     }
 
     public int getMinX() {
@@ -100,7 +100,7 @@ public class CuboidZoneProvider implements ZoneProvider {
         return maxZ;
     }
 
-    public static CuboidZoneProvider fromSection(ConfigurationSection section) {
+    public static CuboidAreaProvider fromSection(ConfigurationSection section) {
         String worldName = section.getString("world", "");
         int minX = section.getInt("min.x");
         int minY = section.getInt("min.y");
@@ -109,6 +109,6 @@ public class CuboidZoneProvider implements ZoneProvider {
         int maxY = section.getInt("max.y");
         int maxZ = section.getInt("max.z");
 
-        return new CuboidZoneProvider(worldName, minX, minY, minZ, maxX, maxY, maxZ);
+        return new CuboidAreaProvider(worldName, minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

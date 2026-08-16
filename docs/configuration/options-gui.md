@@ -2,7 +2,7 @@
 
 `/hb options` (alias `/hb o`) configures **per-head mechanics** of an existing hunt — Hint, Order, and Rewards — through interactive menus instead of editing YAML. This page lists every clickable element and its exact click/drop action.
 
-For the menus that appear while **creating** a hunt (behaviors, timed, zone, scheduled), see [Behavior GUI](behaviors-gui.md).
+For the menus that appear while **creating** a hunt (behaviors, requirements, timed, scheduled), see [Behavior GUI](behaviors-gui.md).
 
 {% hint style="info" %}
 When more than one hunt exists (multi-hunt mode), every menu first shows a **hunt selection** screen — click the hunt icon to configure. With a single hunt, that step is skipped and the menu opens directly.

@@ -8,8 +8,11 @@
 | `headblocks.commands.top`            | See the leaderboard                     | everyone |
 | `headblocks.commands.progress`       | See own progress                        | everyone |
 | `headblocks.commands.progress.other` | See another player's progress           | op       |
-| `headblocks.zone.bypass`             | Bypass hunt zone confinement (builders) | op       |
+| `headblocks.area.bypass`             | Bypass hunt area confinement (builders) | op       |
 | `headblocks.admin`                   | Access all admin commands               | op       |
+
+{% hint style="info" %}
+`headblocks.area.bypass` was named `headblocks.zone.bypass` before the areas became requirements. The old node still works, so existing permission setups need no change. {% endhint %}
 
 {% hint style="info" %}
 Arguments with `<>` are required and `()` are optional parameters.
@@ -50,7 +53,7 @@ Display leaderboard of heads found.
 
 ### /hb leave
 
-Leave the current timed run, or the bounded zone you are confined to.
+Leave the current timed run, or the hunt area you are confined to.
 
 |                |                  |
 |----------------|------------------|

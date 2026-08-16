@@ -4,6 +4,8 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.BehaviorResult;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementResult;
+import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
@@ -138,6 +140,42 @@ class HBHuntTest {
 
         assertThat(hunt.getBehaviors()).hasSize(1);
         assertThat(hunt.getBehaviors().get(0)).isInstanceOf(FreeBehavior.class);
+    }
+
+    @Test
+    void getRequirements_defaultsToAnEmptySet() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        assertThat(hunt.getRequirements()).isNotNull();
+        assertThat(hunt.getRequirements().isEmpty()).isTrue();
+    }
+
+    @Test
+    void setRequirements_null_resetsToAnEmptySet() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        hunt.setRequirements(null);
+
+        assertThat(hunt.getRequirements().isEmpty()).isTrue();
+    }
+
+    @Test
+    void evaluateRequirements_noRequirement_isSatisfied() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        assertThat(hunt.evaluateRequirements(player, headLocation).satisfied()).isTrue();
+    }
+
+    @Test
+    void evaluateRequirements_delegatesToTheSet() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        RequirementSet set = mock(RequirementSet.class);
+        when(set.evaluate(player, headLocation, hunt)).thenReturn(RequirementResult.unmet("nope"));
+        hunt.setRequirements(set);
+
+        RequirementResult result = hunt.evaluateRequirements(player, headLocation);
+
+        assertThat(result.satisfied()).isFalse();
+        assertThat(result.reason()).isEqualTo("nope");
     }
 
     @Test

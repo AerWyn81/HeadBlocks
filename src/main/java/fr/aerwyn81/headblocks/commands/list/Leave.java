@@ -27,8 +27,8 @@ public class Leave implements Cmd {
             return true;
         }
 
-        if (registry.getZoneEnforcementService().leave(player)) {
-            player.sendMessage(registry.getLanguageService().message("Messages.ZoneLeft"));
+        if (registry.getAreaEnforcementService().leave(player)) {
+            player.sendMessage(registry.getLanguageService().message("Messages.AreaLeft"));
             return true;
         }
 

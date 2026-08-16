@@ -121,6 +121,7 @@ dependencies {
     testImplementation(libs.sqlite.jdbc)
     testImplementation(libs.placeholderapi)
     testImplementation(libs.packetevents)
+    testImplementation(libs.worldguard)
 
     spigot.compileOnlyConfigurationName(libs.spigot.api)
     paper.compileOnlyConfigurationName(libs.paper.api)
@@ -160,8 +161,8 @@ fun BukkitPluginDescription.describeHeadBlocks() {
             description = "Allows access to /headblocks admin commands"
             default = BukkitPluginDescription.Permission.Default.OP
         }
-        register("headblocks.zone.bypass") {
-            description = "Allows bypassing hunt zone confinement"
+        register("headblocks.area.bypass") {
+            description = "Allows bypassing hunt area confinement"
             default = BukkitPluginDescription.Permission.Default.OP
         }
     }
@@ -214,8 +215,8 @@ val paperPluginDescription = PaperPluginDescription(project).apply {
             description = "Allows access to /headblocks admin commands"
             default = BukkitPluginDescription.Permission.Default.OP
         }
-        register("headblocks.zone.bypass") {
-            description = "Allows bypassing hunt zone confinement"
+        register("headblocks.area.bypass") {
+            description = "Allows bypassing hunt area confinement"
             default = BukkitPluginDescription.Permission.Default.OP
         }
     }

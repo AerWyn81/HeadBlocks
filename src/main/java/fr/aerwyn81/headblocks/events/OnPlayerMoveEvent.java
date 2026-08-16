@@ -1,7 +1,7 @@
 package fr.aerwyn81.headblocks.events;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
-import fr.aerwyn81.headblocks.services.ZoneEnforcementService;
+import fr.aerwyn81.headblocks.services.AreaEnforcementService;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -33,8 +33,8 @@ public class OnPlayerMoveEvent implements Listener {
             return;
         }
 
-        ZoneEnforcementService service = registry.getZoneEnforcementService();
-        if (service.evaluate(player, to) != ZoneEnforcementService.Decision.CONFINE) {
+        AreaEnforcementService service = registry.getAreaEnforcementService();
+        if (service.evaluate(player, to) != AreaEnforcementService.Decision.CONFINE) {
             return;
         }
 
@@ -69,8 +69,8 @@ public class OnPlayerMoveEvent implements Listener {
             return;
         }
 
-        ZoneEnforcementService service = registry.getZoneEnforcementService();
-        if (service.evaluate(player, to) != ZoneEnforcementService.Decision.CONFINE) {
+        AreaEnforcementService service = registry.getAreaEnforcementService();
+        if (service.evaluate(player, to) != AreaEnforcementService.Decision.CONFINE) {
             return;
         }
 
@@ -89,7 +89,7 @@ public class OnPlayerMoveEvent implements Listener {
             return;
         }
 
-        Location recovery = registry.getZoneEnforcementService().getRecoveryPoint(player, e.getRespawnLocation());
+        Location recovery = registry.getAreaEnforcementService().getRecoveryPoint(player, e.getRespawnLocation());
         if (recovery != null) {
             e.setRespawnLocation(recovery);
         }
@@ -99,7 +99,10 @@ public class OnPlayerMoveEvent implements Listener {
         if (player.getGameMode() == GameMode.SPECTATOR) {
             return true;
         }
-        return PlayerUtils.hasPermission(player, "headblocks.zone.bypass");
+        // The node was renamed with the area refactor; the old one still works so existing
+        // permission setups keep behaving the same after an update.
+        return PlayerUtils.hasPermission(player, "headblocks.area.bypass")
+                || PlayerUtils.hasPermission(player, "headblocks.zone.bypass");
     }
 
     private boolean crossedBlock(Location from, Location to) {
