@@ -28,11 +28,11 @@ public class OnPlayerMoveEvent implements Listener {
         }
 
         Player player = e.getPlayer();
-        if (isExempt(player)) {
+        AreaEnforcementService service = registry.getAreaEnforcementService();
+        if (service.hasNothingToEnforce(player) || isExempt(player)) {
             return;
         }
 
-        AreaEnforcementService service = registry.getAreaEnforcementService();
         if (service.evaluate(player, to) != AreaEnforcementService.Decision.CONFINE) {
             return;
         }
@@ -64,11 +64,11 @@ public class OnPlayerMoveEvent implements Listener {
         }
 
         Player player = e.getPlayer();
-        if (isExempt(player)) {
+        AreaEnforcementService service = registry.getAreaEnforcementService();
+        if (service.hasNothingToEnforce(player) || isExempt(player)) {
             return;
         }
 
-        AreaEnforcementService service = registry.getAreaEnforcementService();
         if (service.evaluate(player, to) != AreaEnforcementService.Decision.CONFINE) {
             return;
         }
@@ -84,11 +84,12 @@ public class OnPlayerMoveEvent implements Listener {
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {
         Player player = e.getPlayer();
-        if (isExempt(player)) {
+        AreaEnforcementService service = registry.getAreaEnforcementService();
+        if (service.hasNothingToEnforce(player) || isExempt(player)) {
             return;
         }
 
-        Location recovery = registry.getAreaEnforcementService().getRecoveryPoint(player, e.getRespawnLocation());
+        Location recovery = service.getRecoveryPoint(player, e.getRespawnLocation());
         if (recovery != null) {
             e.setRespawnLocation(recovery);
         }

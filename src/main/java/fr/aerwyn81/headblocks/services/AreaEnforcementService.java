@@ -108,6 +108,22 @@ public class AreaEnforcementService {
         return Decision.NONE;
     }
 
+    public boolean hasNothingToEnforce(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (AreaRunManager.isEngaged(uuid)) {
+            return false;
+        }
+
+        for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
+            if (hunt.isActive() && isEnforceable(findArea(hunt))) {
+                return false;
+            }
+        }
+
+        AreaRunManager.clearReleased(uuid);
+        return true;
+    }
+
     public Location getRecoveryPoint(Player player, Location reference) {
         UUID uuid = player.getUniqueId();
         String engagedId = AreaRunManager.getEngaged(uuid);

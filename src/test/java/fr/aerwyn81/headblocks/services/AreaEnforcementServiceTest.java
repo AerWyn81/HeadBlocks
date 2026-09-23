@@ -370,6 +370,47 @@ class AreaEnforcementServiceTest {
         assertThat(AreaRunManager.getEngaged(uuid)).isEqualTo(HUNT_ID);
     }
 
+    // --- hasNothingToEnforce ---
+
+    @Test
+    void hasNothingToEnforce_noHunts_returnsTrueAndClearsRelease() {
+        when(huntService.getAllHunts()).thenReturn(List.of());
+        AreaRunManager.markReleased(uuid, HUNT_ID);
+
+        assertThat(service.hasNothingToEnforce(player)).isTrue();
+        assertThat(AreaRunManager.isReleased(uuid, HUNT_ID)).isFalse();
+    }
+
+    @Test
+    void hasNothingToEnforce_activeHuntWithArea_returnsFalse() {
+        registerSingle(hunt(HUNT_ID, 1, 3, area, returnPoint));
+
+        assertThat(service.hasNothingToEnforce(player)).isFalse();
+    }
+
+    @Test
+    void hasNothingToEnforce_inactiveHuntWithArea_returnsTrue() {
+        HBHunt hunt = hunt(HUNT_ID, 1, 3, area, returnPoint);
+        hunt.setState(HuntState.INACTIVE);
+        registerSingle(hunt);
+
+        assertThat(service.hasNothingToEnforce(player)).isTrue();
+    }
+
+    @Test
+    void hasNothingToEnforce_areaNotEnforceable_returnsTrue() {
+        registerSingle(hunt(HUNT_ID, 1, 3, area, null));
+
+        assertThat(service.hasNothingToEnforce(player)).isTrue();
+    }
+
+    @Test
+    void hasNothingToEnforce_engaged_returnsFalse() {
+        AreaRunManager.engage(uuid, HUNT_ID);
+
+        assertThat(service.hasNothingToEnforce(player)).isFalse();
+    }
+
     // --- getRecoveryPoint ---
 
     @Test
