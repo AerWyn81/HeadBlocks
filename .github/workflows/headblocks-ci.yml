@@ -25,6 +25,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
       - name: SonarCloud analysis
+        if: ${{ !github.event.repository.fork }}
         run: ./gradlew sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
