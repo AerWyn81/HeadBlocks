@@ -28,10 +28,10 @@ mockbukkit = "3.93.2"
 sqlite-jdbc = "3.53.1.0"
 
 # Build Plugins
-sonarqube = "7.3.0.8198"
-shadow = "9.4.1"
+sonarqube = "7.5.0.8588"
+shadow = "9.4.3"
 plugin-yml = "0.6.0"
-run-paper = "3.0.2"
+run-paper = "3.1.0"
 hangar-publish = "0.1.4"
 
 [libraries]
