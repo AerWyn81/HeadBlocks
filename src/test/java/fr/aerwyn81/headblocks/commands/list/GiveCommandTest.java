@@ -4,8 +4,11 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadHeadDB;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HuntService;
 import fr.aerwyn81.headblocks.services.LanguageService;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -37,6 +40,9 @@ class GiveCommandTest {
     private LanguageService languageService;
 
     @Mock
+    private HuntService huntService;
+
+    @Mock
     private Player player;
 
     @Mock
@@ -48,6 +54,7 @@ class GiveCommandTest {
     void setUp() {
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
+        lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
         lenient().when(languageService.message(anyString(), anyString())).thenReturn("mock-message");
         command = new Give(registry);
@@ -227,6 +234,54 @@ class GiveCommandTest {
     }
 
     @Nested
+    class GiveWithHunt {
+
+        @Test
+        void unknownHunt_sendsHuntNotFound() {
+            when(huntService.getHuntById("unknown")).thenReturn(null);
+
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
+
+                boolean result = command.perform(player, new String[]{"give", "pName", "1", "unknown"});
+
+                assertThat(result).isTrue();
+                verify(languageService).message("Messages.HuntNotFound");
+                verify(headService, never()).getHeads();
+            }
+        }
+
+        @Test
+        void knownHunt_givesTaggedHead() {
+            HBHunt hunt = mock(HBHunt.class);
+            when(hunt.getId()).thenReturn("ab1");
+            when(hunt.getDisplayName()).thenReturn("AB 1");
+            when(huntService.getHuntById("ab1")).thenReturn(hunt);
+
+            HBHead head1 = mock(HBHead.class);
+            ItemStack item1 = mock(ItemStack.class);
+            ItemStack tagged = mock(ItemStack.class);
+            when(head1.getItemStack()).thenReturn(item1);
+            when(headService.getHeads()).thenReturn(new ArrayList<>(java.util.List.of(head1)));
+            when(player.getInventory()).thenReturn(playerInventory);
+
+            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+                 MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class);
+                 MockedStatic<HeadUtils> hu = mockStatic(HeadUtils.class)) {
+                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
+                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
+                hu.when(() -> HeadUtils.withHunt(item1, "ab1", "mock-message")).thenReturn(tagged);
+
+                boolean result = command.perform(player, new String[]{"give", "pName", "1", "ab1"});
+
+                assertThat(result).isTrue();
+                verify(playerInventory).addItem(tagged);
+                verify(playerInventory, never()).addItem(item1);
+            }
+        }
+    }
+
+    @Nested
     class HDBHead {
 
         @Test
@@ -322,6 +377,15 @@ class GiveCommandTest {
             ArrayList<String> result = command.tabComplete(player, new String[]{"give", "player", ""});
 
             assertThat(result).isEmpty();
+        }
+
+        @Test
+        void fourthArg_returnsMatchingHunts() {
+            when(huntService.getHuntNames()).thenReturn(new ArrayList<>(java.util.List.of("default", "ab1", "ab2")));
+
+            ArrayList<String> result = command.tabComplete(player, new String[]{"give", "player", "1", "a"});
+
+            assertThat(result).containsExactly("ab1", "ab2");
         }
     }
 }

@@ -12,7 +12,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class HeadUtils {
 
@@ -78,6 +80,36 @@ public class HeadUtils {
         return i1Meta != null && i2Meta != null &&
                 i1Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_KEY), PersistentDataType.STRING) &&
                 i2Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_KEY), PersistentDataType.STRING);
+    }
+
+    public static ItemStack withHunt(ItemStack itemStack, String huntId, String loreLine) {
+        ItemStack tagged = itemStack.clone();
+        ItemMeta meta = tagged.getItemMeta();
+        if (meta == null) {
+            return tagged;
+        }
+
+        meta.getPersistentDataContainer().set(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_HUNT_KEY), PersistentDataType.STRING, huntId);
+
+        List<String> lore = meta.getLore() != null ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+        lore.add(loreLine);
+        meta.setLore(lore);
+
+        tagged.setItemMeta(meta);
+        return tagged;
+    }
+
+    public static String getHuntId(ItemStack itemStack) {
+        if (isNotValidItemStack(itemStack)) {
+            return null;
+        }
+
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null) {
+            return null;
+        }
+
+        return meta.getPersistentDataContainer().get(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_HUNT_KEY), PersistentDataType.STRING);
     }
 
     private static boolean isNotValidItemStack(ItemStack i) {

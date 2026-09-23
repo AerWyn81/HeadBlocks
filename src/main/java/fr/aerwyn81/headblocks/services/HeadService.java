@@ -49,6 +49,7 @@ public class HeadService {
     private Map<UUID, Task> tasksHeadSpin;
 
     public static String HB_KEY = "HB_HEAD";
+    public static String HB_HUNT_KEY = "HB_HUNT";
 
     // --- Constructor + instance lifecycle ---
 

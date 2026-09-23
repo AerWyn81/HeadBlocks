@@ -53,6 +53,7 @@ When using `/hb give <playerName>`:
 
 - Add `*` to give all HeadBlocks
 - Add a `number` to give the head at that position in the config
+- Add a `hunt` after it to link the given head (s) to that hunt (e.g. `/hb give Steve 1 halloween`)
 
 ## headsTheme
 

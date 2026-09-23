@@ -9,6 +9,7 @@ Head:
     - "&2✔ &8- &7Right click + sneak to create"
     - "&c✘ &8- &7Left click + sneak to delete"
     - ""
+  HuntLore: "&7Hunt: &e%hunt%"
 
 Messages:
   NoPermission: "%prefix% &cYou do not have permission to run this command."
@@ -38,6 +39,7 @@ Messages:
   AlreadyClaimHead: "%prefix% &cYou have already clicked on this head."
   ListHeadEmpty: "%prefix% &cThere are no heads yet."
   HeadGiven: "%prefix% &aYou received a HeadBlock."
+  HeadHuntDeleted: "%prefix% &cThe hunt &e%hunt% &clinked to this head no longer exists."
   NoHeadFound: "%prefix% &cThis player has not yet found a head."
   ResetAllNoData: "%prefix% &cThere is no data to reset."
   ResetAllConfirm: "%prefix% &cWarning: This command will reset &7%playerCount% &cplayer(s) data. Add &7--confirm &cto the command to confirm."
@@ -709,7 +711,7 @@ Help:
   Progress: "&6/hb progress&8: &7&oDisplays your progress"
   Remove: "&6/hb remove (headUuid)&8: &7&oRemove head by its <headUuid> or targeted head"
   RemoveAll: "&6/hb removeall&8: &7&oRemove all spawned heads"
-  Give: "&6/hb give <player> <*|number>&8: &7&oGives a HeadBlock to <player>. <number> when multi HeadBlocks are defined"
+  Give: "&6/hb give <player> <*|number> [hunt]&8: &7&oGives a HeadBlock to <player>. <number> when multi HeadBlocks are defined. [hunt] to link the head to a hunt"
   Reset: "&6/hb reset <player> [--head <name|uuid>]&8: &7&oReset data of the <player>. Use --head to reset a specific head (empty for targeted head)"
   ResetAll: "&6/hb resetall [--head <name|uuid>] [--confirm]&8: &7&oReset data of all players. Use --head to reset a specific head for all players"
   List: "&6/hb list (huntId) <page>&8: &7&oDisplays the list of existing HeadBlocks (optionally filtered by hunt)"

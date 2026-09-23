@@ -99,21 +99,30 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-        // Assign head to selected hunt directly during save
-        String selectedHuntId = registry.getHuntService().getSelectedHunt(player.getUniqueId());
+        String huntId = HeadUtils.getHuntId(e.getItemInHand());
+        if (huntId != null && !registry.getHuntService().huntExists(huntId)) {
+            e.setCancelled(true);
+            player.sendMessage(registry.getLanguageService().message("Messages.HeadHuntDeleted")
+                    .replace("%hunt%", huntId));
+            return;
+        }
 
-        var selectedHunt = registry.getHuntService().getHuntById(selectedHuntId);
-        if (selectedHunt != null
-                && registry.getAreaEnforcementService().isLocationOutsideArea(selectedHunt, headLocation)) {
+        if (huntId == null) {
+            huntId = registry.getHuntService().getSelectedHunt(player.getUniqueId());
+        }
+
+        var hunt = registry.getHuntService().getHuntById(huntId);
+        if (hunt != null
+                && registry.getAreaEnforcementService().isLocationOutsideArea(hunt, headLocation)) {
             e.setCancelled(true);
             player.sendMessage(registry.getLanguageService().message("Messages.AreaHeadOutside")
-                    .replace("%hunt%", selectedHunt.getDisplayName()));
+                    .replace("%hunt%", hunt.getDisplayName()));
             return;
         }
 
         UUID headUuid;
         try {
-            headUuid = registry.getHeadService().saveHeadLocation(headLocation, headTexture, selectedHuntId);
+            headUuid = registry.getHeadService().saveHeadLocation(headLocation, headTexture, huntId);
         } catch (InternalException ex) {
             player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while trying to create new HeadBlocks from the storage: {0}", ex.getMessage());
@@ -124,7 +133,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadPlaced"), headLocation));
 
-        if (HBHunt.DEFAULT_ID.equals(selectedHuntId)) {
+        if (HBHunt.DEFAULT_ID.equals(huntId)) {
             TextComponent msg = new TextComponent(MessageUtils.colorize(
                     registry.getLanguageService().prefix() + " &7Assigned to &edefault&7. "));
             TextComponent clickable = new TextComponent(MessageUtils.colorize("&a&l[Reassign]"));
@@ -136,7 +145,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             player.spigot().sendMessage(msg);
         }
 
-        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation, selectedHuntId));
+        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation, huntId));
     }
 
     private boolean hasHeadBlocksItemInHand(Player player) {

@@ -5,6 +5,8 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.LoadableHead;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -35,6 +37,16 @@ public class Give implements Cmd {
             }
 
             player = pTemp;
+        }
+
+        HBHunt targetHunt = null;
+        if (args.length > 3) {
+            targetHunt = registry.getHuntService().getHuntById(args[3]);
+            if (targetHunt == null) {
+                sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
+                        .replace("%hunt%", args[3]));
+                return true;
+            }
         }
 
         ArrayList<HBHead> hbHeads = registry.getHeadService().getHeads();
@@ -83,7 +95,13 @@ public class Give implements Cmd {
                 continue;
             }
 
-            player.getInventory().addItem(head.getItemStack());
+            var item = head.getItemStack();
+            if (targetHunt != null) {
+                item = HeadUtils.withHunt(item, targetHunt.getId(), registry.getLanguageService().message("Head.HuntLore")
+                        .replace("%hunt%", targetHunt.getDisplayName()));
+            }
+
+            player.getInventory().addItem(item);
             headGiven++;
         }
 
@@ -101,6 +119,12 @@ public class Give implements Cmd {
             return Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
                     .filter(p -> p.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        if (args.length == 4) {
+            return registry.getHuntService().getHuntNames().stream()
+                    .filter(h -> h.toLowerCase().startsWith(args[3].toLowerCase()))
                     .collect(Collectors.toCollection(ArrayList::new));
         }
 

@@ -66,13 +66,13 @@ All admin commands require `headblocks.admin`.
 
 ### /hb give
 
-Give a HeadBlock item to a player.
+Give a HeadBlock item to a player. When a hunt is specified, the given head is linked to that hunt and is always placed in it, regardless of the hunt selected with `/hb hunt select`.
 
-|               |                               |
-|---------------|-------------------------------|
-| **Alias**     | `g`                           |
-| **Arguments** | `<player> (* or head number)` |
-| **Sender**    | Player                        |
+|               |                                      |
+|---------------|--------------------------------------|
+| **Alias**     | `g`                                  |
+| **Arguments** | `<player> (* or head number) (hunt)` |
+| **Sender**    | Player                               |
 
 ### /hb remove
 
@@ -239,7 +239,7 @@ Show detailed hunt info (state, priority, behaviors, heads, players).
 
 ### /hb hunt select
 
-Set the active hunt for head placement. No argument resets to "default".
+Set the active hunt for head placement. No argument resets to "default". Heads given with a hunt (`/hb give <player> <number> <hunt>`) ignore the selection.
 
 |               |          |
 |---------------|----------|
