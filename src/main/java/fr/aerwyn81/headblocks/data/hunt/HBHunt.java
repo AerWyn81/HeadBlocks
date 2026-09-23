@@ -14,6 +14,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HBHunt {
+    public static final String DEFAULT_ID = "default";
+
     private final String id;
     private final ConfigService configService;
     private String displayName;
@@ -201,7 +203,7 @@ public class HBHunt {
     // --- Utility ---
 
     public boolean isDefault() {
-        return "default".equals(id);
+        return DEFAULT_ID.equals(id);
     }
 
     @Override

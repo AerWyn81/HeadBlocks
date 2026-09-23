@@ -1,5 +1,6 @@
 package fr.aerwyn81.headblocks.utils.gui;
 
+import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.services.GuiService;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import fr.aerwyn81.headblocks.utils.message.color.IridiumColorAPI;
@@ -7,7 +8,6 @@ import fr.aerwyn81.headblocks.utils.runnables.BukkitFutureResult;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,6 +48,9 @@ class GuiUtilsTest {
 
         @Mock
         GuiService guiService;
+
+        @Mock
+        Platform platform;
 
         private HBMenu createMenu(String name, int rowsPerPage) {
             try (MockedStatic<IridiumColorAPI> api = mockStatic(IridiumColorAPI.class)) {
@@ -156,10 +159,9 @@ class GuiUtilsTest {
                 // maxPage=2, currentPage=0
 
                 var viewer = mock(HumanEntity.class);
-                var invView = mock(InventoryView.class);
-                when(viewer.getOpenInventory()).thenReturn(invView);
                 var topInv = mock(org.bukkit.inventory.Inventory.class);
-                when(invView.getTopInventory()).thenReturn(topInv);
+                when(platform.topInventory(viewer)).thenReturn(topInv);
+                when(guiService.getPlatform()).thenReturn(platform);
                 when(topInv.getHolder()).thenReturn(null);
 
                 menu.nextPage(viewer);
@@ -189,10 +191,9 @@ class GuiUtilsTest {
                 menu.setCurrentPage(1);
 
                 var viewer = mock(HumanEntity.class);
-                var invView = mock(InventoryView.class);
-                when(viewer.getOpenInventory()).thenReturn(invView);
                 var topInv = mock(org.bukkit.inventory.Inventory.class);
-                when(invView.getTopInventory()).thenReturn(topInv);
+                when(platform.topInventory(viewer)).thenReturn(topInv);
+                when(guiService.getPlatform()).thenReturn(platform);
                 when(topInv.getHolder()).thenReturn(null);
 
                 menu.previousPage(viewer);

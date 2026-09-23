@@ -10,6 +10,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +39,13 @@ public class PaperPlatform implements Platform {
     @Override
     public CompletableFuture<Boolean> teleportAsync(Entity entity, Location location) {
         return entity.teleportAsync(location);
+    }
+
+    @Override
+    public Inventory topInventory(HumanEntity viewer) {
+        var view = viewer.getOpenInventory();
+
+        return view == null ? null : view.getTopInventory();
     }
 
     /**

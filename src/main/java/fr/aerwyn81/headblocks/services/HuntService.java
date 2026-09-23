@@ -35,7 +35,7 @@ public class HuntService {
 
         List<HBHunt> fileHunts = huntConfigService.loadHunts();
 
-        boolean hasDefault = fileHunts.stream().anyMatch(h -> "default".equals(h.getId()));
+        boolean hasDefault = fileHunts.stream().anyMatch(HBHunt::isDefault);
         if (!hasDefault) {
             HBHunt defaultHunt = createDefaultHunt();
             fileHunts.add(0, defaultHunt);
@@ -54,7 +54,7 @@ public class HuntService {
     }
 
     private HBHunt createDefaultHunt() {
-        HBHunt hunt = new HBHunt(configService, "default", "Default", HuntState.ACTIVE, 0, "PLAYER_HEAD");
+        HBHunt hunt = new HBHunt(configService, HBHunt.DEFAULT_ID, "Default", HuntState.ACTIVE, 0, "PLAYER_HEAD");
         huntConfigService.saveHunt(hunt);
         return hunt;
     }
@@ -83,7 +83,10 @@ public class HuntService {
     }
 
     public HBHunt getDefaultHunt() {
-        return huntsById.get("default");
+        return huntsById.values().stream()
+                .filter(HBHunt::isDefault)
+                .findFirst()
+                .orElse(null);
     }
 
     public Collection<HBHunt> getAllHunts() {
@@ -116,6 +119,7 @@ public class HuntService {
 
     public void unregisterHunt(String huntId) {
         huntsById.remove(huntId);
+        selectedHunt.values().removeIf(huntId::equals);
         TimedRunManager.leaveAllForHunt(huntId);
         AreaRunManager.clearAllForHunt(huntId);
     }
@@ -131,7 +135,13 @@ public class HuntService {
     }
 
     public String getSelectedHunt(UUID playerUUID) {
-        return selectedHunt.getOrDefault(playerUUID, "default");
+        String huntId = selectedHunt.get(playerUUID);
+        if (huntId != null && huntsById.containsKey(huntId)) {
+            return huntId;
+        }
+
+        HBHunt defaultHunt = getDefaultHunt();
+        return defaultHunt != null ? defaultHunt.getId() : HBHunt.DEFAULT_ID;
     }
 
     public void clearSelectedHunt(UUID playerUUID) {

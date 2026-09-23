@@ -80,7 +80,8 @@ public class OnPlayerClickInventoryEvent implements Listener {
                     || registry.getChatPromptService().hasPending(player)) {
                 return;
             }
-            if (player.getOpenInventory().getTopInventory().getHolder() instanceof HBMenu) {
+            var openInventory = registry.getPlatform().topInventory(player);
+            if (openInventory != null && openInventory.getHolder() instanceof HBMenu) {
                 return;
             }
             areaEditor.clearState(player.getUniqueId());

@@ -68,12 +68,7 @@ public class Hunt implements Cmd {
     // --- E2: CRUD ---
 
     private void handleCreate(CommandSender sender, String[] args) {
-        if (args.length < 3) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
-            return;
-        }
-
-        String name = args[2];
+        String name = args.length >= 3 ? args[2] : nextFreeHuntName();
 
         if (!name.matches("[a-zA-Z0-9-]+")) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntInvalidName"));
@@ -118,6 +113,19 @@ public class Hunt implements Cmd {
                 .replace("%hunt%", hunt.getId()));
     }
 
+    private String nextFreeHuntName() {
+        Set<String> taken = registry.getHuntService().getHuntNames().stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+
+        int index = 1;
+        while (taken.contains(String.valueOf(index))) {
+            index++;
+        }
+
+        return String.valueOf(index);
+    }
+
     private void handleDelete(CommandSender sender, String[] args) {
         if (args.length < 3) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
@@ -126,7 +134,7 @@ public class Hunt implements Cmd {
 
         String huntId = args[2].toLowerCase();
 
-        if ("default".equals(huntId)) {
+        if (HBHunt.DEFAULT_ID.equals(huntId)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntCannotDeleteDefault"));
             return;
         }
@@ -163,7 +171,7 @@ public class Hunt implements Cmd {
         }
 
         // Resolve fallback hunt
-        String resolvedFallback = keepHeads ? (fallbackHuntId != null ? fallbackHuntId : "default") : null;
+        String resolvedFallback = keepHeads ? (fallbackHuntId != null ? fallbackHuntId : HBHunt.DEFAULT_ID) : null;
 
         if (keepHeads && fallbackHuntId != null) {
             HBHunt fb = registry.getHuntService().getHuntById(fallbackHuntId);
@@ -850,7 +858,7 @@ public class Hunt implements Cmd {
             switch (sub) {
                 case "delete" -> {
                     return registry.getHuntService().getHuntNames().stream()
-                            .filter(n -> !n.equals("default"))
+                            .filter(n -> !n.equals(HBHunt.DEFAULT_ID))
                             .filter(n -> n.startsWith(args[2].toLowerCase()))
                             .collect(Collectors.toCollection(ArrayList::new));
                 }

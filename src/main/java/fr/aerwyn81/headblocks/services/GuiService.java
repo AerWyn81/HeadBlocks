@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.services.gui.GuiBase;
 import fr.aerwyn81.headblocks.services.gui.types.*;
 import fr.aerwyn81.headblocks.services.gui.types.requirement.RequirementsGui;
@@ -23,6 +24,7 @@ public class GuiService {
     private final HuntService huntService;
     private final HeadService headService;
     private final PluginProvider pluginProvider;
+    private final Platform platform;
 
     private final RewardsGui rewardsManager;
     private final OrderGui orderManager;
@@ -42,6 +44,7 @@ public class GuiService {
         this.huntService = huntService;
         this.headService = headService;
         this.pluginProvider = pluginProvider;
+        this.platform = registry.getPlatform();
 
         this.rewardsManager = new RewardsGui(registry);
         this.orderManager = new OrderGui(registry);
@@ -87,6 +90,10 @@ public class GuiService {
 
     public RequirementsGui getRequirementsGui() {
         return requirementsGui;
+    }
+
+    public Platform getPlatform() {
+        return platform;
     }
 
     public void openHuntSelectionOrDirect(Player player, BiConsumer<Player, HBHunt> callback) {

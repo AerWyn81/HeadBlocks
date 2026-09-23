@@ -7,6 +7,8 @@ import org.bukkit.Location;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.Plugin;
 
 import java.util.List;
@@ -27,6 +29,13 @@ public class TestPlatform implements Platform {
     @Override
     public CompletableFuture<Boolean> teleportAsync(Entity entity, Location location) {
         return CompletableFuture.completedFuture(entity.teleport(location));
+    }
+
+    @Override
+    public Inventory topInventory(HumanEntity viewer) {
+        var view = viewer.getOpenInventory();
+
+        return view == null ? null : view.getTopInventory();
     }
 
     @Override

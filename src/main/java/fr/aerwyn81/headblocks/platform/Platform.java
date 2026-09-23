@@ -5,6 +5,8 @@ import org.bukkit.Location;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.Plugin;
 
 import java.util.List;
@@ -17,6 +19,8 @@ public interface Platform {
     SchedulerAdapter createScheduler(Plugin plugin);
 
     CompletableFuture<Boolean> teleportAsync(Entity entity, Location location);
+
+    Inventory topInventory(HumanEntity viewer);
 
     /**
      * Binds the plugin command. Spigot declares it in plugin.yml and only needs the handler wired;

@@ -113,10 +113,25 @@ class HBHuntCommandTest {
     @Nested
     class Create {
         @Test
-        void noName_sendsUsage() {
-            huntCommand.perform(consoleSender, new String[]{"hunt", "create"});
+        void noName_usesTheFirstFreeNumber() {
+            when(huntService.getHuntNames()).thenReturn(java.util.List.of("default"));
+            var behaviorGui = mock(BehaviorSelectionGui.class);
+            when(guiService.getBehaviorSelectionManager()).thenReturn(behaviorGui);
 
-            verify(languageService).message("Messages.HuntUsage");
+            huntCommand.perform(playerSender, new String[]{"hunt", "create"});
+
+            verify(behaviorGui).open(playerSender, "1");
+        }
+
+        @Test
+        void noName_skipsNumbersAlreadyTaken() {
+            when(huntService.getHuntNames()).thenReturn(java.util.List.of("1", "2", "4"));
+            var behaviorGui = mock(BehaviorSelectionGui.class);
+            when(guiService.getBehaviorSelectionManager()).thenReturn(behaviorGui);
+
+            huntCommand.perform(playerSender, new String[]{"hunt", "create"});
+
+            verify(behaviorGui).open(playerSender, "3");
         }
 
         @Test

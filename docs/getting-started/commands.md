@@ -191,11 +191,11 @@ All hunt commands require `headblocks.admin`.
 
 ### /hb hunt create
 
-Create a new hunt (alphanumeric + hyphens only).
+Create a new hunt (alphanumeric + hyphens only). Omit the name and the hunt is named with the lowest free number (`1`, then `2`, `3`, ...).
 
 |               |          |
 |---------------|----------|
-| **Arguments** | `<name>` |
+| **Arguments** | `[name]` |
 
 ### /hb hunt delete
 

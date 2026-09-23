@@ -5,6 +5,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.plugin.Plugin;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,6 +55,27 @@ class SpigotPlatformTest {
 
         assertThat(result).isCompletedWithValue(true);
         verify(entity).teleport(location);
+    }
+
+    @Test
+    @DisplayName("topInventory reads the top of the viewer's open view")
+    void top_inventory_returns_the_open_top_inventory() {
+        HumanEntity viewer = mock(HumanEntity.class);
+        InventoryView view = mock(InventoryView.class);
+        Inventory top = mock(Inventory.class);
+        when(viewer.getOpenInventory()).thenReturn(view);
+        when(view.getTopInventory()).thenReturn(top);
+
+        assertThat(new SpigotPlatform().topInventory(viewer)).isSameAs(top);
+    }
+
+    @Test
+    @DisplayName("topInventory is null when the viewer has no open view")
+    void top_inventory_without_open_view_is_null() {
+        HumanEntity viewer = mock(HumanEntity.class);
+        when(viewer.getOpenInventory()).thenReturn(null);
+
+        assertThat(new SpigotPlatform().topInventory(viewer)).isNull();
     }
 
     @Test

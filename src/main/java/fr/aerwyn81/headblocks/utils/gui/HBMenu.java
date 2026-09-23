@@ -178,17 +178,18 @@ public class HBMenu implements InventoryHolder {
     }
 
     public void refreshInventory(HumanEntity viewer) {
-        if (!(viewer.getOpenInventory().getTopInventory().getHolder() instanceof HBMenu)
-                || viewer.getOpenInventory().getTopInventory().getHolder() != this) {
+        Inventory openInventory = guiService.getPlatform().topInventory(viewer);
+
+        if (openInventory == null || openInventory.getHolder() != this) {
             return;
         }
 
-        if (viewer.getOpenInventory().getTopInventory().getSize() != getPageSize() + (getMaxPage() > 0 ? 9 : 0)) {
+        if (openInventory.getSize() != getPageSize() + (getMaxPage() > 0 ? 9 : 0)) {
             viewer.openInventory(getInventory());
             return;
         }
 
-        viewer.getOpenInventory().getTopInventory().setContents(getInventory().getContents());
+        openInventory.setContents(getInventory().getContents());
     }
 
     @Override

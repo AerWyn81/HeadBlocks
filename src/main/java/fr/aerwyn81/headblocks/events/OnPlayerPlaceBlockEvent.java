@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
@@ -123,7 +124,7 @@ public class OnPlayerPlaceBlockEvent implements Listener {
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadPlaced"), headLocation));
 
-        if ("default".equals(selectedHuntId)) {
+        if (HBHunt.DEFAULT_ID.equals(selectedHuntId)) {
             TextComponent msg = new TextComponent(MessageUtils.colorize(
                     registry.getLanguageService().prefix() + " &7Assigned to &edefault&7. "));
             TextComponent clickable = new TextComponent(MessageUtils.colorize("&a&l[Reassign]"));

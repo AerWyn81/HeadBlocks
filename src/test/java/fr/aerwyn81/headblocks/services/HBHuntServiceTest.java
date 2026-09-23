@@ -160,7 +160,10 @@ class HBHuntServiceTest {
     @Test
     void setSelectedHunt_returnsSetValue() {
         UUID player = UUID.randomUUID();
+        huntService.registerHunt(new HBHunt(configService, "custom", "Custom", HuntState.ACTIVE, 1, "D"));
+
         huntService.setSelectedHunt(player, "custom");
+
         assertThat(huntService.getSelectedHunt(player)).isEqualTo("custom");
     }
 
@@ -169,6 +172,29 @@ class HBHuntServiceTest {
         UUID player = UUID.randomUUID();
         huntService.setSelectedHunt(player, "custom");
         huntService.clearSelectedHunt(player);
+        assertThat(huntService.getSelectedHunt(player)).isEqualTo("default");
+    }
+
+    @Test
+    void unregisterHunt_revertsSelectionOfEveryPlayerOnIt() {
+        UUID onDeleted = UUID.randomUUID();
+        UUID onKept = UUID.randomUUID();
+        huntService.registerHunt(new HBHunt(configService, "doomed", "Doomed", HuntState.ACTIVE, 1, "D"));
+        huntService.registerHunt(new HBHunt(configService, "kept", "Kept", HuntState.ACTIVE, 2, "D"));
+        huntService.setSelectedHunt(onDeleted, "doomed");
+        huntService.setSelectedHunt(onKept, "kept");
+
+        huntService.unregisterHunt("doomed");
+
+        assertThat(huntService.getSelectedHunt(onDeleted)).isEqualTo("default");
+        assertThat(huntService.getSelectedHunt(onKept)).isEqualTo("kept");
+    }
+
+    @Test
+    void getSelectedHunt_huntNoLongerRegistered_fallsBackToDefault() {
+        UUID player = UUID.randomUUID();
+        huntService.setSelectedHunt(player, "gone");
+
         assertThat(huntService.getSelectedHunt(player)).isEqualTo("default");
     }
 
