@@ -16,6 +16,10 @@ class VisualFormTest {
             "BLOCK, DISPLAY, BLOCK_DISPLAY",
             "ITEM, BLOCK, ITEM_DISPLAY",
             "ITEM, DISPLAY, ITEM_DISPLAY",
+            "TEXT, BLOCK, TEXT_DISPLAY",
+            "TEXT, DISPLAY, TEXT_DISPLAY",
+            "FRAME, BLOCK, ITEM_FRAME",
+            "FRAME, DISPLAY, ITEM_FRAME",
             "MOB, BLOCK, MOB",
             "MOB, DISPLAY, MOB",
             "EXTERNAL, BLOCK, EXTERNAL",
@@ -41,6 +45,8 @@ class VisualFormTest {
         assertThat(VisualForm.BLOCK_DISPLAY.isEntityBased()).isTrue();
         assertThat(VisualForm.MOB.isEntityBased()).isTrue();
         assertThat(VisualForm.EXTERNAL.isEntityBased()).isTrue();
+        assertThat(VisualForm.TEXT_DISPLAY.isEntityBased()).isTrue();
+        assertThat(VisualForm.ITEM_FRAME.isEntityBased()).isTrue();
     }
 
     @Test

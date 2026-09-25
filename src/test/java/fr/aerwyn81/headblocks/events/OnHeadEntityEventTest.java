@@ -309,6 +309,29 @@ class OnHeadEntityEventTest {
         }
 
         @Test
+        void frameBreak_isCancelled() {
+            org.bukkit.entity.ItemFrame frame = mock(org.bukkit.entity.ItemFrame.class);
+            when(visualService.isHeadEntity(frame)).thenReturn(true);
+            org.bukkit.event.hanging.HangingBreakEvent event = mock(org.bukkit.event.hanging.HangingBreakEvent.class);
+            when(event.getEntity()).thenReturn(frame);
+
+            listener.onHangingBreak(event);
+
+            verify(event).setCancelled(true);
+        }
+
+        @Test
+        void otherFrames_canBreak() {
+            org.bukkit.entity.ItemFrame frame = mock(org.bukkit.entity.ItemFrame.class);
+            org.bukkit.event.hanging.HangingBreakEvent event = mock(org.bukkit.event.hanging.HangingBreakEvent.class);
+            when(event.getEntity()).thenReturn(frame);
+
+            listener.onHangingBreak(event);
+
+            verify(event, never()).setCancelled(anyBoolean());
+        }
+
+        @Test
         void otherEntities_areNotProtected() {
             EntityCombustEvent event = mock(EntityCombustEvent.class);
             when(event.getEntity()).thenReturn(entity);

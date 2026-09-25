@@ -446,16 +446,6 @@ Gui:
     - ""
     - "&7Configurées : &f%count%"
     - "&a&lCLIC&8: &7Configurer"
-  BehaviorRenderingName: "&bRendu : &e%rendering%"
-  BehaviorRenderingLore:
-    - ""
-    - "&7Comment les têtes et blocs de cette hunt"
-    - "&7apparaissent dans le monde"
-    - ""
-    - "&fBloc&7 : blocs posés classiques"
-    - "&fDisplay&7 : entités flottantes, redimensionnables"
-    - ""
-    - "&a&lCLIC&8: &7Changer"
   RequirementsTitle: "&8HeadBlocks &7- &dConditions"
   RequirementsMode: "&d&lCombinaison"
   RequirementsModeLore:

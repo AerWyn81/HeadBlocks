@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.visual;
 import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.data.head.visual.VisualForm;
-import fr.aerwyn81.headblocks.hooks.VisualProviderHook;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviderHook;
 import fr.aerwyn81.headblocks.visual.renderers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

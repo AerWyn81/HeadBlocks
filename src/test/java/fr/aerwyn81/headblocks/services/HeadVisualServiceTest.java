@@ -10,7 +10,7 @@ import fr.aerwyn81.headblocks.data.head.visual.VisualForm;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.hooks.VisualProviderHook;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviderHook;
 import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bukkit.Chunk;
@@ -101,6 +101,44 @@ class HeadVisualServiceTest {
             head.setLocation(location);
         }
         return head;
+    }
+
+    @Nested
+    class Usage {
+
+        private HeadLocation placed(HeadContent content, RenderMode mode) {
+            var head = head(content, null);
+            head.setRenderMode(mode);
+            return head;
+        }
+
+        @Test
+        void visualTypes_nameEveryRenderInUse() {
+            var heads = new ArrayList<>(List.of(
+                    placed(null, null),
+                    placed(HeadContent.head("t"), RenderMode.BLOCK),
+                    placed(HeadContent.head("t"), RenderMode.DISPLAY),
+                    placed(HeadContent.of(ContentKind.BLOCK, "STONE", null), RenderMode.BLOCK),
+                    placed(HeadContent.of(ContentKind.BLOCK, "STONE", null), RenderMode.DISPLAY),
+                    placed(HeadContent.of(ContentKind.ITEM, "DIAMOND", null), RenderMode.BLOCK),
+                    placed(HeadContent.of(ContentKind.TEXT, "hi", null), RenderMode.BLOCK),
+                    placed(HeadContent.of(ContentKind.FRAME, "DIAMOND", null), RenderMode.BLOCK),
+                    placed(HeadContent.of(ContentKind.MOB, "CAT", null), RenderMode.BLOCK),
+                    placed(HeadContent.external("fancynpcs", "Notch", null), RenderMode.BLOCK),
+                    placed(HeadContent.external("mythicmobs", "Boss", null), RenderMode.DISPLAY)));
+            when(headService.getChargedHeadLocations()).thenReturn(heads);
+
+            assertThat(visualService.visualTypesInUse()).containsExactlyInAnyOrder(
+                    "Head", "Head (display)", "Block", "Block (display)", "Item", "Text", "Frame", "Mob",
+                    "FancyNpcs", "MythicMobs");
+        }
+
+        @Test
+        void visualTypes_withoutHeads_isEmpty() {
+            when(headService.getChargedHeadLocations()).thenReturn(new ArrayList<>());
+
+            assertThat(visualService.visualTypesInUse()).isEmpty();
+        }
     }
 
     @Nested
@@ -579,6 +617,148 @@ class HeadVisualServiceTest {
 
             verify(cat).remove();
             assertThat(visualService.entitiesOf(mob)).isEmpty();
+        }
+
+        private Entity liveEntity() {
+            Entity entity = mock(Entity.class);
+            lenient().when(entity.isValid()).thenReturn(true);
+            lenient().when(entity.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+            return entity;
+        }
+
+        private VisualProviderHook provider() {
+            VisualProviderHook provider = mock(VisualProviderHook.class);
+            lenient().when(provider.isAvailable()).thenReturn(true);
+            lenient().when(provider.isReady()).thenReturn(true);
+            visualService = new HeadVisualService(registry, Map.of("fake", provider));
+            return provider;
+        }
+
+        private HeadLocation npcHead() {
+            var npc = head(HeadContent.external("fake", "Notch", null), location);
+            lenient().when(headService.getHeadByUUID(npc.getUuid())).thenReturn(npc);
+            return npc;
+        }
+
+        @Test
+        void provider_notReady_waitsSilentlyThenSpawnsOnRetry() {
+            var provider = provider();
+            var npc = npcHead();
+            var entity = liveEntity();
+            when(provider.isReady()).thenReturn(false);
+
+            try (var logUtil = mockStatic(fr.aerwyn81.headblocks.utils.internal.LogUtil.class)) {
+                visualService.ensureSpawned(npc);
+                visualService.tick();
+
+                verify(provider, never()).spawn(any(), any(), any());
+                logUtil.verify(() -> fr.aerwyn81.headblocks.utils.internal.LogUtil.error(anyString(), any(Object[].class)), never());
+            }
+
+            when(provider.isReady()).thenReturn(true);
+            when(provider.spawn(any(), any(), any())).thenReturn(List.of(entity));
+            visualService.retryNow();
+            visualService.tick();
+
+            assertThat(visualService.entitiesOf(npc)).containsExactly(entity);
+        }
+
+        @Test
+        void unloadedChunk_releasesTheRenderThroughItsProvider() {
+            var provider = provider();
+            var npc = npcHead();
+            var entity = liveEntity();
+            when(provider.spawn(any(), any(), any())).thenReturn(List.of(entity));
+            visualService.ensureSpawned(npc);
+
+            when(world.isChunkLoaded(anyInt(), anyInt())).thenReturn(false);
+            visualService.ensureSpawned(npc);
+
+            verify(provider).despawn(List.of(entity));
+            assertThat(visualService.entitiesOf(npc)).isEmpty();
+        }
+
+        @Test
+        void deadRender_isReleasedThroughItsProviderBeforeRespawning() {
+            var provider = provider();
+            var npc = npcHead();
+            var first = liveEntity();
+            var second = liveEntity();
+            when(provider.spawn(any(), any(), any())).thenReturn(List.of(first), List.of(second));
+            visualService.ensureSpawned(npc);
+
+            when(first.isValid()).thenReturn(false);
+            visualService.tick();
+
+            verify(provider).despawn(List.of(first));
+            assertThat(visualService.entitiesOf(npc)).containsExactly(second);
+        }
+
+        @Test
+        void removedRender_isReleasedWithoutTheEntityScheduler() {
+            var provider = provider();
+            var npc = npcHead();
+            var gone = liveEntity();
+            when(provider.spawn(any(), any(), any())).thenReturn(List.of(gone));
+            visualService.ensureSpawned(npc);
+            lenient().doNothing().when(scheduler).runNow(any(Entity.class), any(Runnable.class));
+
+            when(gone.isValid()).thenReturn(false);
+            visualService.despawn(npc);
+
+            verify(scheduler, never()).runNow(eq(gone), any(Runnable.class));
+            verify(provider).despawn(List.of(gone));
+        }
+
+        @Test
+        void partialRender_isReleasedAndReported() {
+            var provider = provider();
+            var npc = npcHead();
+            var alive = liveEntity();
+            var dead = liveEntity();
+            when(dead.isValid()).thenReturn(false);
+            when(provider.spawn(any(), any(), any())).thenReturn(List.of(alive, dead));
+
+            try (var ignored = mockStatic(fr.aerwyn81.headblocks.utils.internal.LogUtil.class)) {
+                visualService.ensureSpawned(npc);
+            }
+
+            verify(provider).despawn(List.of(alive, dead));
+            assertThat(visualService.entitiesOf(npc)).isEmpty();
+        }
+
+        @Test
+        void visibility_reachesTheRenderer() {
+            var provider = provider();
+            var npc = npcHead();
+            var entity = liveEntity();
+            Player player = mock(Player.class);
+            when(provider.spawn(any(), any(), any())).thenReturn(List.of(entity));
+            visualService.ensureSpawned(npc);
+
+            visualService.setVisible(player, npc, false);
+            visualService.setVisible(player, mob, true);
+
+            verify(provider).setVisible(player, List.of(entity), false);
+            verify(provider, never()).setVisible(player, List.of(entity), true);
+        }
+
+        @Test
+        void shutdownAndDespawnAll_releaseTheProviderRenders() {
+            var provider = provider();
+            var npc = npcHead();
+            var first = liveEntity();
+            var second = liveEntity();
+            when(provider.spawn(any(), any(), any())).thenReturn(List.of(first), List.of(second));
+
+            visualService.ensureSpawned(npc);
+            visualService.despawnAll();
+            visualService.ensureSpawned(npc);
+            visualService.shutdown();
+
+            verify(provider).despawn(List.of(first));
+            verify(provider).despawn(List.of(second));
+            assertThat(visualService.entitiesOf(npc)).isEmpty();
         }
     }
 

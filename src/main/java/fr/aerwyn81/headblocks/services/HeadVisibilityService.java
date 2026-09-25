@@ -30,7 +30,7 @@ public class HeadVisibilityService {
 
         for (var player : Bukkit.getOnlinePlayers()) {
             if (hasFound(player.getUniqueId(), head.getUuid())) {
-                registry.getScheduler().runNow(player, () -> setVisible(player, entities, false));
+                registry.getScheduler().runNow(player, () -> setVisible(player, head, entities, false));
             }
         }
     }
@@ -43,7 +43,7 @@ public class HeadVisibilityService {
 
         if (registry.getVisualService().isEntityRendered(head)) {
             if (isEnabled()) {
-                setVisible(player, registry.getVisualService().entitiesOf(head), false);
+                setVisible(player, head, registry.getVisualService().entitiesOf(head), false);
             }
             return;
         }
@@ -67,7 +67,7 @@ public class HeadVisibilityService {
 
         var head = registry.getHeadService().getHeadByUUID(headUuid);
         if (head != null) {
-            setVisible(player, registry.getVisualService().entitiesOf(head), true);
+            setVisible(player, head, registry.getVisualService().entitiesOf(head), true);
         }
     }
 
@@ -116,7 +116,7 @@ public class HeadVisibilityService {
     public void refreshEntities(Player player) {
         var enabled = isEnabled();
         registry.getVisualService().forEachSpawned((head, entities) ->
-                setVisible(player, entities, !(enabled && hasFound(player.getUniqueId(), head.getUuid()))));
+                setVisible(player, head, entities, !(enabled && hasFound(player.getUniqueId(), head.getUuid()))));
     }
 
     private void loadFoundHeads(Player player) {
@@ -141,7 +141,8 @@ public class HeadVisibilityService {
         return found != null && found.contains(headUuid);
     }
 
-    private void setVisible(Player player, List<Entity> entities, boolean visible) {
+    private void setVisible(Player player, HeadLocation head, List<Entity> entities, boolean visible) {
+        registry.getVisualService().setVisible(player, head, visible);
         for (var entity : entities) {
             if (visible) {
                 player.showEntity(HeadBlocks.getInstance(), entity);

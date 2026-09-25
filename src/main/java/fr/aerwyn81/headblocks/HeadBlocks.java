@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.*;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviders;
 import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.platform.Platforms;
 import fr.aerwyn81.headblocks.runnables.AreaOutlineTask;
@@ -129,9 +130,18 @@ public final class HeadBlocks extends JavaPlugin {
             providers.put(headDBHook.prefix(), headDBHook);
         }
 
+        var visualProviders = VisualProviders.detect(Bukkit.getPluginManager()::isPluginEnabled);
+
         this.serviceRegistry = new ServiceRegistry(
                 pluginProvider, scheduler, commandDispatcher, platform,
-                configFile, locationFile, holoEasyLib, earlyConfigService, providers);
+                configFile, locationFile, holoEasyLib, earlyConfigService, providers, visualProviders);
+
+        for (var visualProvider : visualProviders.values()) {
+            visualProvider.register(this, () -> scheduler.runTask(() -> {
+                serviceRegistry.getHeadService().reloadCatalog();
+                serviceRegistry.getVisualService().retryNow();
+            }));
+        }
 
         packetEventsHook.init(serviceRegistry);
 
@@ -185,6 +195,13 @@ public final class HeadBlocks extends JavaPlugin {
                         String name = behavior.getClass().getSimpleName().replace("Behavior", "");
                         map.merge(name, new int[]{1}, (a, b) -> new int[]{a[0] + b[0]});
                     }
+                }
+                return map;
+            }));
+            m.addCustomChart(new AdvancedBarChart("visualTypes", () -> {
+                Map<String, int[]> map = new HashMap<>();
+                for (var type : serviceRegistry.getVisualService().visualTypesInUse()) {
+                    map.put(type, new int[]{1});
                 }
                 return map;
             }));

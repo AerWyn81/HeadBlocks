@@ -2,7 +2,6 @@ package fr.aerwyn81.headblocks.services.gui.types;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HuntCreateEvent;
-import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.*;
@@ -26,7 +25,6 @@ public class BehaviorSelectionGui {
     private final ConcurrentHashMap<UUID, Set<String>> selectedBehaviors = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> pendingHuntNames = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, RequirementSet> pendingRequirements = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, RenderMode> pendingRenderModes = new ConcurrentHashMap<>();
 
     public BehaviorSelectionGui(ServiceRegistry registry) {
         this.registry = registry;
@@ -36,7 +34,6 @@ public class BehaviorSelectionGui {
         pendingHuntNames.put(player.getUniqueId(), huntName);
         selectedBehaviors.put(player.getUniqueId(), new HashSet<>());
         pendingRequirements.remove(player.getUniqueId());
-        pendingRenderModes.put(player.getUniqueId(), registry.getConfigService().renderingMode());
 
         buildAndOpenGui(player);
     }
@@ -46,7 +43,7 @@ public class BehaviorSelectionGui {
                 registry.getLanguageService().message("Gui.BehaviorSelectionTitle"), false, 2);
 
         // Borders
-        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17};
+        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> menu.setItem(0, borders[index],
                         new ItemGUI(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setName("§7").toItemStack()))
@@ -74,8 +71,6 @@ public class BehaviorSelectionGui {
                 registry.getLanguageService().messageList("Gui.BehaviorTimedLore"),
                 selected.contains("timed")));
 
-        menu.setItem(0, 14, createRenderingItem(player));
-
         // Slot 15: Validate button
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
                 .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
@@ -99,25 +94,6 @@ public class BehaviorSelectionGui {
                 .setLore(lore)
                 .toItemStack(), true)
                 .addOnClickEvent(event -> openRequirements((Player) event.getWhoClicked()));
-    }
-
-    private ItemGUI createRenderingItem(Player player) {
-        var mode = pendingRenderModes.getOrDefault(player.getUniqueId(), registry.getConfigService().renderingMode());
-        var modeName = registry.getLanguageService().message(mode == RenderMode.DISPLAY ? "Gui.RenderDisplay" : "Gui.RenderBlock");
-
-        List<String> lore = registry.getLanguageService().messageList("Gui.BehaviorRenderingLore").stream()
-                .map(line -> line.replace("%rendering%", modeName))
-                .collect(Collectors.toList());
-
-        return new ItemGUI(new ItemBuilder(mode == RenderMode.DISPLAY ? Material.ARMOR_STAND : Material.PLAYER_HEAD)
-                .setName(registry.getLanguageService().message("Gui.BehaviorRenderingName").replace("%rendering%", modeName))
-                .setLore(lore)
-                .toItemStack(), true)
-                .addOnClickEvent(event -> {
-                    Player p = (Player) event.getWhoClicked();
-                    pendingRenderModes.put(p.getUniqueId(), mode.next());
-                    buildAndOpenGui(p);
-                });
     }
 
     private void openRequirements(Player player) {
@@ -186,7 +162,6 @@ public class BehaviorSelectionGui {
         String huntName = pendingHuntNames.remove(player.getUniqueId());
         Set<String> selected = selectedBehaviors.remove(player.getUniqueId());
         RequirementSet requirements = pendingRequirements.remove(player.getUniqueId());
-        RenderMode renderMode = pendingRenderModes.remove(player.getUniqueId());
 
         if (huntName == null) {
             player.closeInventory();
@@ -215,9 +190,6 @@ public class BehaviorSelectionGui {
 
         hunt.setBehaviors(behaviors);
         hunt.setRequirements(requirements);
-        if (renderMode != null && renderMode != registry.getConfigService().renderingMode()) {
-            hunt.getConfig().setRenderMode(renderMode);
-        }
 
         HuntCreateEvent createEvent = new HuntCreateEvent(hunt);
         Bukkit.getPluginManager().callEvent(createEvent);
@@ -261,6 +233,5 @@ public class BehaviorSelectionGui {
         pendingHuntNames.remove(playerUuid);
         selectedBehaviors.remove(playerUuid);
         pendingRequirements.remove(playerUuid);
-        pendingRenderModes.remove(playerUuid);
     }
 }

@@ -103,6 +103,7 @@ class HeadVisibilityServiceTest {
         visibilityService.onHeadFound(player, head);
 
         verify(player).hideEntity(plugin, entity);
+        verify(visualService).setVisible(player, head, false);
         verifyNoInteractions(packetHiding);
     }
 
@@ -145,6 +146,7 @@ class HeadVisibilityServiceTest {
 
         verify(packetHiding).removeFoundHead(player, headUuid);
         verify(player).showEntity(plugin, entity);
+        verify(visualService).setVisible(player, head, true);
     }
 
     @SuppressWarnings("unchecked")

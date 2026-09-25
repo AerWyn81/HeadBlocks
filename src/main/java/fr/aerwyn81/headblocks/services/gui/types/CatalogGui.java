@@ -31,6 +31,7 @@ public class CatalogGui {
         HEADS(Material.PLAYER_HEAD),
         BLOCKS(Material.GRASS_BLOCK),
         ITEMS(Material.DIAMOND),
+        TEXTS(Material.NAME_TAG),
         MOBS(Material.EGG),
         EXTERNAL(Material.ENDER_EYE);
 
@@ -49,7 +50,8 @@ public class CatalogGui {
             return switch (content.kind()) {
                 case HEAD -> HEADS;
                 case BLOCK -> BLOCKS;
-                case ITEM -> ITEMS;
+                case ITEM, FRAME -> ITEMS;
+                case TEXT -> TEXTS;
                 case MOB -> MOBS;
                 case EXTERNAL -> EXTERNAL;
             };
@@ -280,7 +282,7 @@ public class CatalogGui {
         if (form.isBlockBased()) {
             return ls.message("Gui.RenderBlock");
         }
-        if (form == VisualForm.ITEM_DISPLAY || form == VisualForm.BLOCK_DISPLAY) {
+        if (form == VisualForm.ITEM_DISPLAY || form == VisualForm.BLOCK_DISPLAY || form == VisualForm.TEXT_DISPLAY) {
             return ls.message("Gui.RenderDisplay");
         }
         return content != null && content.kind() == ContentKind.EXTERNAL

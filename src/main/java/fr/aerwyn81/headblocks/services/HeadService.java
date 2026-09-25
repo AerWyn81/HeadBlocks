@@ -14,6 +14,7 @@ import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviders;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -21,6 +22,7 @@ import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.scheduler.Task;
+import fr.aerwyn81.headblocks.visual.ContentItems;
 import fr.aerwyn81.headblocks.visual.renderers.MobRenderer;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -119,6 +121,12 @@ public class HeadService {
 
         loadHeads();
         loadLocations();
+    }
+
+    public void reloadCatalog() {
+        heads.clear();
+        loadHeads();
+        headProviders.values().stream().filter(HeadProviderHook::isAvailable).forEach(HeadProviderHook::loadTextures);
     }
 
     public void cancelAllSpinTasks() {
@@ -508,8 +516,8 @@ public class HeadService {
         return switch (entry.type()) {
             case "default" -> HeadUtils.createHead(new HBHeadDefault(baseHeadItem()), entry.value());
             case "player" -> playerHead(entry);
-            case "block", "item", "mob", "entity" -> contentHead(contentOf(entry, line));
-            default -> visualService.getProviders().containsKey(entry.type())
+            case "block", "item", "mob", "entity", "text", "frame" -> contentHead(contentOf(entry, line));
+            default -> VisualProviders.isKnown(entry.type())
                     ? externalHead(entry, line)
                     : addProviderHead(baseHeadItem(), entry.type(), entry.value(), entry.raw(), line);
         };
@@ -553,16 +561,20 @@ public class HeadService {
     private HBHead externalHead(CatalogEntry entry, int line) {
         var provider = visualService.getProvider(entry.type());
         if (provider == null) {
-            LogUtil.error("Cannot load head {0}: the {1} plugin is not installed or enabled.", entry.raw(), entry.type());
+            LogUtil.error("Cannot load head {0}: the {1} plugin is not installed or enabled.", entry.raw(), VisualProviders.pluginOf(entry.type()));
+            return null;
+        }
+
+        if (!provider.isReady()) {
             return null;
         }
 
         if (!provider.exists(entry.value())) {
-            LogUtil.error("Invalid head {0} (l.{1}): {2} does not know {3}.", entry.raw(), line, entry.type(), entry.value());
+            LogUtil.error("Invalid head {0} (l.{1}): {2} does not know {3}.", entry.raw(), line, provider.pluginName(), entry.value());
             return null;
         }
 
-        return contentHead(HeadContent.external(entry.type(), entry.value(), null));
+        return contentHead(HeadContent.external(entry.type(), entry.value(), entry.options()));
     }
 
     private HBHead contentHead(HeadContent content) {
@@ -578,7 +590,7 @@ public class HeadService {
     }
 
     private HeadContent contentOf(CatalogEntry entry, int line) {
-        Map<String, Object> options = new LinkedHashMap<>();
+        Map<String, Object> options = new LinkedHashMap<>(entry.options());
 
         switch (entry.type()) {
             case "block" -> {
@@ -593,7 +605,7 @@ public class HeadService {
                 }
                 return HeadContent.of(ContentKind.BLOCK, material.name(), options);
             }
-            case "item" -> {
+            case "item", "frame" -> {
                 var parts = entry.value().split(":");
                 var material = Material.matchMaterial(parts[0]);
                 if (material == null || !material.isItem()) {
@@ -608,7 +620,10 @@ public class HeadService {
                         return null;
                     }
                 }
-                return HeadContent.of(ContentKind.ITEM, material.name(), options);
+                return HeadContent.of(entry.type().equals("frame") ? ContentKind.FRAME : ContentKind.ITEM, material.name(), options);
+            }
+            case "text" -> {
+                return HeadContent.of(ContentKind.TEXT, entry.value(), options);
             }
             default -> {
                 var content = HeadContent.of(ContentKind.MOB, entry.value().toUpperCase(), options);
@@ -616,6 +631,14 @@ public class HeadService {
                     MobRenderer.typeOf(content);
                 } catch (IllegalStateException e) {
                     LogUtil.error("Invalid head {0} (l.{1}): {2}.", entry.raw(), line, e.getMessage());
+                    return null;
+                }
+
+                var invalid = MobRenderer.EQUIPMENT.keySet().stream()
+                        .filter(slot -> content.option(slot) != null && ContentItems.equipmentOf(content.option(slot)) == null)
+                        .findFirst();
+                if (invalid.isPresent()) {
+                    LogUtil.error("Invalid head {0} (l.{1}): {2} is not an item.", entry.raw(), line, content.option(invalid.get()));
                     return null;
                 }
                 return content;

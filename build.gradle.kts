@@ -51,6 +51,15 @@ val coverageExclusions = listOf(
     "**/hooks/PacketEventsHookImpl.java",
     "**/hooks/HeadDatabaseHook.java",
     "**/hooks/HeadDBHook.java",
+    "**/hooks/visual/NexoHook.java",
+    "**/hooks/visual/ItemsAdderHook.java",
+    "**/hooks/visual/OraxenHook.java",
+    "**/hooks/visual/MythicMobsHook.java",
+    "**/hooks/visual/ModelEngineHook.java",
+    "**/hooks/visual/BetterModelHook.java",
+    "**/hooks/visual/FancyNpcsHook.java",
+    "**/hooks/visual/CitizensHook.java",
+    "**/hooks/visual/ZNPCsHook.java",
 
     // Events (Bukkit-bound, not unit-testable)
     "**/events/OnHeadDatabaseLoaded.java",
@@ -78,6 +87,12 @@ repositories {
     maven("https://jitpack.io")
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://maven.enginehub.org/repo/")
+    maven("https://repo.nexomc.com/releases/")
+    maven("https://repo.oraxen.com/releases/")
+    maven("https://mvn.lumine.io/repository/maven-public/")
+    maven("https://repo.fancyinnovations.com/releases/")
+    maven("https://maven.citizensnpcs.co/repo/")
+    maven("https://repo.pyr.lol/releases/")
 }
 
 // `main` compiles against spigot-api on purpose: it prevents Paper-only API from leaking into common code.
@@ -93,6 +108,23 @@ val paper = sourceSets.create("paper") {
     runtimeClasspath += sourceSets["main"].output
 }
 
+// Visual provider APIs target newer JVMs than the plugin: they are only compiled against, and the hooks
+// are instantiated only when their plugin runs, so the JVM compatibility check must not reject them.
+configurations.compileClasspath {
+    attributes { attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25) }
+}
+
+// Tests need the provider APIs too, but last on the classpath: some of them shade unrelocated libraries.
+val providerApis = configurations.create("providerApis") {
+    isTransitive = false
+    attributes { attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25) }
+}
+
+sourceSets.test {
+    compileClasspath += providerApis
+    runtimeClasspath += providerApis
+}
+
 dependencies {
     compileOnly(libs.spigot.api)
     compileOnly(libs.placeholderapi)
@@ -100,6 +132,26 @@ dependencies {
     compileOnly(libs.headdb.api)
     compileOnly(libs.packetevents)
     compileOnly(libs.worldguard)
+    compileOnly(libs.nexo) { isTransitive = false }
+    compileOnly(libs.itemsadder) { isTransitive = false }
+    compileOnly(libs.oraxen) { isTransitive = false }
+    compileOnly(libs.mythicmobs) { isTransitive = false }
+    compileOnly(libs.modelengine) { isTransitive = false }
+    compileOnly(libs.bettermodel) { isTransitive = false }
+    compileOnly(libs.bettermodel.core) { isTransitive = false }
+    compileOnly(libs.fancynpcs) { isTransitive = false }
+    compileOnly(libs.citizens) { isTransitive = false }
+    compileOnly(libs.znpcsplus) { isTransitive = false }
+    providerApis(libs.nexo)
+    providerApis(libs.itemsadder)
+    providerApis(libs.oraxen)
+    providerApis(libs.mythicmobs)
+    providerApis(libs.modelengine)
+    providerApis(libs.bettermodel)
+    providerApis(libs.bettermodel.core)
+    providerApis(libs.fancynpcs)
+    providerApis(libs.citizens)
+    providerApis(libs.znpcsplus)
 
     implementation(libs.jedis)
     implementation(libs.hikaricp)
@@ -133,7 +185,10 @@ fun BukkitPluginDescription.describeHeadBlocks() {
     authors = listOf("AerWyn81")
     apiVersion = "1.13"
     description = "Challenge your players to find all the heads and earn rewards"
-    softDepend = listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents", "WorldGuard")
+    softDepend = listOf(
+        "PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents", "WorldGuard",
+        "Nexo", "ItemsAdder", "Oraxen", "MythicMobs", "ModelEngine", "BetterModel", "FancyNpcs", "Citizens", "ZNPCsPlus"
+    )
     version = project.version.toString()
     website = "https://just2craft.fr"
 
@@ -189,7 +244,22 @@ val paperPluginDescription = PaperPluginDescription(project).apply {
     foliaSupported = true
 
     serverDependencies {
-        for (optional in listOf("PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents", "WorldGuard")) {
+        for (optional in listOf(
+            "PlaceholderAPI",
+            "HeadDatabase",
+            "HeadDB",
+            "packetevents",
+            "WorldGuard",
+            "Nexo",
+            "ItemsAdder",
+            "Oraxen",
+            "MythicMobs",
+            "ModelEngine",
+            "BetterModel",
+            "FancyNpcs",
+            "Citizens",
+            "ZNPCsPlus"
+        )) {
             register(optional) {
                 required = false
                 joinClasspath = true

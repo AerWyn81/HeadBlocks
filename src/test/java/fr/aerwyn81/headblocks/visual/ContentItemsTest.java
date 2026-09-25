@@ -73,6 +73,30 @@ class ContentItemsTest {
     }
 
     @Test
+    void text_and_frame_haveTheirIcons() {
+        assertThat(ContentItems.itemOf(HeadContent.of(ContentKind.TEXT, "Hello", null)).getType()).isEqualTo(Material.NAME_TAG);
+        var frame = ContentItems.itemOf(HeadContent.of(ContentKind.FRAME, "DIAMOND", Map.of("customModelData", 7)));
+        assertThat(frame.getType()).isEqualTo(Material.DIAMOND);
+        assertThat(frame.getItemMeta().getCustomModelData()).isEqualTo(7);
+    }
+
+    @Test
+    void equipment_isAnItemOrATexturedHead() {
+        var texture = "e".repeat(60);
+        ItemStack textured = new ItemStack(Material.PLAYER_HEAD);
+
+        assertThat(ContentItems.equipmentOf("diamond_helmet")).isEqualTo(new ItemStack(Material.DIAMOND_HELMET));
+        assertThat(ContentItems.equipmentOf("AIR")).isNull();
+        assertThat(ContentItems.equipmentOf("NOT_AN_ITEM")).isNull();
+
+        try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
+            headUtils.when(() -> HeadUtils.applyTextureToItemStack(any(ItemStack.class), eq(texture))).thenReturn(textured);
+
+            assertThat(ContentItems.equipmentOf(texture)).isSameAs(textured);
+        }
+    }
+
+    @Test
     void itemWithModelData_setsIt() {
         var item = ContentItems.itemOf(HeadContent.of(ContentKind.ITEM, "DIAMOND", Map.of("customModelData", 42)));
 

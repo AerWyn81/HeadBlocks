@@ -16,8 +16,20 @@ metrics: true
 # Other contents can be hidden too:
 #   "block:<MATERIAL>"          -> any placeable block (e.g. block:LANTERN)
 #   "item:<MATERIAL>[:<cmd>]"   -> any item, with an optional custom model data (e.g. item:DIAMOND:1001), always rendered as a display
+#   "frame:<MATERIAL>[:<cmd>]"  -> an item in an invisible item frame, on the wall you click (e.g. frame:FILLED_MAP)
+#   "text:<text>"               -> a floating text, with & colors and \n for new lines (e.g. text:&6Find me!)
 #   "mob:<ENTITY_TYPE>"         -> a mob without AI (e.g. mob:CAT)
-# Running /hb give without argument opens the catalog to take the items
+# Options can be added between brackets at the end of an entry:
+#   mob:ZOMBIE[head=DIAMOND_HELMET,hand=IRON_SWORD,baby=true]   (head, chest, legs, feet, hand, offhand, baby, invisible)
+#   mob:ARMOR_STAND[head=<texture>,arms=true,small=true,baseplate=false]
+#   text:&eSecret[billboard=fixed,background=none,shadow=true]
+#   frame:DIAMOND[visible=true,lit=true]
+# Contents of other plugins, when installed:
+#   "nexo:<id>", "itemsadder:<namespace:id>", "oraxen:<id>"     -> custom items, rendered as a display
+#   "mythicmobs:<mob>"                                          -> a MythicMobs mob without AI ([level=<n>])
+#   "modelengine:<model>", "bettermodel:<model>"                -> a 3D model ([width=<n>,height=<n>] to size its hitbox)
+#   "citizens:<skin>", "fancynpcs:<skin>", "znpcs:<skin>"       -> an NPC wearing the skin of a player ([name=<name>,type=<ENTITY_TYPE>])
+# Running /hb give opens the catalog to take the items
 heads:
   - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQ5Y2M1OGFkMjVhMWFiMTZkMzZiYjVkNmQ0OTNjOGY1ODk4YzJiZjMwMmI2NGUzMjU5MjFjNDFjMzU4NjcifX19'
 

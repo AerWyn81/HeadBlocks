@@ -3,15 +3,18 @@ package fr.aerwyn81.headblocks.services;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.head.visual.VisualForm;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
-import fr.aerwyn81.headblocks.hooks.VisualProviderHook;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviderHook;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviders;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
+import fr.aerwyn81.headblocks.visual.EntityRenderer;
 import fr.aerwyn81.headblocks.visual.RenderSettings;
 import fr.aerwyn81.headblocks.visual.VisualRenderers;
 import org.bukkit.*;
@@ -33,9 +36,22 @@ public class HeadVisualService {
     private static final long RETRY_DELAY_MS = 30_000L;
     private static final int CONVERSIONS_PER_TICK = 20;
 
+    private static final EntityRenderer ENTITY_REMOVER = new EntityRenderer() {
+        @Override
+        public List<Entity> spawn(Location anchor, HeadContent content, RenderSettings settings) {
+            return List.of();
+        }
+
+        @Override
+        public double height(HeadContent content, RenderSettings settings, List<Entity> entities) {
+            return 1.0;
+        }
+    };
+
     private final ServiceRegistry registry;
     private final VisualRenderers renderers;
     private final Map<UUID, List<Entity>> spawned = new ConcurrentHashMap<>();
+    private final Map<UUID, EntityRenderer> spawnedBy = new ConcurrentHashMap<>();
     private final Map<UUID, Float> spinAngles = new ConcurrentHashMap<>();
     private final Map<UUID, Long> retryAfter = new ConcurrentHashMap<>();
     private final Set<String> reportedFailures = ConcurrentHashMap.newKeySet();
@@ -128,7 +144,7 @@ public class HeadVisualService {
         var location = head.getLocation();
         if (location == null || location.getWorld() == null
                 || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
-            spawned.remove(head.getUuid());
+            dispose(head.getUuid());
             return;
         }
 
@@ -146,13 +162,16 @@ public class HeadVisualService {
             return;
         }
 
-        if (current != null) {
-            current.forEach(Entity::remove);
-        }
+        dispose(head.getUuid());
 
         var content = head.getContent() != null ? head.getContent() : ensureContent(head);
         if (renderer == null || content == null) {
             reportFailure(head, renderer == null ? "its plugin is not available" : "its content is unknown");
+            return;
+        }
+
+        if (renderer instanceof VisualProviderHook provider && !provider.isReady()) {
+            retryAfter.put(head.getUuid(), System.currentTimeMillis() + RETRY_DELAY_MS);
             return;
         }
 
@@ -164,8 +183,9 @@ public class HeadVisualService {
             return;
         }
 
-        created.removeIf(entity -> entity == null || !entity.isValid());
-        if (created.isEmpty()) {
+        created.removeIf(Objects::isNull);
+        if (created.isEmpty() || !created.stream().allMatch(Entity::isValid)) {
+            renderer.despawn(created);
             reportFailure(head, "the entity could not be spawned, is spawning blocked by another plugin?");
             return;
         }
@@ -173,6 +193,7 @@ public class HeadVisualService {
         created.forEach(entity -> tag(entity, head));
         retryAfter.remove(head.getUuid());
         spawned.put(head.getUuid(), List.copyOf(created));
+        spawnedBy.put(head.getUuid(), renderer);
 
         registry.getVisibilityService().onSpawned(head, created);
 
@@ -183,21 +204,21 @@ public class HeadVisualService {
     }
 
     public void despawn(HeadLocation head) {
-        var entities = spawned.remove(head.getUuid());
         spinAngles.remove(head.getUuid());
         retryAfter.remove(head.getUuid());
-        if (entities == null) {
-            return;
-        }
+        dispose(head.getUuid());
+    }
 
-        var renderer = renderers.entity(formOf(head), head.getContent());
-        registry.getScheduler().runNow(entities.get(0), () -> {
-            if (renderer != null) {
-                renderer.despawn(entities);
-            } else {
-                entities.forEach(Entity::remove);
-            }
-        });
+    public void setVisible(Player player, HeadLocation head, boolean visible) {
+        var entities = spawned.get(head.getUuid());
+        var renderer = spawnedBy.get(head.getUuid());
+        if (entities != null && renderer != null) {
+            renderer.setVisible(player, entities, visible);
+        }
+    }
+
+    public void retryNow() {
+        retryAfter.replaceAll((uuid, retryAt) -> 0L);
     }
 
     public void clear(HeadLocation head) {
@@ -273,27 +294,25 @@ public class HeadVisualService {
     }
 
     public void despawnAll() {
-        for (var entities : spawned.values()) {
-            registry.getScheduler().runNow(entities.get(0), () -> entities.forEach(Entity::remove));
-        }
+        new ArrayList<>(spawned.keySet()).forEach(this::dispose);
 
         spawned.clear();
+        spawnedBy.clear();
         spinAngles.clear();
         retryAfter.clear();
         reportedFailures.clear();
     }
 
     public void shutdown() {
-        for (var entities : spawned.values()) {
-            for (var entity : entities) {
-                try {
-                    entity.remove();
-                } catch (Exception ignored) {
-                }
+        for (var entry : spawned.entrySet()) {
+            try {
+                rendererOf(entry.getKey()).despawn(entry.getValue());
+            } catch (Exception ignored) {
             }
         }
 
         spawned.clear();
+        spawnedBy.clear();
         spinAngles.clear();
         retryAfter.clear();
     }
@@ -319,6 +338,28 @@ public class HeadVisualService {
 
         var renderer = renderers.entity(form, head.getContent());
         return renderer == null ? 1.0 : renderer.height(head.getContent(), settingsOf(head), entitiesOf(head));
+    }
+
+    public Set<String> visualTypesInUse() {
+        Set<String> types = new TreeSet<>();
+        for (var head : registry.getHeadService().getChargedHeadLocations()) {
+            types.add(visualTypeOf(head));
+        }
+        return types;
+    }
+
+    private String visualTypeOf(HeadLocation head) {
+        var content = head.getContent();
+        return switch (formOf(head)) {
+            case HEAD_BLOCK -> "Head";
+            case BLOCK -> "Block";
+            case ITEM_DISPLAY -> content == null || content.kind() == ContentKind.HEAD ? "Head (display)" : "Item";
+            case BLOCK_DISPLAY -> "Block (display)";
+            case TEXT_DISPLAY -> "Text";
+            case ITEM_FRAME -> "Frame";
+            case MOB -> "Mob";
+            case EXTERNAL -> VisualProviders.pluginOf(content.provider());
+        };
     }
 
     public ItemStack iconOf(HeadContent content) {
@@ -518,10 +559,28 @@ public class HeadVisualService {
     private void discard(UUID headUuid) {
         retryAfter.remove(headUuid);
         spinAngles.remove(headUuid);
+        dispose(headUuid);
+    }
+
+    private void dispose(UUID headUuid) {
+        var renderer = rendererOf(headUuid);
+        spawnedBy.remove(headUuid);
         var entities = spawned.remove(headUuid);
-        if (entities != null) {
-            registry.getScheduler().runNow(entities.get(0), () -> entities.forEach(Entity::remove));
+        if (entities == null || entities.isEmpty()) {
+            return;
         }
+
+        var owner = entities.stream().filter(Entity::isValid).findFirst();
+        if (owner.isPresent()) {
+            registry.getScheduler().runNow(owner.get(), () -> renderer.despawn(entities));
+        } else {
+            renderer.despawn(entities);
+        }
+    }
+
+    private EntityRenderer rendererOf(UUID headUuid) {
+        var renderer = spawnedBy.get(headUuid);
+        return renderer != null ? renderer : ENTITY_REMOVER;
     }
 
     private void tag(Entity entity, HeadLocation head) {

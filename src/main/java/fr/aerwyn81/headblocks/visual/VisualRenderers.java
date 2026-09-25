@@ -3,7 +3,7 @@ package fr.aerwyn81.headblocks.visual;
 import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.data.head.visual.VisualForm;
-import fr.aerwyn81.headblocks.hooks.VisualProviderHook;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviderHook;
 import fr.aerwyn81.headblocks.visual.renderers.*;
 import org.bukkit.inventory.ItemStack;
 
@@ -24,6 +24,8 @@ public class VisualRenderers {
         blockRenderers.put(VisualForm.BLOCK, new PlainBlockRenderer());
         entityRenderers.put(VisualForm.ITEM_DISPLAY, new ItemDisplayRenderer());
         entityRenderers.put(VisualForm.BLOCK_DISPLAY, new BlockDisplayRenderer());
+        entityRenderers.put(VisualForm.TEXT_DISPLAY, new TextDisplayRenderer());
+        entityRenderers.put(VisualForm.ITEM_FRAME, new ItemFrameRenderer());
         entityRenderers.put(VisualForm.MOB, new MobRenderer());
     }
 

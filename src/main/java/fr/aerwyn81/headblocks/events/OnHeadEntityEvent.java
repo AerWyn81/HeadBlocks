@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
+import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -79,6 +80,13 @@ public class OnHeadEntityEvent implements Listener {
         }
 
         click(player, entity);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onHangingBreak(HangingBreakEvent e) {
+        if (registry.getVisualService().isHeadEntity(e.getEntity())) {
+            e.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH)

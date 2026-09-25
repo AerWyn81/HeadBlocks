@@ -5,6 +5,8 @@ public enum VisualForm {
     BLOCK(true),
     ITEM_DISPLAY(false),
     BLOCK_DISPLAY(false),
+    TEXT_DISPLAY(false),
+    ITEM_FRAME(false),
     MOB(false),
     EXTERNAL(false);
 
@@ -30,6 +32,8 @@ public enum VisualForm {
             case HEAD -> display ? ITEM_DISPLAY : HEAD_BLOCK;
             case BLOCK -> display ? BLOCK_DISPLAY : BLOCK;
             case ITEM -> ITEM_DISPLAY;
+            case TEXT -> TEXT_DISPLAY;
+            case FRAME -> ITEM_FRAME;
             case MOB -> MOB;
             case EXTERNAL -> EXTERNAL;
         };

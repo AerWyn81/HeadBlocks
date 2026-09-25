@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.visual;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 
 import java.util.List;
 
@@ -17,6 +18,9 @@ public interface EntityRenderer {
     }
 
     default void spin(List<Entity> entities, float angle, RenderSettings settings, int periodTicks) {
+    }
+
+    default void setVisible(Player player, List<Entity> entities, boolean visible) {
     }
 
     default boolean anchored() {

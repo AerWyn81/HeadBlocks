@@ -451,16 +451,6 @@ Gui:
     - ""
     - "&7Configured: &f%count%"
     - "&a&lCLICK&8: &7Configure"
-  BehaviorRenderingName: "&bRendering: &e%rendering%"
-  BehaviorRenderingLore:
-    - ""
-    - "&7How heads and blocks of this hunt"
-    - "&7appear in the world"
-    - ""
-    - "&fBlock&7: classic placed blocks"
-    - "&fDisplay&7: floating, scalable entities"
-    - ""
-    - "&a&lCLICK&8: &7Switch"
   RequirementsTitle: "&8HeadBlocks &7- &dRequirements"
   RequirementsMode: "&d&lCombination"
   RequirementsModeLore:

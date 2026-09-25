@@ -1,6 +1,6 @@
 # Heads, Blocks and Mobs
 
-HeadBlocks is not limited to player heads anymore: blocks, items and mobs can be hidden too, and each hunt decides how they appear in the world.
+HeadBlocks is not limited to player heads anymore: blocks, items, texts, mobs, custom items, 3D models and NPCs can be hidden too, and each hunt decides how they appear in the world.
 
 Two things are configured separately:
 
@@ -18,14 +18,60 @@ Every entry of the `heads` list is something you can place. The prefix tells wha
 | `player:<uuid>`            | Head of a player                                              |                     |
 | `block:<MATERIAL>`         | A placeable block that stays in place (no sand, doors, beds…) | `block:LANTERN`     |
 | `item:<MATERIAL>[:<cmd>]`  | Any item, with an optional custom model data                  | `item:DIAMOND:1001` |
+| `frame:<MATERIAL>[:<cmd>]` | An item in an invisible item frame, on the wall you click     | `frame:FILLED_MAP`  |
+| `text:<text>`              | A floating text, with `&` colors and `\n` for new lines       | `text:&6Find me!`   |
 | `mob:<ENTITY_TYPE>`        | A mob without AI                                              | `mob:CAT`           |
+
+### Options
+
+Options are added between brackets at the end of an entry, as `key=value` pairs separated by commas:
+
+```yaml
+heads:
+  - 'mob:ZOMBIE[head=DIAMOND_HELMET,hand=IRON_SWORD,baby=true]'
+  - 'mob:ARMOR_STAND[head=<texture>,arms=true,small=true,baseplate=false]'
+  - 'text:&eSecret\n&7Look closer[billboard=fixed,background=none]'
+  - 'frame:FILLED_MAP[visible=true]'
+```
+
+| Content | Option                                             | Effect                                                                           |
+|---------|----------------------------------------------------|----------------------------------------------------------------------------------|
+| `mob`   | `head`, `chest`, `legs`, `feet`, `hand`, `offhand` | Equipment: an item (`DIAMOND_HELMET`), or a head texture for `head`              |
+| `mob`   | `baby`, `invisible`                                | `true` for a baby, or an invisible mob that only shows its equipment             |
+| `mob`   | `small`, `arms`, `baseplate`                       | Armor stands only                                                                |
+| `text`  | `billboard`                                        | `center` (default, always faces the player), `fixed`, `vertical` or `horizontal` |
+| `text`  | `background`                                       | `none`, or a color: `#RRGGBB` / `#AARRGGBB`                                      |
+| `text`  | `shadow`                                           | `true` to draw a shadow under the text                                           |
+| `frame` | `visible`, `lit`                                   | Show the frame itself, use a glow item frame                                     |
+
+### Contents of other plugins
+
+When the plugin is installed, its contents can be hidden too:
+
+| Format                      | Plugin      | Content                                         |
+|-----------------------------|-------------|-------------------------------------------------|
+| `nexo:<id>`                 | Nexo        | Custom item or furniture, rendered as a display |
+| `itemsadder:<namespace:id>` | ItemsAdder  | Custom item or furniture, rendered as a display |
+| `oraxen:<id>`               | Oraxen      | Custom item or furniture, rendered as a display |
+| `mythicmobs:<mob>`          | MythicMobs  | A MythicMobs mob without AI (`level` option)    |
+| `modelengine:<model>`       | ModelEngine | A 3D model                                      |
+| `bettermodel:<model>`       | BetterModel | A 3D model                                      |
+| `citizens:<skin>`           | Citizens    | An NPC wearing the skin of a player             |
+| `fancynpcs:<skin>`          | FancyNpcs   | An NPC wearing the skin of a player             |
+| `znpcs:<skin>`              | ZNPCsPlus   | An NPC wearing the skin of a player             |
+
+- NPCs accept `name` (shown above them, hidden by default), `type` (another entity type than a player) and, for Citizens and FancyNpcs, `look=true` to look at nearby players.
+- Models and NPCs accept `width` and `height` to size the zone players click.
+- HeadBlocks creates its own copies: they are never saved by the other plugin and don't appear in its lists.
+- Furniture is shown with its model only: it has no seat and no collision.
+- Contents are loaded once their plugin is ready, and again after `/nexo reload`, `/iareload`, `/oraxen reload`, `/mm reload`…
 
 ## Taking the items
 
 Run `/hb give` to open the catalog (or `/hb give <player>` to open it for another player):
 
 - **Click** an item to take one, **shift + click** to take a stack.
-- The **filter** button (bottom left) cycles through heads, blocks, items and mobs.
+- The **filter** button (bottom left) cycles through heads, blocks, items, texts, mobs and the contents of other plugins.
 - The **hunt** button (bottom middle) links the items you take to a hunt: they are always placed in it. Choose *No hunt* to get items that follow `/hb hunt select`.
 - The lore of every item shows how it will be rendered in the chosen hunt.
 
@@ -48,11 +94,13 @@ rendering:
 | Head texture | Head block (classic) | Floating head (item display) |
 | Block        | Real block           | Block display                |
 | Item         | Item display         | Item display                 |
+| Frame        | Item frame           | Item frame                   |
+| Text         | Text display         | Text display                 |
 | Mob          | Mob without AI       | Mob without AI               |
+| Other plugin | Its own render       | Its own render               |
 
 - `scale` and `glow` apply to everything rendered as an entity.
 - Display entities spin smoothly when [spin](effects.md#spin) is enabled.
-- The mode can be chosen when creating a hunt, with the **Rendering** button of the `/hb hunt create` menu.
 
 ### Changing the mode of an existing hunt
 
@@ -74,7 +122,7 @@ A head moved to another hunt (`/hb hunt set`, `assign`, `transfer`, or `delete -
 - They cannot be damaged, pushed, set on fire, leashed, traded with or ridden.
 - With `hideFoundHeads: true`, entities of found heads are hidden for the player who found them. This needs neither PacketEvents nor a restart, and there is no invisible collision left behind.
 - Holograms are raised above tall contents such as mobs.
-- A player finds a mob or a display with a left or a right click, like a head block.
+- A player finds a mob, an NPC, a model or a display with a left or a right click, like a head block.
 
 ## Limits of block contents
 

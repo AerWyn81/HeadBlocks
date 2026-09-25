@@ -6,7 +6,7 @@ import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.head.types.HBHeadContent;
 import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
-import fr.aerwyn81.headblocks.hooks.VisualProviderHook;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
@@ -95,6 +95,65 @@ class HeadCatalogTest {
     }
 
     @Test
+    void textAndFrameEntries_becomeCatalogEntries() {
+        var heads = load(List.of("text:&6Find me[billboard=fixed]", "frame:DIAMOND:12", "frame:NOT_AN_ITEM"));
+
+        assertThat(heads).hasSize(2);
+        assertThat(heads.get(0).getContent()).isEqualTo(HeadContent.of(ContentKind.TEXT, "&6Find me", Map.of("billboard", "fixed")));
+        assertThat(heads.get(1).getContent()).isEqualTo(HeadContent.of(ContentKind.FRAME, "DIAMOND", Map.of("customModelData", 12)));
+    }
+
+    @Test
+    void mobEquipment_mustBeItems() {
+        var heads = load(List.of("mob:ZOMBIE[head=DIAMOND_HELMET,baby=true]", "mob:ZOMBIE[hand=NOT_AN_ITEM]"));
+
+        assertThat(heads).hasSize(1);
+        assertThat(heads.get(0).getContent()).isEqualTo(
+                HeadContent.of(ContentKind.MOB, "ZOMBIE", Map.of("head", "DIAMOND_HELMET", "baby", "true")));
+    }
+
+    @Test
+    void externalEntries_keepTheirOptions() {
+        VisualProviderHook nexo = mock(VisualProviderHook.class);
+        when(visualService.getProvider("nexo")).thenReturn(nexo);
+        when(nexo.isReady()).thenReturn(true);
+        when(nexo.exists("tree")).thenReturn(true);
+
+        var heads = load(List.of("nexo:tree[scale=2]"));
+
+        assertThat(heads.get(0).getContent()).isEqualTo(HeadContent.external("nexo", "tree", Map.of("scale", "2")));
+    }
+
+    @Test
+    void externalEntries_waitForTheirPluginToLoad() {
+        VisualProviderHook nexo = mock(VisualProviderHook.class);
+        when(visualService.getProvider("nexo")).thenReturn(nexo);
+        when(nexo.exists("tree")).thenReturn(true);
+
+        assertThat(load(List.of("nexo:tree", "block:STONE"))).hasSize(1);
+        verify(nexo, never()).exists(anyString());
+        logUtil.verify(() -> LogUtil.error(anyString(), any(Object[].class)), never());
+
+        when(nexo.isReady()).thenReturn(true);
+        headService.reloadCatalog();
+
+        assertThat(headService.getHeads()).hasSize(2);
+        assertThat(headService.getHeads().get(0).getContent()).isEqualTo(HeadContent.external("nexo", "tree", null));
+    }
+
+    @Test
+    void reloadCatalog_keepsThePlacedHeads() {
+        load(List.of("block:STONE"));
+        var placed = headService.getHeadLocations().size();
+
+        doReturn(List.of("block:STONE", "mob:CAT")).when(configService).headEntries();
+        headService.reloadCatalog();
+
+        assertThat(headService.getHeads()).hasSize(2);
+        assertThat(headService.getHeadLocations()).hasSize(placed);
+    }
+
+    @Test
     void mapEntries_areNotSupported() {
         var heads = load(List.of(Map.of("type", "mob", "value", "CAT"), "block:STONE"));
 
@@ -126,6 +185,7 @@ class HeadCatalogTest {
         VisualProviderHook nexo = mock(VisualProviderHook.class);
         when(visualService.getProviders()).thenReturn(Map.of("nexo", nexo, "mythicmobs", mock(VisualProviderHook.class)));
         when(visualService.getProvider("nexo")).thenReturn(nexo);
+        when(nexo.isReady()).thenReturn(true);
         when(nexo.exists("tree")).thenReturn(true);
 
         var heads = load(List.of("nexo:tree", "nexo:unknown", "mythicmobs:boss"));

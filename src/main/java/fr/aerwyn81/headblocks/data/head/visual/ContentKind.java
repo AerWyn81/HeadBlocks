@@ -5,6 +5,8 @@ public enum ContentKind {
     BLOCK,
     ITEM,
     MOB,
+    TEXT,
+    FRAME,
     EXTERNAL;
 
     public static ContentKind of(String value) {

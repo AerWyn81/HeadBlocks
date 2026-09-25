@@ -18,14 +18,13 @@ For the per-head menus opened by `/hb options` (Hint, Order, Rewards), see [Opti
 
 Toggle the behaviors you want, then validate.
 
-| Element          | Icon             | Action                                                                                              |
-|------------------|------------------|-----------------------------------------------------------------------------------------------------|
-| **Requirements** | Book             | LEFT CLICK → open the Requirements menu                                                             |
-| **Ordered**      | Lime/Gray Dye    | LEFT CLICK → toggle the Ordered behavior                                                            |
-| **Scheduled**    | Lime/Gray Dye    | LEFT CLICK → toggle the Scheduled behavior                                                          |
-| **Timed**        | Lime/Gray Dye    | LEFT CLICK → toggle the Timed behavior                                                              |
-| **Rendering**    | Head/Armor Stand | LEFT CLICK → switch between **Block** and **Display** rendering ([details](rendering.md#rendering)) |
-| **Validate**     | Diamond          | LEFT CLICK → create the hunt (chains into the config menus below)                                   |
+| Element          | Icon          | Action                                                            |
+|------------------|---------------|-------------------------------------------------------------------|
+| **Requirements** | Book          | LEFT CLICK → open the Requirements menu                           |
+| **Ordered**      | Lime/Gray Dye | LEFT CLICK → toggle the Ordered behavior                          |
+| **Scheduled**    | Lime/Gray Dye | LEFT CLICK → toggle the Scheduled behavior                        |
+| **Timed**        | Lime/Gray Dye | LEFT CLICK → toggle the Timed behavior                            |
+| **Validate**     | Diamond       | LEFT CLICK → create the hunt (chains into the config menus below) |
 
 A green dye means selected, gray means not selected. If Timed or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created. Requirements are configured in their own menu and the item shows how many are set.
 

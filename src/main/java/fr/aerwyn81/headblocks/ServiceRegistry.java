@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.databases.Requests;
 import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
-import fr.aerwyn81.headblocks.hooks.VisualProviderHook;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviderHook;
 import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;

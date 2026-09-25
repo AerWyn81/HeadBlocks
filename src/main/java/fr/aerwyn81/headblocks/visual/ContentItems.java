@@ -14,6 +14,8 @@ import java.util.UUID;
 
 public final class ContentItems {
 
+    private static final int TEXTURE_MIN_LENGTH = 40;
+
     private ContentItems() {
     }
 
@@ -27,8 +29,19 @@ public final class ContentItems {
             case BLOCK -> new ItemStack(itemMaterial(content.value(), Material.STONE));
             case ITEM -> modelItem(content);
             case MOB -> new ItemStack(itemMaterial(content.value() + "_SPAWN_EGG", Material.PAPER));
+            case TEXT -> new ItemStack(Material.NAME_TAG);
+            case FRAME -> modelItem(content);
             case EXTERNAL -> new ItemStack(Material.PAPER);
         };
+    }
+
+    public static ItemStack equipmentOf(String raw) {
+        var material = Material.matchMaterial(raw);
+        if (material != null) {
+            return material.isItem() && material != Material.AIR ? new ItemStack(material) : null;
+        }
+
+        return raw.length() > TEXTURE_MIN_LENGTH ? HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), raw) : null;
     }
 
     public static BlockData blockDataOf(HeadContent content) {
