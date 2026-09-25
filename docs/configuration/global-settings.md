@@ -49,11 +49,9 @@ Head textures used when placing HeadBlocks. Four formats are available:
 Skulls and BetterHeads plugins are not supported due to API incompatibility.
 {% endhint %}
 
-When using `/hb give <playerName>`:
+Blocks (`block:`), items (`item:`) and mobs (`mob:`) can be listed too. See [Heads, Blocks and Mobs](rendering.md).
 
-- Add `*` to give all HeadBlocks
-- Add a `number` to give the head at that position in the config
-- Add a `hunt` after it to link the given head (s) to that hunt (e.g. `/hb give Steve 1 halloween`)
+Run `/hb give` to open the catalog, where you pick the items and the hunt they are linked to. `/hb give <player>` opens it for that player.
 
 ## headsTheme
 
@@ -109,16 +107,26 @@ shouldResetPlayerData: true
 
 When `true`, player progress data is deleted when a head is removed (via command or sneak+click). Disabling this will cause unused data to accumulate in the database.
 
+## rendering
+
+```yaml
+rendering:
+  mode: BLOCK
+  scale: 1.0
+  glow: false
+```
+
+How newly placed heads and blocks are rendered: as real blocks (`BLOCK`) or as display entities (`DISPLAY`). Each hunt can override it. Heads already placed keep their rendering until converted with `/hb hunt rendering`. See [Heads, Blocks and Mobs](rendering.md#rendering).
+
 ## hideFoundHeads
 
 ```yaml
 hideFoundHeads: false
 ```
 
-When enabled, heads a player has already found are hidden from their view using [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/).
+When enabled, heads a player has already found are hidden from their view. Block heads are hidden using [PacketEvents](https://www.spigotmc.org/resources/packetevents-api.80279/); heads rendered as entities (displays, mobs) are hidden natively.
 
-{% hint style="warning" %}
-**Known limitation**: The server still maintains the physical block. Players will encounter an invisible collision box (forcefield effect) where hidden heads are located.
+{% hint style="warning" %} **Known limitation**: for block heads, the server still maintains the physical block. Players will encounter an invisible collision box (forcefield effect) where hidden heads are located. Heads rendered as entities do not have this issue.
 {% endhint %}
 
 {% hint style="warning" %}

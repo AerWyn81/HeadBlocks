@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.data.hunt;
 
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -450,6 +451,50 @@ class HuntConfigTest {
             config.setParticlesNotFoundEnabled(true);
 
             assertThat(config.hasParticlesConfig()).isTrue();
+        }
+    }
+
+    // =========================================================================
+    // Rendering
+    // =========================================================================
+
+    @Nested
+    class Rendering {
+
+        @Test
+        void renderMode_fallsBackToConfigService_whenNoOverride() {
+            when(configService.renderingMode()).thenReturn(RenderMode.DISPLAY);
+
+            assertThat(config.getRenderMode()).isEqualTo(RenderMode.DISPLAY);
+            assertThat(config.hasRenderMode()).isFalse();
+        }
+
+        @Test
+        void renderMode_returnsOverride_whenSet() {
+            config.setRenderMode(RenderMode.DISPLAY);
+
+            assertThat(config.getRenderMode()).isEqualTo(RenderMode.DISPLAY);
+            assertThat(config.hasRenderMode()).isTrue();
+        }
+
+        @Test
+        void renderScale_fallsBackAndOverrides() {
+            when(configService.renderingScale()).thenReturn(1.0);
+            assertThat(config.getRenderScale()).isEqualTo(1.0);
+
+            config.setRenderScale(2.5);
+            assertThat(config.getRenderScale()).isEqualTo(2.5);
+            assertThat(config.hasRenderScale()).isTrue();
+        }
+
+        @Test
+        void renderGlow_fallsBackAndOverrides() {
+            when(configService.renderingGlow()).thenReturn(false);
+            assertThat(config.isRenderGlow()).isFalse();
+
+            config.setRenderGlow(true);
+            assertThat(config.isRenderGlow()).isTrue();
+            assertThat(config.hasRenderGlow()).isTrue();
         }
     }
 }

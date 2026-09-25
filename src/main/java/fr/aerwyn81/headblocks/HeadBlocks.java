@@ -47,6 +47,7 @@ public final class HeadBlocks extends JavaPlugin {
     private Task globalTask;
     private Task timedRunTask;
     private Task areaOutlineTask;
+    private Task visualTask;
     private HeadDatabaseHook headDatabaseHook;
     private HeadDBHook headDBHook;
     private PacketEventsHook packetEventsHook;
@@ -162,9 +163,13 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerMoveEvent(serviceRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new OnHeadEntityEvent(serviceRegistry), this);
 
         timedRunTask = scheduler.runTaskTimer(new TimedRunTask(serviceRegistry), 0, 2);
         areaOutlineTask = scheduler.runTaskTimer(new AreaOutlineTask(serviceRegistry), 20, 10);
+        serviceRegistry.getVisualService().spawnLoaded();
+        serviceRegistry.getVisibilityService().loadOnlinePlayers();
+        visualTask = scheduler.runTaskTimer(() -> serviceRegistry.getVisualService().tick(), 20, 20);
 
         if (serviceRegistry.getConfigService().metricsEnabled()) {
             var m = new Metrics(this, 15495);
@@ -219,7 +224,8 @@ public final class HeadBlocks extends JavaPlugin {
         cancelTask(globalTask);
         cancelTask(timedRunTask);
         cancelTask(areaOutlineTask);
-        globalTask = timedRunTask = areaOutlineTask = null;
+        cancelTask(visualTask);
+        globalTask = timedRunTask = areaOutlineTask = visualTask = null;
 
         if (scheduler != null) {
             scheduler.cancelAllTasks();

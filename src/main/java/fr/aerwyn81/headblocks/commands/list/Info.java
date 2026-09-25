@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadTargeting;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -11,7 +12,6 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -29,9 +29,7 @@ public class Info implements Cmd {
     public boolean perform(CommandSender sender, String[] args) {
         var player = (Player) sender;
 
-        Location targetLoc = player.getTargetBlock(null, 100).getLocation();
-
-        HeadLocation headLocation = registry.getHeadService().getHeadAt(targetLoc);
+        HeadLocation headLocation = HeadTargeting.lookedAt(player, registry, 100);
 
         if (headLocation == null) {
             player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));

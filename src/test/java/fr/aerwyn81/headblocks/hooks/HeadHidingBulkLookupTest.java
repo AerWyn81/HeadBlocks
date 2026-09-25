@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HeadVisualService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.runnables.BukkitFutureResult;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
@@ -57,6 +58,14 @@ class HeadHidingBulkLookupTest {
         lenient().when(registry.getConfigService()).thenReturn(configService);
         lenient().when(configService.isHideFoundHeads()).thenReturn(true);
         lenient().when(headService.getHeadLocations()).thenReturn(allHeads);
+        lenient().when(headService.getHeadByUUID(any(UUID.class))).thenAnswer(invocation -> allHeads.stream()
+                .filter(h -> h.getUuid().equals(invocation.getArgument(0)))
+                .findFirst()
+                .orElse(null));
+
+        HeadVisualService visualService = mock(HeadVisualService.class);
+        lenient().when(registry.getVisualService()).thenReturn(visualService);
+        lenient().when(visualService.isBlockRendered(any())).thenReturn(true);
         lenient().when(player.getUniqueId()).thenReturn(UUID.randomUUID());
         lenient().when(player.getWorld()).thenReturn(world);
 
@@ -158,8 +167,8 @@ class HeadHidingBulkLookupTest {
     }
 
     @Test
-    @DisplayName("the head list is scanned once per bulk loop, not once per found head")
-    void scans_the_head_list_a_bounded_number_of_times() {
+    @DisplayName("found heads are resolved through the index, the head list is never scanned")
+    void resolves_found_heads_without_scanning_the_head_list() {
         Set<UUID> foundHeads = new LinkedHashSet<>();
         for (int i = 0; i < 25; i++) {
             UUID uuid = UUID.randomUUID();
@@ -169,14 +178,13 @@ class HeadHidingBulkLookupTest {
 
         completeJoinWith(foundHeads);
 
-        // Two loops (chunk map, then the delayed packet send) => two passes, not 25 x 2 lookups.
-        verify(headService, times(2)).getHeadLocations();
+        verify(headService, never()).getHeadLocations();
         verify(player, times(25)).sendBlockChange(any(Location.class), any());
     }
 
     @Test
-    @DisplayName("showAllPreviousHeads resolves the head list in a single pass")
-    void show_all_previous_heads_scans_once() {
+    @DisplayName("showAllPreviousHeads resolves each found head once, without scanning the head list")
+    void show_all_previous_heads_resolves_each_head_once() {
         Set<UUID> foundHeads = new LinkedHashSet<>();
         for (int i = 0; i < 10; i++) {
             UUID uuid = UUID.randomUUID();
@@ -189,7 +197,8 @@ class HeadHidingBulkLookupTest {
 
         listener.showAllPreviousHeads(player);
 
-        verify(headService, times(1)).getHeadLocations();
+        verify(headService, never()).getHeadLocations();
+        verify(headService, times(10)).getHeadByUUID(any(UUID.class));
     }
 
     @Test

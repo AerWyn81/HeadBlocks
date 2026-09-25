@@ -3,7 +3,6 @@ package fr.aerwyn81.headblocks.runnables;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -61,8 +60,7 @@ public class GlobalTask implements Runnable {
         }
 
         // Resolve hunt config for this head (1:1)
-        HBHunt hunt = registry.getHuntService().getHuntById(headLocation.getHuntId());
-        HuntConfig huntConfig = hunt != null ? hunt.getConfig() : new HuntConfig(registry.getConfigService());
+        HuntConfig huntConfig = registry.getHuntService().configOf(headLocation.getHuntId());
 
         if (huntConfig.isSpinEnabled() && huntConfig.isSpinLinked()) {
             registry.getHeadService().rotateHead(headLocation);

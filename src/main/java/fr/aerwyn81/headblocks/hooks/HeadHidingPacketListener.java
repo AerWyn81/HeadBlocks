@@ -10,6 +10,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCh
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
+import fr.aerwyn81.headblocks.data.HeadLocation;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public class HeadHidingPacketListener implements PacketListener {
         var blockPos = packet.getBlockPosition();
         var loc = new Location(player.getWorld(), blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
-        var headLocation = registry.getHeadService().getHeadAt(loc);
+        var headLocation = registry.getHeadService().getBlockHeadAt(loc);
         if (headLocation != null && foundHeads.contains(headLocation.getUuid())) {
             packet.setBlockState(WrappedBlockState.getDefaultState(StateTypes.STRUCTURE_VOID));
         }
@@ -74,7 +75,7 @@ public class HeadHidingPacketListener implements PacketListener {
 
             var loc = new Location(player.getWorld(), block.getX(), block.getY(), block.getZ());
 
-            var headLocation = registry.getHeadService().getHeadAt(loc);
+            var headLocation = registry.getHeadService().getBlockHeadAt(loc);
             if (headLocation != null && foundHeads.contains(headLocation.getUuid())) {
                 blocks[i] = new WrapperPlayServerMultiBlockChange.EncodedBlock(
                         WrappedBlockState.getDefaultState(StateTypes.STRUCTURE_VOID),
@@ -118,26 +119,24 @@ public class HeadHidingPacketListener implements PacketListener {
     // Null whenever the head is unknown or its world is not loaded.
     private Location headLocationOf(UUID headUuid) {
         var headLocation = registry.getHeadService().getHeadByUUID(headUuid);
-        if (headLocation == null) {
+        if (headLocation == null || !isBlockRendered(headLocation)) {
             return null;
         }
 
         return headLocation.getLocation();
     }
 
-    // Bulk loops resolve every head in one pass: getHeadByUUID rescans the whole list per call,
-    // which is O(found x total) on a player carrying hundreds of found heads.
+    private boolean isBlockRendered(HeadLocation headLocation) {
+        return registry.getVisualService().isBlockRendered(headLocation);
+    }
+
     private Map<UUID, Location> resolveHeadLocations(Collection<UUID> headUuids) {
         Map<UUID, Location> byUuid = new HashMap<>();
 
-        for (var headLocation : registry.getHeadService().getHeadLocations()) {
-            if (!headUuids.contains(headLocation.getUuid())) {
-                continue;
-            }
-
-            var location = headLocation.getLocation();
+        for (var headUuid : headUuids) {
+            var location = headLocationOf(headUuid);
             if (location != null) {
-                byUuid.put(headLocation.getUuid(), location);
+                byUuid.put(headUuid, location);
             }
         }
 

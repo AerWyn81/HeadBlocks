@@ -1,5 +1,8 @@
 package fr.aerwyn81.headblocks.data;
 
+import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
+import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.data.reward.RewardType;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -531,5 +534,79 @@ class HeadLocationTest {
 
         hl.setOrderIndex(10);
         assertThat(hl.getOrderIndex()).isEqualTo(10);
+    }
+
+    // --- Content, yaw and render override ---
+
+    @Test
+    void saveThenLoad_roundTripsContentYawAndOverride() {
+        UUID uuid = UUID.randomUUID();
+        HeadLocation hl = new HeadLocation("Cat", uuid, "default", "world", 1.5, 64, 2.5, -1, false, false, new ArrayList<>());
+        hl.setContent(HeadContent.of(ContentKind.MOB, "CAT", java.util.Map.of("baby", true)));
+        hl.setYaw(90f);
+        hl.setRenderMode(RenderMode.DISPLAY);
+
+        YamlConfiguration config = new YamlConfiguration();
+        hl.saveInConfig(config);
+
+        try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
+            bk.when(() -> Bukkit.getWorld("world")).thenReturn(null);
+
+            HeadLocation loaded = HeadLocation.fromConfig(config, uuid, "default");
+
+            assertThat(loaded.getContent()).isEqualTo(hl.getContent());
+            assertThat(loaded.getYaw()).isEqualTo(90f);
+            assertThat(loaded.getRenderMode()).isEqualTo(RenderMode.DISPLAY);
+        }
+    }
+
+    @Test
+    void saveInConfig_defaultsAreNotWritten() {
+        UUID uuid = UUID.randomUUID();
+        HeadLocation hl = new HeadLocation("Plain", uuid, "default", "world", 1.5, 64, 2.5, -1, false, false, new ArrayList<>());
+
+        YamlConfiguration config = new YamlConfiguration();
+        hl.saveInConfig(config);
+
+        String key = "locations." + uuid;
+        assertThat(config.contains(key + ".content")).isFalse();
+        assertThat(config.contains(key + ".yaw")).isFalse();
+        assertThat(config.contains(key + ".render")).isFalse();
+    }
+
+    @Test
+    void saveInConfig_clearedContent_isRemoved() {
+        UUID uuid = UUID.randomUUID();
+        HeadLocation hl = new HeadLocation("Plain", uuid, "default", "world", 1.5, 64, 2.5, -1, false, false, new ArrayList<>());
+        hl.setContent(HeadContent.head("abc"));
+        YamlConfiguration config = new YamlConfiguration();
+        hl.saveInConfig(config);
+
+        hl.setContent(null);
+        hl.saveInConfig(config);
+
+        assertThat(config.contains("locations." + uuid + ".content")).isFalse();
+    }
+
+    @Test
+    void fromConfig_legacyHeadWithoutContent_hasNoContent() {
+        UUID uuid = UUID.randomUUID();
+        YamlConfiguration config = new YamlConfiguration();
+        String key = "locations." + uuid;
+        config.set(key + ".name", "Legacy");
+        config.set(key + ".location.x", 1.5);
+        config.set(key + ".location.y", 64.0);
+        config.set(key + ".location.z", 2.5);
+        config.set(key + ".location.world", "world");
+
+        try (MockedStatic<Bukkit> bk = mockStatic(Bukkit.class)) {
+            bk.when(() -> Bukkit.getWorld("world")).thenReturn(null);
+
+            HeadLocation loaded = HeadLocation.fromConfig(config, uuid, "default");
+
+            assertThat(loaded.getContent()).isNull();
+            assertThat(loaded.getYaw()).isZero();
+            assertThat(loaded.getRenderMode()).isNull();
+        }
     }
 }

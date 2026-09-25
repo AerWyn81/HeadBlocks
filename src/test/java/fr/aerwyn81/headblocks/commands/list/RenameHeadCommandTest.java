@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HeadVisualService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
@@ -37,6 +38,7 @@ class RenameHeadCommandTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");

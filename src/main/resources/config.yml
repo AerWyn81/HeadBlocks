@@ -13,6 +13,11 @@ metrics: true
 # Support HeadDatabase (Arcaniax) plugin, use the format "hdb:<id>" where <id> is the id of the head
 # Support HeadDB (TheSilentPro) plugin, use the format "headdb:<id>" where <id> is the numeric id of the head
 # Support player head, use the format "player:<playername>" where <playername> is the name of a player
+# Other contents can be hidden too:
+#   "block:<MATERIAL>"          -> any placeable block (e.g. block:LANTERN)
+#   "item:<MATERIAL>[:<cmd>]"   -> any item, with an optional custom model data (e.g. item:DIAMOND:1001), always rendered as a display
+#   "mob:<ENTITY_TYPE>"         -> a mob without AI (e.g. mob:CAT)
+# Running /hb give without argument opens the catalog to take the items
 heads:
   - 'default:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQ5Y2M1OGFkMjVhMWFiMTZkMzZiYjVkNmQ0OTNjOGY1ODk4YzJiZjMwMmI2NGUzMjU5MjFjNDFjMzU4NjcifX19'
 
@@ -219,6 +224,17 @@ spin:
   enabled: false
   speed: 20
   linked: true
+
+# How newly placed heads and blocks are rendered in the world (can be overridden per hunt)
+# mode: BLOCK   -> heads and blocks are placed as real blocks (classic behavior)
+# mode: DISPLAY -> heads and blocks are rendered as display entities (floating, scalable, smooth spin)
+# Items, mobs and external contents are always rendered as entities, whatever the mode
+# scale and glow only apply to entity renders
+# Heads already placed keep their rendering: use /hb hunt rendering <hunt> <block|display> to convert them
+rendering:
+  mode: BLOCK
+  scale: 1.0
+  glow: false
 
 # If true, when a Headblocks is destroyed, it will delete all player data related to it
 # If false, Headblocks destroyed will remain in database. There's no purge command atm

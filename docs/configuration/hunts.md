@@ -82,6 +82,11 @@ config:
     speed: 20
     linked: true
 
+  rendering:
+    mode: DISPLAY
+    scale: 1.5
+    glow: true
+
   particles:
     found:
       enabled: false
@@ -445,15 +450,11 @@ The ordering operators (`>`, `>=`, `<`, `<=`) need numbers on both sides: a plac
 
 Each setting under `config:` overrides the global `config.yml` value for this hunt only. **Any field left out inherits from `config.yml` at runtime.** This means hunt files stay lightweight — only override what you need.
 
-See [Head Click](head-click.md), [Holograms](holograms.md), [Effects](effects.md), and [Rewards](rewards.md) for the available options.
+See [Head Click](head-click.md), [Holograms](holograms.md), [Effects](effects.md), [Rewards](rewards.md) and [Rendering](rendering.md#rendering) for the available options.
 
 ## Linking Heads to a Hunt
 
-Instead of switching hunts with `/hb hunt select` before placing heads, you can give heads already linked to a hunt:
-
-```
-/hb give <player> <number|*> <hunt>
-```
+Instead of switching hunts with `/hb hunt select` before placing heads, you can take heads already linked to a hunt: open the catalog with `/hb give`, choose the hunt with its hunt button, then take the items.
 
 A linked head shows its hunt in its lore and is always placed in that hunt, whatever hunt is currently selected. This is handy to keep one head per hunt in your hotbar (e.g. head 1 → `ab1`, head 2 → `ab2`).
 

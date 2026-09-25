@@ -180,6 +180,7 @@ public class ConfigUpdater {
         StringBuilder valueBuilder = new StringBuilder();
 
         String currentIgnoredSection = null;
+        int ignoredListItemIndent = -1;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(toUpdate))) {
             String line;
@@ -190,12 +191,23 @@ public class ConfigUpdater {
                 if (trimmedLine.isEmpty() || trimmedLine.startsWith("#"))
                     continue;
 
+                int indent = line.length() - line.stripLeading().length();
+                if (ignoredListItemIndent >= 0) {
+                    if (indent > ignoredListItemIndent) {
+                        valueBuilder.append("\n").append(line);
+                        continue;
+                    }
+
+                    ignoredListItemIndent = -1;
+                }
+
                 if (trimmedLine.startsWith("-")) {
                     for (String ignoredSection : ignoredSections) {
                         boolean isIgnoredParent = ignoredSection.equals(keyBuilder.toString());
 
                         if (isIgnoredParent || keyBuilder.isSubKeyOf(ignoredSection)) {
                             valueBuilder.append("\n").append(line);
+                            ignoredListItemIndent = indent;
                             continue lineLoop;
                         }
                     }

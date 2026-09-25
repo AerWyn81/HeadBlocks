@@ -1,22 +1,16 @@
 package fr.aerwyn81.headblocks.events;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.HBHunt;
-import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.services.AreaRunManager;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
-import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockFromToEvent;
-import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -39,13 +33,7 @@ public class OthersEvent implements Listener {
 
         Block block = e.getBlock();
 
-        // Check if block is a head
-        if (!HeadUtils.isPlayerHead(block)) {
-            return;
-        }
-
-        // Check if the head is a head of the plugin
-        HeadLocation headLocation = registry.getHeadService().getHeadAt(block.getLocation());
+        HeadLocation headLocation = registry.getHeadService().getBlockHeadAt(block);
         if (headLocation == null) {
             return;
         }
@@ -59,20 +47,55 @@ public class OthersEvent implements Listener {
             return;
         }
 
-        if (e.getBlocks().stream().anyMatch(b -> registry.getHeadService().getChargedHeadLocations().stream()
-                .anyMatch(p -> LocationUtils.areEquals(p.getLocation(), b.getLocation())))) {
+        if (e.getBlocks().stream().anyMatch(this::isHeadBlock)) {
             e.setCancelled(true);
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPhysics(BlockPhysicsEvent e) {
+        if (isHeadBlock(e.getBlock())) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBurn(BlockBurnEvent e) {
+        if (isHeadBlock(e.getBlock())) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFade(BlockFadeEvent e) {
+        if (isHeadBlock(e.getBlock())) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onLeavesDecay(LeavesDecayEvent e) {
+        if (isHeadBlock(e.getBlock())) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityChangeBlock(EntityChangeBlockEvent e) {
+        if (isHeadBlock(e.getBlock())) {
+            e.setCancelled(true);
+        }
+    }
+
+    private boolean isHeadBlock(Block block) {
+        return registry.getHeadService().getBlockHeadAt(block) != null;
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         registry.getStorageService().loadPlayers(e.getPlayer());
 
-        var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
-        if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
-            packetEventsHook.getHeadHidingListener().onPlayerJoin(e.getPlayer());
-        }
+        registry.getVisibilityService().onJoin(e.getPlayer());
     }
 
     @EventHandler
@@ -89,11 +112,9 @@ public class OthersEvent implements Listener {
         registry.getChatPromptService().cancel(e.getPlayer().getUniqueId());
         registry.getGuiService().getRewardsManager().cancelPendingRewardInput(e.getPlayer());
         registry.getGuiService().getHintManager().clearCache(e.getPlayer().getUniqueId());
+        registry.getGuiService().getCatalogGui().clearState(e.getPlayer().getUniqueId());
 
-        var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
-        if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
-            packetEventsHook.getHeadHidingListener().invalidatePlayerCache(e.getPlayer().getUniqueId());
-        }
+        registry.getVisibilityService().onQuit(e.getPlayer().getUniqueId());
     }
 
     @EventHandler
@@ -119,9 +140,8 @@ public class OthersEvent implements Listener {
             head.setLocation(new Location(e.getWorld(), head.getX(), head.getY(), head.getZ()));
             head.setCharged(true);
 
-            HBHunt hunt = registry.getHuntService().getHuntById(head.getHuntId());
-            HuntConfig huntConfig = hunt != null ? hunt.getConfig() : new HuntConfig(registry.getConfigService());
-            registry.getHologramService().createHolograms(head.getLocation(), huntConfig);
+            registry.getHologramService().createHolograms(head.getLocation(), registry.getHuntService().configOf(head.getHuntId()));
+            registry.getVisualService().ensureSpawned(head);
         }
     }
 
@@ -142,13 +162,7 @@ public class OthersEvent implements Listener {
             return;
         }
 
-        e.blockList().removeIf(block -> {
-            if (HeadUtils.isPlayerHead(block)) {
-                var headLocation = registry.getHeadService().getHeadAt(block.getLocation());
-                return headLocation != null;
-            }
-            return false;
-        });
+        e.blockList().removeIf(this::isHeadBlock);
     }
 
 }

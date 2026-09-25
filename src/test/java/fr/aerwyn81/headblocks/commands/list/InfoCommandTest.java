@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.data.reward.RewardType;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HeadVisualService;
 import fr.aerwyn81.headblocks.services.HuntService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -51,6 +52,7 @@ class InfoCommandTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);

@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadTargeting;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -53,14 +54,7 @@ public abstract class ResetBase implements Cmd {
             return null;
         }
 
-        var targetBlock = player.getTargetBlock(null, 100);
-        if (targetBlock.isEmpty()) {
-            player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
-            return null;
-        }
-
-        var targetLoc = targetBlock.getLocation();
-        var headLocation = registry.getHeadService().getHeadAt(targetLoc);
+        var headLocation = HeadTargeting.lookedAt(player, registry, 100);
 
         if (headLocation == null) {
             player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));

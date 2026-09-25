@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.data.hunt;
 
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.services.ConfigService;
 
 import java.util.ArrayList;
@@ -44,6 +45,11 @@ public class HuntConfig {
     private Boolean spinEnabled;
     private Integer spinSpeed;
     private Boolean spinLinked;
+
+    // Rendering
+    private RenderMode renderMode;
+    private Double renderScale;
+    private Boolean renderGlow;
 
     // Particles
     private Boolean particlesFoundEnabled;
@@ -261,6 +267,32 @@ public class HuntConfig {
         this.spinLinked = linked;
     }
 
+    // --- Rendering getters with fallback ---
+
+    public RenderMode getRenderMode() {
+        return renderMode != null ? renderMode : configService.renderingMode();
+    }
+
+    public void setRenderMode(RenderMode renderMode) {
+        this.renderMode = renderMode;
+    }
+
+    public double getRenderScale() {
+        return renderScale != null ? renderScale : configService.renderingScale();
+    }
+
+    public void setRenderScale(Double renderScale) {
+        this.renderScale = renderScale;
+    }
+
+    public boolean isRenderGlow() {
+        return renderGlow != null ? renderGlow : configService.renderingGlow();
+    }
+
+    public void setRenderGlow(Boolean renderGlow) {
+        this.renderGlow = renderGlow;
+    }
+
     // --- Particles getters with fallback ---
 
     public boolean isParticlesFoundEnabled() {
@@ -337,6 +369,18 @@ public class HuntConfig {
 
     public boolean hasTieredRewards() {
         return tieredRewards != null;
+    }
+
+    public boolean hasRenderMode() {
+        return renderMode != null;
+    }
+
+    public boolean hasRenderScale() {
+        return renderScale != null;
+    }
+
+    public boolean hasRenderGlow() {
+        return renderGlow != null;
     }
 
     public boolean hasSpinConfig() {

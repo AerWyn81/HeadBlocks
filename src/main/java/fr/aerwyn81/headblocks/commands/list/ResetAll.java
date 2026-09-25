@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks.commands.list;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -74,10 +73,7 @@ public class ResetAll extends ResetBase {
 
                     Player onlinePlayer = Bukkit.getPlayer(playerUuid);
                     if (onlinePlayer != null) {
-                        var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
-                        if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
-                            packetEventsHook.getHeadHidingListener().removeFoundHead(onlinePlayer, headUuid);
-                        }
+                        registry.getVisibilityService().onHeadReset(onlinePlayer, headUuid);
                     }
                 } catch (InternalException ex) {
                     sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
@@ -120,10 +116,7 @@ public class ResetAll extends ResetBase {
 
                     Player onlinePlayer = Bukkit.getPlayer(uuid);
                     if (onlinePlayer != null) {
-                        var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
-                        if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
-                            packetEventsHook.getHeadHidingListener().showAllPreviousHeads(onlinePlayer);
-                        }
+                        registry.getVisibilityService().onProgressReset(onlinePlayer);
                     }
                 } catch (InternalException ex) {
                     sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));

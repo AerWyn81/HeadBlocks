@@ -6,13 +6,14 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
+import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
+import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import fr.aerwyn81.headblocks.utils.runnables.CompletableBukkitFuture;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -81,6 +82,10 @@ public class Debug implements Cmd {
                 if (applied) {
                     try {
                         registry.getStorageService().createOrUpdateHead(headLoc.getUuid(), args[2]);
+                        if (headLoc.getContent() == null || headLoc.getContent().kind() == ContentKind.HEAD) {
+                            headLoc.setContent(HeadContent.head(args[2]));
+                            registry.getHeadService().saveHeadInConfig(headLoc);
+                        }
                     } catch (InternalException e) {
                         LogUtil.error("Error with storage, head new texture not saved: {0}", e.getMessage());
                         applied = false;
@@ -412,34 +417,48 @@ public class Debug implements Cmd {
 
             HeadBlocks.getScheduler().runTask(location, () -> {
                 try {
-                    var texture = registry.getStorageService().getHeadTexture(headLocation.getUuid());
+                    var visualService = registry.getVisualService();
+                    if (visualService.isEntityRendered(headLocation)) {
+                        visualService.respawn(headLocation);
+                        skipped.incrementAndGet();
+                        return;
+                    }
+
+                    var content = headLocation.getContent();
+                    if (content != null && content.kind() == ContentKind.BLOCK) {
+                        if (location.getBlock().isEmpty() && visualService.placeBlock(headLocation)) {
+                            restored.incrementAndGet();
+                        } else {
+                            skipped.incrementAndGet();
+                        }
+                        return;
+                    }
+
+                    var block = location.getBlock();
+                    if (!HeadUtils.isPlayerHead(block)) {
+                        if (visualService.placeBlock(headLocation)) {
+                            restored.incrementAndGet();
+                        } else {
+                            failed.incrementAndGet();
+                        }
+                        return;
+                    }
+
+                    var texture = content != null && content.kind() == ContentKind.HEAD && !content.value().isEmpty()
+                            ? content.value()
+                            : registry.getStorageService().getHeadTexture(headLocation.getUuid());
                     if (texture == null || texture.isEmpty()) {
                         LogUtil.warning("Resync locations: No texture found for head {0}", headLocation.getUuid());
                         failed.incrementAndGet();
                         return;
                     }
 
-                    var block = location.getBlock();
-
-                    if (HeadUtils.isPlayerHead(block)) {
-                        var currentTexture = HeadUtils.getHeadTexture(block);
-                        if (texture.equals(currentTexture)) {
-                            skipped.incrementAndGet();
-                            return;
-                        }
-
-                        if (HeadUtils.applyTextureToBlock(block, texture)) {
-                            textureApplied.incrementAndGet();
-                        } else {
-                            failed.incrementAndGet();
-                        }
+                    if (texture.equals(HeadUtils.getHeadTexture(block))) {
+                        skipped.incrementAndGet();
+                    } else if (HeadUtils.applyTextureToBlock(block, texture)) {
+                        textureApplied.incrementAndGet();
                     } else {
-                        block.setType(Material.PLAYER_HEAD);
-                        if (HeadUtils.applyTextureToBlock(block, texture)) {
-                            restored.incrementAndGet();
-                        } else {
-                            failed.incrementAndGet();
-                        }
+                        failed.incrementAndGet();
                     }
                 } catch (InternalException e) {
                     LogUtil.error("Resync locations: Error processing head {0}: {1}", headLocation.getUuid(), e.getMessage());

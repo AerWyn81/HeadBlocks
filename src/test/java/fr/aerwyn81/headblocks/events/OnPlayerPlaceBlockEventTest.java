@@ -3,7 +3,9 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
+import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
+import fr.aerwyn81.headblocks.data.head.visual.VisualForm;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.services.gui.types.TimedConfigGui;
 import fr.aerwyn81.headblocks.utils.bukkit.*;
@@ -15,21 +17,24 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.PluginManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
@@ -57,6 +62,9 @@ class OnPlayerPlaceBlockEventTest {
 
     @Mock
     private GuiService guiService;
+
+    @Mock
+    private HeadVisualService visualService;
 
     @Mock
     private TimedConfigGui timedConfigGui;
@@ -93,12 +101,19 @@ class OnPlayerPlaceBlockEventTest {
         lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(registry.getGuiService()).thenReturn(guiService);
         lenient().when(guiService.getTimedConfigManager()).thenReturn(timedConfigGui);
+        lenient().when(registry.getVisualService()).thenReturn(visualService);
+        lenient().when(visualService.formOf(any(HeadContent.class), any())).thenReturn(VisualForm.HEAD_BLOCK);
 
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
         lenient().when(event.getPlayer()).thenReturn(player);
         lenient().when(event.getBlockPlaced()).thenReturn(blockPlaced);
         lenient().when(player.getInventory()).thenReturn(playerInventory);
         lenient().when(playerInventory.getItemInMainHand()).thenReturn(mainHandItem);
+
+        Location defaultLocation = mock(Location.class);
+        lenient().when(blockPlaced.getLocation()).thenReturn(defaultLocation);
+        lenient().when(defaultLocation.clone()).thenReturn(defaultLocation);
+        lenient().when(defaultLocation.add(0.5, 0, 0.5)).thenReturn(defaultLocation);
 
         handler = new OnPlayerPlaceBlockEvent(registry);
     }
@@ -115,9 +130,6 @@ class OnPlayerPlaceBlockEventTest {
         UUID playerUuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
-
-        // Empty heads list means hasHeadBlocksItemInHand returns false
-        when(headService.getHeads()).thenReturn(new ArrayList<>());
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
             handler.onPlayerPlaceBlock(event);
@@ -136,13 +148,8 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
 
             handler.onPlayerPlaceBlock(event);
 
@@ -159,14 +166,9 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(false);
 
             handler.onPlayerPlaceBlock(event);
@@ -183,16 +185,11 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(player.isSneaking()).thenReturn(false);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.onPlayerPlaceBlock(event);
@@ -210,11 +207,6 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
 
@@ -229,7 +221,7 @@ class OnPlayerPlaceBlockEventTest {
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.onPlayerPlaceBlock(event);
@@ -247,11 +239,6 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
 
@@ -266,7 +253,7 @@ class OnPlayerPlaceBlockEventTest {
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.onPlayerPlaceBlock(event);
@@ -285,11 +272,6 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
 
@@ -303,7 +285,7 @@ class OnPlayerPlaceBlockEventTest {
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
         when(huntService.getSelectedHunt(playerUuid)).thenReturn("hunt1");
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "hunt1")).thenReturn(headUuid);
+        when(headService.saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "hunt1")).thenReturn(headUuid);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
@@ -311,8 +293,8 @@ class OnPlayerPlaceBlockEventTest {
              MockedStatic<VersionUtils> versionUtils = mockStatic(VersionUtils.class);
              MockedStatic<ParticlesUtils> ignored = mockStatic(ParticlesUtils.class);
              MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
-            headUtils.when(() -> HeadUtils.getHeadTexture(eventItemInHand)).thenReturn("texture-abc");
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand)).thenReturn(HeadContent.head("texture-abc"));
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
             locationUtils.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
                     .thenReturn("parsed-message");
@@ -322,7 +304,7 @@ class OnPlayerPlaceBlockEventTest {
 
             handler.onPlayerPlaceBlock(event);
 
-            verify(headService).saveHeadLocation(centeredLoc, "texture-abc", "hunt1");
+            verify(headService).saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "hunt1");
             verify(event, never()).setCancelled(anyBoolean());
         }
     }
@@ -333,11 +315,6 @@ class OnPlayerPlaceBlockEventTest {
         UUID headUuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
-
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
 
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
@@ -352,15 +329,15 @@ class OnPlayerPlaceBlockEventTest {
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
         when(huntService.huntExists("ab1")).thenReturn(true);
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "ab1")).thenReturn(headUuid);
+        when(headService.saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "ab1")).thenReturn(headUuid);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
              MockedStatic<LocationUtils> locationUtils = mockStatic(LocationUtils.class);
              MockedStatic<ParticlesUtils> ignored = mockStatic(ParticlesUtils.class);
              MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
-            headUtils.when(() -> HeadUtils.getHeadTexture(eventItemInHand)).thenReturn("texture-abc");
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand)).thenReturn(HeadContent.head("texture-abc"));
             headUtils.when(() -> HeadUtils.getHuntId(eventItemInHand)).thenReturn("ab1");
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
             locationUtils.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
@@ -369,7 +346,7 @@ class OnPlayerPlaceBlockEventTest {
 
             handler.onPlayerPlaceBlock(event);
 
-            verify(headService).saveHeadLocation(centeredLoc, "texture-abc", "ab1");
+            verify(headService).saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "ab1");
             verify(huntService, never()).getSelectedHunt(any());
             verify(event, never()).setCancelled(anyBoolean());
         }
@@ -380,11 +357,6 @@ class OnPlayerPlaceBlockEventTest {
         UUID playerUuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
-
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
 
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
@@ -402,8 +374,8 @@ class OnPlayerPlaceBlockEventTest {
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
-            headUtils.when(() -> HeadUtils.getHeadTexture(eventItemInHand)).thenReturn("texture-abc");
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand)).thenReturn(HeadContent.head("texture-abc"));
             headUtils.when(() -> HeadUtils.getHuntId(eventItemInHand)).thenReturn("ab1");
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
@@ -411,7 +383,7 @@ class OnPlayerPlaceBlockEventTest {
 
             verify(event).setCancelled(true);
             verify(languageService).message("Messages.HeadHuntDeleted");
-            verify(headService, never()).saveHeadLocation(any(), anyString(), anyString());
+            verify(headService, never()).saveHeadLocation(any(), any(HeadContent.class), anyFloat(), anyString());
         }
     }
 
@@ -433,8 +405,7 @@ class OnPlayerPlaceBlockEventTest {
         handler.onPlayerPlaceBlock(event);
 
         verify(timedConfigGui).handlePlatePlaced(player, centeredLoc);
-        // Should return early and not check for headblocks item
-        verify(headService, never()).getHeads();
+        verify(storageService, never()).isStorageError();
     }
 
     // --- Pending timed plate with non-pressure-plate block: returns early without handling ---
@@ -451,8 +422,7 @@ class OnPlayerPlaceBlockEventTest {
         handler.onPlayerPlaceBlock(event);
 
         verify(timedConfigGui, never()).handlePlatePlaced(any(), any());
-        // Should still return early and not check for headblocks item
-        verify(headService, never()).getHeads();
+        verify(storageService, never()).isStorageError();
     }
 
     // --- No permission with empty message: cancelled but no message sent ---
@@ -463,17 +433,12 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         // Return empty/whitespace message for NoPermissionBlock
         when(languageService.message("Messages.NoPermissionBlock")).thenReturn("   ");
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(false);
 
             handler.onPlayerPlaceBlock(event);
@@ -492,16 +457,11 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(languageService.message("Messages.NoPermissionBlock")).thenReturn("You don't have permission");
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(false);
 
             handler.onPlayerPlaceBlock(event);
@@ -519,17 +479,12 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.SURVIVAL);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.onPlayerPlaceBlock(event);
@@ -548,11 +503,6 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getName()).thenReturn("TestPlayer");
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
 
@@ -569,8 +519,8 @@ class OnPlayerPlaceBlockEventTest {
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
              MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
-            headUtils.when(() -> HeadUtils.getHeadTexture(eventItemInHand)).thenReturn(null);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand)).thenReturn(null);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.onPlayerPlaceBlock(event);
@@ -579,7 +529,7 @@ class OnPlayerPlaceBlockEventTest {
             verify(player).sendMessage("mock-message");
             logUtil.verify(() -> LogUtil.error(eq("Error, head texture not resolved when trying to save the head for player {0}"), eq("TestPlayer")));
             // Should NOT proceed to saveHeadLocation
-            verify(headService, never()).saveHeadLocation(any(), anyString(), anyString());
+            verify(headService, never()).saveHeadLocation(any(), any(HeadContent.class), anyFloat(), anyString());
         }
     }
 
@@ -590,11 +540,6 @@ class OnPlayerPlaceBlockEventTest {
         UUID playerUuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
-
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
 
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
@@ -609,14 +554,14 @@ class OnPlayerPlaceBlockEventTest {
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
         when(huntService.getSelectedHunt(playerUuid)).thenReturn("default");
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "default"))
+        when(headService.saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "default"))
                 .thenThrow(new InternalException("DB connection failed"));
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
              MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
-            headUtils.when(() -> HeadUtils.getHeadTexture(eventItemInHand)).thenReturn("texture-abc");
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand)).thenReturn(HeadContent.head("texture-abc"));
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.onPlayerPlaceBlock(event);
@@ -634,16 +579,11 @@ class OnPlayerPlaceBlockEventTest {
     // --- Success with default hunt: sends reassign message ---
 
     @Test
-    void success_defaultHunt_sendsReassignMessage() throws Exception {
+    void success_defaultHunt_severalHunts_sendsReassignMessage() throws Exception {
         UUID playerUuid = UUID.randomUUID();
         UUID headUuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
-
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
 
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
@@ -658,8 +598,9 @@ class OnPlayerPlaceBlockEventTest {
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
         when(huntService.getSelectedHunt(playerUuid)).thenReturn("default");
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "default")).thenReturn(headUuid);
+        when(headService.saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "default")).thenReturn(headUuid);
         when(languageService.prefix()).thenReturn("[HB]");
+        when(huntService.isMultiHunt()).thenReturn(true);
 
         Player.Spigot spigot = mock(Player.Spigot.class);
         when(player.spigot()).thenReturn(spigot);
@@ -671,8 +612,8 @@ class OnPlayerPlaceBlockEventTest {
              MockedStatic<ParticlesUtils> ignored = mockStatic(ParticlesUtils.class);
              MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class);
              MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
-            headUtils.when(() -> HeadUtils.getHeadTexture(eventItemInHand)).thenReturn("texture-abc");
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand)).thenReturn(HeadContent.head("texture-abc"));
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
             locationUtils.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
                     .thenReturn("parsed-message");
@@ -683,9 +624,56 @@ class OnPlayerPlaceBlockEventTest {
 
             handler.onPlayerPlaceBlock(event);
 
-            verify(headService).saveHeadLocation(centeredLoc, "texture-abc", "default");
+            verify(headService).saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "default");
             // Default hunt sends a reassign message via spigot
             verify(spigot).sendMessage(any(net.md_5.bungee.api.chat.TextComponent.class));
+        }
+    }
+
+    @Test
+    void success_defaultHunt_onlyHunt_sendsNoReassignMessage() throws Exception {
+        UUID playerUuid = UUID.randomUUID();
+        UUID headUuid = UUID.randomUUID();
+        when(player.getUniqueId()).thenReturn(playerUuid);
+        when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
+
+        when(player.isSneaking()).thenReturn(true);
+        when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
+
+        Location rawBlockLoc = mock(Location.class);
+        Location centeredLoc = mock(Location.class);
+        when(blockPlaced.getLocation()).thenReturn(rawBlockLoc);
+        when(rawBlockLoc.clone()).thenReturn(centeredLoc);
+        when(centeredLoc.add(0.5, 0, 0.5)).thenReturn(centeredLoc);
+        when(headService.getHeadAt(centeredLoc)).thenReturn(null);
+
+        when(storageService.isStorageError()).thenReturn(false);
+        when(event.getItemInHand()).thenReturn(eventItemInHand);
+        when(huntService.getSelectedHunt(playerUuid)).thenReturn("default");
+        when(headService.saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "default")).thenReturn(headUuid);
+        when(huntService.isMultiHunt()).thenReturn(false);
+
+        try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
+             MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
+             MockedStatic<LocationUtils> locationUtils = mockStatic(LocationUtils.class);
+             MockedStatic<VersionUtils> versionUtils = mockStatic(VersionUtils.class);
+             MockedStatic<ParticlesUtils> ignored = mockStatic(ParticlesUtils.class);
+             MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class);
+             MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand)).thenReturn(HeadContent.head("texture-abc"));
+            playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
+            locationUtils.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
+                    .thenReturn("parsed-message");
+            versionUtils.when(() -> VersionUtils.isNewerOrEqualsTo(any())).thenReturn(true);
+            messageUtils.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
+            PluginManager pm = mock(PluginManager.class);
+            bukkit.when(Bukkit::getPluginManager).thenReturn(pm);
+
+            handler.onPlayerPlaceBlock(event);
+
+            verify(headService).saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "default");
+            verify(player, never()).spigot();
         }
     }
 
@@ -697,17 +685,12 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.ADVENTURE);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.onPlayerPlaceBlock(event);
@@ -726,11 +709,6 @@ class OnPlayerPlaceBlockEventTest {
         when(player.getUniqueId()).thenReturn(playerUuid);
         when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
 
-        HBHead hbHead = mock(HBHead.class);
-        ItemStack headItemStack = mock(ItemStack.class);
-        when(hbHead.getItemStack()).thenReturn(headItemStack);
-        when(headService.getHeads()).thenReturn(new ArrayList<>(List.of(hbHead)));
-
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
 
@@ -744,7 +722,7 @@ class OnPlayerPlaceBlockEventTest {
         when(storageService.isStorageError()).thenReturn(false);
         when(event.getItemInHand()).thenReturn(eventItemInHand);
         when(huntService.getSelectedHunt(playerUuid)).thenReturn("hunt1");
-        when(headService.saveHeadLocation(centeredLoc, "texture-abc", "hunt1")).thenReturn(headUuid);
+        when(headService.saveHeadLocation(centeredLoc, HeadContent.head("texture-abc"), 0f, "hunt1")).thenReturn(headUuid);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
@@ -752,8 +730,8 @@ class OnPlayerPlaceBlockEventTest {
              MockedStatic<VersionUtils> versionUtils = mockStatic(VersionUtils.class);
              MockedStatic<ParticlesUtils> ignored = mockStatic(ParticlesUtils.class);
              MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-            headUtils.when(() -> HeadUtils.areEquals(headItemStack, mainHandItem)).thenReturn(true);
-            headUtils.when(() -> HeadUtils.getHeadTexture(eventItemInHand)).thenReturn("texture-abc");
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand)).thenReturn(HeadContent.head("texture-abc"));
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
             locationUtils.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
                     .thenReturn("parsed-message");
@@ -765,6 +743,186 @@ class OnPlayerPlaceBlockEventTest {
 
             // Hunt assignment now happens inside saveHeadLocation, so just verify the event fires
             verify(pm).callEvent(any());
+        }
+    }
+
+    // --- Entity rendering ---
+
+    private void adminPlacing(UUID playerUuid) {
+        lenient().when(player.getUniqueId()).thenReturn(playerUuid);
+        lenient().when(player.isSneaking()).thenReturn(true);
+        lenient().when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
+        lenient().when(huntService.getSelectedHunt(playerUuid)).thenReturn("halloween");
+        lenient().when(storageService.isStorageError()).thenReturn(false);
+    }
+
+    @Test
+    void blockPlace_ofAPlainBlock_savesItsBlockData() throws Exception {
+        UUID playerUuid = UUID.randomUUID();
+        adminPlacing(playerUuid);
+        when(timedConfigGui.hasPendingPlatePlacement(playerUuid)).thenReturn(false);
+        when(event.getItemInHand()).thenReturn(eventItemInHand);
+        org.bukkit.block.data.BlockData data = mock(org.bukkit.block.data.BlockData.class);
+        when(blockPlaced.getBlockData()).thenReturn(data);
+        when(data.getAsString()).thenReturn("minecraft:lantern[hanging=true]");
+
+        try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
+             MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
+             MockedStatic<LocationUtils> ignoredLocation = mockStatic(LocationUtils.class);
+             MockedStatic<ParticlesUtils> ignoredParticles = mockStatic(ParticlesUtils.class);
+             MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            headUtils.when(() -> HeadUtils.isHeadBlocksItem(mainHandItem)).thenReturn(true);
+            headUtils.when(() -> HeadUtils.getContent(eventItemInHand))
+                    .thenReturn(HeadContent.of(ContentKind.BLOCK, "LANTERN", null));
+            playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
+            bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+
+            handler.onPlayerPlaceBlock(event);
+
+            verify(headService).saveHeadLocation(any(),
+                    eq(HeadContent.of(ContentKind.BLOCK, "LANTERN", java.util.Map.of("data", "minecraft:lantern[hanging=true]"))),
+                    anyFloat(), eq("halloween"));
+            verify(event, never()).setCancelled(anyBoolean());
+        }
+    }
+
+    @Nested
+    class EntityPlacement {
+
+        @Mock
+        private PlayerInteractEvent interact;
+
+        @Mock
+        private ItemStack item;
+
+        @Mock
+        private Block clicked;
+
+        @Mock
+        private Block target;
+
+        private final UUID playerUuid = UUID.randomUUID();
+
+        @BeforeEach
+        void setUpInteract() {
+            lenient().when(interact.getAction()).thenReturn(Action.RIGHT_CLICK_BLOCK);
+            lenient().when(interact.getHand()).thenReturn(EquipmentSlot.HAND);
+            lenient().when(interact.getClickedBlock()).thenReturn(clicked);
+            lenient().when(interact.getItem()).thenReturn(item);
+            lenient().when(interact.getPlayer()).thenReturn(player);
+            lenient().when(interact.getBlockFace()).thenReturn(BlockFace.UP);
+            lenient().when(clicked.getRelative(BlockFace.UP)).thenReturn(target);
+            adminPlacing(playerUuid);
+        }
+
+        @Test
+        void nonBlockItem_cannotBeUsedInTheAir() {
+            when(interact.getAction()).thenReturn(Action.RIGHT_CLICK_AIR);
+            when(item.getType()).thenReturn(Material.ENDER_PEARL);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
+                headUtils.when(() -> HeadUtils.isHeadBlocksItem(item)).thenReturn(true);
+
+                handler.onHeadBlocksItemUse(interact);
+            }
+
+            verify(interact).setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+        }
+
+        @Test
+        void blockItem_inTheAir_isLeftAlone() {
+            when(interact.getAction()).thenReturn(Action.RIGHT_CLICK_AIR);
+            when(item.getType()).thenReturn(Material.PLAYER_HEAD);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
+                headUtils.when(() -> HeadUtils.isHeadBlocksItem(item)).thenReturn(true);
+
+                handler.onHeadBlocksItemUse(interact);
+            }
+
+            verify(interact, never()).setUseItemInHand(any());
+        }
+
+        @Test
+        void leftClick_isIgnored() {
+            when(interact.getAction()).thenReturn(Action.LEFT_CLICK_BLOCK);
+
+            handler.onEntityHeadPlace(interact);
+
+            verify(interact, never()).setCancelled(anyBoolean());
+        }
+
+        @Test
+        void notAHeadBlocksItem_isIgnored() {
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
+                headUtils.when(() -> HeadUtils.isHeadBlocksItem(item)).thenReturn(false);
+
+                handler.onEntityHeadPlace(interact);
+            }
+
+            verify(interact, never()).setCancelled(anyBoolean());
+        }
+
+        @Test
+        void blockRenderedBlockItem_isLeftToTheBlockPlaceEvent() {
+            var content = HeadContent.head("t");
+            when(item.getType()).thenReturn(Material.PLAYER_HEAD);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
+                headUtils.when(() -> HeadUtils.isHeadBlocksItem(item)).thenReturn(true);
+                headUtils.when(() -> HeadUtils.getContent(item)).thenReturn(content);
+
+                handler.onEntityHeadPlace(interact);
+            }
+
+            verify(interact, never()).setCancelled(anyBoolean());
+        }
+
+        @Test
+        void occupiedTarget_isRefused() {
+            var content = HeadContent.of(ContentKind.MOB, "CAT", null);
+            when(visualService.formOf(content, "halloween")).thenReturn(VisualForm.MOB);
+            when(target.isPassable()).thenReturn(false);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
+                headUtils.when(() -> HeadUtils.isHeadBlocksItem(item)).thenReturn(true);
+                headUtils.when(() -> HeadUtils.getContent(item)).thenReturn(content);
+
+                handler.onEntityHeadPlace(interact);
+            }
+
+            verify(interact).setCancelled(true);
+            verify(languageService).message("Messages.TargetBlockInvalid");
+            verifyNoInteractions(headService);
+        }
+
+        @Test
+        void mob_isPlacedOnTheClickedFace() throws Exception {
+            var content = HeadContent.of(ContentKind.MOB, "CAT", null);
+            when(visualService.formOf(content, "halloween")).thenReturn(VisualForm.MOB);
+            when(target.isPassable()).thenReturn(true);
+            Location targetLocation = mock(Location.class);
+            when(target.getLocation()).thenReturn(targetLocation);
+            when(targetLocation.add(0.5, 0, 0.5)).thenReturn(targetLocation);
+            Location playerLocation = mock(Location.class);
+            when(player.getLocation()).thenReturn(playerLocation);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
+                 MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
+                 MockedStatic<LocationUtils> ignoredLocation = mockStatic(LocationUtils.class);
+                 MockedStatic<ParticlesUtils> ignoredParticles = mockStatic(ParticlesUtils.class);
+                 MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                headUtils.when(() -> HeadUtils.isHeadBlocksItem(item)).thenReturn(true);
+                headUtils.when(() -> HeadUtils.getContent(item)).thenReturn(content);
+                playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
+                bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+
+                handler.onEntityHeadPlace(interact);
+
+                verify(interact).setCancelled(true);
+                verify(interact).setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+                verify(headService).saveHeadLocation(eq(targetLocation), eq(content), anyFloat(), eq("halloween"));
+            }
         }
     }
 }

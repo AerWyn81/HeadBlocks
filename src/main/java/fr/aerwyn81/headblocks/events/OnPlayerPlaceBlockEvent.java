@@ -1,37 +1,36 @@
 package fr.aerwyn81.headblocks.events;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
-import fr.aerwyn81.headblocks.api.events.HeadCreatedEvent;
-import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
+import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
+import fr.aerwyn81.headblocks.data.head.visual.VisualForm;
+import fr.aerwyn81.headblocks.services.HeadPlacementService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.internal.LogUtil;
-import fr.aerwyn81.headblocks.utils.message.MessageUtils;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OnPlayerPlaceBlockEvent implements Listener {
 
     private final ServiceRegistry registry;
+    private final HeadPlacementService placementService;
 
     public OnPlayerPlaceBlockEvent(ServiceRegistry registry) {
         this.registry = registry;
+        this.placementService = new HeadPlacementService(registry);
     }
 
     @EventHandler
@@ -39,7 +38,6 @@ public class OnPlayerPlaceBlockEvent implements Listener {
         Player player = e.getPlayer();
         Block headBlock = e.getBlockPlaced();
 
-        // Check for pending timed plate placement
         if (registry.getGuiService().getTimedConfigManager().hasPendingPlatePlacement(player.getUniqueId())) {
             if (headBlock.getType().name().contains("PRESSURE_PLATE")) {
                 Location plateLoc = headBlock.getLocation().clone().add(0.5, 0, 0.5);
@@ -48,107 +46,73 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
-
-        if (!hasHeadBlocksItemInHand(player)) {
+        if (!HeadUtils.isHeadBlocksItem(player.getInventory().getItemInMainHand())) {
             return;
         }
 
-        if (HeadBlocks.isReloadInProgress) {
-            e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.PluginReloading"));
-            return;
+        Location headLocation = headBlock.getLocation().clone().add(0.5, 0, 0.5);
+
+        var item = e.getItemInHand();
+        var content = HeadUtils.getContent(item);
+        if (content != null && content.kind() == ContentKind.BLOCK) {
+            Map<String, Object> options = new HashMap<>(content.options());
+            options.put("data", headBlock.getBlockData().getAsString());
+            content = HeadContent.of(ContentKind.BLOCK, content.value(), options);
+        } else if (content != null && content.kind() == ContentKind.HEAD && headBlock.getType() == Material.PLAYER_WALL_HEAD) {
+            content = HeadContent.withWall(content);
         }
 
-        if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
-            e.setCancelled(true);
-
-            var message = registry.getLanguageService().message("Messages.NoPermissionBlock");
-            if (!message.trim().isEmpty()) {
-                player.sendMessage(message);
-            }
-
-            return;
-        }
-
-        if (!player.isSneaking() || player.getGameMode() != GameMode.CREATIVE) {
-            e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.CreativeSneakAddHead"));
-            return;
-        }
-
-        Location headLocation = headBlock.getLocation();
-        headLocation = headLocation.clone().add(0.5, 0, 0.5);
-
-        if (registry.getHeadService().getHeadAt(headLocation) != null) {
-            e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.HeadAlreadyExistHere"));
-            return;
-        }
-
-        // Check if there is a storage issue
-        if (registry.getStorageService().isStorageError()) {
-            e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
-            return;
-        }
-
-        var headTexture = HeadUtils.getHeadTexture(e.getItemInHand());
-        if (headTexture == null) {
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
-            LogUtil.error("Error, head texture not resolved when trying to save the head for player {0}", player.getName());
-            return;
-        }
-
-        String huntId = HeadUtils.getHuntId(e.getItemInHand());
-        if (huntId != null && !registry.getHuntService().huntExists(huntId)) {
-            e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.HeadHuntDeleted")
-                    .replace("%hunt%", huntId));
-            return;
-        }
-
-        if (huntId == null) {
-            huntId = registry.getHuntService().getSelectedHunt(player.getUniqueId());
-        }
-
-        var hunt = registry.getHuntService().getHuntById(huntId);
-        if (hunt != null
-                && registry.getAreaEnforcementService().isLocationOutsideArea(hunt, headLocation)) {
-            e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.AreaHeadOutside")
-                    .replace("%hunt%", hunt.getDisplayName()));
-            return;
-        }
-
-        UUID headUuid;
-        try {
-            headUuid = registry.getHeadService().saveHeadLocation(headLocation, headTexture, huntId);
-        } catch (InternalException ex) {
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
-            LogUtil.error("Error while trying to create new HeadBlocks from the storage: {0}", ex.getMessage());
-            return;
-        }
-
-        ParticlesUtils.spawn(headLocation, ParticlesUtils.resolve("HAPPY_VILLAGER"), 10, null, player);
-
-        player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadPlaced"), headLocation));
-
-        if (HBHunt.DEFAULT_ID.equals(huntId)) {
-            TextComponent msg = new TextComponent(MessageUtils.colorize(
-                    registry.getLanguageService().prefix() + " &7Assigned to &edefault&7. "));
-            TextComponent clickable = new TextComponent(MessageUtils.colorize("&a&l[Reassign]"));
-            clickable.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                    new Text(MessageUtils.colorize("&7Click to reassign this head"))));
-            clickable.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
-                    "/headblocks hunt transfer " + headUuid + " "));
-            msg.addExtra(clickable);
-            player.spigot().sendMessage(msg);
-        }
-
-        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, headLocation, huntId));
+        var huntId = placementService.targetHuntId(player, item);
+        placementService.place(player, item, huntId, headLocation, HeadUtils.yawOf(headBlock), content, () -> e.setCancelled(true));
     }
 
-    private boolean hasHeadBlocksItemInHand(Player player) {
-        return registry.getHeadService().getHeads().stream().anyMatch(i -> HeadUtils.areEquals(i.getItemStack(), player.getInventory().getItemInMainHand()));
+    @EventHandler
+    public void onHeadBlocksItemUse(PlayerInteractEvent e) {
+        if (e.getAction() != Action.RIGHT_CLICK_AIR) {
+            return;
+        }
+
+        ItemStack item = e.getItem();
+        if (HeadUtils.isHeadBlocksItem(item) && !item.getType().isBlock()) {
+            e.setUseItemInHand(Event.Result.DENY);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEntityHeadPlace(PlayerInteractEvent e) {
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK || e.getHand() != EquipmentSlot.HAND || e.getClickedBlock() == null) {
+            return;
+        }
+
+        ItemStack item = e.getItem();
+        if (!HeadUtils.isHeadBlocksItem(item)) {
+            return;
+        }
+
+        Player player = e.getPlayer();
+        var content = HeadUtils.getContent(item);
+        var huntId = placementService.targetHuntId(player, item);
+        var form = content == null ? VisualForm.HEAD_BLOCK : registry.getVisualService().formOf(content, huntId);
+        if (form.isBlockBased() && item.getType().isBlock()) {
+            return;
+        }
+
+        e.setCancelled(true);
+        e.setUseInteractedBlock(Event.Result.DENY);
+        e.setUseItemInHand(Event.Result.DENY);
+
+        var target = e.getClickedBlock().getRelative(e.getBlockFace());
+        if (!target.isPassable() || target.isLiquid()) {
+            player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockInvalid"));
+            return;
+        }
+
+        var anchor = target.getLocation().add(0.5, 0, 0.5);
+        placementService.place(player, item, huntId, anchor, facingYaw(player), content, () -> {
+        });
+    }
+
+    private float facingYaw(Player player) {
+        return HeadUtils.snapYaw(player.getLocation().getYaw() + 180f);
     }
 }

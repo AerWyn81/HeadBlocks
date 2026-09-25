@@ -8,7 +8,6 @@ import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.behavior.BehaviorResult;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementResult;
 import fr.aerwyn81.headblocks.data.reward.Reward;
-import fr.aerwyn81.headblocks.hooks.PacketEventsHook;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
@@ -69,6 +68,12 @@ class OnPlayerInteractEventTest {
     private AreaEnforcementService areaEnforcementService;
 
     @Mock
+    private HeadVisualService visualService;
+
+    @Mock
+    private HeadVisibilityService visibilityService;
+
+    @Mock
     private PlayerInteractEvent event;
 
     @Mock
@@ -92,6 +97,9 @@ class OnPlayerInteractEventTest {
         lenient().when(registry.getRewardService()).thenReturn(rewardService);
         lenient().when(registry.getConfigService()).thenReturn(configService);
         lenient().when(registry.getAreaEnforcementService()).thenReturn(areaEnforcementService);
+        lenient().when(registry.getVisualService()).thenReturn(visualService);
+        lenient().when(registry.getVisibilityService()).thenReturn(visibilityService);
+        lenient().when(visualService.isBlockRendered(any())).thenReturn(true);
 
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
 
@@ -131,9 +139,11 @@ class OnPlayerInteractEventTest {
         }
 
         @Test
-        void notPlayerHead_ignored() {
+        void notPlayerHead_notAHeadBlocksBlock_ignored() {
             when(event.getClickedBlock()).thenReturn(block);
             when(event.getHand()).thenReturn(EquipmentSlot.HAND);
+            when(block.getLocation()).thenReturn(location);
+            when(headService.getHeadAt(location)).thenReturn(null);
 
             try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
                 headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(false);
@@ -141,7 +151,72 @@ class OnPlayerInteractEventTest {
                 handler.onPlayerInteract(event);
 
                 verify(event, never()).setCancelled(anyBoolean());
-                verifyNoInteractions(headService);
+                verify(event, never()).getPlayer();
+            }
+        }
+
+        @Test
+        void notPlayerHead_blockHead_deniesTheVanillaInteraction() {
+            HeadLocation headLocation = mock(HeadLocation.class);
+            when(event.getClickedBlock()).thenReturn(block);
+            when(event.getHand()).thenReturn(EquipmentSlot.HAND);
+            when(event.getPlayer()).thenReturn(player);
+            when(player.getGameMode()).thenReturn(GameMode.SURVIVAL);
+            when(block.getLocation()).thenReturn(location);
+            when(headService.getHeadAt(location)).thenReturn(headLocation);
+            when(storageService.isStorageError()).thenReturn(true);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
+                headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(false);
+
+                handler.onPlayerInteract(event);
+            }
+
+            verify(event).setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+        }
+
+        @Test
+        void notPlayerHead_entityRenderedHead_ignored() {
+            HeadLocation headLocation = mock(HeadLocation.class);
+            when(visualService.isBlockRendered(headLocation)).thenReturn(false);
+
+            when(event.getClickedBlock()).thenReturn(block);
+            when(event.getHand()).thenReturn(EquipmentSlot.HAND);
+            when(block.getLocation()).thenReturn(location);
+            when(headService.getHeadAt(location)).thenReturn(headLocation);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
+                headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(false);
+
+                handler.onPlayerInteract(event);
+
+                verify(event, never()).setCancelled(anyBoolean());
+                verify(headLocation, never()).getHuntId();
+            }
+        }
+
+        @Test
+        void notPlayerHead_blockRenderedHead_isClaimed() {
+            HeadLocation headLocation = mock(HeadLocation.class);
+            when(headLocation.getHuntId()).thenReturn(null);
+
+            when(event.getClickedBlock()).thenReturn(block);
+            when(event.getHand()).thenReturn(EquipmentSlot.HAND);
+            when(event.getPlayer()).thenReturn(player);
+            when(player.getGameMode()).thenReturn(GameMode.SURVIVAL);
+            when(block.getLocation()).thenReturn(location);
+            when(headService.getHeadAt(location)).thenReturn(headLocation);
+            when(storageService.isStorageError()).thenReturn(false);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
+                 MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
+                headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(false);
+                playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.use")).thenReturn(true);
+
+                handler.onPlayerInteract(event);
+
+                verify(headLocation).getHuntId();
+                verify(headService, times(1)).getHeadAt(location);
             }
         }
 
@@ -775,42 +850,15 @@ class OnPlayerInteractEventTest {
             }
 
             @Test
-            void newFind_packetEventsEnabled_addsFoundHead() throws InternalException {
+            void newFind_notifiesVisibility() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
                 when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
                 when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
                 when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
 
-                @SuppressWarnings("unchecked")
-                BukkitFutureResult<Set<UUID>> futureResult = mock(BukkitFutureResult.class);
-                when(storageService.getHeadsPlayer(playerUuid)).thenReturn(futureResult);
+                triggerHandleHuntClick(new HashSet<>());
 
-                try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
-                     MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
-                     MockedStatic<HeadBlocks> headBlocksStatic = mockStatic(HeadBlocks.class);
-                     MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
-                    headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
-                    playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.use")).thenReturn(true);
-
-                    HeadBlocks pluginInstance = mock(HeadBlocks.class);
-                    headBlocksStatic.when(HeadBlocks::getInstance).thenReturn(pluginInstance);
-
-                    PacketEventsHook peHook = mock(PacketEventsHook.class, RETURNS_DEEP_STUBS);
-                    when(pluginInstance.getPacketEventsHook()).thenReturn(peHook);
-                    when(peHook.isEnabled()).thenReturn(true);
-
-                    PluginManager pluginManager = mock(PluginManager.class);
-                    bukkitStatic.when(Bukkit::getPluginManager).thenReturn(pluginManager);
-
-                    handler.onPlayerInteract(event);
-
-                    @SuppressWarnings("unchecked")
-                    ArgumentCaptor<Consumer<Set<UUID>>> captor = ArgumentCaptor.forClass(Consumer.class);
-                    verify(futureResult).whenComplete(eq(player), captor.capture());
-                    captor.getValue().accept(new HashSet<>());
-
-                    verify(peHook.getHeadHidingListener()).addFoundHead(player, headUuid);
-                }
+                verify(visibilityService).onHeadFound(player, headLocation);
             }
 
             @Test
@@ -825,45 +873,6 @@ class OnPlayerInteractEventTest {
 
                 // Should complete without NPE
                 verify(storageService).addHeadForHunt(playerUuid, headUuid, "default");
-            }
-
-            @Test
-            void newFind_packetEventsNotEnabled_doesNotCallHide() throws InternalException {
-                ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
-                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
-
-                @SuppressWarnings("unchecked")
-                BukkitFutureResult<Set<UUID>> futureResult = mock(BukkitFutureResult.class);
-                when(storageService.getHeadsPlayer(playerUuid)).thenReturn(futureResult);
-
-                try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
-                     MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
-                     MockedStatic<HeadBlocks> headBlocksStatic = mockStatic(HeadBlocks.class);
-                     MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
-                    headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
-                    playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.use")).thenReturn(true);
-
-                    HeadBlocks pluginInstance = mock(HeadBlocks.class);
-                    headBlocksStatic.when(HeadBlocks::getInstance).thenReturn(pluginInstance);
-
-                    PacketEventsHook peHook = mock(PacketEventsHook.class);
-                    when(pluginInstance.getPacketEventsHook()).thenReturn(peHook);
-                    when(peHook.isEnabled()).thenReturn(false);
-
-                    PluginManager pluginManager = mock(PluginManager.class);
-                    bukkitStatic.when(Bukkit::getPluginManager).thenReturn(pluginManager);
-
-                    handler.onPlayerInteract(event);
-
-                    @SuppressWarnings("unchecked")
-                    ArgumentCaptor<Consumer<Set<UUID>>> captor = ArgumentCaptor.forClass(Consumer.class);
-                    verify(futureResult).whenComplete(eq(player), captor.capture());
-                    captor.getValue().accept(new HashSet<>());
-
-                    verify(peHook, never()).getHeadHidingListener();
-                }
             }
         }
 

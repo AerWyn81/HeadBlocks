@@ -3,7 +3,9 @@ package fr.aerwyn81.headblocks.commands.list;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
@@ -75,6 +77,7 @@ class HBHuntCommandTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
         lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(registry.getStorageService()).thenReturn(storageService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
@@ -382,6 +385,76 @@ class HBHuntCommandTest {
         }
     }
 
+    // ==================== RENDERING ====================
+
+    @Nested
+    class Rendering {
+
+        private HeadVisualService visualService;
+        private HBHunt hunt;
+
+        @BeforeEach
+        void setUpRendering() {
+            visualService = mock(HeadVisualService.class);
+            lenient().when(registry.getVisualService()).thenReturn(visualService);
+            hunt = new HBHunt(configService, "halloween", "Halloween", HuntState.ACTIVE, 1, "STONE");
+            lenient().when(huntService.getHuntById("halloween")).thenReturn(hunt);
+            lenient().when(configService.renderingMode()).thenReturn(RenderMode.BLOCK);
+        }
+
+        @Test
+        void missingHunt_sendsUsage() {
+            huntCommand.perform(consoleSender, new String[]{"hunt", "rendering"});
+
+            verify(languageService).message("Messages.HuntRenderingUsage");
+        }
+
+        @Test
+        void unknownHunt_sendsNotFound() {
+            huntCommand.perform(consoleSender, new String[]{"hunt", "rendering", "nope"});
+
+            verify(languageService).message("Messages.HuntNotFound");
+        }
+
+        @Test
+        void withoutMode_showsTheCurrentOne() {
+            huntCommand.perform(consoleSender, new String[]{"hunt", "rendering", "halloween"});
+
+            verify(languageService).message("Messages.HuntRenderingCurrent");
+            verifyNoInteractions(visualService);
+        }
+
+        @Test
+        void invalidMode_sendsUsage() {
+            huntCommand.perform(consoleSender, new String[]{"hunt", "rendering", "halloween", "floating"});
+
+            verify(languageService).message("Messages.HuntRenderingUsage");
+            verifyNoInteractions(visualService);
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void validMode_convertsAndReports() {
+            doAnswer(invocation -> {
+                ((java.util.function.Consumer<HeadVisualService.ConversionReport>) invocation.getArgument(2))
+                        .accept(new HeadVisualService.ConversionReport());
+                return null;
+            }).when(visualService).convertHunt(eq(hunt), eq(RenderMode.DISPLAY), any());
+
+            huntCommand.perform(consoleSender, new String[]{"hunt", "rendering", "halloween", "display"});
+
+            verify(languageService).message("Messages.HuntRenderingInProgress");
+            verify(languageService).message("Messages.HuntRenderingDone");
+            verify(storageService).incrementHuntVersion();
+        }
+
+        @Test
+        void tabCompletion_offersTheModes() {
+            assertThat(huntCommand.tabComplete(consoleSender, new String[]{"hunt", "rendering", "halloween", "d"}))
+                    .containsExactly("display");
+        }
+    }
+
     // ==================== INFO ====================
 
     @Nested
@@ -411,13 +484,16 @@ class HBHuntCommandTest {
             when(hunt.getPriority()).thenReturn(1);
             when(hunt.getHeadCount()).thenReturn(3);
             when(hunt.getBehaviors()).thenReturn(java.util.List.of(new FreeBehavior()));
+            HuntConfig huntConfig = mock(HuntConfig.class);
+            when(huntConfig.getRenderMode()).thenReturn(RenderMode.DISPLAY);
+            when(hunt.getConfig()).thenReturn(huntConfig);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getTopPlayersForHunt("myhunt")).thenReturn(new LinkedHashMap<>());
 
             huntCommand.perform(consoleSender, new String[]{"hunt", "info", "myhunt"});
 
-            // Header + name + state + priority + heads + behaviors + players = 7 messages
-            verify(consoleSender, atLeast(7)).sendMessage(anyString());
+            verify(consoleSender, atLeast(8)).sendMessage(anyString());
+            verify(languageService).message("Messages.HuntInfoRendering");
         }
     }
 

@@ -1,5 +1,7 @@
 package fr.aerwyn81.headblocks.data;
 
+import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -26,6 +28,9 @@ public class HeadLocation {
     private int orderIndex;
     private boolean hintSound;
     private boolean hintActionBar;
+    private HeadContent content;
+    private float yaw;
+    private RenderMode renderMode;
 
     private final ArrayList<Reward> rewards;
 
@@ -171,6 +176,30 @@ public class HeadLocation {
         return z;
     }
 
+    public HeadContent getContent() {
+        return content;
+    }
+
+    public void setContent(HeadContent content) {
+        this.content = content;
+    }
+
+    public float getYaw() {
+        return yaw;
+    }
+
+    public void setYaw(float yaw) {
+        this.yaw = yaw;
+    }
+
+    public RenderMode getRenderMode() {
+        return renderMode;
+    }
+
+    public void setRenderMode(RenderMode renderMode) {
+        this.renderMode = renderMode;
+    }
+
     public void addReward(Reward reward) {
         this.rewards.add(reward);
     }
@@ -200,6 +229,17 @@ public class HeadLocation {
         section.set("locations." + hUUID + ".orderIndex", orderIndex == -1 ? null : orderIndex);
         section.set("locations." + hUUID + ".hintSound", !hintSound ? null : true);
         section.set("locations." + hUUID + ".hintActionBar", !hintActionBar ? null : true);
+        section.set("locations." + hUUID + ".yaw", yaw == 0f ? null : (double) yaw);
+        section.set("locations." + hUUID + ".render", renderMode == null ? null : renderMode.name());
+
+        if (content != null) {
+            var headSection = section.getConfigurationSection("locations." + hUUID);
+            if (headSection != null) {
+                content.save(headSection, "content");
+            }
+        } else {
+            section.set("locations." + hUUID + ".content", null);
+        }
 
         if (!rewards.isEmpty()) {
             var confRewards = new ArrayList<>();
@@ -280,6 +320,9 @@ public class HeadLocation {
         }
 
         var headLocation = new HeadLocation(name, headUUID, huntId, worldName, x, y, z, orderIndex, hintSound, hintActionBar, rewards);
+        headLocation.setContent(HeadContent.load(section.getConfigurationSection("locations." + hUUID + ".content")));
+        headLocation.setYaw((float) section.getDouble("locations." + hUUID + ".yaw", 0));
+        headLocation.setRenderMode(RenderMode.of(section.getString("locations." + hUUID + ".render")));
 
         World world = Bukkit.getWorld(worldName);
         if (world != null) {

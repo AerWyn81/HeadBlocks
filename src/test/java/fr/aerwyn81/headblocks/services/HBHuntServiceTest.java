@@ -16,8 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class HBHuntServiceTest {
@@ -252,5 +251,38 @@ class HBHuntServiceTest {
 
         verify(huntConfigService).removeLocationFromHunt("source", head);
         verify(huntConfigService).saveLocationInHunt("target", hl);
+    }
+
+    // --- configOf ---
+
+    @Test
+    void configOf_knownHunt_returnsItsConfig() {
+        HBHunt hunt = new HBHunt(configService, "halloween", "Halloween", HuntState.ACTIVE, 1, "STONE");
+        huntService.registerHunt(hunt);
+
+        assertThat(huntService.configOf("halloween")).isSameAs(hunt.getConfig());
+    }
+
+    @Test
+    void configOf_unknownOrNullHunt_returnsTheGlobalConfig() {
+        when(configService.spinSpeed()).thenReturn(7);
+
+        assertThat(huntService.configOf("gone").getSpinSpeed()).isEqualTo(7);
+        assertThat(huntService.configOf(null).getSpinSpeed()).isEqualTo(7);
+    }
+
+    @Test
+    void transferHead_notifiesTheListeners() {
+        HBHunt target = new HBHunt(configService, "target", "Target", HuntState.ACTIVE, 1, "STONE");
+        huntService.registerHunt(target);
+        HeadLocation head = mock(HeadLocation.class);
+        when(head.getHuntId()).thenReturn("default");
+        when(head.getUuid()).thenReturn(UUID.randomUUID());
+        java.util.List<HeadLocation> notified = new java.util.ArrayList<>();
+        huntService.onHeadTransferred(notified::add);
+
+        huntService.transferHead(head, "target");
+
+        assertThat(notified).containsExactly(head);
     }
 }

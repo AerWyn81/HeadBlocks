@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import com.cryptomorin.xseries.XSound;
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -51,27 +52,33 @@ public class ConfigService {
         return config.getStringList("heads");
     }
 
+    public List<?> headEntries() {
+        var entries = config.getList("heads");
+        return entries == null ? List.of() : entries;
+    }
+
+    public HashMap<String, List<?>> headsThemeEntries() {
+        var headsTheme = new HashMap<String, List<?>>();
+
+        var headsThemeSection = config.getConfigurationSection("headsTheme.theme");
+        if (headsThemeSection == null) {
+            return headsTheme;
+        }
+
+        for (String theme : headsThemeSection.getKeys(false)) {
+            var entries = config.getList("headsTheme.theme." + theme);
+            headsTheme.put(theme, entries == null ? new ArrayList<>() : new ArrayList<>(entries));
+        }
+
+        return headsTheme;
+    }
+
     public boolean headsThemeEnabled() {
         return config.getBoolean("headsTheme.enabled", false);
     }
 
     public String headsThemeSelected() {
         return config.getString("headsTheme.selected", "");
-    }
-
-    public HashMap<String, List<String>> headsTheme() {
-        var headsTheme = new HashMap<String, List<String>>();
-
-        var headsThemeSection = config.getConfigurationSection("headsTheme.theme");
-        if (headsThemeSection == null) {
-            return new HashMap<>();
-        }
-
-        for (String theme : headsThemeSection.getKeys(false)) {
-            headsTheme.put(theme, new ArrayList<>(config.getStringList("headsTheme.theme." + theme)));
-        }
-
-        return headsTheme;
     }
 
     public String headClickAlreadyOwnSound() {
@@ -501,6 +508,19 @@ public class ConfigService {
 
     public boolean spinLinked() {
         return config.getBoolean("spin.linked", true);
+    }
+
+    public RenderMode renderingMode() {
+        var mode = RenderMode.of(config.getString("rendering.mode", "BLOCK"));
+        return mode == null ? RenderMode.BLOCK : mode;
+    }
+
+    public double renderingScale() {
+        return Math.max(0.1, config.getDouble("rendering.scale", 1.0));
+    }
+
+    public boolean renderingGlow() {
+        return config.getBoolean("rendering.glow", false);
     }
 
     public int hintDistanceBlocks() {

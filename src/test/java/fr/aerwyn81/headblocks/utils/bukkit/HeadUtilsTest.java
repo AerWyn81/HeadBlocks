@@ -1,17 +1,22 @@
 package fr.aerwyn81.headblocks.utils.bukkit;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
+import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -121,47 +126,50 @@ class HeadUtilsTest {
         assertThat(result).isEqualTo(BlockFace.EAST);
     }
 
-    // --- areEquals ---
+    // --- isHeadBlocksItem ---
 
     @Test
-    void areEquals_nullFirst_returnsFalse() {
-        ItemStack item = mock(ItemStack.class);
-        when(item.getType()).thenReturn(Material.PLAYER_HEAD);
-
-        assertThat(HeadUtils.areEquals(null, item)).isFalse();
-    }
-
-    @Test
-    void areEquals_nullSecond_returnsFalse() {
-        ItemStack item = mock(ItemStack.class);
-        when(item.getType()).thenReturn(Material.PLAYER_HEAD);
-
-        assertThat(HeadUtils.areEquals(item, null)).isFalse();
-    }
-
-    @Test
-    void areEquals_bothNull_returnsFalse() {
-        assertThat(HeadUtils.areEquals(null, null)).isFalse();
-    }
-
-    @Test
-    void areEquals_airItem_returnsFalse() {
+    void isHeadBlocksItem_nullOrAir_isFalse() {
         ItemStack air = mock(ItemStack.class);
         when(air.getType()).thenReturn(Material.AIR);
-        ItemStack head = mock(ItemStack.class);
-        when(head.getType()).thenReturn(Material.PLAYER_HEAD);
 
-        assertThat(HeadUtils.areEquals(air, head)).isFalse();
+        assertThat(HeadUtils.isHeadBlocksItem(null)).isFalse();
+        assertThat(HeadUtils.isHeadBlocksItem(air)).isFalse();
     }
 
     @Test
-    void areEquals_bothAir_returnsFalse() {
-        ItemStack air1 = mock(ItemStack.class);
-        when(air1.getType()).thenReturn(Material.AIR);
-        ItemStack air2 = mock(ItemStack.class);
-        when(air2.getType()).thenReturn(Material.AIR);
+    void isHeadBlocksItem_readsTheHeadBlocksTag() {
+        try (MockedStatic<HeadBlocks> hbStatic = mockStatic(HeadBlocks.class)) {
+            HeadBlocks plugin = mock(HeadBlocks.class);
+            when(plugin.getName()).thenReturn("headblocks");
+            hbStatic.when(HeadBlocks::getInstance).thenReturn(plugin);
 
-        assertThat(HeadUtils.areEquals(air1, air2)).isFalse();
+            ItemStack tagged = mock(ItemStack.class);
+            when(tagged.getType()).thenReturn(Material.LANTERN);
+            ItemMeta taggedMeta = mock(ItemMeta.class);
+            PersistentDataContainer taggedPdc = mock(PersistentDataContainer.class);
+            when(tagged.getItemMeta()).thenReturn(taggedMeta);
+            when(taggedMeta.getPersistentDataContainer()).thenReturn(taggedPdc);
+            when(taggedPdc.has(any(NamespacedKey.class), eq(PersistentDataType.STRING))).thenReturn(true);
+
+            ItemStack plain = mock(ItemStack.class);
+            when(plain.getType()).thenReturn(Material.PLAYER_HEAD);
+            ItemMeta plainMeta = mock(ItemMeta.class);
+            PersistentDataContainer plainPdc = mock(PersistentDataContainer.class);
+            when(plain.getItemMeta()).thenReturn(plainMeta);
+            when(plainMeta.getPersistentDataContainer()).thenReturn(plainPdc);
+
+            assertThat(HeadUtils.isHeadBlocksItem(tagged)).isTrue();
+            assertThat(HeadUtils.isHeadBlocksItem(plain)).isFalse();
+        }
+    }
+
+    @Test
+    void isHeadBlocksItem_withoutMeta_isFalse() {
+        ItemStack item = mock(ItemStack.class);
+        when(item.getType()).thenReturn(Material.PLAYER_HEAD);
+
+        assertThat(HeadUtils.isHeadBlocksItem(item)).isFalse();
     }
 
     // --- getHeadTexture(ItemStack) ---
@@ -206,88 +214,135 @@ class HeadUtilsTest {
         assertThat(HeadUtils.skullRotationList.get(12)).isEqualTo(BlockFace.WEST);
     }
 
-    // --- areEquals deep path (with metas and PersistentDataContainer) ---
+
+    // --- yaw helpers ---
 
     @Test
-    void areEquals_bothValidHeads_bothHaveHBKey_returnsTrue() {
-        try (MockedStatic<HeadBlocks> hbStatic = mockStatic(HeadBlocks.class)) {
-            HeadBlocks plugin = mock(HeadBlocks.class);
-            when(plugin.getName()).thenReturn("headblocks");
-            hbStatic.when(HeadBlocks::getInstance).thenReturn(plugin);
+    void yawOf_face_followsMinecraftConvention() {
+        assertThat(HeadUtils.yawOf(BlockFace.SOUTH)).isEqualTo(0f);
+        assertThat(HeadUtils.yawOf(BlockFace.WEST)).isEqualTo(90f);
+        assertThat(HeadUtils.yawOf(BlockFace.NORTH)).isEqualTo(180f);
+        assertThat(HeadUtils.yawOf(BlockFace.EAST)).isEqualTo(270f);
+    }
 
-            ItemStack i1 = mock(ItemStack.class);
-            when(i1.getType()).thenReturn(Material.PLAYER_HEAD);
-            ItemMeta meta1 = mock(ItemMeta.class);
-            PersistentDataContainer pdc1 = mock(PersistentDataContainer.class);
-            when(i1.getItemMeta()).thenReturn(meta1);
-            when(meta1.getPersistentDataContainer()).thenReturn(pdc1);
-            when(pdc1.has(any(NamespacedKey.class), eq(PersistentDataType.STRING))).thenReturn(true);
-
-            ItemStack i2 = mock(ItemStack.class);
-            when(i2.getType()).thenReturn(Material.PLAYER_HEAD);
-            ItemMeta meta2 = mock(ItemMeta.class);
-            PersistentDataContainer pdc2 = mock(PersistentDataContainer.class);
-            when(i2.getItemMeta()).thenReturn(meta2);
-            when(meta2.getPersistentDataContainer()).thenReturn(pdc2);
-            when(pdc2.has(any(NamespacedKey.class), eq(PersistentDataType.STRING))).thenReturn(true);
-
-            assertThat(HeadUtils.areEquals(i1, i2)).isTrue();
+    @Test
+    void rotationOf_isTheInverseOfYawOf() {
+        for (var face : HeadUtils.skullRotationList.values()) {
+            assertThat(HeadUtils.rotationOf(HeadUtils.yawOf(face))).isEqualTo(face);
         }
     }
 
     @Test
-    void areEquals_bothValidHeads_firstMissingHBKey_returnsFalse() {
-        try (MockedStatic<HeadBlocks> hbStatic = mockStatic(HeadBlocks.class)) {
+    void rotationOf_roundsToTheClosestSixteenth() {
+        assertThat(HeadUtils.rotationOf(359f)).isEqualTo(BlockFace.SOUTH);
+        assertThat(HeadUtils.rotationOf(-90f)).isEqualTo(BlockFace.EAST);
+        assertThat(HeadUtils.rotationOf(100f)).isEqualTo(BlockFace.WEST);
+    }
+
+    @Test
+    void yawOf_block_readsRotatableData() {
+        Block block = mock(Block.class);
+        Rotatable rotatable = mock(Rotatable.class);
+        when(block.getBlockData()).thenReturn(rotatable);
+        when(rotatable.getRotation()).thenReturn(BlockFace.WEST);
+
+        assertThat(HeadUtils.yawOf(block)).isEqualTo(90f);
+    }
+
+    @Test
+    void yawOf_block_withoutOrientation_isZero() {
+        Block block = mock(Block.class);
+        when(block.getBlockData()).thenReturn(mock(org.bukkit.block.data.BlockData.class));
+
+        assertThat(HeadUtils.yawOf(block)).isZero();
+    }
+
+    @Test
+    void normalizeYaw_wrapsIntoZeroToThreeSixty() {
+        assertThat(HeadUtils.normalizeYaw(-90f)).isEqualTo(270f);
+        assertThat(HeadUtils.normalizeYaw(450f)).isEqualTo(90f);
+        assertThat(HeadUtils.normalizeYaw(0f)).isZero();
+    }
+
+    @Test
+    void snapYaw_snapsToSkullSteps() {
+        assertThat(HeadUtils.snapYaw(10f)).isZero();
+        assertThat(HeadUtils.snapYaw(12f)).isEqualTo(22.5f);
+        assertThat(HeadUtils.snapYaw(-100f)).isEqualTo(270f);
+    }
+
+    // --- getContent ---
+
+    private ItemStack headItem(ItemMeta meta) {
+        ItemStack item = mock(ItemStack.class);
+        when(item.getType()).thenReturn(Material.PLAYER_HEAD);
+        when(item.getItemMeta()).thenReturn(meta);
+        return item;
+    }
+
+    @Test
+    void getContent_texturedHead_isAHeadContent() {
+        ItemMeta meta = mock(ItemMeta.class);
+        when(meta.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+        ItemStack item = headItem(meta);
+
+        try (MockedStatic<HeadBlocks> hbStatic = mockStatic(HeadBlocks.class);
+             MockedStatic<HeadAdapterNbtApi> nbt = mockStatic(HeadAdapterNbtApi.class)) {
             HeadBlocks plugin = mock(HeadBlocks.class);
             when(plugin.getName()).thenReturn("headblocks");
             hbStatic.when(HeadBlocks::getInstance).thenReturn(plugin);
+            nbt.when(() -> HeadAdapterNbtApi.getHeadTextureFromItemStack(item)).thenReturn("abc");
 
-            ItemStack i1 = mock(ItemStack.class);
-            when(i1.getType()).thenReturn(Material.PLAYER_HEAD);
-            ItemMeta meta1 = mock(ItemMeta.class);
-            PersistentDataContainer pdc1 = mock(PersistentDataContainer.class);
-            when(i1.getItemMeta()).thenReturn(meta1);
-            when(meta1.getPersistentDataContainer()).thenReturn(pdc1);
-            when(pdc1.has(any(NamespacedKey.class), eq(PersistentDataType.STRING))).thenReturn(false);
-
-            ItemStack i2 = mock(ItemStack.class);
-            when(i2.getType()).thenReturn(Material.PLAYER_HEAD);
-            ItemMeta meta2 = mock(ItemMeta.class);
-            PersistentDataContainer pdc2 = mock(PersistentDataContainer.class);
-            when(i2.getItemMeta()).thenReturn(meta2);
-            when(meta2.getPersistentDataContainer()).thenReturn(pdc2);
-            when(pdc2.has(any(NamespacedKey.class), eq(PersistentDataType.STRING))).thenReturn(true);
-
-            assertThat(HeadUtils.areEquals(i1, i2)).isFalse();
+            assertThat(HeadUtils.getContent(item)).isEqualTo(HeadContent.head("abc"));
         }
     }
 
     @Test
-    void areEquals_firstNullMeta_returnsFalse() {
-        ItemStack i1 = mock(ItemStack.class);
-        when(i1.getType()).thenReturn(Material.PLAYER_HEAD);
-        when(i1.getItemMeta()).thenReturn(null);
+    void getContent_untexturedPlayerHead_keepsItsOwner() {
+        SkullMeta meta = mock(SkullMeta.class);
+        when(meta.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+        OfflinePlayer owner = mock(OfflinePlayer.class);
+        UUID ownerUuid = UUID.randomUUID();
+        when(owner.getUniqueId()).thenReturn(ownerUuid);
+        when(meta.getOwningPlayer()).thenReturn(owner);
+        ItemStack item = headItem(meta);
 
-        ItemStack i2 = mock(ItemStack.class);
-        when(i2.getType()).thenReturn(Material.PLAYER_HEAD);
-        ItemMeta meta2 = mock(ItemMeta.class);
-        when(i2.getItemMeta()).thenReturn(meta2);
+        try (MockedStatic<HeadBlocks> hbStatic = mockStatic(HeadBlocks.class);
+             MockedStatic<HeadAdapterNbtApi> nbt = mockStatic(HeadAdapterNbtApi.class)) {
+            HeadBlocks plugin = mock(HeadBlocks.class);
+            when(plugin.getName()).thenReturn("headblocks");
+            hbStatic.when(HeadBlocks::getInstance).thenReturn(plugin);
+            nbt.when(() -> HeadAdapterNbtApi.getHeadTextureFromItemStack(item)).thenReturn("");
 
-        assertThat(HeadUtils.areEquals(i1, i2)).isFalse();
+            var content = HeadUtils.getContent(item);
+
+            assertThat(content.value()).isEmpty();
+            assertThat(content.option("owner")).isEqualTo(ownerUuid.toString());
+        }
     }
 
     @Test
-    void areEquals_secondNullMeta_returnsFalse() {
-        ItemStack i1 = mock(ItemStack.class);
-        when(i1.getType()).thenReturn(Material.PLAYER_HEAD);
-        ItemMeta meta1 = mock(ItemMeta.class);
-        when(i1.getItemMeta()).thenReturn(meta1);
+    void getContent_headWithoutTextureOrOwner_isUnresolved() {
+        ItemMeta meta = mock(ItemMeta.class);
+        when(meta.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+        ItemStack item = headItem(meta);
 
-        ItemStack i2 = mock(ItemStack.class);
-        when(i2.getType()).thenReturn(Material.PLAYER_HEAD);
-        when(i2.getItemMeta()).thenReturn(null);
+        try (MockedStatic<HeadBlocks> hbStatic = mockStatic(HeadBlocks.class);
+             MockedStatic<HeadAdapterNbtApi> nbt = mockStatic(HeadAdapterNbtApi.class)) {
+            HeadBlocks plugin = mock(HeadBlocks.class);
+            when(plugin.getName()).thenReturn("headblocks");
+            hbStatic.when(HeadBlocks::getInstance).thenReturn(plugin);
+            nbt.when(() -> HeadAdapterNbtApi.getHeadTextureFromItemStack(item)).thenReturn("");
 
-        assertThat(HeadUtils.areEquals(i1, i2)).isFalse();
+            assertThat(HeadUtils.getContent(item)).isNull();
+        }
     }
 
+    @Test
+    void cardinalOf_roundsToTheClosestSide() {
+        assertThat(HeadUtils.cardinalOf(10f)).isEqualTo(BlockFace.SOUTH);
+        assertThat(HeadUtils.cardinalOf(80f)).isEqualTo(BlockFace.WEST);
+        assertThat(HeadUtils.cardinalOf(-170f)).isEqualTo(BlockFace.NORTH);
+        assertThat(HeadUtils.cardinalOf(265f)).isEqualTo(BlockFace.EAST);
+    }
 }

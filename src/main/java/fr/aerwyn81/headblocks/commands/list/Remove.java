@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadTargeting;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -40,13 +41,7 @@ public class Remove implements Cmd {
 
             Player player = (Player) sender;
 
-            var targetBlock = player.getTargetBlock(null, 25);
-            if (targetBlock.isEmpty()) {
-                player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockNotHead"));
-                return true;
-            }
-
-            var targetHead = registry.getHeadService().getHeadAt(targetBlock.getLocation());
+            var targetHead = HeadTargeting.lookedAt(player, registry, 25);
 
             if (targetHead == null) {
                 player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockNotHead"));

@@ -1,21 +1,13 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
-import fr.aerwyn81.headblocks.data.head.HBHead;
-import fr.aerwyn81.headblocks.data.head.types.HBHeadHDB;
-import fr.aerwyn81.headblocks.data.head.types.HBHeadHeadDB;
-import fr.aerwyn81.headblocks.data.hunt.HBHunt;
-import fr.aerwyn81.headblocks.services.HeadService;
-import fr.aerwyn81.headblocks.services.HuntService;
+import fr.aerwyn81.headblocks.services.GuiService;
 import fr.aerwyn81.headblocks.services.LanguageService;
-import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
+import fr.aerwyn81.headblocks.services.gui.types.CatalogGui;
 import org.bukkit.Bukkit;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -23,6 +15,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -34,358 +27,114 @@ class GiveCommandTest {
     private ServiceRegistry registry;
 
     @Mock
-    private HeadService headService;
-
-    @Mock
     private LanguageService languageService;
 
     @Mock
-    private HuntService huntService;
+    private GuiService guiService;
+
+    @Mock
+    private CatalogGui catalogGui;
 
     @Mock
     private Player player;
-
-    @Mock
-    private PlayerInventory playerInventory;
 
     private Give command;
 
     @BeforeEach
     void setUp() {
-        lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
-        lenient().when(registry.getHuntService()).thenReturn(huntService);
+        lenient().when(registry.getGuiService()).thenReturn(guiService);
+        lenient().when(guiService.getCatalogGui()).thenReturn(catalogGui);
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
         lenient().when(languageService.message(anyString(), anyString())).thenReturn("mock-message");
         command = new Give(registry);
     }
 
     @Test
-    void emptyHeads_sendsListEmpty() {
-        when(headService.getHeads()).thenReturn(new ArrayList<>());
+    void noArgument_opensTheCatalogForTheSender() {
+        assertThat(command.perform(player, new String[]{"give"})).isTrue();
 
-        boolean result = command.perform(player, new String[]{"give"});
-
-        assertThat(result).isTrue();
-        verify(languageService).message("Messages.ListHeadEmpty");
+        verify(catalogGui).open(player);
     }
 
     @Test
-    void targetPlayerNotConnected_sendsError() {
+    void playerArgument_opensTheCatalogForThatPlayer() {
+        Player target = mock(Player.class);
+
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-            bukkit.when(() -> Bukkit.getPlayer("unknownPlayer")).thenReturn(null);
+            bukkit.when(() -> Bukkit.getPlayer("Steve")).thenReturn(target);
 
-            boolean result = command.perform(player, new String[]{"give", "unknownPlayer"});
-
-            assertThat(result).isTrue();
-            verify(languageService).message("Messages.PlayerNotConnected", "unknownPlayer");
+            command.perform(player, new String[]{"give", "Steve"});
         }
+
+        verify(catalogGui).open(target);
+        verify(catalogGui, never()).open(player);
     }
 
-    @Nested
-    class GiveAllHeads {
+    @Test
+    void extraArguments_areIgnored() {
+        Player target = mock(Player.class);
 
-        @Test
-        void noSlots_sendsInventoryFull() {
-            HBHead head1 = mock(HBHead.class);
-            HBHead head2 = mock(HBHead.class);
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(head1, head2));
-            when(headService.getHeads()).thenReturn(heads);
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getPlayer("Steve")).thenReturn(target);
 
-            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(1);
-
-                boolean result = command.perform(player, new String[]{"give"});
-
-                assertThat(result).isTrue();
-                verify(languageService).message("Messages.InventoryFull");
-            }
+            command.perform(player, new String[]{"give", "Steve", "2", "halloween"});
         }
 
-        @Test
-        void enoughSlots_givesAllHeads() {
-            HBHead head1 = mock(HBHead.class);
-            HBHead head2 = mock(HBHead.class);
-            ItemStack item1 = mock(ItemStack.class);
-            ItemStack item2 = mock(ItemStack.class);
-            when(head1.getItemStack()).thenReturn(item1);
-            when(head2.getItemStack()).thenReturn(item2);
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(head1, head2));
-            when(headService.getHeads()).thenReturn(heads);
-            when(player.getInventory()).thenReturn(playerInventory);
-
-            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
-
-                boolean result = command.perform(player, new String[]{"give"});
-
-                assertThat(result).isTrue();
-                verify(playerInventory).addItem(item1);
-                verify(playerInventory).addItem(item2);
-                verify(languageService).message("Messages.HeadGiven");
-            }
-        }
-
-        @Test
-        void withStar_givesAllHeads() {
-            HBHead head1 = mock(HBHead.class);
-            ItemStack item1 = mock(ItemStack.class);
-            when(head1.getItemStack()).thenReturn(item1);
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(head1));
-            when(headService.getHeads()).thenReturn(heads);
-            when(player.getInventory()).thenReturn(playerInventory);
-
-            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
-                 MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
-
-                boolean result = command.perform(player, new String[]{"give", "pName", "*"});
-
-                assertThat(result).isTrue();
-                verify(playerInventory).addItem(item1);
-            }
-        }
+        verify(catalogGui).open(target);
     }
 
-    @Nested
-    class GiveSpecificHead {
+    @Test
+    void offlinePlayer_sendsAnError() {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getPlayer("Ghost")).thenReturn(null);
 
-        @Test
-        void validId_givesOneHead() {
-            HBHead head1 = mock(HBHead.class);
-            HBHead head2 = mock(HBHead.class);
-            ItemStack item2 = mock(ItemStack.class);
-            when(head2.getItemStack()).thenReturn(item2);
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(head1, head2));
-            when(headService.getHeads()).thenReturn(heads);
-            when(player.getInventory()).thenReturn(playerInventory);
-
-            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
-                 MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
-
-                boolean result = command.perform(player, new String[]{"give", "pName", "2"});
-
-                assertThat(result).isTrue();
-                verify(playerInventory).addItem(item2);
-                verify(playerInventory, times(1)).addItem(any(ItemStack.class));
-            }
+            command.perform(player, new String[]{"give", "Ghost"});
         }
 
-        @Test
-        void idTooHigh_sendsError() {
-            HBHead head1 = mock(HBHead.class);
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(head1));
-            when(headService.getHeads()).thenReturn(heads);
-
-            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
-
-                boolean result = command.perform(player, new String[]{"give", "pName", "5"});
-
-                assertThat(result).isTrue();
-                verify(languageService).message("Messages.ErrorCommand");
-            }
-        }
-
-        @Test
-        void invalidNumber_defaultsToFirst() {
-            HBHead head1 = mock(HBHead.class);
-            ItemStack item1 = mock(ItemStack.class);
-            when(head1.getItemStack()).thenReturn(item1);
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(head1));
-            when(headService.getHeads()).thenReturn(heads);
-            when(player.getInventory()).thenReturn(playerInventory);
-
-            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
-                 MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
-
-                boolean result = command.perform(player, new String[]{"give", "pName", "abc"});
-
-                assertThat(result).isTrue();
-                verify(playerInventory).addItem(item1);
-            }
-        }
-
-        @Test
-        void negativeId_defaultsToFirst() {
-            HBHead head1 = mock(HBHead.class);
-            ItemStack item1 = mock(ItemStack.class);
-            when(head1.getItemStack()).thenReturn(item1);
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(head1));
-            when(headService.getHeads()).thenReturn(heads);
-            when(player.getInventory()).thenReturn(playerInventory);
-
-            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
-                 MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
-
-                boolean result = command.perform(player, new String[]{"give", "pName", "-1"});
-
-                assertThat(result).isTrue();
-                verify(playerInventory).addItem(item1);
-            }
-        }
+        verify(languageService).message("Messages.PlayerNotConnected", "Ghost");
+        verifyNoInteractions(catalogGui);
     }
 
-    @Nested
-    class GiveWithHunt {
+    @Test
+    void console_withAPlayer_opensTheCatalogForThatPlayer() {
+        Player target = mock(Player.class);
+        ConsoleCommandSender console = mock(ConsoleCommandSender.class);
 
-        @Test
-        void unknownHunt_sendsHuntNotFound() {
-            when(huntService.getHuntById("unknown")).thenReturn(null);
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getPlayer("Steve")).thenReturn(target);
 
-            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
-
-                boolean result = command.perform(player, new String[]{"give", "pName", "1", "unknown"});
-
-                assertThat(result).isTrue();
-                verify(languageService).message("Messages.HuntNotFound");
-                verify(headService, never()).getHeads();
-            }
+            command.perform(console, new String[]{"give", "Steve"});
         }
 
-        @Test
-        void knownHunt_givesTaggedHead() {
-            HBHunt hunt = mock(HBHunt.class);
-            when(hunt.getId()).thenReturn("ab1");
-            when(hunt.getDisplayName()).thenReturn("AB 1");
-            when(huntService.getHuntById("ab1")).thenReturn(hunt);
-
-            HBHead head1 = mock(HBHead.class);
-            ItemStack item1 = mock(ItemStack.class);
-            ItemStack tagged = mock(ItemStack.class);
-            when(head1.getItemStack()).thenReturn(item1);
-            when(headService.getHeads()).thenReturn(new ArrayList<>(java.util.List.of(head1)));
-            when(player.getInventory()).thenReturn(playerInventory);
-
-            try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
-                 MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class);
-                 MockedStatic<HeadUtils> hu = mockStatic(HeadUtils.class)) {
-                bukkit.when(() -> Bukkit.getPlayer("pName")).thenReturn(player);
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
-                hu.when(() -> HeadUtils.withHunt(item1, "ab1", "mock-message")).thenReturn(tagged);
-
-                boolean result = command.perform(player, new String[]{"give", "pName", "1", "ab1"});
-
-                assertThat(result).isTrue();
-                verify(playerInventory).addItem(tagged);
-                verify(playerInventory, never()).addItem(item1);
-            }
-        }
+        verify(catalogGui).open(target);
     }
 
-    @Nested
-    class HDBHead {
+    @Test
+    void console_withoutPlayer_isRefused() {
+        ConsoleCommandSender console = mock(ConsoleCommandSender.class);
 
-        @Test
-        void hdbHeadNotLoaded_sendsNotLoadedMessage() {
-            HBHeadHDB hdbHead = mock(HBHeadHDB.class);
-            when(hdbHead.isLoaded()).thenReturn(false);
-            when(hdbHead.getDisplayId()).thenReturn("hdb-123");
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(hdbHead));
-            when(headService.getHeads()).thenReturn(heads);
+        command.perform(console, new String[]{"give"});
 
-            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
-
-                boolean result = command.perform(player, new String[]{"give"});
-
-                assertThat(result).isTrue();
-                // headGiven is 0, so HeadGiven message should not be sent
-                verify(languageService, never()).message("Messages.HeadGiven");
-            }
-        }
+        verify(languageService).message("Messages.PlayerOnly");
+        verifyNoInteractions(catalogGui);
     }
 
-    @Nested
-    class HeadDBHeadCheck {
+    @Test
+    void tabCompletion_offersOnlinePlayersOnly() {
+        Player steve = mock(Player.class);
+        Player alex = mock(Player.class);
+        when(steve.getName()).thenReturn("Steve");
+        when(alex.getName()).thenReturn("Alex");
 
-        @Test
-        void headDBHeadNotLoaded_sendsNotLoadedMessage() {
-            HBHeadHeadDB headDBHead = mock(HBHeadHeadDB.class);
-            when(headDBHead.isLoaded()).thenReturn(false);
-            when(headDBHead.getDisplayId()).thenReturn("5678");
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(headDBHead));
-            when(headService.getHeads()).thenReturn(heads);
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(Bukkit::getOnlinePlayers).thenAnswer(invocation -> List.of(steve, alex));
 
-            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
+            ArrayList<String> result = command.tabComplete(player, new String[]{"give", "st"});
 
-                boolean result = command.perform(player, new String[]{"give"});
-
-                assertThat(result).isTrue();
-                verify(languageService, never()).message("Messages.HeadGiven");
-                verify(languageService).message("Messages.HeadNotYetLoaded");
-            }
+            assertThat(result).containsExactly("Steve");
         }
 
-        @Test
-        void mixedLoadedAndNotLoaded_givesOnlyLoaded() {
-            HBHeadHDB loadedHdb = mock(HBHeadHDB.class);
-            when(loadedHdb.isLoaded()).thenReturn(true);
-            ItemStack loadedItem = mock(ItemStack.class);
-            when(loadedHdb.getItemStack()).thenReturn(loadedItem);
-
-            HBHeadHeadDB unloadedHeadDb = mock(HBHeadHeadDB.class);
-            when(unloadedHeadDb.isLoaded()).thenReturn(false);
-            when(unloadedHeadDb.getDisplayId()).thenReturn("99");
-
-            ArrayList<HBHead> heads = new ArrayList<>(java.util.List.of(loadedHdb, unloadedHeadDb));
-            when(headService.getHeads()).thenReturn(heads);
-            when(player.getInventory()).thenReturn(playerInventory);
-
-            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
-                pu.when(() -> PlayerUtils.getEmptySlots(player)).thenReturn(5);
-
-                boolean result = command.perform(player, new String[]{"give"});
-
-                assertThat(result).isTrue();
-                verify(playerInventory, times(1)).addItem(loadedItem);
-                verify(languageService).message("Messages.HeadGiven");
-                verify(languageService).message("Messages.HeadNotYetLoaded");
-            }
-        }
-    }
-
-    @Nested
-    class TabCompletion {
-
-        @Test
-        void thirdArg_withMultipleHeads_returnsStarAndNumbers() {
-            HBHead h1 = mock(HBHead.class);
-            HBHead h2 = mock(HBHead.class);
-            HBHead h3 = mock(HBHead.class);
-            when(headService.getHeads()).thenReturn(new ArrayList<>(java.util.List.of(h1, h2, h3)));
-
-            ArrayList<String> result = command.tabComplete(player, new String[]{"give", "player", ""});
-
-            assertThat(result).containsExactly("*", "1", "2", "3");
-        }
-
-        @Test
-        void thirdArg_withSingleHead_returnsEmpty() {
-            HBHead h1 = mock(HBHead.class);
-            when(headService.getHeads()).thenReturn(new ArrayList<>(java.util.List.of(h1)));
-
-            ArrayList<String> result = command.tabComplete(player, new String[]{"give", "player", ""});
-
-            assertThat(result).isEmpty();
-        }
-
-        @Test
-        void fourthArg_returnsMatchingHunts() {
-            when(huntService.getHuntNames()).thenReturn(new ArrayList<>(java.util.List.of("default", "ab1", "ab2")));
-
-            ArrayList<String> result = command.tabComplete(player, new String[]{"give", "player", "1", "a"});
-
-            assertThat(result).containsExactly("ab1", "ab2");
-        }
+        assertThat(command.tabComplete(player, new String[]{"give", "Steve", ""})).isEmpty();
     }
 }

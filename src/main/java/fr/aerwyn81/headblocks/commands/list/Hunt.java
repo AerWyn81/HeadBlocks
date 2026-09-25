@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks.commands.list;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HuntCreateEvent;
 import fr.aerwyn81.headblocks.api.events.HuntDeleteEvent;
@@ -10,10 +9,12 @@ import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.commands.list.schedule.ScheduleCommandHandler;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadTargeting;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -59,6 +60,7 @@ public class Hunt implements Cmd {
             case "top" -> handleTop(sender, args);
             case "reset" -> handleReset(sender, args);
             case "schedule" -> handleSchedule(sender, args);
+            case "rendering" -> handleRendering(sender, args);
             default -> sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
         }
 
@@ -420,6 +422,8 @@ public class Hunt implements Cmd {
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoBehaviors")
                 .replace("%behaviors%", hunt.getBehaviors().stream()
                         .map(Behavior::getId).collect(Collectors.joining(", "))));
+        sender.sendMessage(registry.getLanguageService().message("Messages.HuntInfoRendering")
+                .replace("%rendering%", hunt.getConfig().getRenderMode().name().toLowerCase()));
 
         try {
             int playerCount = registry.getStorageService().getTopPlayersForHunt(huntId).size();
@@ -431,7 +435,51 @@ public class Hunt implements Cmd {
         }
     }
 
+    private void handleRendering(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntRenderingUsage"));
+            return;
+        }
+
+        String huntId = args[2].toLowerCase();
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
+
+        if (hunt == null) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
+                    .replace("%hunt%", huntId));
+            return;
+        }
+
+        if (args.length < 4) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntRenderingCurrent")
+                    .replace("%hunt%", hunt.getId())
+                    .replace("%rendering%", hunt.getConfig().getRenderMode().name().toLowerCase()));
+            return;
+        }
+
+        RenderMode mode = RenderMode.of(args[3]);
+        if (mode == null) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntRenderingUsage"));
+            return;
+        }
+
+        sender.sendMessage(registry.getLanguageService().message("Messages.HuntRenderingInProgress")
+                .replace("%hunt%", hunt.getId())
+                .replace("%rendering%", mode.name().toLowerCase()));
+
+        registry.getVisualService().convertHunt(hunt, mode, report -> {
+            registry.getStorageService().incrementHuntVersion();
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntRenderingDone")
+                    .replace("%hunt%", hunt.getId())
+                    .replace("%rendering%", mode.name().toLowerCase())
+                    .replace("%converted%", String.valueOf(report.converted()))
+                    .replace("%unchanged%", String.valueOf(report.unchanged()))
+                    .replace("%failed%", String.valueOf(report.failed() + report.skipped())));
+        });
+    }
+
     // --- E3: Head assignment ---
+
 
     private void handleSelect(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
@@ -489,13 +537,7 @@ public class Hunt implements Cmd {
             return;
         }
 
-        var targetBlock = player.getTargetBlock(null, 100);
-        if (targetBlock.isEmpty()) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
-            return;
-        }
-
-        HeadLocation headLocation = registry.getHeadService().getHeadAt(targetBlock.getLocation());
+        HeadLocation headLocation = HeadTargeting.lookedAt(player, registry, 100);
 
         if (headLocation == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
@@ -827,11 +869,7 @@ public class Hunt implements Cmd {
         // Re-sync head visibility if PacketEvents active
         var targetPlayer = Bukkit.getPlayer(profile.uuid());
         if (targetPlayer != null) {
-            var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
-            if (packetEventsHook != null && packetEventsHook.isEnabled()
-                    && packetEventsHook.getHeadHidingListener() != null) {
-                packetEventsHook.getHeadHidingListener().showAllPreviousHeads(targetPlayer);
-            }
+            registry.getVisibilityService().onHuntReset(targetPlayer, hunt);
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntPlayerReset")
@@ -849,7 +887,7 @@ public class Hunt implements Cmd {
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 2) {
             return Stream.of("create", "delete", "enable", "disable", "list", "info",
-                            "select", "active", "set", "assign", "transfer", "progress", "top", "reset", "schedule")
+                            "select", "active", "set", "assign", "transfer", "progress", "top", "reset", "schedule", "rendering")
                     .filter(s -> s.startsWith(args[1].toLowerCase())).collect(Collectors.toCollection(ArrayList::new));
         }
 
@@ -862,7 +900,8 @@ public class Hunt implements Cmd {
                             .filter(n -> n.startsWith(args[2].toLowerCase()))
                             .collect(Collectors.toCollection(ArrayList::new));
                 }
-                case "enable", "disable", "info", "select", "set", "assign", "progress", "top", "reset", "schedule" -> {
+                case "enable", "disable", "info", "select", "set", "assign", "progress", "top", "reset", "schedule",
+                     "rendering" -> {
                     return registry.getHuntService().getHuntNames().stream()
                             .filter(n -> n.startsWith(args[2].toLowerCase()))
                             .collect(Collectors.toCollection(ArrayList::new));
@@ -895,6 +934,10 @@ public class Hunt implements Cmd {
                         return registry.getHuntService().getHuntNames().stream()
                                 .filter(n -> n.startsWith(args[3].toLowerCase()))
                                 .collect(Collectors.toCollection(ArrayList::new));
+                    }
+                    case "rendering" -> {
+                        return Stream.of("block", "display")
+                                .filter(s -> s.startsWith(args[3].toLowerCase())).collect(Collectors.toCollection(ArrayList::new));
                     }
                     case "progress", "reset" -> {
                         return Bukkit.getOnlinePlayers().stream()

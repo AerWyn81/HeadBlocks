@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HeadVisualService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.services.StorageService;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
@@ -41,6 +42,7 @@ class DebugResyncLocationsTest {
     @BeforeEach
     void setUp() {
         registry = mock(ServiceRegistry.class);
+        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
         headService = mock(HeadService.class);
         languageService = mock(LanguageService.class);
         storageService = mock(StorageService.class);

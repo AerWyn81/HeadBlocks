@@ -37,13 +37,16 @@ locations:
 
 Each head has a UUID as its key identifier.
 
-| Property       | Description                                                                            | Auto-generated |
-|----------------|----------------------------------------------------------------------------------------|----------------|
-| **name**       | Display name in GUIs and chat. Supports hex colors. Rename with `/hb rename`          | No             |
-| **location**   | X, Y, Z coordinates and world                                                          | Yes            |
-| **rewards**    | Per-head rewards (MESSAGE, COMMAND, BROADCAST). Configurable via `/hb options rewards` | No             |
-| **orderIndex** | Click order index, defined with `/hb options`                                          | Yes            |
-| **hitCount**   | Maximum clicks allowed on the head (global), defined with `/hb options`                | Yes            |
+| Property       | Description                                                                                         | Auto-generated |
+|----------------|-----------------------------------------------------------------------------------------------------|----------------|
+| **name**       | Display name in GUIs and chat. Supports hex colors. Rename with `/hb rename`                        | No             |
+| **location**   | X, Y, Z coordinates and world                                                                       | Yes            |
+| **rewards**    | Per-head rewards (MESSAGE, COMMAND, BROADCAST). Configurable via `/hb options rewards`              | No             |
+| **orderIndex** | Click order index, defined with `/hb options`                                                       | Yes            |
+| **hitCount**   | Maximum clicks allowed on the head (global), defined with `/hb options`                             | Yes            |
+| **content**    | What was placed: `kind` (HEAD, BLOCK, ITEM, MOB), `value` and `options`. Absent on older heads      | Yes            |
+| **yaw**        | Orientation of heads rendered as entities                                                           | Yes            |
+| **render**     | How this head is currently rendered (`BLOCK` or `DISPLAY`). Absent on older heads, which are blocks | Yes            |
 
 {% hint style="warning" %}
 Properties marked as auto-generated should not be changed manually unless you know what you're doing.

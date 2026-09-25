@@ -104,8 +104,8 @@ class HBCommandExecutorTest {
         try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
             pu.when(() -> PlayerUtils.hasPermission(any(), anyString())).thenReturn(true);
 
-            // "give" is player-only
-            boolean result = executor.onCommand(consoleSender, command, "hb", new String[]{"give"});
+            // "move" is player-only
+            boolean result = executor.onCommand(consoleSender, command, "hb", new String[]{"move"});
 
             verify(consoleSender).sendMessage("mock-message");
             verify(languageService).message("Messages.PlayerOnly");

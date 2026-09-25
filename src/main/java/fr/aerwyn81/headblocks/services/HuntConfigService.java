@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.services;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
@@ -656,6 +657,20 @@ public class HuntConfigService {
             hc.setSpinLinked(yaml.getBoolean(p + "spin.linked"));
         }
 
+        if (yaml.contains(p + "rendering.mode")) {
+            var mode = RenderMode.of(yaml.getString(p + "rendering.mode"));
+            if (mode == null) {
+                LogUtil.warning("Unknown rendering mode {0}, falling back to the global one.", yaml.getString(p + "rendering.mode"));
+            }
+            hc.setRenderMode(mode);
+        }
+        if (yaml.contains(p + "rendering.scale")) {
+            hc.setRenderScale(Math.max(0.1, yaml.getDouble(p + "rendering.scale")));
+        }
+        if (yaml.contains(p + "rendering.glow")) {
+            hc.setRenderGlow(yaml.getBoolean(p + "rendering.glow"));
+        }
+
         if (yaml.contains(p + "particles.found.enabled")) {
             hc.setParticlesFoundEnabled(yaml.getBoolean(p + "particles.found.enabled"));
         }
@@ -736,6 +751,14 @@ public class HuntConfigService {
 
         if (hc.hasTieredRewards()) {
             saveTieredRewards(yaml, hc.getTieredRewards(), p);
+        }
+
+        yaml.set(p + "rendering.mode", hc.hasRenderMode() ? hc.getRenderMode().name() : null);
+        yaml.set(p + "rendering.scale", hc.hasRenderScale() ? hc.getRenderScale() : null);
+        yaml.set(p + "rendering.glow", hc.hasRenderGlow() ? hc.isRenderGlow() : null);
+        if (yaml.getConfigurationSection(p + "rendering") != null
+                && yaml.getConfigurationSection(p + "rendering").getKeys(false).isEmpty()) {
+            yaml.set(p + "rendering", null);
         }
     }
 

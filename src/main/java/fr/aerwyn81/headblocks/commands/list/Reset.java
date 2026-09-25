@@ -1,6 +1,5 @@
 package fr.aerwyn81.headblocks.commands.list;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
@@ -59,20 +58,14 @@ public class Reset extends ResetBase {
                         .replace("%headName%", headName));
 
                 if (targetPlayer != null) {
-                    var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
-                    if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
-                        packetEventsHook.getHeadHidingListener().removeFoundHead(targetPlayer, headUuid);
-                    }
+                    registry.getVisibilityService().onHeadReset(targetPlayer, headUuid);
                 }
             } else {
                 registry.getStorageService().resetPlayer(profile.uuid());
                 sender.sendMessage(registry.getLanguageService().message("Messages.PlayerReset", args[1]));
 
                 if (targetPlayer != null) {
-                    var packetEventsHook = HeadBlocks.getInstance().getPacketEventsHook();
-                    if (packetEventsHook != null && packetEventsHook.isEnabled() && packetEventsHook.getHeadHidingListener() != null) {
-                        packetEventsHook.getHeadHidingListener().showAllPreviousHeads(targetPlayer);
-                    }
+                    registry.getVisibilityService().onProgressReset(targetPlayer);
                 }
             }
         } catch (InternalException ex) {

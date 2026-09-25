@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.services;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
@@ -1748,5 +1749,82 @@ class HBHuntConfigServiceTest {
                 assertThat(remaining.getFirst().getUuid()).isEqualTo(existing);
             }
         }
+    }
+
+    // --- Rendering ---
+
+    @Test
+    void loadHuntConfig_readsRenderingValues() throws IOException {
+        File file = new File(tempDir.toFile(), "hunts/rendered.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("id", "rendered");
+        yaml.set("config.rendering.mode", "display");
+        yaml.set("config.rendering.scale", 2.0);
+        yaml.set("config.rendering.glow", true);
+        yaml.save(file);
+
+        HBHunt hunt = huntConfigService.loadHunt(file);
+
+        assertThat(hunt).isNotNull();
+        assertThat(hunt.getConfig().getRenderMode()).isEqualTo(RenderMode.DISPLAY);
+        assertThat(hunt.getConfig().getRenderScale()).isEqualTo(2.0);
+        assertThat(hunt.getConfig().isRenderGlow()).isTrue();
+    }
+
+    @Test
+    void loadHuntConfig_unknownRenderingMode_inheritsTheGlobalOne() throws IOException {
+        File file = new File(tempDir.toFile(), "hunts/weird.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("id", "weird");
+        yaml.set("config.rendering.mode", "floating");
+        yaml.save(file);
+        when(configService.renderingMode()).thenReturn(RenderMode.BLOCK);
+
+        HBHunt hunt = huntConfigService.loadHunt(file);
+
+        assertThat(hunt).isNotNull();
+        assertThat(hunt.getConfig().hasRenderMode()).isFalse();
+        assertThat(hunt.getConfig().getRenderMode()).isEqualTo(RenderMode.BLOCK);
+    }
+
+    @Test
+    void loadHuntConfig_tinyScale_isClamped() throws IOException {
+        File file = new File(tempDir.toFile(), "hunts/tiny.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("id", "tiny");
+        yaml.set("config.rendering.scale", 0.0);
+        yaml.save(file);
+
+        HBHunt hunt = huntConfigService.loadHunt(file);
+
+        assertThat(hunt).isNotNull();
+        assertThat(hunt.getConfig().getRenderScale()).isEqualTo(0.1);
+    }
+
+    @Test
+    void saveHunt_writesRenderingOverrides() {
+        HBHunt hunt = new HBHunt(configService, "displayed", "Displayed", HuntState.ACTIVE, 1, "STONE");
+        hunt.getConfig().setRenderMode(RenderMode.DISPLAY);
+        hunt.getConfig().setRenderGlow(true);
+
+        huntConfigService.saveHunt(hunt);
+
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(new File(tempDir.toFile(), "hunts/displayed.yml"));
+        assertThat(yaml.getString("config.rendering.mode")).isEqualTo("DISPLAY");
+        assertThat(yaml.getBoolean("config.rendering.glow")).isTrue();
+        assertThat(yaml.contains("config.rendering.scale")).isFalse();
+    }
+
+    @Test
+    void saveHunt_withoutRenderingOverride_omitsTheSection() {
+        HBHunt hunt = new HBHunt(configService, "plain", "Plain", HuntState.ACTIVE, 1, "STONE");
+        hunt.getConfig().setRenderMode(RenderMode.DISPLAY);
+        huntConfigService.saveHunt(hunt);
+
+        hunt.getConfig().setRenderMode(null);
+        huntConfigService.saveHunt(hunt);
+
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(new File(tempDir.toFile(), "hunts/plain.yml"));
+        assertThat(yaml.contains("config.rendering")).isFalse();
     }
 }

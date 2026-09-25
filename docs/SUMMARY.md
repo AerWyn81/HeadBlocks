@@ -13,6 +13,7 @@
 
 * [Overview](configuration/README.md)
 * [Global Settings](configuration/global-settings.md)
+* [Heads, Blocks and Mobs](configuration/rendering.md)
 * [Storage](configuration/storage.md)
 * [Head Click](configuration/head-click.md)
 * [Holograms](configuration/holograms.md)

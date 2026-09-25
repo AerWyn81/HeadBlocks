@@ -2,19 +2,24 @@ package fr.aerwyn81.headblocks.utils.bukkit;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.data.head.HBHead;
+import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
+import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.services.HeadService;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HeadUtils {
 
@@ -69,19 +74,6 @@ public class HeadUtils {
         return HeadAdapterNbtApi.getHeadTextureFromBlock(headBlock);
     }
 
-    public static boolean areEquals(ItemStack i1, ItemStack i2) {
-        if (isNotValidItemStack(i1) || isNotValidItemStack(i2)) {
-            return false;
-        }
-
-        ItemMeta i1Meta = i1.getItemMeta();
-        ItemMeta i2Meta = i2.getItemMeta();
-
-        return i1Meta != null && i2Meta != null &&
-                i1Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_KEY), PersistentDataType.STRING) &&
-                i2Meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_KEY), PersistentDataType.STRING);
-    }
-
     public static ItemStack withHunt(ItemStack itemStack, String huntId, String loreLine) {
         ItemStack tagged = itemStack.clone();
         ItemMeta meta = tagged.getItemMeta();
@@ -97,6 +89,94 @@ public class HeadUtils {
 
         tagged.setItemMeta(meta);
         return tagged;
+    }
+
+    public static ItemStack withContent(ItemStack itemStack, HeadContent content) {
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null) {
+            return itemStack;
+        }
+
+        meta.getPersistentDataContainer().set(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_CONTENT_KEY), PersistentDataType.STRING, content.toJson());
+        itemStack.setItemMeta(meta);
+        return itemStack;
+    }
+
+    public static HeadContent getContent(ItemStack itemStack) {
+        if (isNotValidItemStack(itemStack)) {
+            return null;
+        }
+
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta != null) {
+            var json = meta.getPersistentDataContainer().get(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_CONTENT_KEY), PersistentDataType.STRING);
+            if (json != null) {
+                return HeadContent.fromJson(json);
+            }
+        }
+
+        if (!isPlayerHead(itemStack)) {
+            return null;
+        }
+
+        var texture = getHeadTexture(itemStack);
+        if (texture != null && !texture.isEmpty()) {
+            return HeadContent.head(texture);
+        }
+
+        if (meta instanceof SkullMeta skullMeta && skullMeta.getOwningPlayer() != null) {
+            return HeadContent.of(ContentKind.HEAD, "", Map.of("owner", skullMeta.getOwningPlayer().getUniqueId().toString()));
+        }
+
+        return null;
+    }
+
+    public static boolean isHeadBlocksItem(ItemStack itemStack) {
+        if (isNotValidItemStack(itemStack)) {
+            return false;
+        }
+
+        ItemMeta meta = itemStack.getItemMeta();
+        return meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(HeadBlocks.getInstance(), HeadService.HB_KEY), PersistentDataType.STRING);
+    }
+
+    public static float yawOf(BlockFace face) {
+        var direction = face.getDirection();
+        return normalizeYaw((float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ())));
+    }
+
+    public static float yawOf(Block block) {
+        var blockData = block.getBlockData();
+        if (blockData instanceof Rotatable rotatable) {
+            return yawOf(rotatable.getRotation());
+        }
+        if (blockData instanceof Directional directional) {
+            return yawOf(directional.getFacing());
+        }
+        return 0f;
+    }
+
+    public static BlockFace rotationOf(float yaw) {
+        var index = Math.round(normalizeYaw(yaw) / 22.5f) % 16;
+        return skullRotationList.get((index + 8) % 16);
+    }
+
+    public static BlockFace cardinalOf(float yaw) {
+        return switch (Math.round(normalizeYaw(yaw) / 90f) % 4) {
+            case 1 -> BlockFace.WEST;
+            case 2 -> BlockFace.NORTH;
+            case 3 -> BlockFace.EAST;
+            default -> BlockFace.SOUTH;
+        };
+    }
+
+    public static float normalizeYaw(float yaw) {
+        var normalized = yaw % 360f;
+        return normalized < 0 ? normalized + 360f : normalized;
+    }
+
+    public static float snapYaw(float yaw) {
+        return normalizeYaw(Math.round(yaw / 22.5f) * 22.5f);
     }
 
     public static String getHuntId(ItemStack itemStack) {

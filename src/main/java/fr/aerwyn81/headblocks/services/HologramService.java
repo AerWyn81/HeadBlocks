@@ -2,7 +2,6 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
-import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.holograms.InternalHologram;
@@ -148,10 +147,12 @@ public class HologramService {
                 continue;
             }
 
-            HBHunt hunt = huntService.getHuntById(loc.getHuntId());
-            HuntConfig huntConfig = hunt != null ? hunt.getConfig() : new HuntConfig(configService);
-            createHolograms(headLoc, huntConfig);
+            createHolograms(headLoc, huntService.configOf(loc.getHuntId()));
         }
+    }
+
+    public boolean isEnabled() {
+        return enable;
     }
 
     public EnumTypeHologram getHologramTypeFromConfig() {
@@ -237,9 +238,18 @@ public class HologramService {
 
         var uuid = InternalUtils.generateNewUUID(allUUIDs);
         var internalHologram = new InternalHologram(enumTypeHologram, serviceRegistry);
-        internalHologram.createHologram(uuid, location, lines, configService.hologramsHeightAboveHead());
+        internalHologram.createHologram(uuid, location, lines, configService.hologramsHeightAboveHead() + visualHeightOffset(location));
 
         return internalHologram;
+    }
+
+    private double visualHeightOffset(Location location) {
+        var headLocation = headService.getHeadAt(location);
+        if (headLocation == null) {
+            return 0;
+        }
+
+        return serviceRegistry.getVisualService().visualHeight(headLocation) - 0.5;
     }
 
     public void showFoundTo(Player player, Location location, HuntConfig huntConfig) {

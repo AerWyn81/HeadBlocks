@@ -88,15 +88,13 @@ class OnPlayerBreakBlockEventTest {
     // --- Not a player head: ignored ---
 
     @Test
-    void nonPlayerHead_ignored() {
-        try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
-            headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(false);
+    void notAHeadBlocksBlock_ignored() {
+        when(block.getLocation()).thenReturn(location);
 
-            handler.OnBlockBreakEvent(event);
+        handler.OnBlockBreakEvent(event);
 
-            verify(event, never()).setCancelled(anyBoolean());
-            verify(headService, never()).getHeadAt(any());
-        }
+        verify(event, never()).setCancelled(anyBoolean());
+        verify(headService).getBlockHeadAt(location);
     }
 
     // --- Not a plugin head: ignored ---
@@ -104,10 +102,9 @@ class OnPlayerBreakBlockEventTest {
     @Test
     void notPluginHead_ignored() {
         when(block.getLocation()).thenReturn(location);
-        when(headService.getHeadAt(location)).thenReturn(null);
+        when(headService.getBlockHeadAt(location)).thenReturn(null);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
-            headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
 
             handler.OnBlockBreakEvent(event);
 
@@ -123,10 +120,9 @@ class OnPlayerBreakBlockEventTest {
         HeadLocation headLocation = mock(HeadLocation.class);
 
         when(block.getLocation()).thenReturn(location);
-        when(headService.getHeadAt(location)).thenReturn(headLocation);
+        when(headService.getBlockHeadAt(location)).thenReturn(headLocation);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
-            headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
 
             handler.OnBlockBreakEvent(event);
 
@@ -142,11 +138,10 @@ class OnPlayerBreakBlockEventTest {
         HeadLocation headLocation = mock(HeadLocation.class);
 
         when(block.getLocation()).thenReturn(location);
-        when(headService.getHeadAt(location)).thenReturn(headLocation);
+        when(headService.getBlockHeadAt(location)).thenReturn(headLocation);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(false);
 
             handler.OnBlockBreakEvent(event);
@@ -162,12 +157,11 @@ class OnPlayerBreakBlockEventTest {
         HeadLocation headLocation = mock(HeadLocation.class);
 
         when(block.getLocation()).thenReturn(location);
-        when(headService.getHeadAt(location)).thenReturn(headLocation);
+        when(headService.getBlockHeadAt(location)).thenReturn(headLocation);
         when(player.isSneaking()).thenReturn(false);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.OnBlockBreakEvent(event);
@@ -184,13 +178,12 @@ class OnPlayerBreakBlockEventTest {
         HeadLocation headLocation = mock(HeadLocation.class);
 
         when(block.getLocation()).thenReturn(location);
-        when(headService.getHeadAt(location)).thenReturn(headLocation);
+        when(headService.getBlockHeadAt(location)).thenReturn(headLocation);
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.SURVIVAL);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.OnBlockBreakEvent(event);
@@ -207,14 +200,13 @@ class OnPlayerBreakBlockEventTest {
         HeadLocation headLocation = mock(HeadLocation.class);
 
         when(block.getLocation()).thenReturn(location);
-        when(headService.getHeadAt(location)).thenReturn(headLocation);
+        when(headService.getBlockHeadAt(location)).thenReturn(headLocation);
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
         when(storageService.isStorageError()).thenReturn(true);
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
-            headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
             handler.OnBlockBreakEvent(event);
@@ -272,7 +264,7 @@ class OnPlayerBreakBlockEventTest {
         when(headLocation.getUuid()).thenReturn(headUuid);
 
         when(block.getLocation()).thenReturn(location);
-        when(headService.getHeadAt(location)).thenReturn(headLocation);
+        when(headService.getBlockHeadAt(location)).thenReturn(headLocation);
         when(player.isSneaking()).thenReturn(true);
         when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
         when(storageService.isStorageError()).thenReturn(false);
@@ -282,7 +274,6 @@ class OnPlayerBreakBlockEventTest {
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
              MockedStatic<LocationUtils> locationUtils = mockStatic(LocationUtils.class);
              MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-            headUtils.when(() -> HeadUtils.isPlayerHead(block)).thenReturn(true);
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
             locationUtils.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
                     .thenReturn("parsed-message");

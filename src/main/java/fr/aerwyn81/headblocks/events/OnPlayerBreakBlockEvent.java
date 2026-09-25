@@ -1,19 +1,11 @@
 package fr.aerwyn81.headblocks.events;
 
-import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
-import fr.aerwyn81.headblocks.api.events.HeadDeletedEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
-import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
-import fr.aerwyn81.headblocks.utils.internal.InternalException;
-import fr.aerwyn81.headblocks.utils.internal.LogUtil;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
+import fr.aerwyn81.headblocks.services.HeadRemovalService;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -23,9 +15,11 @@ import org.bukkit.event.block.BlockBreakEvent;
 public class OnPlayerBreakBlockEvent implements Listener {
 
     private final ServiceRegistry registry;
+    private final HeadRemovalService removalService;
 
     public OnPlayerBreakBlockEvent(ServiceRegistry registry) {
         this.registry = registry;
+        this.removalService = new HeadRemovalService(registry);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -69,65 +63,22 @@ public class OnPlayerBreakBlockEvent implements Listener {
         var player = e.getPlayer();
         var block = e.getBlock();
 
-        // Check if block destroyed is a head
-        if (!HeadUtils.isPlayerHead(block)) {
-            return;
-        }
-
         Location blockLocation = block.getLocation();
 
-        // Check if the head is a head of the plugin
-        HeadLocation headLocation = registry.getHeadService().getHeadAt(blockLocation);
+        HeadLocation headLocation = registry.getHeadService().getBlockHeadAt(blockLocation);
         if (headLocation == null) {
             return;
         }
 
-        if (HeadBlocks.isReloadInProgress) {
+        if (!removalService.canRemove(player)) {
             e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.PluginReloading"));
             return;
         }
 
-        if (!PlayerUtils.hasPermission(player, "headblocks.admin")) {
-            e.setCancelled(true);
-
-            var message = registry.getLanguageService().message("Messages.NoPermissionBlock");
-            if (!message.trim().isEmpty()) {
-                player.sendMessage(message);
-            }
-            return;
-        }
-
-        // Destroying HeadBlock require creative gamemode and sneaking
-        if (!player.isSneaking() || player.getGameMode() != GameMode.CREATIVE) {
-            e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.CreativeSneakRemoveHead"));
-            return;
-        }
-
-        // Admin with creative+sneaking: un-cancel from the protection handler
         e.setCancelled(false);
 
-        // Check if there is a storage issue
-        if (registry.getStorageService().isStorageError()) {
+        if (!removalService.remove(player, headLocation, blockLocation)) {
             e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
-            return;
-        }
-
-        // Remove the head
-        try {
-            registry.getHeadService().removeHeadLocation(headLocation, registry.getConfigService().resetPlayerData());
-
-            // Send player success message
-            player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadRemoved"), blockLocation));
-
-            // Trigger the event HeadDeleted
-            Bukkit.getPluginManager().callEvent(new HeadDeletedEvent(headLocation.getUuid(), blockLocation, headLocation.getHuntId()));
-        } catch (InternalException ex) {
-            e.setCancelled(true);
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
-            LogUtil.error("Error while trying to remove a head \"{0}\" from the storage: {1}", headLocation.getNameOrUuid(), ex.getMessage());
         }
     }
 }

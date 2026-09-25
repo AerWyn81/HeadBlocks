@@ -33,6 +33,7 @@ public class GuiService {
     private final TimedConfigGui timedConfigManager;
     private final ScheduledConfigGui scheduledConfigManager;
     private final RequirementsGui requirementsGui;
+    private final CatalogGui catalogGui;
 
     // --- Constructor ---
 
@@ -53,6 +54,7 @@ public class GuiService {
         this.timedConfigManager = new TimedConfigGui(registry);
         this.scheduledConfigManager = new ScheduledConfigGui(registry);
         this.requirementsGui = new RequirementsGui(registry);
+        this.catalogGui = new CatalogGui(registry);
     }
 
     // --- Instance methods ---
@@ -90,6 +92,10 @@ public class GuiService {
 
     public RequirementsGui getRequirementsGui() {
         return requirementsGui;
+    }
+
+    public CatalogGui getCatalogGui() {
+        return catalogGui;
     }
 
     public Platform getPlatform() {

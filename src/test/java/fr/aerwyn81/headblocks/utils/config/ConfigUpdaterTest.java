@@ -432,6 +432,80 @@ class ConfigUpdaterTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void update_ignoredListOfMaps_keepsEveryLineOfEachItem() throws Exception {
+        String resource = """
+                key1: default1
+                heads:
+                  - 'default:abc'
+                key2: default2
+                """;
+
+        String existing = """
+                key1: custom1
+                heads:
+                  - 'block:LANTERN'
+                  - id: black-cat
+                    type: mob
+                    value: CAT
+                    baby: true
+                  - 'mob:PIG'
+                key2: custom2
+                """;
+        File file = tempDir.resolve("config.yml").toFile();
+        Files.writeString(file.toPath(), existing);
+
+        callUpdate(resourceLoader(resource), "res.yml", file, List.of("heads"));
+
+        YamlConfiguration result = YamlConfiguration.loadConfiguration(file);
+        List<?> heads = result.getList("heads");
+        assertThat(heads).hasSize(3);
+        assertThat(heads.get(0)).isEqualTo("block:LANTERN");
+        assertThat((Map<Object, Object>) heads.get(1)).containsEntry("id", "black-cat")
+                .containsEntry("type", "mob")
+                .containsEntry("value", "CAT")
+                .containsEntry("baby", true);
+        assertThat(heads.get(2)).isEqualTo("mob:PIG");
+        assertThat(result.getString("key1")).isEqualTo("custom1");
+        assertThat(result.getString("key2")).isEqualTo("custom2");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void update_ignoredNestedListOfMaps_keepsEveryLineOfEachItem() throws Exception {
+        String resource = """
+                headsTheme:
+                  enabled: false
+                  theme:
+                    Easter:
+                      - 'default:abc'
+                key2: default2
+                """;
+
+        String existing = """
+                headsTheme:
+                  enabled: true
+                  theme:
+                    Easter:
+                      - id: egg
+                        type: item
+                        value: EGG
+                key2: custom2
+                """;
+        File file = tempDir.resolve("config.yml").toFile();
+        Files.writeString(file.toPath(), existing);
+
+        callUpdate(resourceLoader(resource), "res.yml", file, List.of("headsTheme"));
+
+        YamlConfiguration result = YamlConfiguration.loadConfiguration(file);
+        List<?> easter = result.getList("headsTheme.theme.Easter");
+        assertThat(easter).hasSize(1);
+        assertThat((Map<Object, Object>) easter.get(0)).containsEntry("id", "egg").containsEntry("value", "EGG");
+        assertThat(result.getBoolean("headsTheme.enabled")).isTrue();
+        assertThat(result.getString("key2")).isEqualTo("custom2");
+    }
+
+    @Test
     void update_preservesTrailingComments() throws Exception {
         String resource = """
                 key1: value1

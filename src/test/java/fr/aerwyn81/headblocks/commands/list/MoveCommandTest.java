@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.services.HeadService;
+import fr.aerwyn81.headblocks.services.HeadVisualService;
 import fr.aerwyn81.headblocks.services.LanguageService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
@@ -45,6 +46,7 @@ class MoveCommandTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
@@ -232,6 +234,98 @@ class MoveCommandTest {
                 verify(headService).changeHeadLocation(headUuid, oldBlock, newBlock);
                 assertThat(headMoves).doesNotContainKey(playerUuid);
             }
+        }
+    }
+
+    @Nested
+    class EntityHeads {
+
+        private HeadVisualService visualService;
+        private final UUID playerUuid = UUID.randomUUID();
+        private final UUID headUuid = UUID.randomUUID();
+
+        @BeforeEach
+        void setUpVisual() {
+            visualService = mock(HeadVisualService.class);
+            when(registry.getVisualService()).thenReturn(visualService);
+            lenient().when(player.getUniqueId()).thenReturn(playerUuid);
+        }
+
+        @Test
+        void lookingAtAnEntityHead_selectsIt() {
+            HeadLocation head = mock(HeadLocation.class);
+            Location headLoc = mock(Location.class);
+            Block headBlock = mock(Block.class);
+            Location blockLoc = mock(Location.class);
+            when(head.getUuid()).thenReturn(headUuid);
+            when(head.getNameOrUuid()).thenReturn("Cat");
+            when(head.getLocation()).thenReturn(headLoc);
+            when(headLoc.getBlock()).thenReturn(headBlock);
+            when(headBlock.getLocation()).thenReturn(blockLoc);
+            when(visualService.lookedAtHead(player, 100)).thenReturn(head);
+
+            try (MockedStatic<LocationUtils> lu = mockStatic(LocationUtils.class)) {
+                lu.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class))).thenReturn("parsed");
+
+                command.perform(player, new String[]{"move"});
+            }
+
+            assertThat(headMoves.get(playerUuid)).isEqualTo(new HeadMove(headUuid, blockLoc));
+            verify(player, never()).getTargetBlock(any(), anyInt());
+        }
+
+        private Location prepareConfirm(Block targetBlock, Block newBlock) {
+            headMoves.put(playerUuid, new HeadMove(headUuid, mock(Location.class)));
+            HeadLocation head = mock(HeadLocation.class);
+            when(headService.getHeadByUUID(headUuid)).thenReturn(head);
+            when(visualService.isEntityRendered(head)).thenReturn(true);
+
+            Location targetLoc = mock(Location.class);
+            Location newLoc = mock(Location.class);
+            when(player.getTargetBlock(null, 100)).thenReturn(targetBlock);
+            when(targetBlock.getLocation()).thenReturn(targetLoc);
+            when(targetLoc.clone()).thenReturn(newLoc);
+            when(newLoc.add(0, 1, 0)).thenReturn(newLoc);
+            lenient().when(targetLoc.getBlock()).thenReturn(targetBlock);
+            lenient().when(newLoc.getBlock()).thenReturn(newBlock);
+            lenient().when(newLoc.clone()).thenReturn(newLoc);
+            lenient().when(newLoc.add(0.5, 0, 0.5)).thenReturn(newLoc);
+            return newLoc;
+        }
+
+        @Test
+        void confirm_movesTheEntityOntoAFreeSpot() {
+            Block targetBlock = mock(Block.class);
+            Block newBlock = mock(Block.class);
+            when(targetBlock.isEmpty()).thenReturn(false);
+            when(newBlock.isPassable()).thenReturn(true);
+            var newLoc = prepareConfirm(targetBlock, newBlock);
+
+            try (MockedStatic<LocationUtils> lu = mockStatic(LocationUtils.class)) {
+                lu.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class))).thenReturn("parsed");
+
+                command.perform(player, new String[]{"move", "--confirm"});
+            }
+
+            verify(headService).moveEntityHead(any(HeadLocation.class), eq(newLoc));
+            verify(headService, never()).changeHeadLocation(any(), any(), any());
+            assertThat(headMoves).doesNotContainKey(playerUuid);
+        }
+
+        @Test
+        void confirm_ontoASolidBlock_isRefused() {
+            Block targetBlock = mock(Block.class);
+            Block newBlock = mock(Block.class);
+            when(targetBlock.isEmpty()).thenReturn(false);
+            when(newBlock.isPassable()).thenReturn(false);
+            prepareConfirm(targetBlock, newBlock);
+
+            try (MockedStatic<LocationUtils> ignored = mockStatic(LocationUtils.class)) {
+                command.perform(player, new String[]{"move", "--confirm"});
+            }
+
+            verify(languageService).message("Messages.TargetBlockInvalid");
+            verify(headService, never()).moveEntityHead(any(), any());
         }
     }
 

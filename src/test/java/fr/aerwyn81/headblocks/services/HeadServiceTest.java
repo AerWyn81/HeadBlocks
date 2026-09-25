@@ -4,10 +4,10 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.HeadMove;
 import fr.aerwyn81.headblocks.data.head.HBHead;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.LocationUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
@@ -16,6 +16,7 @@ import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import fr.aerwyn81.headblocks.utils.scheduler.Task;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.inventory.ItemStack;
@@ -64,6 +65,9 @@ class HeadServiceTest {
     @Mock
     private HuntConfigService huntConfigService;
 
+    @Mock
+    private HeadVisualService visualService;
+
     private HeadService headService;
 
     @BeforeEach
@@ -73,6 +77,10 @@ class HeadServiceTest {
         headService.setHologramService(hologramService);
         headService.setHuntService(huntService);
         headService.setHuntConfigService(huntConfigService);
+        headService.setVisualService(visualService);
+        lenient().when(huntService.configOf(any())).thenAnswer(invocation -> new HuntConfig(configService));
+        lenient().when(visualService.isBlockRendered(any())).thenReturn(true);
+        lenient().when(visualService.getProviders()).thenReturn(Map.of());
 
         setField("headLocations", new CopyOnWriteArrayList<HeadLocation>());
         setField("headMoves", new ConcurrentHashMap<UUID, HeadMove>());
@@ -116,6 +124,32 @@ class HeadServiceTest {
         Field field = HeadService.class.getDeclaredField(name);
         field.setAccessible(true);
         field.set(headService, value);
+    }
+
+    private void addHead(HeadLocation headLocation) throws Exception {
+        var register = HeadService.class.getDeclaredMethod("register", HeadLocation.class);
+        register.setAccessible(true);
+        register.invoke(headService, headLocation);
+    }
+
+    private Location worldLocation(String worldName, double x, double y, double z) {
+        World world = mock(World.class);
+        lenient().when(world.getName()).thenReturn(worldName);
+        Location location = mock(Location.class);
+        lenient().when(location.getWorld()).thenReturn(world);
+        lenient().when(location.getX()).thenReturn(x);
+        lenient().when(location.getY()).thenReturn(y);
+        lenient().when(location.getZ()).thenReturn(z);
+        return location;
+    }
+
+    private HeadLocation createPlacedHead(String name, String worldName, double x, double y, double z) {
+        var hl = createHeadLocation(UUID.randomUUID(), name, worldLocation(worldName, x, y, z), true);
+        lenient().when(hl.getConfigWorldName()).thenReturn(worldName);
+        lenient().when(hl.getX()).thenReturn(x);
+        lenient().when(hl.getY()).thenReturn(y);
+        lenient().when(hl.getZ()).thenReturn(z);
+        return hl;
     }
 
     @SuppressWarnings("unchecked")
@@ -252,7 +286,7 @@ class HeadServiceTest {
         }
 
         @Test
-        void providerAvailable_createsAndAddsHead() throws Exception {
+        void providerAvailable_createsTheHead() throws Exception {
             HBHead created = mock(HBHead.class);
             HeadProviderHook hook = mock(HeadProviderHook.class);
             when(hook.isAvailable()).thenReturn(true);
@@ -264,9 +298,7 @@ class HeadServiceTest {
             HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
             initHeads(svc);
 
-            svc.addProviderHead(head, "headdb", "5", "headdb:5", 1);
-
-            assertThat(heads(svc)).containsExactly(created);
+            assertThat(svc.addProviderHead(head, "headdb", "5", "headdb:5", 1)).isSameAs(created);
         }
 
         @Test
@@ -301,7 +333,7 @@ class HeadServiceTest {
         void found_returns_matching_head() throws Exception {
             UUID uuid = UUID.randomUUID();
             HeadLocation hl = createHeadLocation(uuid, "Alpha", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.getHeadByUUID(uuid)).isSameAs(hl);
         }
@@ -310,7 +342,7 @@ class HeadServiceTest {
         void not_found_returns_null() throws Exception {
             UUID uuid = UUID.randomUUID();
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "Beta", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.getHeadByUUID(uuid)).isNull();
         }
@@ -325,8 +357,8 @@ class HeadServiceTest {
             UUID uuid = UUID.randomUUID();
             HeadLocation hl1 = createHeadLocation(uuid, "First", null, true);
             HeadLocation hl2 = createHeadLocation(uuid, "Duplicate", null, true);
-            headLocations().add(hl1);
-            headLocations().add(hl2);
+            addHead(hl1);
+            addHead(hl2);
 
             assertThat(headService.getHeadByUUID(uuid)).isSameAs(hl1);
         }
@@ -343,7 +375,7 @@ class HeadServiceTest {
         void found_returns_matching_head() throws Exception {
             UUID uuid = UUID.randomUUID();
             HeadLocation hl = createHeadLocation(uuid, "MyHead", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.getHeadByName("MyHead")).isSameAs(hl);
         }
@@ -351,7 +383,7 @@ class HeadServiceTest {
         @Test
         void not_found_returns_null() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "Existing", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.getHeadByName("NonExistent")).isNull();
         }
@@ -360,7 +392,7 @@ class HeadServiceTest {
         void uses_rawNameOrUuid_for_unnamed_head() throws Exception {
             UUID uuid = UUID.randomUUID();
             HeadLocation hl = createHeadLocation(uuid, "", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.getHeadByName(uuid.toString())).isSameAs(hl);
         }
@@ -373,7 +405,7 @@ class HeadServiceTest {
         @Test
         void case_sensitive_match() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "CaseSensitive", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.getHeadByName("casesensitive")).isNull();
         }
@@ -388,55 +420,60 @@ class HeadServiceTest {
 
         @Test
         void found_returns_matching_head() throws Exception {
-            Location loc = mock(Location.class);
-            HeadLocation hl = createHeadLocation(UUID.randomUUID(), "At", loc, true);
-            headLocations().add(hl);
+            HeadLocation hl = createPlacedHead("At", "world", 10.5, 64, -3.5);
+            addHead(hl);
 
-            try (MockedStatic<LocationUtils> mocked = mockStatic(LocationUtils.class)) {
-                mocked.when(() -> LocationUtils.areEquals(loc, loc)).thenReturn(true);
-
-                assertThat(headService.getHeadAt(loc)).isSameAs(hl);
-            }
+            assertThat(headService.getHeadAt(worldLocation("world", 10, 64, -4))).isSameAs(hl);
         }
 
         @Test
-        void not_found_returns_null() throws Exception {
-            Location loc1 = mock(Location.class);
-            Location loc2 = mock(Location.class);
-            HeadLocation hl = createHeadLocation(UUID.randomUUID(), "Far", loc1, true);
-            headLocations().add(hl);
+        void other_block_returns_null() throws Exception {
+            addHead(createPlacedHead("Far", "world", 10.5, 64, -3.5));
 
-            try (MockedStatic<LocationUtils> mocked = mockStatic(LocationUtils.class)) {
-                mocked.when(() -> LocationUtils.areEquals(loc1, loc2)).thenReturn(false);
+            assertThat(headService.getHeadAt(worldLocation("world", 11, 64, -4))).isNull();
+        }
 
-                assertThat(headService.getHeadAt(loc2)).isNull();
-            }
+        @Test
+        void other_world_returns_null() throws Exception {
+            addHead(createPlacedHead("Far", "world", 10.5, 64, -3.5));
+
+            assertThat(headService.getHeadAt(worldLocation("nether", 10, 64, -4))).isNull();
+        }
+
+        @Test
+        void location_without_world_returns_null() {
+            assertThat(headService.getHeadAt(mock(Location.class))).isNull();
+        }
+
+        @Test
+        void null_location_returns_null() {
+            assertThat(headService.getHeadAt(null)).isNull();
         }
 
         @Test
         void empty_list_returns_null() {
-            try (MockedStatic<LocationUtils> ignored = mockStatic(LocationUtils.class)) {
-                assertThat(headService.getHeadAt(mock(Location.class))).isNull();
-            }
+            assertThat(headService.getHeadAt(worldLocation("world", 0, 0, 0))).isNull();
         }
 
         @Test
-        void multiple_heads_returns_first_matching() throws Exception {
-            Location loc = mock(Location.class);
-            Location otherLoc = mock(Location.class);
-            HeadLocation hl1 = createHeadLocation(UUID.randomUUID(), "First", loc, true);
-            HeadLocation hl2 = createHeadLocation(UUID.randomUUID(), "Second", otherLoc, true);
-            HeadLocation hl3 = createHeadLocation(UUID.randomUUID(), "Third", loc, true);
-            headLocations().add(hl1);
-            headLocations().add(hl2);
-            headLocations().add(hl3);
+        void multiple_heads_returns_the_one_in_the_block() throws Exception {
+            HeadLocation hl1 = createPlacedHead("First", "world", 0.5, 64, 0.5);
+            HeadLocation hl2 = createPlacedHead("Second", "world", 5.5, 64, 0.5);
+            addHead(hl1);
+            addHead(hl2);
 
-            try (MockedStatic<LocationUtils> mocked = mockStatic(LocationUtils.class)) {
-                mocked.when(() -> LocationUtils.areEquals(loc, loc)).thenReturn(true);
-                mocked.when(() -> LocationUtils.areEquals(otherLoc, loc)).thenReturn(false);
+            assertThat(headService.getHeadAt(worldLocation("world", 5.2, 64.9, 0.1))).isSameAs(hl2);
+        }
 
-                assertThat(headService.getHeadAt(loc)).isSameAs(hl1);
-            }
+        @Test
+        void removed_head_is_no_longer_found() throws Exception {
+            HeadLocation hl = createPlacedHead("Gone", "world", 0.5, 64, 0.5);
+            addHead(hl);
+
+            headService.removeHeadLocation(hl, false);
+
+            assertThat(headService.getHeadAt(worldLocation("world", 0, 64, 0))).isNull();
+            assertThat(headService.getHeadByUUID(hl.getUuid())).isNull();
         }
     }
 
@@ -451,7 +488,7 @@ class HeadServiceTest {
         void valid_uuid_returns_head_by_uuid() throws Exception {
             UUID uuid = UUID.randomUUID();
             HeadLocation hl = createHeadLocation(uuid, "Resolved", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.resolveHeadIdentifier(uuid.toString())).isSameAs(hl);
         }
@@ -466,7 +503,7 @@ class HeadServiceTest {
         @Test
         void invalid_uuid_falls_back_to_name() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "ByName", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.resolveHeadIdentifier("ByName")).isSameAs(hl);
         }
@@ -479,7 +516,7 @@ class HeadServiceTest {
         @Test
         void empty_string_falls_back_to_name_lookup() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             // Empty string is not a valid UUID, so it falls back to name lookup
             // An unnamed head has getRawNameOrUuid returning the uuid string, not ""
@@ -492,7 +529,7 @@ class HeadServiceTest {
             UUID uuid = UUID.randomUUID();
             // Create a head whose name happens to be a UUID string
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), uuid.toString(), null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             // Since the identifier is a valid UUID, it tries getHeadByUUID first.
             // That UUID doesn't match the head's actual UUID, so null is returned.
@@ -514,8 +551,8 @@ class HeadServiceTest {
             UUID uuid2 = UUID.randomUUID();
             HeadLocation unnamed = createHeadLocation(uuid2, "", null, true);
 
-            headLocations().add(named);
-            headLocations().add(unnamed);
+            addHead(named);
+            addHead(unnamed);
 
             ArrayList<String> result = headService.getHeadRawNameOrUuid();
 
@@ -530,7 +567,7 @@ class HeadServiceTest {
         @Test
         void returns_arraylist_type() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "Test", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.getHeadRawNameOrUuid()).isInstanceOf(ArrayList.class);
         }
@@ -541,9 +578,9 @@ class HeadServiceTest {
             HeadLocation hl2 = createHeadLocation(UUID.randomUUID(), "Apple", null, true);
             HeadLocation hl3 = createHeadLocation(UUID.randomUUID(), "Mango", null, true);
 
-            headLocations().add(hl1);
-            headLocations().add(hl2);
-            headLocations().add(hl3);
+            addHead(hl1);
+            addHead(hl2);
+            addHead(hl3);
 
             ArrayList<String> result = headService.getHeadRawNameOrUuid();
 
@@ -564,9 +601,9 @@ class HeadServiceTest {
             HeadLocation uncharged = createHeadLocation(UUID.randomUUID(), "U1", null, false);
             HeadLocation charged2 = createHeadLocation(UUID.randomUUID(), "C2", null, true);
 
-            headLocations().add(charged1);
-            headLocations().add(uncharged);
-            headLocations().add(charged2);
+            addHead(charged1);
+            addHead(uncharged);
+            addHead(charged2);
 
             ArrayList<HeadLocation> result = headService.getChargedHeadLocations();
 
@@ -576,7 +613,7 @@ class HeadServiceTest {
         @Test
         void empty_when_none_charged() throws Exception {
             HeadLocation uncharged = createHeadLocation(UUID.randomUUID(), "U", null, false);
-            headLocations().add(uncharged);
+            addHead(uncharged);
 
             assertThat(headService.getChargedHeadLocations()).isEmpty();
         }
@@ -589,7 +626,7 @@ class HeadServiceTest {
         @Test
         void returns_arraylist_type() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "C", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             assertThat(headService.getChargedHeadLocations()).isInstanceOf(ArrayList.class);
         }
@@ -598,8 +635,8 @@ class HeadServiceTest {
         void all_charged_returns_all() throws Exception {
             HeadLocation c1 = createHeadLocation(UUID.randomUUID(), "C1", null, true);
             HeadLocation c2 = createHeadLocation(UUID.randomUUID(), "C2", null, true);
-            headLocations().add(c1);
-            headLocations().add(c2);
+            addHead(c1);
+            addHead(c2);
 
             assertThat(headService.getChargedHeadLocations()).containsExactly(c1, c2);
         }
@@ -625,9 +662,9 @@ class HeadServiceTest {
             HeadLocation hl3 = createHeadLocation(uuid3, "H3", null, true);
             lenient().when(hl3.getHuntId()).thenReturn("hunt1");
 
-            headLocations().add(hl1);
-            headLocations().add(hl2);
-            headLocations().add(hl3);
+            addHead(hl1);
+            addHead(hl2);
+            addHead(hl3);
 
             HBHunt hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
 
@@ -640,7 +677,7 @@ class HeadServiceTest {
         void empty_hunt_returns_empty() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "H", null, true);
             lenient().when(hl.getHuntId()).thenReturn("other");
-            headLocations().add(hl);
+            addHead(hl);
 
             HBHunt hunt = new HBHunt(configService, "empty", "Empty", HuntState.ACTIVE, 1, "D");
 
@@ -757,8 +794,8 @@ class HeadServiceTest {
         void returns_all_heads() throws Exception {
             HeadLocation hl1 = createHeadLocation(UUID.randomUUID(), "A", null, true);
             HeadLocation hl2 = createHeadLocation(UUID.randomUUID(), "B", null, false);
-            headLocations().add(hl1);
-            headLocations().add(hl2);
+            addHead(hl1);
+            addHead(hl2);
 
             assertThat(headService.getHeadLocations()).containsExactly(hl1, hl2);
         }
@@ -815,19 +852,17 @@ class HeadServiceTest {
         void removes_head_from_storage_and_list() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "ToRemove", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
             headService.removeHeadLocation(hl, true);
 
             verify(storageService).removeHead(uuid, true);
-            verify(block).setType(Material.AIR);
+            verify(visualService).clear(hl);
             assertThat(headLocations()).doesNotContain(hl);
         }
 
@@ -835,12 +870,10 @@ class HeadServiceTest {
         void removes_head_from_hunt_and_config() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "HuntHead", loc, true);
             when(hl.getHuntId()).thenReturn("hunt1");
-            headLocations().add(hl);
+            addHead(hl);
 
             HBHunt hunt = mock(HBHunt.class);
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
@@ -856,12 +889,10 @@ class HeadServiceTest {
         void removes_hologram_when_holograms_enabled() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "HoloHead", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             when(configService.hologramsEnabled()).thenReturn(true);
 
@@ -874,12 +905,10 @@ class HeadServiceTest {
         void does_not_remove_hologram_when_holograms_disabled() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NoHolo", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -892,12 +921,10 @@ class HeadServiceTest {
         void cancels_spin_task_if_exists() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "SpinHead", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
             tasksHeadSpin().put(uuid, task(42));
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
@@ -912,12 +939,10 @@ class HeadServiceTest {
         void no_spin_task_does_not_call_cancel() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NoSpin", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -930,12 +955,10 @@ class HeadServiceTest {
         void removes_associated_headMoves() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "MovedHead", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
             headMoves().put(uuid, new HeadMove(uuid, mock(Location.class)));
 
             // Also add another move that should NOT be removed
@@ -954,12 +977,10 @@ class HeadServiceTest {
         void removes_from_hunt_config() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "ConfigHead", loc, true);
             when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -979,12 +1000,10 @@ class HeadServiceTest {
         void withDelete_false_passes_false_to_storage() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NoDelete", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -999,7 +1018,7 @@ class HeadServiceTest {
             Location loc = mock(Location.class);
 
             HeadLocation hl = createHeadLocation(uuid, "ErrHead", loc, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             doThrow(new InternalException("storage error")).when(storageService).removeHead(uuid, true);
 
@@ -1064,7 +1083,7 @@ class HeadServiceTest {
 
                 headService.saveHeadLocation(loc, "tex", "default");
 
-                verify(hologramService).createHolograms(loc);
+                verify(hologramService).createHolograms(eq(loc), any());
             }
         }
 
@@ -1239,12 +1258,10 @@ class HeadServiceTest {
             UUID uuid1 = UUID.randomUUID();
             UUID uuid2 = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl1 = createHeadLocation(uuid1, "Spin1", loc, true);
             lenient().when(hl1.getHuntId()).thenReturn("default");
-            headLocations().add(hl1);
+            addHead(hl1);
             tasksHeadSpin().put(uuid1, task(10));
             tasksHeadSpin().put(uuid2, task(20));
 
@@ -1270,12 +1287,10 @@ class HeadServiceTest {
         void getHeadByUUID_after_removal_returns_null() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "Removed", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -1287,7 +1302,7 @@ class HeadServiceTest {
         @Test
         void getChargedHeadLocations_returns_new_list_not_same_reference() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "C", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             ArrayList<HeadLocation> result1 = headService.getChargedHeadLocations();
             ArrayList<HeadLocation> result2 = headService.getChargedHeadLocations();
@@ -1299,7 +1314,7 @@ class HeadServiceTest {
         @Test
         void getHeadRawNameOrUuid_returns_new_list_not_same_reference() throws Exception {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "Test", null, true);
-            headLocations().add(hl);
+            addHead(hl);
 
             ArrayList<String> result1 = headService.getHeadRawNameOrUuid();
             ArrayList<String> result2 = headService.getHeadRawNameOrUuid();
@@ -1312,24 +1327,19 @@ class HeadServiceTest {
             UUID uuid = UUID.randomUUID();
             // One head with UUID matching, another with name matching the UUID string
             HeadLocation hlByUuid = createHeadLocation(uuid, "NotByName", null, true);
-            headLocations().add(hlByUuid);
+            addHead(hlByUuid);
 
             assertThat(headService.resolveHeadIdentifier(uuid.toString())).isSameAs(hlByUuid);
         }
 
         @Test
         void multiple_heads_at_same_location_getHeadAt_returns_first() throws Exception {
-            Location loc = mock(Location.class);
-            HeadLocation hl1 = createHeadLocation(UUID.randomUUID(), "First", loc, true);
-            HeadLocation hl2 = createHeadLocation(UUID.randomUUID(), "Second", loc, true);
-            headLocations().add(hl1);
-            headLocations().add(hl2);
+            HeadLocation hl1 = createPlacedHead("First", "world", 0.5, 64, 0.5);
+            HeadLocation hl2 = createPlacedHead("Second", "world", 0.5, 64, 0.5);
+            addHead(hl1);
+            addHead(hl2);
 
-            try (MockedStatic<LocationUtils> mocked = mockStatic(LocationUtils.class)) {
-                mocked.when(() -> LocationUtils.areEquals(loc, loc)).thenReturn(true);
-
-                assertThat(headService.getHeadAt(loc)).isSameAs(hl1);
-            }
+            assertThat(headService.getHeadAt(worldLocation("world", 0, 64, 0))).isSameAs(hl1);
         }
     }
 
@@ -1342,7 +1352,7 @@ class HeadServiceTest {
 
         @Test
         void no_hunts_resets_to_empty_list() throws Exception {
-            headLocations().add(createHeadLocation(UUID.randomUUID(), "Old", null, true));
+            addHead(createHeadLocation(UUID.randomUUID(), "Old", null, true));
 
             when(storageService.isStorageError()).thenReturn(false);
             when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
@@ -1606,7 +1616,7 @@ class HeadServiceTest {
         @Test
         void clears_existing_headLocations_before_loading() throws Exception {
             HeadLocation existing = createHeadLocation(UUID.randomUUID(), "Existing", null, true);
-            headLocations().add(existing);
+            addHead(existing);
 
             when(storageService.isStorageError()).thenReturn(false);
             when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
@@ -1754,8 +1764,8 @@ class HeadServiceTest {
             lenient().when(hl1.getHuntId()).thenReturn("default");
             HeadLocation hl2 = createHeadLocation(uuid2, "R2", loc2, true);
             lenient().when(hl2.getHuntId()).thenReturn("default");
-            headLocations().add(hl1);
-            headLocations().add(hl2);
+            addHead(hl1);
+            addHead(hl2);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -1793,7 +1803,7 @@ class HeadServiceTest {
 
             HeadLocation hl = createHeadLocation(uuid, "Valid", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -1837,8 +1847,8 @@ class HeadServiceTest {
             lenient().when(hl1.getNameOrUuid()).thenReturn("Fail");
             lenient().when(hl1.getHuntId()).thenReturn("default");
             lenient().when(hl2.getHuntId()).thenReturn("default");
-            headLocations().add(hl1);
-            headLocations().add(hl2);
+            addHead(hl1);
+            addHead(hl2);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -1875,7 +1885,7 @@ class HeadServiceTest {
 
             HeadLocation hl = createHeadLocation(uuid, "Holo", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             when(configService.hologramsEnabled()).thenReturn(true);
 
@@ -1909,7 +1919,7 @@ class HeadServiceTest {
 
             HeadLocation hl = createHeadLocation(uuid, "NoHolo", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -1945,7 +1955,7 @@ class HeadServiceTest {
 
             HeadLocation hl = createHeadLocation(uuid, "NullHolo", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(true);
 
@@ -1980,7 +1990,7 @@ class HeadServiceTest {
 
             HeadLocation hl = createHeadLocation(uuid, "SpinRemove", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
             tasksHeadSpin().put(uuid, task(77));
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
@@ -2017,7 +2027,7 @@ class HeadServiceTest {
 
             HeadLocation hl = createHeadLocation(uuid, "MoveRemove", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
             headMoves().put(uuid, new HeadMove(uuid, mock(Location.class)));
             headMoves().put(otherUuid, new HeadMove(otherUuid, mock(Location.class)));
 
@@ -2076,7 +2086,7 @@ class HeadServiceTest {
 
             HeadLocation hl = createHeadLocation(uuid, "ConfigRemove", loc, true);
             when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
 
@@ -2204,12 +2214,10 @@ class HeadServiceTest {
 
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "NullHolo", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
 
             when(configService.hologramsEnabled()).thenReturn(true);
 
@@ -2398,9 +2406,9 @@ class HeadServiceTest {
             HeadLocation hl3 = createHeadLocation(uuid3, "H3", null, true);
             lenient().when(hl3.getHuntId()).thenReturn("all");
 
-            headLocations().add(hl1);
-            headLocations().add(hl2);
-            headLocations().add(hl3);
+            addHead(hl1);
+            addHead(hl2);
+            addHead(hl3);
 
             HBHunt hunt = new HBHunt(configService, "all", "All Heads", HuntState.ACTIVE, 1, "D");
 
@@ -2414,7 +2422,7 @@ class HeadServiceTest {
             UUID uuid = UUID.randomUUID();
             HeadLocation hl = createHeadLocation(uuid, "H", null, true);
             lenient().when(hl.getHuntId()).thenReturn("other");
-            headLocations().add(hl);
+            addHead(hl);
 
             HBHunt hunt = new HBHunt(configService, "unknown", "Unknown", HuntState.ACTIVE, 1, "D");
 
@@ -2437,11 +2445,11 @@ class HeadServiceTest {
             HeadLocation u2 = createHeadLocation(UUID.randomUUID(), "U2", null, false);
             HeadLocation c3 = createHeadLocation(UUID.randomUUID(), "C3", null, true);
 
-            headLocations().add(c1);
-            headLocations().add(u1);
-            headLocations().add(c2);
-            headLocations().add(u2);
-            headLocations().add(c3);
+            addHead(c1);
+            addHead(u1);
+            addHead(c2);
+            addHead(u2);
+            addHead(c3);
 
             ArrayList<HeadLocation> result = headService.getChargedHeadLocations();
 
@@ -2453,8 +2461,8 @@ class HeadServiceTest {
             HeadLocation u1 = createHeadLocation(UUID.randomUUID(), "U1", null, false);
             HeadLocation u2 = createHeadLocation(UUID.randomUUID(), "U2", null, false);
 
-            headLocations().add(u1);
-            headLocations().add(u2);
+            addHead(u1);
+            addHead(u2);
 
             assertThat(headService.getChargedHeadLocations()).isEmpty();
         }
@@ -2471,12 +2479,10 @@ class HeadServiceTest {
         void removes_multiple_headMoves_for_same_head() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "MultiMove", loc, true);
             lenient().when(hl.getHuntId()).thenReturn("default");
-            headLocations().add(hl);
+            addHead(hl);
             headMoves().put(uuid, new HeadMove(uuid, mock(Location.class)));
 
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
@@ -2490,12 +2496,10 @@ class HeadServiceTest {
         void removes_from_hunt_correctly() throws Exception {
             UUID uuid = UUID.randomUUID();
             Location loc = mock(Location.class);
-            Block block = mock(Block.class);
-            when(loc.getBlock()).thenReturn(block);
 
             HeadLocation hl = createHeadLocation(uuid, "HuntHead", loc, true);
             when(hl.getHuntId()).thenReturn("hunt1");
-            headLocations().add(hl);
+            addHead(hl);
 
             HBHunt hunt = mock(HBHunt.class);
             lenient().when(configService.hologramsEnabled()).thenReturn(false);
@@ -2521,9 +2525,9 @@ class HeadServiceTest {
             HeadLocation hl2 = createHeadLocation(UUID.randomUUID(), "Beta", null, true);
             HeadLocation hl3 = createHeadLocation(UUID.randomUUID(), "Gamma", null, true);
 
-            headLocations().add(hl1);
-            headLocations().add(hl2);
-            headLocations().add(hl3);
+            addHead(hl1);
+            addHead(hl2);
+            addHead(hl3);
 
             assertThat(headService.resolveHeadIdentifier("Beta")).isSameAs(hl2);
         }
@@ -2535,9 +2539,9 @@ class HeadServiceTest {
             HeadLocation hl2 = createHeadLocation(targetUuid, "B", null, true);
             HeadLocation hl3 = createHeadLocation(UUID.randomUUID(), "C", null, true);
 
-            headLocations().add(hl1);
-            headLocations().add(hl2);
-            headLocations().add(hl3);
+            addHead(hl1);
+            addHead(hl2);
+            addHead(hl3);
 
             assertThat(headService.resolveHeadIdentifier(targetUuid.toString())).isSameAs(hl2);
         }
@@ -2599,7 +2603,7 @@ class HeadServiceTest {
         void loadLocations_clears_headLocations() throws Exception {
             // loadLocations clears headLocations at the start
             UUID existingUuid = UUID.randomUUID();
-            headLocations().add(createHeadLocation(existingUuid, "Old", null, true));
+            addHead(createHeadLocation(existingUuid, "Old", null, true));
 
             when(storageService.isStorageError()).thenReturn(false);
             when(huntService.getAllHunts()).thenReturn(Collections.emptyList());
@@ -2620,7 +2624,7 @@ class HeadServiceTest {
             for (int i = 0; i < 200; i++) {
                 UUID uuid = UUID.randomUUID();
                 uuids.add(uuid);
-                headLocations().add(createHeadLocation(uuid, "head-" + i, null, true));
+                addHead(createHeadLocation(uuid, "head-" + i, null, true));
             }
 
             List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
@@ -2645,7 +2649,7 @@ class HeadServiceTest {
 
             for (int i = 0; i < 300; i++) {
                 HeadLocation extra = createHeadLocation(UUID.randomUUID(), "extra-" + i, null, true);
-                headLocations().add(extra);
+                addHead(extra);
                 headLocations().remove(extra);
             }
 
@@ -2655,6 +2659,163 @@ class HeadServiceTest {
             }
 
             assertThat(failures).isEmpty();
+        }
+    }
+
+    // =========================================================================
+    // Chunk index
+    // =========================================================================
+
+    @Nested
+    class ChunkIndex {
+
+        @Test
+        void headsInChunk_areFoundByChunkCoordinates() throws Exception {
+            HeadLocation inChunk = createPlacedHead("In", "world", 17.5, 64, -1.5);
+            HeadLocation otherChunk = createPlacedHead("Out", "world", 40.5, 64, 0.5);
+            HeadLocation otherWorld = createPlacedHead("Nether", "nether", 17.5, 64, -1.5);
+            addHead(inChunk);
+            addHead(otherChunk);
+            addHead(otherWorld);
+
+            assertThat(headService.getHeadsInChunk("world", 1, -1)).containsExactly(inChunk);
+            assertThat(headService.getHeadsInChunk("world", 2, 0)).containsExactly(otherChunk);
+            assertThat(headService.getHeadsInChunk("world", 5, 5)).isEmpty();
+        }
+
+        @Test
+        void removedHead_leavesTheChunk() throws Exception {
+            HeadLocation head = createPlacedHead("Gone", "world", 0.5, 64, 0.5);
+            addHead(head);
+
+            headService.removeHeadLocation(head, false);
+
+            assertThat(headService.getHeadsInChunk("world", 0, 0)).isEmpty();
+        }
+
+        @Test
+        void movedEntityHead_withHologramsOff_createsNoHologram() throws Exception {
+            HeadLocation head = createPlacedHead("Cat", "world", 0.5, 64, 0.5);
+            addHead(head);
+            when(hologramService.isEnabled()).thenReturn(false);
+
+            headService.moveEntityHead(head, worldLocation("world", 10.5, 64, 10.5));
+
+            verify(hologramService, never()).createHolograms(any(), any());
+        }
+
+        @Test
+        void movedEntityHead_withHologramsOn_movesTheHologram() throws Exception {
+            HeadLocation head = createPlacedHead("Cat", "world", 0.5, 64, 0.5);
+            addHead(head);
+            when(hologramService.isEnabled()).thenReturn(true);
+            Location target = worldLocation("world", 10.5, 64, 10.5);
+
+            headService.moveEntityHead(head, target);
+
+            verify(hologramService).removeHolograms(head.getLocation());
+            verify(hologramService).createHolograms(eq(target), any());
+        }
+
+        @Test
+        void movedEntityHead_changesChunkAndBlock() throws Exception {
+            HeadLocation head = new HeadLocation("", UUID.randomUUID(), "default", "world", 0.5, 64, 0.5, -1, false, false, new ArrayList<>());
+            addHead(head);
+            Location target = worldLocation("world", 40.5, 70, 40.5);
+
+            headService.moveEntityHead(head, target);
+
+            assertThat(headService.getHeadsInChunk("world", 0, 0)).isEmpty();
+            assertThat(headService.getHeadsInChunk("world", 2, 2)).containsExactly(head);
+            assertThat(headService.getHeadAt(worldLocation("world", 40, 70, 40))).isSameAs(head);
+            assertThat(headService.getHeadAt(worldLocation("world", 0, 64, 0))).isNull();
+            verify(visualService).despawn(head);
+        }
+    }
+
+    // =========================================================================
+    // Render mode and spin per hunt
+    // =========================================================================
+
+    @Nested
+    class RenderModeAndSpin {
+
+        @Test
+        void newHead_storesTheHuntRenderMode() throws Exception {
+            HuntConfig displayConfig = new HuntConfig(configService);
+            displayConfig.setRenderMode(fr.aerwyn81.headblocks.data.head.visual.RenderMode.DISPLAY);
+            when(huntService.configOf("halloween")).thenReturn(displayConfig);
+
+            try (MockedStatic<InternalUtils> mocked = mockStatic(InternalUtils.class)) {
+                mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(UUID.randomUUID());
+
+                headService.saveHeadLocation(mock(Location.class), "tex", "halloween");
+            }
+
+            assertThat(headLocations().getFirst().getRenderMode()).isEqualTo(fr.aerwyn81.headblocks.data.head.visual.RenderMode.DISPLAY);
+        }
+
+        @Test
+        void spinTask_usesTheHuntSpeed() throws Exception {
+            HuntConfig fast = new HuntConfig(configService);
+            fast.setSpinEnabled(true);
+            fast.setSpinLinked(false);
+            fast.setSpinSpeed(7);
+            when(huntService.configOf("halloween")).thenReturn(fast);
+            Location location = mock(Location.class);
+            when(scheduler.runTaskTimer(eq(location), any(Runnable.class), eq(5L), eq(7L))).thenReturn(task(7));
+
+            try (MockedStatic<InternalUtils> mocked = mockStatic(InternalUtils.class)) {
+                mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(UUID.randomUUID());
+
+                headService.saveHeadLocation(location, "tex", "halloween");
+            }
+
+            verify(scheduler).runTaskTimer(eq(location), any(Runnable.class), eq(5L), eq(7L));
+        }
+    }
+
+    @Nested
+    class BlockLookup {
+
+        @Test
+        void blockHead_isFoundFromItsBlock() throws Exception {
+            HeadLocation head = createPlacedHead("Lantern", "world", 3.5, 70, -8.5);
+            addHead(head);
+            Block block = mock(Block.class);
+            World world = mock(World.class);
+            when(world.getName()).thenReturn("world");
+            when(block.getWorld()).thenReturn(world);
+            when(block.getX()).thenReturn(3);
+            when(block.getY()).thenReturn(70);
+            when(block.getZ()).thenReturn(-9);
+
+            assertThat(headService.getBlockHeadAt(block)).isSameAs(head);
+
+            when(visualService.isBlockRendered(head)).thenReturn(false);
+            assertThat(headService.getBlockHeadAt(block)).isNull();
+        }
+
+        @Test
+        void unknownWorld_hasNoHead() {
+            Block block = mock(Block.class);
+            World world = mock(World.class);
+            when(world.getName()).thenReturn("void");
+            when(block.getWorld()).thenReturn(world);
+
+            assertThat(headService.getBlockHeadAt(block)).isNull();
+        }
+
+        @Test
+        void negativeAndHighCoordinates_doNotCollide() throws Exception {
+            HeadLocation low = createPlacedHead("Low", "world", -1.5, -64, -1.5);
+            HeadLocation high = createPlacedHead("High", "world", 1_000_000.5, 319, 1_000_000.5);
+            addHead(low);
+            addHead(high);
+
+            assertThat(headService.getHeadAt(worldLocation("world", -1.2, -63.5, -1.9))).isSameAs(low);
+            assertThat(headService.getHeadAt(worldLocation("world", 1_000_000, 319, 1_000_000))).isSameAs(high);
+            assertThat(headService.getHeadAt(worldLocation("world", -1.2, 319, -1.9))).isNull();
         }
     }
 }

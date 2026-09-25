@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks;
 
 import fr.aerwyn81.headblocks.databases.Requests;
 import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
+import fr.aerwyn81.headblocks.hooks.VisualProviderHook;
 import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.utils.bukkit.CommandDispatcher;
@@ -34,11 +35,14 @@ public class ServiceRegistry {
     private GuiService guiService;
     private AreaEnforcementService areaEnforcementService;
     private ChatPromptService chatPromptService;
+    private HeadVisualService visualService;
+    private HeadVisibilityService visibilityService;
 
     private final File configFile;
     private final File locationFile;
     private final ConfigService existingConfigService;
     private final Map<String, HeadProviderHook> headProviders;
+    private final Map<String, VisualProviderHook> visualProviders;
 
     public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
                            CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
@@ -56,6 +60,14 @@ public class ServiceRegistry {
                            CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
                            HoloEasy holoEasyLib, ConfigService existingConfigService,
                            Map<String, HeadProviderHook> headProviders) {
+        this(pluginProvider, scheduler, commandDispatcher, platform, configFile, locationFile, holoEasyLib,
+                existingConfigService, headProviders, Collections.emptyMap());
+    }
+
+    public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
+                           CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
+                           HoloEasy holoEasyLib, ConfigService existingConfigService,
+                           Map<String, HeadProviderHook> headProviders, Map<String, VisualProviderHook> visualProviders) {
         this.pluginProvider = pluginProvider;
         this.scheduler = scheduler;
         this.commandDispatcher = commandDispatcher;
@@ -65,6 +77,7 @@ public class ServiceRegistry {
         this.holoEasyLib = holoEasyLib;
         this.existingConfigService = existingConfigService;
         this.headProviders = headProviders == null ? Collections.emptyMap() : headProviders;
+        this.visualProviders = visualProviders == null ? Collections.emptyMap() : visualProviders;
 
         initializeAll();
     }
@@ -93,6 +106,10 @@ public class ServiceRegistry {
         this.headService = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, headProviders);
         headService.setHuntService(huntService);
         headService.setHuntConfigService(huntConfigService);
+        this.visualService = new HeadVisualService(this, visualProviders);
+        this.visibilityService = new HeadVisibilityService(this);
+        huntService.onHeadTransferred(visualService::rerender);
+        headService.setVisualService(visualService);
         headService.initialize();
 
         this.rewardService = new RewardService(configService, placeholdersService, scheduler, commandDispatcher);
@@ -127,11 +144,15 @@ public class ServiceRegistry {
         languageService.setLang(configService.language());
         languageService.pushMessages();
 
+        visualService.despawnAll();
+
         // Reinitialize storage, hunts, heads
         storageService.initialize();
         huntConfigService.initialize();
         huntService.initialize();
         headService.load();
+        visualService.spawnLoaded();
+        visibilityService.loadOnlinePlayers();
 
         hologramService.load();
 
@@ -139,6 +160,7 @@ public class ServiceRegistry {
     }
 
     public void shutdown() {
+        visualService.shutdown();
         hologramService.unload();
         storageService.close();
         headService.cancelAllSpinTasks();
@@ -212,6 +234,14 @@ public class ServiceRegistry {
 
     public AreaEnforcementService getAreaEnforcementService() {
         return areaEnforcementService;
+    }
+
+    public HeadVisualService getVisualService() {
+        return visualService;
+    }
+
+    public HeadVisibilityService getVisibilityService() {
+        return visibilityService;
     }
 
     public HoloEasy getHoloEasyLib() {

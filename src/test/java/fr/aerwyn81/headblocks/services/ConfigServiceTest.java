@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.services;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
 import fr.aerwyn81.headblocks.data.TieredReward;
+import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.databases.EnumTypeDatabase;
 import org.bukkit.Color;
 import org.junit.jupiter.api.AfterEach;
@@ -14,7 +15,6 @@ import redis.clients.jedis.Protocol;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1946,40 +1946,106 @@ class ConfigServiceTest {
         }
 
         @Test
-        void headsTheme_returns_configured_themes() throws IOException {
+        void headsThemeEntries_returns_configured_themes() throws IOException {
             String yaml = """
                     headsTheme:
                       theme:
                         christmas:
                           - "texture_xmas_1"
-                          - "texture_xmas_2"
+                          - "block:SPRUCE_SAPLING"
                         halloween:
                           - "texture_halloween_1"
                     """;
             var service = new ConfigService(writeConfig(yaml));
 
-            HashMap<String, List<String>> themes = service.headsTheme();
+            var themes = service.headsThemeEntries();
             assertThat(themes).hasSize(2);
-            assertThat(themes.get("christmas")).containsExactly("texture_xmas_1", "texture_xmas_2");
-            assertThat(themes.get("halloween")).containsExactly("texture_halloween_1");
+            assertThat(themes.get("christmas")).hasSize(2);
+            assertThat(themes.get("christmas").get(0)).isEqualTo("texture_xmas_1");
+            assertThat(themes.get("christmas").get(1)).isEqualTo("block:SPRUCE_SAPLING");
+            assertThat(themes.get("halloween")).hasSize(1);
+            assertThat(themes.get("halloween").get(0)).isEqualTo("texture_halloween_1");
         }
 
         @Test
-        void headsTheme_returns_empty_when_no_theme_section() throws IOException {
+        void headsThemeEntries_returns_empty_when_no_theme_section() throws IOException {
             var service = new ConfigService(writeConfig(""));
 
-            assertThat(service.headsTheme()).isEmpty();
+            assertThat(service.headsThemeEntries()).isEmpty();
         }
 
         @Test
-        void headsTheme_returns_empty_when_theme_section_is_null() throws IOException {
+        void headsThemeEntries_returns_empty_when_theme_section_is_null() throws IOException {
             String yaml = """
                     headsTheme:
                       enabled: true
                     """;
             var service = new ConfigService(writeConfig(yaml));
 
-            assertThat(service.headsTheme()).isEmpty();
+            assertThat(service.headsThemeEntries()).isEmpty();
+        }
+    }
+
+    // =========================================================================
+    // Catalog entries and rendering
+    // =========================================================================
+
+    @Nested
+    class CatalogAndRendering {
+
+        @Test
+        void headEntries_readsTheList() throws IOException {
+            String yaml = """
+                    heads:
+                      - 'block:LANTERN'
+                      - 'mob:CAT'
+                    """;
+            var service = new ConfigService(writeConfig(yaml));
+
+            assertThat(service.headEntries()).hasSize(2);
+            assertThat(service.headEntries().get(1)).isEqualTo("mob:CAT");
+        }
+
+        @Test
+        void headEntries_defaults_to_empty() throws IOException {
+            assertThat(new ConfigService(writeConfig("")).headEntries()).isEmpty();
+        }
+
+        @Test
+        void rendering_defaults_to_blocks() throws IOException {
+            var service = new ConfigService(writeConfig(""));
+
+            assertThat(service.renderingMode()).isEqualTo(RenderMode.BLOCK);
+            assertThat(service.renderingScale()).isEqualTo(1.0);
+            assertThat(service.renderingGlow()).isFalse();
+        }
+
+        @Test
+        void rendering_readsTheConfiguredValues() throws IOException {
+            String yaml = """
+                    rendering:
+                      mode: display
+                      scale: 2.5
+                      glow: true
+                    """;
+            var service = new ConfigService(writeConfig(yaml));
+
+            assertThat(service.renderingMode()).isEqualTo(RenderMode.DISPLAY);
+            assertThat(service.renderingScale()).isEqualTo(2.5);
+            assertThat(service.renderingGlow()).isTrue();
+        }
+
+        @Test
+        void rendering_invalidValues_fallBackSafely() throws IOException {
+            String yaml = """
+                    rendering:
+                      mode: floating
+                      scale: -3
+                    """;
+            var service = new ConfigService(writeConfig(yaml));
+
+            assertThat(service.renderingMode()).isEqualTo(RenderMode.BLOCK);
+            assertThat(service.renderingScale()).isEqualTo(0.1);
         }
     }
 

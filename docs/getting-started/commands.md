@@ -66,13 +66,12 @@ All admin commands require `headblocks.admin`.
 
 ### /hb give
 
-Give a HeadBlock item to a player. When a hunt is specified, the given head is linked to that hunt and is always placed in it, regardless of the hunt selected with `/hb hunt select`.
+Opens the catalog to pick the items and the hunt they are linked to (see [Heads, Blocks and Mobs](../configuration/rendering.md#taking-the-items)). With a player name, the catalog opens for that player instead.
 
-|               |                                      |
-|---------------|--------------------------------------|
-| **Alias**     | `g`                                  |
-| **Arguments** | `<player> (* or head number) (hunt)` |
-| **Sender**    | Player                               |
+|               |            |
+|---------------|------------|
+| **Alias**     | `g`        |
+| **Arguments** | `(player)` |
 
 ### /hb remove
 
@@ -239,7 +238,7 @@ Show detailed hunt info (state, priority, behaviors, heads, players).
 
 ### /hb hunt select
 
-Set the active hunt for head placement. No argument resets to "default". Heads given with a hunt (`/hb give <player> <number> <hunt>`) ignore the selection.
+Set the active hunt for head placement. No argument resets to "default". Heads taken from the catalog with a hunt linked ignore the selection.
 
 |               |          |
 |---------------|----------|
@@ -302,6 +301,14 @@ Reset a player's progress in a specific hunt.
 |               |                    |
 |---------------|--------------------|
 | **Arguments** | `<name> <player>`  |
+
+### /hb hunt rendering
+
+Show or change how the heads of a hunt are rendered. Changing it converts the heads already placed (see [Heads, Blocks and Mobs](../configuration/rendering.md#changing-the-mode-of-an-existing-hunt)).
+
+|               |                           |
+|---------------|---------------------------|
+| **Arguments** | `<name> (block\|display)` |
 
 ### /hb hunt schedule
 

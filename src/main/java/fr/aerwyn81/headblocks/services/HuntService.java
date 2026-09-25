@@ -2,10 +2,12 @@ package fr.aerwyn81.headblocks.services;
 
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class HuntService {
@@ -16,6 +18,7 @@ public class HuntService {
     private final Map<String, HBHunt> huntsById = new LinkedHashMap<>();
     private final Map<UUID, String> selectedHunt = new HashMap<>();
     private long knownHuntVersion = 0;
+    private final List<Consumer<HeadLocation>> transferListeners = new ArrayList<>();
 
     // --- Constructor ---
 
@@ -144,6 +147,11 @@ public class HuntService {
         return defaultHunt != null ? defaultHunt.getId() : HBHunt.DEFAULT_ID;
     }
 
+    public HuntConfig configOf(String huntId) {
+        HBHunt hunt = huntId == null ? null : huntsById.get(huntId);
+        return hunt != null ? hunt.getConfig() : new HuntConfig(configService);
+    }
+
     public void clearSelectedHunt(UUID playerUUID) {
         selectedHunt.remove(playerUUID);
     }
@@ -170,6 +178,12 @@ public class HuntService {
         huntConfigService.saveLocationInHunt(toHuntId, headLocation);
 
         storageService.incrementHuntVersion();
+
+        transferListeners.forEach(listener -> listener.accept(headLocation));
+    }
+
+    public void onHeadTransferred(Consumer<HeadLocation> listener) {
+        transferListeners.add(listener);
     }
 
     public void checkRemoteChanges() {
