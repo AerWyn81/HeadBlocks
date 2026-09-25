@@ -3,8 +3,8 @@ name: HeadBlocks CD
 on:
   push:
     tags:
-      - '[0-9]+\.[0-9]+\.[0-9]+'
-      - '[0-9]+\.[0-9]+\.[0-9]+\-[a-z]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-[a-z]+'
   workflow_dispatch:
     inputs:
       version:
@@ -26,14 +26,21 @@ jobs:
   release:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
 
       # - name: Install dependencies
       #  run: bash ./install-dependency.sh ${{ secrets.FILE_ID_CMI_9_8_2_2 }} ${{ secrets.FILE_ID_CMI_LIB_1_5_7_1 }} ${{ secrets.FILE_ID_HOLOEASY }}
@@ -41,61 +48,37 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run tests
-        run: ./gradlew test
       - name: Build with Gradle - Compile plugin
         run: ./gradlew clean build -Pcd
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create Release with both JARs
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-      - name: Get the tag version
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-
-      - name: Upload Release Jar (Paper)
-        id: upload-release-jar
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/HeadBlocks.jar
-          asset_name: HeadBlocks-${{ steps.get_version.outputs.VERSION }}.jar
-          asset_content_type: application/java-archive
-
-      - name: Upload Release Jar (Spigot)
-        id: upload-release-jar-spigot
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/HeadBlocks-spigot.jar
-          asset_name: HeadBlocks-${{ steps.get_version.outputs.VERSION }}-spigot.jar
-          asset_content_type: application/java-archive
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp build/HeadBlocks.jar "build/HeadBlocks-${GITHUB_REF_NAME}.jar"
+          cp build/HeadBlocks-spigot.jar "build/HeadBlocks-${GITHUB_REF_NAME}-spigot.jar"
+          gh release create "$GITHUB_REF_NAME" \
+            "build/HeadBlocks-${GITHUB_REF_NAME}.jar" \
+            "build/HeadBlocks-${GITHUB_REF_NAME}-spigot.jar" \
+            --title "$GITHUB_REF" --notes '' --verify-tag
 
   publish-modrinth:
     needs: release
     if: always() && github.event_name == 'workflow_dispatch' && (inputs.jobs == 'all' || inputs.jobs == 'modrinth')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'gradle'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -266,14 +249,18 @@ jobs:
     if: always() && github.event_name == 'workflow_dispatch' && (inputs.jobs == 'all' || inputs.jobs == 'hangar')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'gradle'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -306,10 +293,10 @@ jobs:
     if: always() && github.event_name == 'workflow_dispatch' && (inputs.jobs == 'all' || inputs.jobs == 'bbcode')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
@@ -321,7 +308,7 @@ jobs:
         run: echo "VERSION=${{ inputs.version || github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Upload BBCode as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: changelog-bbcode-${{ steps.get_version.outputs.VERSION }}
           path: changelog.bbcode
@@ -332,7 +319,7 @@ jobs:
     if: always() && github.event_name == 'workflow_dispatch' && (inputs.jobs == 'all' || inputs.jobs == 'discord')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Get version
         id: get_version
