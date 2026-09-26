@@ -173,7 +173,11 @@ public final class HeadBlocks extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new OnPlayerChatEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPressurePlateEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerMoveEvent(serviceRegistry), this);
-        Bukkit.getPluginManager().registerEvents(new OnHeadEntityEvent(serviceRegistry), this);
+        var headEntityEvent = new OnHeadEntityEvent(serviceRegistry);
+        Bukkit.getPluginManager().registerEvents(headEntityEvent, this);
+        for (var visualProvider : visualProviders.values()) {
+            visualProvider.listenInteractions(this, headEntityEvent);
+        }
 
         timedRunTask = scheduler.runTaskTimer(new TimedRunTask(serviceRegistry), 0, 2);
         areaOutlineTask = scheduler.runTaskTimer(new AreaOutlineTask(serviceRegistry), 20, 10);

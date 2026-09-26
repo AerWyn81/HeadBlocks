@@ -48,22 +48,24 @@ heads:
 
 When the plugin is installed, its contents can be hidden too:
 
-| Format                      | Plugin      | Content                                         |
-|-----------------------------|-------------|-------------------------------------------------|
-| `nexo:<id>`                 | Nexo        | Custom item or furniture, rendered as a display |
-| `itemsadder:<namespace:id>` | ItemsAdder  | Custom item or furniture, rendered as a display |
-| `oraxen:<id>`               | Oraxen      | Custom item or furniture, rendered as a display |
-| `mythicmobs:<mob>`          | MythicMobs  | A MythicMobs mob without AI (`level` option)    |
-| `modelengine:<model>`       | ModelEngine | A 3D model                                      |
-| `bettermodel:<model>`       | BetterModel | A 3D model                                      |
-| `citizens:<skin>`           | Citizens    | An NPC wearing the skin of a player             |
-| `fancynpcs:<skin>`          | FancyNpcs   | An NPC wearing the skin of a player             |
-| `znpcs:<skin>`              | ZNPCsPlus   | An NPC wearing the skin of a player             |
+| Format                      | Plugin      | Content                                        |
+|-----------------------------|-------------|------------------------------------------------|
+| `nexo:<id>`                 | Nexo        | Custom item, or furniture placed by Nexo       |
+| `itemsadder:<namespace:id>` | ItemsAdder  | Custom item, or furniture placed by ItemsAdder |
+| `oraxen:<id>`               | Oraxen      | Custom item, or furniture shown as in Oraxen   |
+| `mythicmobs:<mob>`          | MythicMobs  | A MythicMobs mob without AI (`level` option)   |
+| `modelengine:<model>`       | ModelEngine | A 3D model                                     |
+| `bettermodel:<model>`       | BetterModel | A 3D model                                     |
+| `citizens:<skin>`           | Citizens    | An NPC wearing the skin of a player            |
+| `fancynpcs:<skin>`          | FancyNpcs   | An NPC wearing the skin of a player            |
+| `znpcs:<skin>`              | ZNPCsPlus   | An NPC wearing the skin of a player            |
 
 - NPCs accept `name` (shown above them, hidden by default), `type` (another entity type than a player) and, for Citizens and FancyNpcs, `look=true` to look at nearby players.
 - Models and NPCs accept `width` and `height` to size the zone players click.
 - HeadBlocks creates its own copies: they are never saved by the other plugin and don't appear in its lists.
-- Furniture is shown with its model only: it has no seat and no collision.
+- Nexo and ItemsAdder furniture is placed by its plugin, with its model and orientation. Seats, storage and other furniture actions are disabled.
+- Oraxen furniture (display entity type) is shown with the model, size and orientation set in Oraxen, without its seats, barriers or light. Other Oraxen furniture types are shown as an item.
+- Furniture keeps its own size: `scale` and spin don't apply to it. Use `width` and `height` to size the zone players click.
 - Contents are loaded once their plugin is ready, and again after `/nexo reload`, `/iareload`, `/oraxen reload`, `/mm reload`…
 
 ## Taking the items

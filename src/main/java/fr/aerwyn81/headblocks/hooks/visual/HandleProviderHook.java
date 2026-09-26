@@ -113,6 +113,10 @@ public abstract class HandleProviderHook<H> implements VisualProviderHook {
         }
     }
 
+    boolean handles(List<Entity> entities) {
+        return handleOf(entities) != null;
+    }
+
     private H handleOf(List<Entity> entities) {
         return entities.isEmpty() ? null : handles.get(entities.get(0).getUniqueId());
     }

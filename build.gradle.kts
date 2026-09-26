@@ -52,6 +52,9 @@ val coverageExclusions = listOf(
     "**/hooks/HeadDatabaseHook.java",
     "**/hooks/HeadDBHook.java",
     "**/hooks/visual/NexoHook.java",
+    "**/hooks/visual/NexoFurnitureRenderer.java",
+    "**/hooks/visual/ItemsAdderFurnitureRenderer.java",
+    "**/hooks/visual/OraxenFurnitureRenderer.java",
     "**/hooks/visual/ItemsAdderHook.java",
     "**/hooks/visual/OraxenHook.java",
     "**/hooks/visual/MythicMobsHook.java",
@@ -114,7 +117,7 @@ configurations.compileClasspath {
     attributes { attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25) }
 }
 
-// Tests need the provider APIs too, but last on the classpath: some of them shade unrelocated libraries.
+// Tests need  the providerAPIs too, but last on the classpath: some of them shade unrelocated libraries.
 val providerApis = configurations.create("providerApis") {
     isTransitive = false
     attributes { attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25) }
