@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.events;
 import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.hooks.visual.HeadEntityInteractions;
 import fr.aerwyn81.headblocks.services.HeadClaimService;
 import fr.aerwyn81.headblocks.services.HeadRemovalService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
@@ -20,7 +21,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
-public class OnHeadEntityEvent implements Listener {
+public class OnHeadEntityEvent implements Listener, HeadEntityInteractions {
 
     private final ServiceRegistry registry;
     private final HeadClaimService claimService;
@@ -70,16 +71,9 @@ public class OnHeadEntityEvent implements Listener {
 
         e.setCancelled(true);
 
-        if (!(e instanceof EntityDamageByEntityEvent byEntity) || !(byEntity.getDamager() instanceof Player player)) {
-            return;
+        if (e instanceof EntityDamageByEntityEvent byEntity && byEntity.getDamager() instanceof Player player) {
+            attack(player, entity);
         }
-
-        if (player.getGameMode() == GameMode.CREATIVE) {
-            removeIfAllowed(player, entity);
-            return;
-        }
-
-        click(player, entity);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -127,6 +121,26 @@ public class OnHeadEntityEvent implements Listener {
         for (var entity : e.getEntities()) {
             registry.getVisualService().removeOrphan(entity);
         }
+    }
+
+    @Override
+    public boolean isHead(Entity entity) {
+        return registry.getVisualService().isHeadEntity(entity);
+    }
+
+    @Override
+    public void use(Player player, Entity entity) {
+        click(player, entity);
+    }
+
+    @Override
+    public void attack(Player player, Entity entity) {
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            removeIfAllowed(player, entity);
+            return;
+        }
+
+        click(player, entity);
     }
 
     private void click(Player player, Entity entity) {

@@ -89,6 +89,21 @@ class HandleProviderHookTest {
     }
 
     @Test
+    void handles_onlyItsOwnRenders() {
+        var entities = hook.spawn(anchor, content, settings);
+        Entity other = mock(Entity.class);
+        when(other.getUniqueId()).thenReturn(UUID.randomUUID());
+
+        assertThat(hook.handles(entities)).isTrue();
+        assertThat(hook.handles(List.of(other))).isFalse();
+        assertThat(hook.handles(List.of())).isFalse();
+
+        hook.despawn(entities);
+
+        assertThat(hook.handles(entities)).isFalse();
+    }
+
+    @Test
     void despawn_destroysTheHandleOnlyOnce() {
         var entities = hook.spawn(anchor, content, settings);
 

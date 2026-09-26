@@ -32,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -257,6 +258,54 @@ class OnHeadEntityEventTest {
             }
 
             verify(headService, never()).removeHeadLocation(any(), anyBoolean());
+            verify(storageService, never()).isStorageError();
+        }
+    }
+
+    @Nested
+    class ProviderInteractions {
+
+        @Test
+        void isHead_followsTheVisualService() {
+            headEntity();
+
+            assertThat(listener.isHead(entity)).isTrue();
+            assertThat(listener.isHead(mock(Entity.class))).isFalse();
+        }
+
+        @Test
+        void use_claims() {
+            when(visualService.headOf(entity)).thenReturn(head);
+            when(storageService.isStorageError()).thenReturn(true);
+
+            listener.use(player, entity);
+
+            verify(languageService).message("Messages.StorageError");
+        }
+
+        @Test
+        void attack_bySurvivalPlayer_claims() {
+            when(visualService.headOf(entity)).thenReturn(head);
+            when(player.getGameMode()).thenReturn(GameMode.SURVIVAL);
+            when(storageService.isStorageError()).thenReturn(true);
+
+            listener.attack(player, entity);
+
+            verify(languageService).message("Messages.StorageError");
+        }
+
+        @Test
+        void attack_byCreativePlayer_triesToRemove() {
+            when(visualService.headOf(entity)).thenReturn(head);
+            when(player.getGameMode()).thenReturn(GameMode.CREATIVE);
+
+            try (MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
+                playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(false);
+
+                listener.attack(player, entity);
+            }
+
+            verify(languageService).message("Messages.NoPermissionBlock");
             verify(storageService, never()).isStorageError();
         }
     }

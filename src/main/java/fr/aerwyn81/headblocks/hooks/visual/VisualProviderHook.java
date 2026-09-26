@@ -26,6 +26,9 @@ public interface VisualProviderHook extends EntityRenderer {
     default void register(Plugin plugin, Runnable onReload) {
     }
 
+    default void listenInteractions(Plugin plugin, HeadEntityInteractions interactions) {
+    }
+
     boolean exists(String id);
 
     ItemStack icon(HeadContent content);
