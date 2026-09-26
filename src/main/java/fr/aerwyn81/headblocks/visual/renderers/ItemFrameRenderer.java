@@ -7,6 +7,7 @@ import fr.aerwyn81.headblocks.visual.EntityRenderer;
 import fr.aerwyn81.headblocks.visual.RenderSettings;
 import org.bukkit.Location;
 import org.bukkit.Rotation;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.GlowItemFrame;
 import org.bukkit.entity.ItemFrame;
@@ -20,7 +21,7 @@ public class ItemFrameRenderer implements EntityRenderer {
 
     @Override
     public List<Entity> spawn(Location anchor, HeadContent content, RenderSettings settings) {
-        var facing = HeadUtils.cardinalOf(settings.yaw());
+        var facing = facingOf(content, settings.yaw());
         var item = ContentItems.itemOf(content);
         Class<? extends ItemFrame> type = content.optionBoolean("lit", false) ? GlowItemFrame.class : ItemFrame.class;
 
@@ -48,6 +49,17 @@ public class ItemFrameRenderer implements EntityRenderer {
                 frame.setRotation(rotationOf(angle));
             }
         }
+    }
+
+    static BlockFace facingOf(HeadContent content, float yaw) {
+        var raw = content.option("facing");
+        if (BlockFace.UP.name().equalsIgnoreCase(raw)) {
+            return BlockFace.UP;
+        }
+        if (BlockFace.DOWN.name().equalsIgnoreCase(raw)) {
+            return BlockFace.DOWN;
+        }
+        return HeadUtils.cardinalOf(yaw);
     }
 
     static Rotation rotationOf(float angle) {

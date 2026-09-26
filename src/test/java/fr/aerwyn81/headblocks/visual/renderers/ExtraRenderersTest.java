@@ -150,6 +150,26 @@ class ExtraRenderersTest {
         }
 
         @Test
+        void frame_facingOptionLaysItOnTheFloor() {
+            when(world.spawn(blockLocation, ItemFrame.class)).thenReturn(frame);
+
+            new ItemFrameRenderer().spawn(anchor, HeadContent.of(ContentKind.FRAME, "DIAMOND", Map.of("facing", "UP")),
+                    new RenderSettings(1, false, 90f));
+
+            verify(frame).setFacingDirection(BlockFace.UP, true);
+        }
+
+        @Test
+        void frame_facingOfFallsBackToTheYaw() {
+            assertThat(ItemFrameRenderer.facingOf(HeadContent.of(ContentKind.FRAME, "DIAMOND", Map.of("facing", "down")), 0))
+                    .isEqualTo(BlockFace.DOWN);
+            assertThat(ItemFrameRenderer.facingOf(HeadContent.of(ContentKind.FRAME, "DIAMOND", Map.of("facing", "NORTH")), 0))
+                    .isEqualTo(BlockFace.SOUTH);
+            assertThat(ItemFrameRenderer.facingOf(HeadContent.of(ContentKind.FRAME, "DIAMOND", null), 180))
+                    .isEqualTo(BlockFace.NORTH);
+        }
+
+        @Test
         void frame_optionsMakeItVisibleAndLit() {
             GlowItemFrame glowFrame = mock(GlowItemFrame.class);
             when(world.spawn(blockLocation, GlowItemFrame.class)).thenReturn(glowFrame);

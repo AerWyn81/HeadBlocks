@@ -18,7 +18,7 @@ Every entry of the `heads` list is something you can place. The prefix tells wha
 | `player:<uuid>`            | Head of a player                                              |                     |
 | `block:<MATERIAL>`         | A placeable block that stays in place (no sand, doors, beds…) | `block:LANTERN`     |
 | `item:<MATERIAL>[:<cmd>]`  | Any item, with an optional custom model data                  | `item:DIAMOND:1001` |
-| `frame:<MATERIAL>[:<cmd>]` | An item in an invisible item frame, on the wall you click     | `frame:FILLED_MAP`  |
+| `frame:<MATERIAL>[:<cmd>]` | An item in an invisible item frame, on the face you click     | `frame:FILLED_MAP`  |
 | `text:<text>`              | A floating text, with `&` colors and `\n` for new lines       | `text:&6Find me!`   |
 | `mob:<ENTITY_TYPE>`        | A mob without AI                                              | `mob:CAT`           |
 

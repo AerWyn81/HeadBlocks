@@ -16,7 +16,7 @@ metrics: true
 # Other contents can be hidden too:
 #   "block:<MATERIAL>"          -> any placeable block (e.g. block:LANTERN)
 #   "item:<MATERIAL>[:<cmd>]"   -> any item, with an optional custom model data (e.g. item:DIAMOND:1001), always rendered as a display
-#   "frame:<MATERIAL>[:<cmd>]"  -> an item in an invisible item frame, on the wall you click (e.g. frame:FILLED_MAP)
+#   "frame:<MATERIAL>[:<cmd>]"  -> an item in an invisible item frame, on the wall, floor or ceiling you click (e.g. frame:FILLED_MAP)
 #   "text:<text>"               -> a floating text, with & colors and \n for new lines (e.g. text:&6Find me!)
 #   "mob:<ENTITY_TYPE>"         -> a mob without AI (e.g. mob:CAT)
 # Options can be added between brackets at the end of an entry:

@@ -85,7 +85,7 @@ The Spigot server jar cannot be downloaded automatically; build it once per Mine
 ```bash
 mkdir -p run-spigot && cd run-spigot
 curl -O https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
-java -jar BuildTools.jar --rev 26.2 --remapped
+java -jar BuildTools.jar --rev 26.3 --remapped
 mv spigot-*.jar spigot.jar
 ```
 

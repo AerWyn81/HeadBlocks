@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -107,8 +108,20 @@ public class OnPlayerPlaceBlockEvent implements Listener {
             return;
         }
 
+        var yaw = facingYaw(player);
+        if (form == VisualForm.ITEM_FRAME) {
+            var face = e.getBlockFace();
+            if (face == BlockFace.UP || face == BlockFace.DOWN) {
+                Map<String, Object> options = new HashMap<>(content.options());
+                options.put("facing", face.name());
+                content = HeadContent.of(ContentKind.FRAME, content.value(), options);
+            } else {
+                yaw = HeadUtils.yawOf(face);
+            }
+        }
+
         var anchor = target.getLocation().add(0.5, 0, 0.5);
-        placementService.place(player, item, huntId, anchor, facingYaw(player), content, () -> {
+        placementService.place(player, item, huntId, anchor, yaw, content, () -> {
         });
     }
 

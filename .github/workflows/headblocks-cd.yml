@@ -186,6 +186,7 @@ jobs:
             26.1.1
             26.1.2
             26.2
+            26.3
 
           # The Paper jar ships paper-plugin.yml, so it will not load on plain Bukkit/Spigot at all.
           loaders: |
@@ -198,6 +199,11 @@ jobs:
             PlaceholderAPI(optional)
             HeadDatabase(optional)
             PacketEvents(optional)
+            nexo(optional)
+            mythicmobs(optional)
+            bettermodel(optional)
+            fancynpcs(optional)
+            znpcsplus(optional)
 
           # Java version
           java: 17
@@ -247,6 +253,7 @@ jobs:
             26.1.1
             26.1.2
             26.2
+            26.3
 
           loaders: |
             bukkit
@@ -257,6 +264,11 @@ jobs:
             PlaceholderAPI(optional)
             HeadDatabase(optional)
             PacketEvents(optional)
+            nexo(optional)
+            mythicmobs(optional)
+            bettermodel(optional)
+            fancynpcs(optional)
+            znpcsplus(optional)
 
           # Java version
           java: 17

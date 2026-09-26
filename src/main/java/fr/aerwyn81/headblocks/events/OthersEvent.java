@@ -52,6 +52,17 @@ public class OthersEvent implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPistonRetract(BlockPistonRetractEvent e) {
+        if (!registry.getConfigService().preventPistonExtension()) {
+            return;
+        }
+
+        if (e.getBlocks().stream().anyMatch(this::isHeadBlock)) {
+            e.setCancelled(true);
+        }
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onPhysics(BlockPhysicsEvent e) {
         if (isHeadBlock(e.getBlock())) {

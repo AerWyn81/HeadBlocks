@@ -1,24 +1,30 @@
-# HeadBlocks v3.4.0
+# HeadBlocks v3.5.0
 
 ## What's New
 
 ### ✨ New Features
 
-- **Hunt requirements.** A **Requirements** menu in `/hb hunt create` to stack the conditions to claim a head: area, previous hunt, permission, playtime and PlaceholderAPI, combined with `ALL` or `ANY`. See the [documentation](https://github.com/AerWyn81/HeadBlocks/blob/master/docs/configuration/hunts.md#requirements).
-- `/hb give <player> <number> [hunt]` links the given head to a hunt. It is always placed in that hunt, whatever the hunt selected with `/hb hunt select`.
-- `/hb hunt create` without a name creates a hunt named with the lowest free number (`1`, `2`, ...).
+- **Hide more than heads.** The `heads` list now accepts blocks (`block:LANTERN`), items (`item:DIAMOND:1001`), item frames (`frame:FILLED_MAP`), floating texts (`text:&6Find me!`) and mobs without AI (`mob:CAT`). Options go between brackets, e.g. `mob:ZOMBIE[head=DIAMOND_HELMET,baby=true]`. See the [documentation](https://aerwyn81.gitbook.io/headblocks/configuration-config.yml/rendering).
+- **Contents of other plugins**, when installed: custom items and furniture from **Nexo**, **ItemsAdder** and **Oraxen**, mobs from **MythicMobs**, 3D models from **ModelEngine** and **BetterModel**, and NPCs from **Citizens**, **FancyNpcs** and **ZNPCsPlus**.
+- **Rendering modes.** A new `rendering` section (`mode`, `scale`, `glow`) in `config.yml`, overridable per hunt: heads and blocks are placed as real blocks (`BLOCK`) or as floating, scalable display entities (`DISPLAY`) that spin smoothly.
+- `/hb hunt rendering <hunt> <block|display>` converts the heads already placed in a hunt, keeping their content, position and player progress. `/hb hunt info` shows the rendering of the hunt.
+- **Catalog.** `/hb give` opens a menu to take the items: filter by type, pick the hunt the items are linked to, shift + click to take a stack. `/hb give <player>` opens it for that player, and can be run from the console.
 
 ### 🚀 Improvements
 
-- The bounded zone became the **area** requirement, with every option it had. Existing hunt files are migrated on load.
-- The `headblocks.zone.bypass` permission is now `headblocks.area.bypass`. The old node keeps working.
-- Hunt files no longer keep the keys of a behavior or a requirement that was removed.
-- Player movement checks are skipped when no active hunt has an area to enforce.
+- Heads rendered as entities are hidden natively for players who found them with `hideFoundHeads`: no PacketEvents needed, and no invisible collision left behind.
+- Entities are never saved in the world: they are spawned when their chunk loads and respawned if something removes them, so uninstalling the plugin leaves nothing behind.
+- Placed block heads are protected: they don't burn, melt, decay, pop off when their support is removed or get pulled by a sticky piston, and clicking one only claims it (a chest doesn't open, a lever doesn't toggle).
+- Item frames are placed on the face you click, including floors and ceilings.
+- `/hb move` also moves heads rendered as entities.
+- A head moved to another hunt takes the rendering of its new hunt.
+- Holograms are raised above tall contents such as mobs.
+- Spin settings of a hunt are now applied to its heads.
+- Faster head lookups on servers with many heads.
 
-### 🐛 Bug Fixes
+### ⚠️ Breaking Changes
 
-- Fixed heads being placed in a deleted hunt when it was still selected. The selection now falls back to the default hunt.
-- Fixed a possible error when refreshing HeadBlocks menus while the player had no inventory open.
+- `/hb give <player> <number|*> [hunt]` is replaced by the catalog: the head number, `*` and hunt arguments no longer exist. Scripts or commands giving heads by number must be updated.
 
 ---
 

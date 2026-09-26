@@ -31,12 +31,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -923,6 +925,55 @@ class OnPlayerPlaceBlockEventTest {
                 verify(interact).setUseItemInHand(org.bukkit.event.Event.Result.DENY);
                 verify(headService).saveHeadLocation(eq(targetLocation), eq(content), anyFloat(), eq("halloween"));
             }
+        }
+
+        @Test
+        void frame_onAWall_facesTheClickedFace() throws Exception {
+            var content = HeadContent.of(ContentKind.FRAME, "DIAMOND", null);
+            when(interact.getBlockFace()).thenReturn(BlockFace.EAST);
+            when(clicked.getRelative(BlockFace.EAST)).thenReturn(target);
+
+            var saved = placeFrame(content);
+
+            assertThat(saved.getValue()).isEqualTo(content);
+            verify(headService).saveHeadLocation(any(Location.class), any(HeadContent.class), eq(270f), eq("halloween"));
+        }
+
+        @Test
+        void frame_onTheFloor_isLaidFlat() throws Exception {
+            var content = HeadContent.of(ContentKind.FRAME, "DIAMOND", null);
+
+            var saved = placeFrame(content);
+
+            assertThat(saved.getValue().kind()).isEqualTo(ContentKind.FRAME);
+            assertThat(saved.getValue().option("facing")).isEqualTo("UP");
+        }
+
+        private ArgumentCaptor<HeadContent> placeFrame(HeadContent content) throws Exception {
+            when(visualService.formOf(content, "halloween")).thenReturn(VisualForm.ITEM_FRAME);
+            when(target.isPassable()).thenReturn(true);
+            Location targetLocation = mock(Location.class);
+            when(target.getLocation()).thenReturn(targetLocation);
+            when(targetLocation.add(0.5, 0, 0.5)).thenReturn(targetLocation);
+            when(player.getLocation()).thenReturn(mock(Location.class));
+            ArgumentCaptor<HeadContent> saved = ArgumentCaptor.forClass(HeadContent.class);
+
+            try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
+                 MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class);
+                 MockedStatic<LocationUtils> ignoredLocation = mockStatic(LocationUtils.class);
+                 MockedStatic<ParticlesUtils> ignoredParticles = mockStatic(ParticlesUtils.class);
+                 MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+                headUtils.when(() -> HeadUtils.isHeadBlocksItem(item)).thenReturn(true);
+                headUtils.when(() -> HeadUtils.getContent(item)).thenReturn(content);
+                headUtils.when(() -> HeadUtils.yawOf(BlockFace.EAST)).thenReturn(270f);
+                playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
+                bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+
+                handler.onEntityHeadPlace(interact);
+
+                verify(headService).saveHeadLocation(eq(targetLocation), saved.capture(), anyFloat(), eq("halloween"));
+            }
+            return saved;
         }
     }
 }

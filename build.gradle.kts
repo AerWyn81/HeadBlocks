@@ -299,7 +299,8 @@ val generatePaperPluginDescription = tasks.register<GeneratePluginDescription>("
     outputDirectory.set(layout.buildDirectory.dir("generated/paper-plugin-yml"))
 }
 
-val mcVersion = "26.2"
+val mcVersion = "26.3"
+val foliaVersion = "26.2"
 
 // Minecraft 26.1+ refuses to boot below Java 25, whatever JDK happens to run Gradle.
 val serverJavaLauncher = javaToolchains.launcherFor {
@@ -493,7 +494,7 @@ runPaper {
         pluginsMode.set(RunPaperExtension.Folia.PluginsMode.INHERIT_NONE)
 
         registerTask {
-            minecraftVersion(mcVersion)
+            minecraftVersion(foliaVersion)
             javaLauncher.set(serverJavaLauncher)
             pluginJars.setFrom(paperJar.flatMap { it.archiveFile })
             runDirectory.set(file("run-folia"))
@@ -537,7 +538,7 @@ hangarPublish {
                     "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6",
                     "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6",
                     "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11",
-                    "26.1", "26.1.1", "26.1.2", "26.2"
+                    "26.1", "26.1.1", "26.1.2", "26.2", "26.3"
                 )
                 dependencies {
                     hangar("PlaceholderAPI") {
@@ -550,6 +551,26 @@ hangarPublish {
                         required = false
                     }
                     url("packetevents", "https://modrinth.com/plugin/packetevents") {
+                        required = false
+                    }
+                    for (optional in listOf("MythicMobs", "BetterModel", "FancyNpcs", "ZNPCsPlus")) {
+                        hangar(optional) {
+                            required = false
+                        }
+                    }
+                    url("Nexo", "https://modrinth.com/plugin/nexo") {
+                        required = false
+                    }
+                    url("ItemsAdder", "https://www.spigotmc.org/resources/73355/") {
+                        required = false
+                    }
+                    url("Oraxen", "https://www.spigotmc.org/resources/72448/") {
+                        required = false
+                    }
+                    url("ModelEngine", "https://mythiccraft.io/index.php?resources/1213/") {
+                        required = false
+                    }
+                    url("Citizens", "https://www.spigotmc.org/resources/13811/") {
                         required = false
                     }
                 }
