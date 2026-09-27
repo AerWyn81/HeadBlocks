@@ -32,18 +32,21 @@ In multi-hunt mode (2+ hunts), `%headblocks_current%` and `%headblocks_left%` wi
 
 These placeholders work with any hunt by replacing `<huntId>` with the hunt's ID (e.g., `christmas`, `default`).
 
-| Placeholder                            | Description                                  | Output  |
-|----------------------------------------|----------------------------------------------|---------|
-| `%headblocks_hunt_<huntId>_found%`     | Heads found by the player                    | Integer |
-| `%headblocks_hunt_<huntId>_total%`     | Heads to find in this hunt (the goal of a spawn hunt) | Integer |
-| `%headblocks_hunt_<huntId>_spawned%`   | Heads that appeared so far in a spawn hunt (`_spawned_formatted`: grouped digits) | Integer |
-| `%headblocks_hunt_<huntId>_active%`    | Heads currently present in a spawn hunt      | Integer |
-| `%headblocks_hunt_<huntId>_score%`     | Points of the player in a spawn hunt scoring points (`_score_formatted`: rounded, grouped digits) | Number  |
-| `%headblocks_hunt_<huntId>_left%`      | Heads remaining in this hunt                 | Integer |
-| `%headblocks_hunt_<huntId>_progress%`  | Progress bar for this hunt                   | String  |
-| `%headblocks_hunt_<huntId>_name%`      | Display name of the hunt                     | String  |
-| `%headblocks_hunt_<huntId>_state%`     | Localized state (Active, Inactive, Archived) | String  |
-| `%headblocks_hunt_<huntId>_finishers%` | Number of players who completed this hunt    | Integer |
+| Placeholder                                       | Description                                                                                       | Output         |
+|---------------------------------------------------|---------------------------------------------------------------------------------------------------|----------------|
+| `%headblocks_hunt_<huntId>_found%`                | Heads found by the player                                                                         | Integer        |
+| `%headblocks_hunt_<huntId>_total%`                | Heads to find in this hunt (the goal of a spawn hunt)                                             | Integer        |
+| `%headblocks_hunt_<huntId>_spawned%`              | Heads that appeared so far in a spawn hunt (`_spawned_formatted`: grouped digits)                 | Integer        |
+| `%headblocks_hunt_<huntId>_active%`               | Heads currently present in a spawn hunt                                                           | Integer        |
+| `%headblocks_hunt_<huntId>_score%`                | Points of the player in a spawn hunt scoring points (`_score_formatted`: rounded, grouped digits) | Number         |
+| `%headblocks_hunt_<huntId>_scoreposition%`        | Player's position in the points leaderboard (`-` if absent or not a points hunt)                  | Integer or `-` |
+| `%headblocks_hunt_<huntId>_scoretop_<pos>_name%`  | Player name at position in the points leaderboard                                                 | String         |
+| `%headblocks_hunt_<huntId>_scoretop_<pos>_score%` | Points at position in the points leaderboard                                                      | Number         |
+| `%headblocks_hunt_<huntId>_left%`                 | Heads remaining in this hunt                                                                      | Integer        |
+| `%headblocks_hunt_<huntId>_progress%`             | Progress bar for this hunt                                                                        | String         |
+| `%headblocks_hunt_<huntId>_name%`                 | Display name of the hunt                                                                          | String         |
+| `%headblocks_hunt_<huntId>_state%`                | Localized state (Active, Inactive, Archived)                                                      | String         |
+| `%headblocks_hunt_<huntId>_finishers%`            | Number of players who completed this hunt                                                         | Integer        |
 
 ## Per-Hunt Timed Placeholders
 

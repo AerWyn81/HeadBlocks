@@ -16,7 +16,6 @@ public record SpawnTemplate(String id, String name, int weight, HeadContent cont
         weight = Math.max(0, weight);
         rewards = List.copyOf(rewards);
         rewardChance = clampPercent(rewardChance);
-        points = Math.max(0, points);
         trapChance = clampPercent(trapChance);
         trapCommands = List.copyOf(trapCommands);
     }

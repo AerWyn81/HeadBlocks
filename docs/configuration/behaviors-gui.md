@@ -1,6 +1,6 @@
 # Behavior GUI
 
-Creating a hunt with **`/hb hunt create <name>`** opens the **Behaviors** menu, which chains into the Spawn points / Random spawn, Timed and Scheduled configuration menus depending on what you select, and gives access to the **Requirements** menu. This page lists every clickable element and its exact click/drop action.
+Creating a hunt with **`/hb hunt create <name>`** opens the **Behaviors** menu, which chains into the Spawning heads, Timed and Scheduled configuration menus depending on what you select, and gives access to the **Requirements** menu. This page lists every clickable element and its exact click/drop action.
 
 For the per-head menus opened by `/hb options` (Hint, Order, Rewards), see [Options GUI](options-gui.md). For what each behavior does at runtime, see [Hunt Files](hunts.md).
 
@@ -18,17 +18,16 @@ For the per-head menus opened by `/hb options` (Hint, Order, Rewards), see [Opti
 
 Toggle the behaviors you want, then validate.
 
-| Element          | Icon          | Action                                                            |
-|------------------|---------------|-------------------------------------------------------------------|
-| **Requirements** | Book          | LEFT CLICK → open the Requirements menu                           |
-| **Ordered**      | Lime/Gray Dye | LEFT CLICK → toggle the Ordered behavior                          |
-| **Scheduled**    | Lime/Gray Dye | LEFT CLICK → toggle the Scheduled behavior                        |
-| **Timed**        | Lime/Gray Dye | LEFT CLICK → toggle the Timed behavior                            |
-| **Spawn points** | Lime/Gray Dye | LEFT CLICK → toggle the Spawn points behavior (unselects Ordered) |
-| **Random spawn** | Lime/Gray Dye | LEFT CLICK → toggle the Random spawn behavior (unselects Ordered and Spawn points). Without an area requirement, the Requirements menu opens |
-| **Validate**     | Diamond       | LEFT CLICK → create the hunt (chains into the config menus below) |
+| Element            | Icon          | Action                                                              |
+|--------------------|---------------|---------------------------------------------------------------------|
+| **Requirements**   | Book          | LEFT CLICK → open the Requirements menu                             |
+| **Ordered**        | Lime/Gray Dye | LEFT CLICK → toggle the Ordered behavior                            |
+| **Scheduled**      | Lime/Gray Dye | LEFT CLICK → toggle the Scheduled behavior                          |
+| **Timed**          | Lime/Gray Dye | LEFT CLICK → toggle the Timed behavior                              |
+| **Spawning heads** | Lime/Gray Dye | LEFT CLICK → toggle the Spawning heads behavior (unselects Ordered) |
+| **Validate**       | Diamond       | LEFT CLICK → create the hunt (chains into the config menus below)   |
 
-A green dye means selected, gray means not selected. If Timed or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created. Spawn points and Random spawn open their own configuration first. Ordered, Spawn points and Random spawn cannot be selected together. Random spawn needs an area requirement: validating without one opens the Requirements menu, and removing the area unselects Random spawn. Requirements are configured in their own menu and the item shows how many are set.
+A green dye means selected, gray means not selected. If Timed or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created. Spawning heads opens its own configuration first. Ordered and Spawning heads cannot be selected together. When the heads are placed in the area and there is no area requirement, validating opens the Requirements menu. Requirements are configured in their own menu and the item shows how many are set.
 
 ---
 
@@ -116,9 +115,9 @@ First pick the hunt in the paginated list, then set the threshold.
 
 ---
 
-## Spawn points configuration
+## Spawning heads configuration
 
-Opened when validating with **Spawn points** or **Random spawn** selected, or with `/hb spawn <hunt> config` for an existing hunt. Numbers: **LEFT CLICK** → +, **RIGHT CLICK** → -, hold **SHIFT** for a bigger step.
+Opened when validating with **Spawning heads** selected, or with `/hb spawn <hunt> config` for an existing hunt. Numbers: **LEFT CLICK** → +, **RIGHT CLICK** → -, hold **SHIFT** for a bigger step.
 
 | Element                          | Icon              | Action                                                          |
 |----------------------------------|-------------------|-----------------------------------------------------------------|
@@ -142,7 +141,7 @@ Opened when validating with **Spawn points** or **Random spawn** selected, or wi
 | **Validate**                     | Diamond/Barrier   | LEFT CLICK → save (needs a template with a weight above 0)      |
 | **Back**                         | Back icon         | LEFT CLICK → discard the changes                                |
 
-With **Random spawn**, a second row holds its own options:
+**Placement** (Map) switches between **Points** and **Area**. With **Area**, the second row holds its own options:
 
 | Element                  | Icon          | Action                                                         |
 |--------------------------|---------------|----------------------------------------------------------------|
@@ -178,7 +177,7 @@ With **Random spawn**, a second row holds its own options:
 | Reward                         | Paper         | SHIFT + RIGHT CLICK → remove                             |
 | **Add a MESSAGE / COMMAND / BROADCAST reward** | Lime Concrete | LEFT CLICK → type the value in the chat |
 
-Spots are not set in this menu: add them in game with `/hb spawn <hunt> point add`. A random spawn hunt uses its area instead.
+Spots are not set in this menu: add them in game with `/hb spawn <hunt> point add`. With the **Area** placement, the hunt area is used instead.
 
 ---
 

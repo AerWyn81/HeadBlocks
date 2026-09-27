@@ -4,8 +4,9 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehaviors;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AfterGoal;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.RespawnPolicy;
@@ -648,7 +649,7 @@ class AreaEnforcementServiceTest {
     @Test
     void sanitize_randomSpawnWithoutAnyHead_keepsArea() {
         HBHunt hunt = hunt(HUNT_ID, 1, 0, area, returnPoint);
-        hunt.setBehaviors(List.of(fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.fromConfig(registry, null)));
+        hunt.setBehaviors(List.of(fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehaviors.area(registry)));
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
         when(headService.getHeadLocationsForHunt(hunt)).thenReturn(new ArrayList<>());
 
@@ -657,8 +658,8 @@ class AreaEnforcementServiceTest {
         assertThat(service.hasArea(hunt)).isTrue();
     }
 
-    private SpawnPointsBehavior spawnPoints(SpawnPoint... points) {
-        return new SpawnPointsBehavior(registry, List.of(points), 1, 1, -1, SpawnCompletion.PER_PLAYER,
+    private SpawnBehavior spawnPoints(SpawnPoint... points) {
+        return SpawnBehaviors.points(registry, List.of(points), 1, 1, -1, SpawnCompletion.PER_PLAYER,
                 AfterGoal.DENY, RespawnPolicy.DEFAULT, List.of());
     }
 

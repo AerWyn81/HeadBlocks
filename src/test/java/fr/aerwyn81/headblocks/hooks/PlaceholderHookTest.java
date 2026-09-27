@@ -467,6 +467,63 @@ class PlaceholderHookTest {
             assertThat(result).isEqualTo("");
         }
 
+        private HBHunt pointsHunt() throws InternalException {
+            HBHunt hunt = mock(HBHunt.class);
+            when(huntService.getHuntById("myhunt")).thenReturn(hunt);
+            when(hunt.scoresPoints()).thenReturn(true);
+            lenient().when(hunt.getId()).thenReturn("myhunt");
+
+            LinkedHashMap<PlayerProfileLight, Double> scores = new LinkedHashMap<>();
+            scores.put(new PlayerProfileLight(UUID.randomUUID(), "Best", ""), 12.5);
+            scores.put(new PlayerProfileLight(UUID.randomUUID(), "Second", ""), 3.0);
+            lenient().when(storageService.getTopScoresForHunt("myhunt")).thenReturn(scores);
+            return hunt;
+        }
+
+        @Test
+        void huntScoretop_returnsNameAndScore() throws InternalException {
+            pointsHunt();
+
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_1_name")).isEqualTo("Best");
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_1_score")).isEqualTo("12.5");
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_2_score")).isEqualTo("3");
+        }
+
+        @Test
+        void huntScoretop_invalidRequests_returnDash() throws InternalException {
+            pointsHunt();
+
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_3_name")).isEqualTo("-");
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_x_name")).isEqualTo("-");
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_1_other")).isEqualTo("-");
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_1")).isEqualTo("-");
+        }
+
+        @Test
+        void huntScoretop_headsHunt_returnsDash() {
+            HBHunt hunt = mock(HBHunt.class);
+            when(huntService.getHuntById("myhunt")).thenReturn(hunt);
+
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_1_name")).isEqualTo("-");
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoreposition")).isEqualTo("-");
+        }
+
+        @Test
+        void huntScoreposition_returnsTheRankOrDash() throws InternalException {
+            var hunt = pointsHunt();
+            var second = new ArrayList<>(storageService.getTopScoresForHunt("myhunt").keySet()).get(1).uuid();
+            when(player.getUniqueId()).thenReturn(second);
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoreposition")).isEqualTo("2");
+
+            when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoreposition")).isEqualTo("-");
+
+            when(storageService.getTopScoresForHunt("myhunt")).thenThrow(new InternalException("down"));
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoreposition")).isEqualTo("-");
+            assertThat(hook.onRequest(player, "hunt_myhunt_scoretop_1_name")).isEqualTo("-");
+            assertThat(hunt.scoresPoints()).isTrue();
+        }
+
         @Test
         void huntFound_storageError_returnsZero() throws InternalException {
             UUID playerUuid = UUID.randomUUID();

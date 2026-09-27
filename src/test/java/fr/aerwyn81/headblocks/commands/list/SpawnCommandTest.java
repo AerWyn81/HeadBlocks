@@ -4,8 +4,9 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehaviors;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
 import fr.aerwyn81.headblocks.services.*;
 import fr.aerwyn81.headblocks.services.gui.types.SpawnConfigGui;
@@ -85,13 +86,13 @@ class SpawnCommandTest {
     }
 
     private void useFixed(SpawnPoint... points) {
-        hunt.setBehaviors(List.of(new FreeBehavior(), new SpawnPointsBehavior(registry, List.of(points), 1, 1, -1,
+        hunt.setBehaviors(List.of(new FreeBehavior(), SpawnBehaviors.points(registry, List.of(points), 1, 1, -1,
                 SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT,
                 List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())))));
     }
 
-    private SpawnPointsBehavior fixed() {
-        return (SpawnPointsBehavior) hunt.getBehaviors().get(1);
+    private SpawnBehavior fixed() {
+        return (SpawnBehavior) hunt.getBehaviors().get(1);
     }
 
     private void lookAt(int x, int y, int z) {
@@ -370,6 +371,7 @@ class SpawnCommandTest {
         verify(huntConfigService).saveHunt(hunt);
         verify(spawnService).reconfigure(hunt);
         verify(player).sendMessage("Messages.SpawnConfigSaved");
+        verify(player, never()).sendMessage("Messages.SpawnNeedsArea");
     }
 
     @Test
@@ -386,6 +388,17 @@ class SpawnCommandTest {
         assertThat(command.tabComplete(player, new String[]{"spawn", "spawnhunt", "reroll", ""})).containsExactly("reset");
         assertThat(command.tabComplete(player, new String[]{"spawn", "spawnhunt", "clear", ""})).isEmpty();
         assertThat(command.tabComplete(player, new String[]{"spawn", "spawnhunt", "point", "add", ""})).isEmpty();
+    }
+
+    @Test
+    void add_acceptsLargeCounts_andAtLeastOne() {
+        useFixed();
+
+        command.perform(player, new String[]{"spawn", "spawnhunt", "add", "10000"});
+        command.perform(player, new String[]{"spawn", "spawnhunt", "add", "-5"});
+
+        verify(spawnService).addHeads(hunt, 10000);
+        verify(spawnService).addHeads(hunt, 1);
     }
 
     @Test
@@ -455,8 +468,8 @@ class SpawnCommandTest {
     }
 
     private void useRandom() {
-        hunt.setBehaviors(List.of(new FreeBehavior(), new fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior(registry,
-                true, 20, fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.BlockFilter.BLACKLIST, List.of(),
+        hunt.setBehaviors(List.of(new FreeBehavior(), fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehaviors.area(registry,
+                true, 20, fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AreaOptions.BlockFilter.BLACKLIST, List.of(),
                 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, SpawnOptions.DEFAULT,
                 List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())))));
     }
@@ -499,8 +512,10 @@ class SpawnCommandTest {
         command.applyConfig(player, hunt, draft);
 
         assertThat(hunt.getBehaviors().get(1)).isInstanceOfSatisfying(
-                fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.class,
-                random -> assertThat(random.surface()).isFalse());
+                fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior.class,
+                random -> assertThat(random.area().surface()).isFalse());
         verify(spawnService).reconfigure(hunt);
+        verify(areaEnforcementService).sanitizeAreaHunts();
+        verify(player).sendMessage("Messages.SpawnNeedsArea");
     }
 }

@@ -150,6 +150,69 @@ class ProgressCommandTest {
         }
 
         @Test
+        void multiHunt_pointsHunt_showsTheScore() throws InternalException {
+            UUID playerUuid = UUID.randomUUID();
+            PlayerProfileLight profile = new PlayerProfileLight(playerUuid, "testPlayer", "");
+
+            HBHunt points = mock(HBHunt.class);
+            when(points.getId()).thenReturn("points");
+            when(points.getDisplayName()).thenReturn("Points");
+            when(points.scoresPoints()).thenReturn(true);
+            when(points.getState()).thenReturn(HuntState.ACTIVE);
+            HBHunt heads = mock(HBHunt.class);
+            when(heads.getId()).thenReturn("heads");
+            when(heads.getDisplayName()).thenReturn("Heads");
+            when(heads.getState()).thenReturn(HuntState.ACTIVE);
+
+            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class);
+                 MockedStatic<CommandsUtils> cu = mockStatic(CommandsUtils.class)) {
+                pu.when(() -> PlayerUtils.hasPermission(any(), anyString())).thenReturn(true);
+                cu.when(() -> CommandsUtils.extractAndGetPlayerUuidByName(eq(registry), any(), any(), anyBoolean()))
+                        .thenReturn(profile);
+
+                when(huntService.isMultiHunt()).thenReturn(true);
+                when(huntService.getAllHunts()).thenReturn(new ArrayList<>(java.util.List.of(points, heads)));
+                when(storageService.getHeadsPlayerForHunt(eq(playerUuid), anyString())).thenReturn(new ArrayList<>());
+                when(storageService.getScoreForHunt(playerUuid, "points")).thenReturn(4.5);
+                when(configService.progressBarSymbol()).thenReturn("|");
+                when(configService.progressBarCompletedColor()).thenReturn("&a");
+                when(configService.progressBarNotCompletedColor()).thenReturn("&7");
+                when(languageService.message(anyString())).thenReturn("");
+                when(languageService.message("Messages.HuntProgressScore")).thenReturn("%displayName% %score%");
+
+                command.perform(player, new String[]{"progress"});
+
+                verify(player).sendMessage("Points 4.5");
+                verify(storageService, never()).getScoreForHunt(playerUuid, "heads");
+            }
+        }
+
+        @Test
+        void singleHunt_pointsHunt_scoreError_sendsNothing() throws InternalException {
+            UUID playerUuid = UUID.randomUUID();
+            PlayerProfileLight profile = new PlayerProfileLight(playerUuid, "testPlayer", "");
+            HBHunt points = mock(HBHunt.class);
+            when(points.getId()).thenReturn("points");
+            when(points.scoresPoints()).thenReturn(true);
+
+            try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class);
+                 MockedStatic<CommandsUtils> cu = mockStatic(CommandsUtils.class)) {
+                pu.when(() -> PlayerUtils.hasPermission(any(), anyString())).thenReturn(true);
+                cu.when(() -> CommandsUtils.extractAndGetPlayerUuidByName(eq(registry), any(), any(), anyBoolean()))
+                        .thenReturn(profile);
+
+                when(huntService.isMultiHunt()).thenReturn(false);
+                when(huntService.getAllHunts()).thenReturn(new ArrayList<>(java.util.List.of(points)));
+                when(languageService.messageList("Messages.ProgressCommand")).thenReturn(new ArrayList<>());
+                when(storageService.getScoreForHunt(playerUuid, "points")).thenThrow(new InternalException("down"));
+
+                command.perform(player, new String[]{"progress"});
+
+                verify(player, never()).sendMessage(anyString());
+            }
+        }
+
+        @Test
         void multiHunt_storageError_continuesGracefully() throws InternalException {
             UUID playerUuid = UUID.randomUUID();
             PlayerProfileLight profile = new PlayerProfileLight(playerUuid, "testPlayer", "");

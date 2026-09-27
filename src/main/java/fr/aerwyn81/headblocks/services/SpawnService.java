@@ -7,9 +7,8 @@ import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AreaOptions;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.ClaimOutcome;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnParticle;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnTemplate;
@@ -48,6 +47,7 @@ public class SpawnService {
     private final File folder;
     private final Map<String, SpawnState> states = new ConcurrentHashMap<>();
     private final Set<String> dirty = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Double> foundPoints = new ConcurrentHashMap<>();
     private ExecutorService writer;
     private Task flushTask;
 
@@ -183,19 +183,19 @@ public class SpawnService {
             return ClaimOutcome.TRAPPED;
         }
 
-        try {
-            registry.getStorageService().createSpawnHead(head.getUuid(), textureOf(head), template == null ? 1 : template.points());
-        } catch (InternalException e) {
-            state.active.put(head.getUuid(), spawn);
-            LogUtil.error("Cannot store the spawned head found in hunt {0}: {1}", hunt.getId(), e.getMessage());
-            return ClaimOutcome.TAKEN;
-        }
-
+        foundPoints.put(head.getUuid(), template == null ? 1 : template.points());
         registry.getHeadService().removeSpawnedHead(head);
         markDirty(state);
         log(state, "FOUND", head, player);
         respawnAfterFind(state, head.getLocation());
         return ClaimOutcome.FOUND;
+    }
+
+    public void storeFound(HeadLocation head) throws InternalException {
+        var points = foundPoints.remove(head.getUuid());
+        if (points != null) {
+            registry.getStorageService().createSpawnHead(head.getUuid(), textureOf(head), points);
+        }
     }
 
     public int addHeads(HBHunt hunt, int count) {
@@ -206,7 +206,7 @@ public class SpawnService {
 
         int spawned = 0;
         for (int i = 0; i < count; i++) {
-            if (spawnOne(state, null)) {
+            if (spawnOne(state, null, false)) {
                 spawned++;
             }
         }
@@ -423,6 +423,10 @@ public class SpawnService {
     }
 
     private boolean spawnOne(SpawnState state, Location avoid) {
+        return spawnOne(state, avoid, true);
+    }
+
+    private boolean spawnOne(SpawnState state, Location avoid, boolean retry) {
         var behavior = activeBehaviorOf(state);
         if (behavior == null) {
             return false;
@@ -438,24 +442,26 @@ public class SpawnService {
             return false;
         }
 
-        if (behavior instanceof RandomSpawnBehavior random) {
-            return spawnRandom(state, random, template, avoid);
+        if (behavior.placement() == SpawnBehavior.Placement.AREA) {
+            return spawnInArea(state, behavior, template, avoid, retry);
         }
 
-        var points = (SpawnPointsBehavior) behavior;
-        var location = points.pickLocation(candidate -> isFree(candidate, avoid));
+        var location = behavior.pickPoint(candidate -> isFree(candidate, avoid));
         if (location == null && avoid != null) {
-            location = points.pickLocation(candidate -> isFree(candidate, null));
+            location = behavior.pickPoint(candidate -> isFree(candidate, null));
         }
 
-        return place(state, behavior, template, location, location == null ? 0f : points.yawAt(location));
+        return place(state, behavior, template, location, location == null ? 0f : behavior.yawAt(location), retry);
     }
 
-    private boolean spawnRandom(SpawnState state, RandomSpawnBehavior behavior, SpawnTemplate template, Location avoid) {
-        var hunt = registry.getHuntService().getHuntById(state.huntId);
-        var column = behavior.pickColumn(hunt);
+    private boolean spawnInArea(SpawnState state, SpawnBehavior behavior, SpawnTemplate template, Location avoid,
+                                boolean retry) {
+        var area = SpawnBehavior.areaOf(registry.getHuntService().getHuntById(state.huntId));
+        var column = behavior.area().pickColumn(area);
         if (column == null) {
-            scheduleRespawn(state, RETRY_SECONDS, null);
+            if (retry) {
+                scheduleRespawn(state, RETRY_SECONDS, null);
+            }
             return false;
         }
 
@@ -474,21 +480,19 @@ public class SpawnService {
                 return;
             }
 
-            var location = behavior.pickInChunk(hunt, column, candidate -> isFree(candidate, avoid));
-            placed.set(place(state, behavior, template, location, behavior.randomYaw()));
+            var location = behavior.area().pickInChunk(area, column, candidate -> isFree(candidate, avoid));
+            placed.set(place(state, behavior, template, location, AreaOptions.randomYaw(), retry));
         });
         return placed.get() || !ran.get();
     }
 
-    private boolean place(SpawnState state, SpawnBehavior behavior, SpawnTemplate template, Location location, float yaw) {
-        if (location == null) {
-            scheduleRespawn(state, RETRY_SECONDS, null);
-            return false;
-        }
-
-        var head = buildHead(state.huntId, UUID.randomUUID(), template, location, yaw);
-        if (!activate(state, head, template)) {
-            scheduleRespawn(state, RETRY_SECONDS, null);
+    private boolean place(SpawnState state, SpawnBehavior behavior, SpawnTemplate template, Location location, float yaw,
+                          boolean retry) {
+        var head = location == null ? null : buildHead(state.huntId, UUID.randomUUID(), template, location, yaw);
+        if (head == null || !activate(state, head, template)) {
+            if (retry) {
+                scheduleRespawn(state, RETRY_SECONDS, null);
+            }
             return false;
         }
 
@@ -606,7 +610,7 @@ public class SpawnService {
     }
 
     private HeadLocation restoredHead(String huntId, SavedSpawn saved, World world, SpawnTemplate template) {
-        var head = buildHead(huntId, saved.uuid(), template, new Location(world, saved.x(), saved.y(), saved.z()), saved.yaw());
+        var head = buildHead(huntId, saved.uuid(), template, new Location(world, Math.floor(saved.x()), Math.floor(saved.y()), Math.floor(saved.z())), saved.yaw());
         if (saved.render() != null) {
             head.setRenderMode(saved.render());
         }
@@ -710,7 +714,7 @@ public class SpawnService {
     }
 
     private void removeLeftover(SavedSpawn saved, World world, SpawnTemplate template) {
-        var head = new HeadLocation("", saved.uuid(), new Location(world, saved.x(), saved.y(), saved.z()), "");
+        var head = new HeadLocation("", saved.uuid(), new Location(world, Math.floor(saved.x()), Math.floor(saved.y()), Math.floor(saved.z())), "");
         if (template != null) {
             head.setContent(template.content());
         }

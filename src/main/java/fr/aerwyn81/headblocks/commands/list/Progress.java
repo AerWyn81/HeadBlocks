@@ -48,6 +48,23 @@ public class Progress implements Cmd {
             messages.forEach(msg ->
                     sender.sendMessage(registry.getPlaceholdersService().parse(profile.name(), profile.uuid(), msg)));
         }
+
+        registry.getHuntService().getAllHunts().forEach(hunt -> showScore(sender, profile, hunt));
+    }
+
+    private void showScore(CommandSender sender, PlayerProfileLight profile, HBHunt hunt) {
+        if (!hunt.scoresPoints()) {
+            return;
+        }
+
+        try {
+            double score = registry.getStorageService().getScoreForHunt(profile.uuid(), hunt.getId());
+            sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.HuntProgressScore")
+                    .replace("%displayName%", hunt.getDisplayName())
+                    .replace("%score%", MessageUtils.formatScore(score))));
+        } catch (InternalException e) {
+            LogUtil.error("Error retrieving the score of {0} in hunt {1}: {2}", profile.name(), hunt.getId(), e.getMessage());
+        }
     }
 
     private void showMultiHuntProgress(CommandSender sender, PlayerProfileLight profile) {
@@ -75,6 +92,7 @@ public class Progress implements Cmd {
                                 .replace("%current%", String.valueOf(current))
                                 .replace("%max%", String.valueOf(total))
                                 .replace("%progress%", progress)));
+                showScore(sender, profile, hunt);
             } catch (InternalException e) {
                 LogUtil.error("Error retrieving hunt progress for {0} in hunt {1}: {2}",
                         profile.name(), hunt.getId(), e.getMessage());

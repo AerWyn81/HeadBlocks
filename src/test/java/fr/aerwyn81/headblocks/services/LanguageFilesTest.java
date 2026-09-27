@@ -33,6 +33,6 @@ class LanguageFilesTest {
         var spawnFr = fr.stream().filter(key -> key.contains("Spawn")).toList();
 
         assertThat(spawnEn).isNotEmpty().containsExactlyElementsOf(spawnFr);
-        assertThat(en).contains("Gui.SpawnConfigCompletion_FIRST_WINS", "Help.Spawn", "Hunt.Behavior.SpawnPoints");
+        assertThat(en).contains("Gui.SpawnConfigCompletion_FIRST_WINS", "Help.Spawn", "Hunt.Behavior.Spawn", "Gui.SpawnConfigPlacement_AREA");
     }
 }

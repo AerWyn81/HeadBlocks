@@ -1,11 +1,12 @@
-package fr.aerwyn81.headblocks.data.hunt.behavior;
+package fr.aerwyn81.headblocks.data.hunt.behavior.spawn;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.BlockFilter;
-import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehaviors;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AreaOptions.BlockFilter;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementMode;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
 import fr.aerwyn81.headblocks.data.hunt.requirement.area.CuboidAreaProvider;
@@ -37,7 +38,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class RandomSpawnBehaviorTest {
+class AreaOptionsTest {
 
     @Mock
     ServiceRegistry registry;
@@ -102,21 +103,19 @@ class RandomSpawnBehaviorTest {
                 List.of(new AreaRequirement(registry, area, null, false, false, null))));
     }
 
-    private RandomSpawnBehavior behavior(boolean surface, BlockFilter filter, List<Material> list) {
-        return new RandomSpawnBehavior(registry, surface, 20, filter, list, 3, 10, -1, SpawnCompletion.PER_PLAYER,
-                AfterGoal.DENY, RespawnPolicy.DEFAULT, SpawnOptions.DEFAULT,
-                List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())));
+    private AreaOptions behavior(boolean surface, BlockFilter filter, List<Material> list) {
+        return new AreaOptions(surface, 20, filter, list);
     }
 
-    private Location pick(RandomSpawnBehavior behavior) {
-        var column = behavior.pickColumn(hunt);
-        return column == null ? null : behavior.pickInChunk(hunt, column, location -> true);
+    private Location pick(AreaOptions options) {
+        var column = options.pickColumn(SpawnBehavior.areaOf(hunt));
+        return column == null ? null : options.pickInChunk(SpawnBehavior.areaOf(hunt), column, location -> true);
     }
 
     @Test
     void pickColumn_staysInsideTheAreaBounds() {
         for (int i = 0; i < 50; i++) {
-            var location = behavior(true, BlockFilter.BLACKLIST, List.of()).pickColumn(hunt);
+            var location = behavior(true, BlockFilter.BLACKLIST, List.of()).pickColumn(SpawnBehavior.areaOf(hunt));
 
             assertThat(location.getBlockX()).isBetween(0, 31);
             assertThat(location.getBlockZ()).isBetween(0, 31);
@@ -128,22 +127,22 @@ class RandomSpawnBehaviorTest {
     void pickColumn_noLoadedChunk_findsNothing() {
         when(world.isChunkLoaded(anyInt(), anyInt())).thenReturn(false);
 
-        assertThat(behavior(true, BlockFilter.BLACKLIST, List.of()).pickColumn(hunt)).isNull();
+        assertThat(behavior(true, BlockFilter.BLACKLIST, List.of()).pickColumn(SpawnBehavior.areaOf(hunt))).isNull();
     }
 
     @Test
     void pickColumn_withoutArea_findsNothing() {
         hunt.setRequirements(new RequirementSet(registry));
 
-        assertThat(behavior(true, BlockFilter.BLACKLIST, List.of()).pickColumn(hunt)).isNull();
-        assertThat(RandomSpawnBehavior.areaOf(hunt)).isNull();
+        assertThat(behavior(true, BlockFilter.BLACKLIST, List.of()).pickColumn(SpawnBehavior.areaOf(hunt))).isNull();
+        assertThat(SpawnBehavior.areaOf(hunt)).isNull();
     }
 
     @Test
     void pickColumn_unloadedWorld_findsNothing() {
         useArea(new CuboidAreaProvider("nether", 0, 50, 0, 31, 80, 31));
 
-        assertThat(behavior(true, BlockFilter.BLACKLIST, List.of()).pickColumn(hunt)).isNull();
+        assertThat(behavior(true, BlockFilter.BLACKLIST, List.of()).pickColumn(SpawnBehavior.areaOf(hunt))).isNull();
     }
 
     @Test
@@ -201,9 +200,9 @@ class RandomSpawnBehaviorTest {
     @Test
     void occupiedSpots_areSkipped() {
         var behavior = behavior(true, BlockFilter.BLACKLIST, List.of());
-        var column = behavior.pickColumn(hunt);
+        var column = behavior.pickColumn(SpawnBehavior.areaOf(hunt));
 
-        assertThat(behavior.pickInChunk(hunt, column, location -> false)).isNull();
+        assertThat(behavior.pickInChunk(SpawnBehavior.areaOf(hunt), column, location -> false)).isNull();
     }
 
     @Test
@@ -211,7 +210,7 @@ class RandomSpawnBehaviorTest {
         var behavior = behavior(true, BlockFilter.BLACKLIST, List.of());
 
         for (int i = 0; i < 20; i++) {
-            var location = behavior.pickInChunk(hunt, new Location(world, 20, 50, 5), spot -> true);
+            var location = behavior.pickInChunk(SpawnBehavior.areaOf(hunt), new Location(world, 20, 50, 5), spot -> true);
 
             assertThat(location.getBlockX()).isBetween(16, 31);
             assertThat(location.getBlockZ()).isBetween(0, 15);
@@ -223,22 +222,25 @@ class RandomSpawnBehaviorTest {
         var behavior = behavior(true, BlockFilter.BLACKLIST, List.of());
 
         for (int i = 0; i < 20; i++) {
-            assertThat(behavior.randomYaw()).isIn(0f, 90f, 180f, 270f);
+            assertThat(AreaOptions.randomYaw()).isIn(0f, 90f, 180f, 270f);
         }
     }
 
     @Test
     void saveTo_thenFromConfig_keepsEverything() {
-        var original = behavior(false, BlockFilter.WHITELIST, List.of(Material.STONE, Material.SAND));
+        var original = SpawnBehaviors.area(registry, false, 20, BlockFilter.WHITELIST, List.of(Material.STONE, Material.SAND),
+                3, 10, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, SpawnOptions.DEFAULT,
+                List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())));
         var yaml = new YamlConfiguration();
         original.saveTo(yaml);
 
-        var loaded = RandomSpawnBehavior.fromConfig(registry, yaml);
+        var loaded = SpawnBehavior.fromConfig(registry, yaml);
 
-        assertThat(loaded.surface()).isFalse();
-        assertThat(loaded.maxTries()).isEqualTo(20);
-        assertThat(loaded.filter()).isEqualTo(BlockFilter.WHITELIST);
-        assertThat(loaded.blocks()).containsExactlyInAnyOrder(Material.STONE, Material.SAND);
+        assertThat(loaded.placement()).isEqualTo(SpawnBehavior.Placement.AREA);
+        assertThat(loaded.area().surface()).isFalse();
+        assertThat(loaded.area().maxTries()).isEqualTo(20);
+        assertThat(loaded.area().filter()).isEqualTo(BlockFilter.WHITELIST);
+        assertThat(loaded.area().blocks()).containsExactlyInAnyOrder(Material.STONE, Material.SAND);
         assertThat(loaded.active()).isEqualTo(3);
         assertThat(loaded.goal()).isEqualTo(10);
         assertThat(loaded.template("basic")).isNotNull();
@@ -246,17 +248,15 @@ class RandomSpawnBehaviorTest {
 
     @Test
     void fromConfig_nullSection_usesTheDefaults() {
-        var loaded = RandomSpawnBehavior.fromConfig(registry, null);
+        var loaded = SpawnBehavior.fromConfig(registry, null);
 
-        assertThat(loaded.surface()).isTrue();
-        assertThat(loaded.maxTries()).isEqualTo(20);
-        assertThat(loaded.filter()).isEqualTo(BlockFilter.BLACKLIST);
-        assertThat(loaded.blocks()).isEmpty();
+        assertThat(loaded.placement()).isEqualTo(SpawnBehavior.Placement.POINTS);
+        assertThat(loaded.area()).isEqualTo(AreaOptions.DEFAULT);
     }
 
     @Test
     void parseBlocks_ignoresUnknownNamesAndItems() {
-        assertThat(RandomSpawnBehavior.parseBlocks(List.of("sand", " STONE ", "nope", "DIAMOND")))
+        assertThat(AreaOptions.parseBlocks(List.of("sand", " STONE ", "nope", "DIAMOND")))
                 .containsExactly(Material.SAND, Material.STONE);
     }
 
@@ -269,20 +269,17 @@ class RandomSpawnBehaviorTest {
 
     @Test
     void maxTries_isAtLeastOne() {
-        var behavior = new RandomSpawnBehavior(registry, true, 0, BlockFilter.BLACKLIST, List.of(), 1, 1, -1,
-                SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, SpawnOptions.DEFAULT, List.of());
-
-        assertThat(behavior.maxTries()).isEqualTo(1);
+        assertThat(new AreaOptions(true, 0, BlockFilter.BLACKLIST, List.of()).maxTries()).isEqualTo(1);
     }
 
     @Test
     void idAndDisplayInfo() {
         when(registry.getLanguageService()).thenReturn(languageService);
-        when(languageService.message("Hunt.Behavior.RandomSpawn")).thenReturn("Random spawn");
-        var behavior = behavior(true, BlockFilter.BLACKLIST, List.of());
+        when(languageService.message("Hunt.Behavior.Spawn")).thenReturn("Spawning heads");
+        var behavior = SpawnBehaviors.area(registry);
 
-        assertThat(behavior.getId()).isEqualTo("random_spawn");
-        assertThat(behavior.getDisplayInfo(null, hunt)).isEqualTo("Random spawn");
+        assertThat(behavior.getId()).isEqualTo("spawn");
+        assertThat(behavior.getDisplayInfo(null, hunt)).isEqualTo("Spawning heads");
     }
 
     @Test

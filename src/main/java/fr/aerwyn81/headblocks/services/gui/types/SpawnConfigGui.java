@@ -1,13 +1,8 @@
 package fr.aerwyn81.headblocks.services.gui.types;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
-import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AfterGoal;
-import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnCompletion;
-import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnDraft;
-import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnOptions;
-import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnParticle;
-import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnTemplate;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import fr.aerwyn81.headblocks.data.reward.RewardType;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
@@ -60,7 +55,7 @@ public class SpawnConfigGui {
         var ls = registry.getLanguageService();
         var draft = session.draft();
         Runnable reopen = () -> openSettings(player);
-        var menu = filledMenu(ls.message(draft.random ? "Gui.SpawnConfigRandomTitle" : "Gui.SpawnConfigTitle"));
+        var menu = filledMenu(ls.message("Gui.SpawnConfigTitle"));
 
         menu.setItem(0, 10, number(Material.PLAYER_HEAD, "Active", draft.active, 1, 1, 10,
                 value -> draft.active = value, reopen));
@@ -75,13 +70,16 @@ public class SpawnConfigGui {
                 () -> draft.afterGoal = draft.afterGoal == AfterGoal.DENY ? AfterGoal.CONTINUE : AfterGoal.DENY, reopen));
         menu.setItem(0, 16, templatesItem(draft));
 
-        if (draft.random) {
+        menu.setItem(0, 19, choice(Material.MAP, "Placement", draft.placement.name(),
+                () -> draft.placement = draft.placement == SpawnBehavior.Placement.POINTS
+                        ? SpawnBehavior.Placement.AREA : SpawnBehavior.Placement.POINTS, reopen));
+        if (draft.placement == SpawnBehavior.Placement.AREA) {
             menu.setItem(0, 20, toggle("Surface", draft.surface, () -> draft.surface = !draft.surface, reopen));
             menu.setItem(0, 21, number(Material.COMPASS, "MaxTries", draft.maxTries, 1, 1, 10,
                     value -> draft.maxTries = value, reopen));
             menu.setItem(0, 23, choice(Material.GRASS_BLOCK, "BlockFilter", draft.filter.name(),
-                    () -> draft.filter = draft.filter == RandomSpawnBehavior.BlockFilter.BLACKLIST
-                            ? RandomSpawnBehavior.BlockFilter.WHITELIST : RandomSpawnBehavior.BlockFilter.BLACKLIST, reopen));
+                    () -> draft.filter = draft.filter == AreaOptions.BlockFilter.BLACKLIST
+                            ? AreaOptions.BlockFilter.WHITELIST : AreaOptions.BlockFilter.BLACKLIST, reopen));
             menu.setItem(0, 24, blocksItem(player, draft, reopen));
         }
 
@@ -104,14 +102,14 @@ public class SpawnConfigGui {
         menu.setItem(0, 37, toggle("Announce", draft.announce, () -> draft.announce = !draft.announce, reopen));
         menu.setItem(0, 38, toggle("Log", draft.log, () -> draft.log = !draft.log, reopen));
         menu.setItem(0, 39, toggle("Debug", draft.debug, () -> draft.debug = !draft.debug, reopen));
-        menu.setItem(0, 41, choice(Material.EXPERIENCE_BOTTLE, "Scoring", draft.scoring.name(),
+        menu.setItem(0, 40, choice(Material.EXPERIENCE_BOTTLE, "Scoring", draft.scoring.name(),
                 () -> draft.scoring = draft.scoring == SpawnOptions.Scoring.HEADS
                         ? SpawnOptions.Scoring.POINTS : SpawnOptions.Scoring.HEADS, reopen));
-        menu.setItem(0, 42, toggle("ResetOnActivate", draft.resetOnActivate,
+        menu.setItem(0, 41, toggle("ResetOnActivate", draft.resetOnActivate,
                 () -> draft.resetOnActivate = !draft.resetOnActivate, reopen));
 
         if (draft.isValid()) {
-            menu.setItem(0, 40, new ItemGUI(new ItemBuilder(Material.DIAMOND)
+            menu.setItem(0, 43, new ItemGUI(new ItemBuilder(Material.DIAMOND)
                     .setName(ls.message("Gui.SpawnConfigValidate"))
                     .setLore(ls.messageList("Gui.SpawnConfigValidateLore"))
                     .toItemStack(), true)
@@ -122,7 +120,7 @@ public class SpawnConfigGui {
                         }
                     }));
         } else {
-            menu.setItem(0, 40, new ItemGUI(new ItemBuilder(Material.BARRIER)
+            menu.setItem(0, 43, new ItemGUI(new ItemBuilder(Material.BARRIER)
                     .setName(ls.message("Gui.ValidateBlocked"))
                     .setLore(ls.messageList("Gui.SpawnConfigValidateBlockedLore"))
                     .toItemStack()));
@@ -158,7 +156,7 @@ public class SpawnConfigGui {
 
                     registry.getChatPromptService().prompt(player, ls.message("Gui.SpawnBlocksPrompt"),
                             input -> {
-                                var parsed = RandomSpawnBehavior.parseBlocks(Arrays.asList(input.split("[\\s,]+")));
+                                var parsed = AreaOptions.parseBlocks(Arrays.asList(input.split("[\\s,]+")));
                                 if (parsed.isEmpty()) {
                                     player.sendMessage(ls.message("Gui.SpawnBlocksInvalid"));
                                 }
@@ -252,7 +250,7 @@ public class SpawnConfigGui {
 
         menu.setItem(0, 19, number(Material.ANVIL, "TemplateWeight", template.weight(), 0, 1, 10,
                 value -> draft.setWeight(templateId, value), reopen));
-        menu.setItem(0, 20, decimal(Material.EXPERIENCE_BOTTLE, "TemplatePoints", template.points(), 0, 100_000,
+        menu.setItem(0, 20, decimal(Material.EXPERIENCE_BOTTLE, "TemplatePoints", template.points(), -100_000, 100_000,
                 value -> draft.update(templateId, t -> t.withPoints(value)), reopen));
         menu.setItem(0, 21, rewardsItem(player, template));
         menu.setItem(0, 22, decimal(Material.EMERALD, "TemplateRewardChance", template.rewardChance(), 0, 100,

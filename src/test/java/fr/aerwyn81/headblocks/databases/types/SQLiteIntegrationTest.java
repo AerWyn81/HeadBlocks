@@ -779,4 +779,27 @@ class SQLiteIntegrationTest {
         assertThat(scores.get(0).getValue()).isEqualTo(6.5);
         assertThat(scores.get(1).getValue()).isEqualTo(2.0);
     }
+
+    @Test
+    void getTopScoresForHunt_negativePoints_lowerTheScore() throws InternalException {
+        UUID alice = UUID.randomUUID();
+        UUID bob = UUID.randomUUID();
+        UUID bonus = UUID.randomUUID();
+        UUID malus = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(alice, "Alice", ""));
+        db.updatePlayerInfo(new PlayerProfileLight(bob, "Bob", ""));
+        db.createSpawnHead(bonus, "t", 2, "s");
+        db.createSpawnHead(malus, "t", -3.5, "s");
+        db.addHeadForHunt(alice, bonus, "h");
+        db.addHeadForHunt(bob, bonus, "h");
+        db.addHeadForHunt(bob, malus, "h");
+
+        var scores = new java.util.ArrayList<>(db.getTopScoresForHunt("h").entrySet());
+
+        assertThat(scores).hasSize(2);
+        assertThat(scores.get(0).getKey().name()).isEqualTo("Alice");
+        assertThat(scores.get(0).getValue()).isEqualTo(2.0);
+        assertThat(scores.get(1).getKey().name()).isEqualTo("Bob");
+        assertThat(scores.get(1).getValue()).isEqualTo(-1.5);
+    }
 }

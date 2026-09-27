@@ -120,7 +120,7 @@ public class CatalogGui {
 
         int slot = 0;
         for (var head : registry.getHeadService().getHeads()) {
-            menu.addItem(slot++, new ItemGUI(head.getItemStack().clone(), true)
+            menu.addItem(slot++, new ItemGUI(pickerIcon(head), true)
                     .addOnClickEvent(event -> {
                         var clicker = (Player) event.getWhoClicked();
                         var content = head instanceof LoadableHead loadable && !loadable.isLoaded() ? null : head.getContent();
@@ -145,6 +145,21 @@ public class CatalogGui {
         });
 
         player.openInventory(menu.getInventory());
+    }
+
+    private ItemStack pickerIcon(HBHead head) {
+        var ls = registry.getLanguageService();
+        var loaded = !(head instanceof LoadableHead loadable) || loadable.isLoaded();
+        var content = loaded ? head.getContent() : null;
+
+        var lore = new ArrayList<String>();
+        if (content != null) {
+            lore.add("");
+            lore.add(ls.message("Head.ContentLore").replace("%content%", content.describe()));
+        }
+        lore.addAll(ls.messageList("Gui.CatalogPickerItemLore"));
+
+        return new ItemBuilder(head.getItemStack().clone()).setLore(lore).toItemStack();
     }
 
     private ItemGUI catalogItem(HBHead head, State state) {

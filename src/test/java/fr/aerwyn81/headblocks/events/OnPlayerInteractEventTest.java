@@ -588,6 +588,17 @@ class OnPlayerInteractEventTest {
 
         @BeforeEach
         void setUpHuntClick() {
+            var scheduler = mock(fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter.class);
+            lenient().when(registry.getScheduler()).thenReturn(scheduler);
+            lenient().doAnswer(invocation -> {
+                ((Runnable) invocation.getArgument(0)).run();
+                return null;
+            }).when(scheduler).runTaskAsync(any(Runnable.class));
+            lenient().doAnswer(invocation -> {
+                ((Runnable) invocation.getArgument(1)).run();
+                return null;
+            }).when(scheduler).runTask(any(org.bukkit.entity.Entity.class), any(Runnable.class));
+
             headUuid = UUID.randomUUID();
             playerUuid = UUID.randomUUID();
 
@@ -609,6 +620,7 @@ class OnPlayerInteractEventTest {
             lenient().when(player.getGameMode()).thenReturn(GameMode.SURVIVAL);
             lenient().when(player.getUniqueId()).thenReturn(playerUuid);
             lenient().when(player.getName()).thenReturn("TestPlayer");
+            lenient().when(player.isOnline()).thenReturn(true);
             lenient().when(block.getLocation()).thenReturn(location);
             lenient().when(headService.getHeadAt(location)).thenReturn(headLocation);
             lenient().when(storageService.isStorageError()).thenReturn(false);
@@ -769,6 +781,138 @@ class OnPlayerInteractEventTest {
 
         @Nested
         class SuccessfulFind {
+            @Test
+            void whileTheFindIsWritten_otherClicksInTheHuntWaitForIt() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenAnswer(invocation -> new ArrayList<>());
+                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
+                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
+                var writes = new ArrayList<Runnable>();
+                var scheduler = registry.getScheduler();
+                doAnswer(invocation -> {
+                    writes.add(invocation.getArgument(0));
+                    return null;
+                }).when(scheduler).runTaskAsync(any(Runnable.class));
+                var retries = new ArrayList<Runnable>();
+                doAnswer(invocation -> {
+                    retries.add(invocation.getArgument(1));
+                    return null;
+                }).when(scheduler).runTaskLater(any(org.bukkit.entity.Entity.class), any(Runnable.class), eq(1L));
+
+                triggerHandleHuntClick(new HashSet<>());
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(activeHunt, times(1)).evaluateBehaviors(player, headLocation);
+                verify(storageService, never()).addHeadForHunt(any(), any(), any());
+                org.assertj.core.api.Assertions.assertThat(retries).hasSize(1);
+
+                try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+                    bukkitStatic.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+                    writes.forEach(Runnable::run);
+                }
+                BukkitFutureResult<Set<UUID>> replayed = mock(BukkitFutureResult.class);
+                when(storageService.getHeadsPlayer(playerUuid)).thenReturn(replayed);
+                retries.forEach(Runnable::run);
+                ArgumentCaptor<Consumer<Set<UUID>>> captor = ArgumentCaptor.forClass(Consumer.class);
+                verify(replayed).whenComplete(eq(player), captor.capture());
+                try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+                    bukkitStatic.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+                    captor.getValue().accept(new HashSet<>());
+                }
+
+                verify(storageService, times(1)).addHeadForHunt(playerUuid, headUuid, "default");
+                verify(activeHunt, times(2)).evaluateBehaviors(player, headLocation);
+            }
+
+            private List<Runnable> holdTheWriteAndCollectReplays() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenAnswer(invocation -> new ArrayList<>());
+                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
+                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
+                var scheduler = registry.getScheduler();
+                doReturn(null).when(scheduler).runTaskAsync(any(Runnable.class));
+                var replays = new ArrayList<Runnable>();
+                doAnswer(invocation -> {
+                    replays.add(invocation.getArgument(1));
+                    return null;
+                }).when(scheduler).runTaskLater(any(org.bukkit.entity.Entity.class), any(Runnable.class), eq(1L));
+                return replays;
+            }
+
+            private void runLastReplay(List<Runnable> replays) {
+                BukkitFutureResult<Set<UUID>> replayed = mock(BukkitFutureResult.class);
+                lenient().when(storageService.getHeadsPlayer(playerUuid)).thenReturn(replayed);
+                replays.get(replays.size() - 1).run();
+                ArgumentCaptor<Consumer<Set<UUID>>> captor = ArgumentCaptor.forClass(Consumer.class);
+                verify(replayed, atMost(1)).whenComplete(eq(player), captor.capture());
+                if (!captor.getAllValues().isEmpty()) {
+                    captor.getValue().accept(new HashSet<>());
+                }
+            }
+
+            @Test
+            void replay_stopsWhenThePlayerLeft() throws InternalException {
+                var replays = holdTheWriteAndCollectReplays();
+                triggerHandleHuntClick(new HashSet<>());
+                triggerHandleHuntClick(new HashSet<>());
+                when(player.isOnline()).thenReturn(false);
+
+                runLastReplay(replays);
+
+                org.assertj.core.api.Assertions.assertThat(replays).hasSize(1);
+                verify(activeHunt, times(1)).evaluateBehaviors(player, headLocation);
+            }
+
+            @Test
+            void replay_stopsWhenTheHuntClosed() throws InternalException {
+                var replays = holdTheWriteAndCollectReplays();
+                triggerHandleHuntClick(new HashSet<>());
+                triggerHandleHuntClick(new HashSet<>());
+                when(activeHunt.isActive()).thenReturn(false);
+
+                runLastReplay(replays);
+
+                org.assertj.core.api.Assertions.assertThat(replays).hasSize(1);
+                verify(activeHunt, times(1)).evaluateBehaviors(player, headLocation);
+            }
+
+            @Test
+            void replay_givesUpAfterFiveSeconds() throws InternalException {
+                var replays = holdTheWriteAndCollectReplays();
+                triggerHandleHuntClick(new HashSet<>());
+                triggerHandleHuntClick(new HashSet<>());
+
+                for (int i = 0; i < 100; i++) {
+                    runLastReplay(replays);
+                }
+
+                org.assertj.core.api.Assertions.assertThat(replays).hasSize(100);
+                verify(player).sendMessage("mock-message");
+                verify(activeHunt, times(1)).evaluateBehaviors(player, headLocation);
+            }
+
+            @Test
+            void failedWrite_releasesTheHunt() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenAnswer(invocation -> new ArrayList<>());
+                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
+                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
+                doThrow(new InternalException("down")).when(storageService).addHeadForHunt(playerUuid, headUuid, "default");
+
+                triggerHandleHuntClick(new HashSet<>());
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(storageService, times(2)).addHeadForHunt(playerUuid, headUuid, "default");
+            }
+
+            @Test
+            void deniedClick_releasesTheHunt() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenAnswer(invocation -> new ArrayList<>());
+                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.deny("no"));
+
+                triggerHandleHuntClick(new HashSet<>());
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(activeHunt, times(2)).evaluateBehaviors(player, headLocation);
+            }
+
             @Test
             void newFind_addsHeadForHunt() throws InternalException {
                 ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
@@ -1093,8 +1237,9 @@ class OnPlayerInteractEventTest {
 
                 triggerHandleHuntClick(new HashSet<>());
 
-                // Should not crash, the exception is caught
                 verify(storageService).addHeadForHunt(playerUuid, headUuid, "default");
+                verify(player).sendMessage("mock-message");
+                verify(rewardService, never()).giveReward(any(), any(), any(), any(), any());
             }
         }
     }

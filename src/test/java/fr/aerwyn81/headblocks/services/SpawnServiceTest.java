@@ -9,7 +9,8 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehaviors;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
@@ -34,6 +35,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -148,12 +150,12 @@ class SpawnServiceTest {
         bukkit.close();
     }
 
-    private SpawnPointsBehavior spawnPoints(int points, int active, int max, RespawnPolicy respawn) {
+    private SpawnBehavior spawnPoints(int points, int active, int max, RespawnPolicy respawn) {
         var spawnPoints = new ArrayList<SpawnPoint>();
         for (int i = 0; i < points; i++) {
             spawnPoints.add(new SpawnPoint("world", i * 10, 64, 0, 0f));
         }
-        return new SpawnPointsBehavior(registry, spawnPoints, active, 10, max, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
+        return SpawnBehaviors.points(registry, spawnPoints, active, 10, max, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
                 respawn, List.of(new SpawnTemplate("basic", "Basic", 1, HeadContent.head("tex"), List.of())));
     }
 
@@ -207,7 +209,7 @@ class SpawnServiceTest {
             assertThat(head.getHuntId()).isEqualTo("spawnhunt");
             assertThat(head.getContent()).isEqualTo(HeadContent.head("tex"));
             assertThat(head.getName()).isEqualTo("Basic");
-            assertThat(head.getLocation().getX() % 1).isEqualTo(0.5);
+            assertThat(head.getLocation().getX() % 1).isZero();
         });
         verify(storageService, never()).createSpawnHead(any(), any(), anyDouble());
     }
@@ -286,7 +288,7 @@ class SpawnServiceTest {
     @Test
     void noTemplateWithWeight_spawnsNothing() {
         hunt = new HBHunt(configService, "spawnhunt", "Spawn", HuntState.ACTIVE, 1, "D");
-        hunt.setBehaviors(List.of(new SpawnPointsBehavior(registry, List.of(new SpawnPoint("world", 0, 64, 0, 0f)), 1, 1, -1,
+        hunt.setBehaviors(List.of(SpawnBehaviors.points(registry, List.of(new SpawnPoint("world", 0, 64, 0, 0f)), 1, 1, -1,
                 SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, List.of())));
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
         when(huntService.getHuntById("spawnhunt")).thenReturn(hunt);
@@ -307,6 +309,8 @@ class SpawnServiceTest {
 
         assertThat(service.claim(hunt, head, player)).isEqualTo(ClaimOutcome.FOUND);
         assertThat(service.claim(hunt, head, player)).isEqualTo(ClaimOutcome.TAKEN);
+        service.storeFound(head);
+        service.storeFound(head);
 
         verify(storageService, times(1)).createSpawnHead(head.getUuid(), "tex", 1.0);
         verify(headService, times(1)).removeSpawnedHead(head);
@@ -314,16 +318,26 @@ class SpawnServiceTest {
     }
 
     @Test
-    void claim_databaseDown_keepsTheHead() throws Exception {
+    void claim_doesNotTouchTheDatabase_theRowIsStoredLater() throws Exception {
         useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         var head = spawned().get(0);
+
+        service.claim(hunt, head, player);
+        verify(storageService, never()).createSpawnHead(any(), any(), anyDouble());
+
         doThrow(new InternalException("down")).when(storageService).createSpawnHead(any(), any(), anyDouble());
+        assertThatThrownBy(() -> service.storeFound(head)).isInstanceOf(InternalException.class);
+    }
 
-        assertThat(service.claim(hunt, head, player)).isEqualTo(ClaimOutcome.TAKEN);
+    @Test
+    void storeFound_placedHead_writesNothing() throws Exception {
+        var placed = mock(HeadLocation.class);
+        when(placed.getUuid()).thenReturn(UUID.randomUUID());
 
-        verify(headService, never()).removeSpawnedHead(any());
-        assertThat(service.getActiveHeads("spawnhunt")).containsExactly(head);
+        service.storeFound(placed);
+
+        verify(storageService, never()).createSpawnHead(any(), any(), anyDouble());
     }
 
     @Test
@@ -756,7 +770,7 @@ class SpawnServiceTest {
         var head = spawned().get(0);
         service.stop();
 
-        useHunt(new SpawnPointsBehavior(registry, spawnPoints(5, 1, -1, onFind(0)).points(), 1, 10, -1,
+        useHunt(SpawnBehaviors.points(registry, spawnPoints(5, 1, -1, onFind(0)).points(), 1, 10, -1,
                 SpawnCompletion.PER_PLAYER, AfterGoal.DENY, new RespawnPolicy(true, 0, 0, false, 3600, false, false),
                 List.of(new SpawnTemplate("other", "", 1, HeadContent.head("x"), List.of()))), HuntState.ACTIVE);
         when(visualService.isBlockRendered(any())).thenReturn(true);
@@ -967,7 +981,7 @@ class SpawnServiceTest {
         bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(null);
         restart();
 
-        useHunt(new SpawnPointsBehavior(registry, spawnPoints(5, 1, -1, onFind(0)).points(), 1, 10, -1,
+        useHunt(SpawnBehaviors.points(registry, spawnPoints(5, 1, -1, onFind(0)).points(), 1, 10, -1,
                 SpawnCompletion.PER_PLAYER, AfterGoal.DENY, onFind(0),
                 List.of(new SpawnTemplate("other", "", 1, HeadContent.head("x"), List.of()))), HuntState.ACTIVE);
         bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
@@ -979,12 +993,12 @@ class SpawnServiceTest {
 
     // --- Templates, announcements, extra heads, logs ---
 
-    private SpawnPointsBehavior withTemplate(int points, int active, SpawnTemplate template, SpawnOptions options) {
+    private SpawnBehavior withTemplate(int points, int active, SpawnTemplate template, SpawnOptions options) {
         var spawnPoints = new ArrayList<SpawnPoint>();
         for (int i = 0; i < points; i++) {
             spawnPoints.add(new SpawnPoint("world", i * 10, 64, 0, 0f));
         }
-        return new SpawnPointsBehavior(registry, spawnPoints, active, 10, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
+        return SpawnBehaviors.points(registry, spawnPoints, active, 10, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
                 onFind(0), options, List.of(template));
     }
 
@@ -1069,6 +1083,18 @@ class SpawnServiceTest {
 
         assertThat(service.getActiveHeads("spawnhunt")).hasSize(1);
         assertThat(spawned()).hasSize(3);
+    }
+
+    @Test
+    void addHeads_moreThanTheFreeSpots_placesWhatFits_withoutLeavingRetries() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        later.clear();
+
+        assertThat(service.addHeads(hunt, 10000)).isEqualTo(4);
+
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(5);
+        assertThat(later).isEmpty();
     }
 
     @Test
@@ -1181,15 +1207,16 @@ class SpawnServiceTest {
         var head = spawned().get(0);
 
         service.claim(hunt, head, player);
+        service.storeFound(head);
 
         verify(storageService).createSpawnHead(head.getUuid(), "tex", 2.5);
     }
 
-    // --- Random spawn ---
+    // --- Area placement ---
 
-    private fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior randomBehavior(int active, SpawnOptions options) {
-        return new fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior(registry, true, 20,
-                fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.BlockFilter.BLACKLIST, List.of(),
+    private fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior randomBehavior(int active, SpawnOptions options) {
+        return fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehaviors.area(registry, true, 20,
+                fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AreaOptions.BlockFilter.BLACKLIST, List.of(),
                 active, 10, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY, onFind(0), options,
                 List.of(new SpawnTemplate("basic", "Basic", 1, HeadContent.head("tex"), List.of())));
     }
@@ -1316,5 +1343,27 @@ class SpawnServiceTest {
 
         assertThat(spawned()).hasSize(1);
         assertThat(service.getActiveHeads("spawnhunt")).hasSize(1);
+    }
+
+    @Test
+    void restart_headSavedOnABlockCenter_comesBackOnTheBlock() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        service.stop();
+
+        var yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(stateFile().toFile());
+        var active = yaml.getConfigurationSection("active");
+        for (String key : active.getKeys(false)) {
+            active.set(key + ".x", active.getDouble(key + ".x") + 0.5);
+            active.set(key + ".z", active.getDouble(key + ".z") + 0.5);
+        }
+        yaml.save(stateFile().toFile());
+
+        restart();
+
+        assertThat(spawned()).singleElement().satisfies(head -> {
+            assertThat(head.getLocation().getX() % 1).isZero();
+            assertThat(head.getLocation().getZ() % 1).isZero();
+        });
     }
 }

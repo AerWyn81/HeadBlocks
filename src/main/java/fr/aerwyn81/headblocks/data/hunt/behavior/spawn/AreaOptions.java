@@ -1,26 +1,20 @@
-package fr.aerwyn81.headblocks.data.hunt.behavior;
+package fr.aerwyn81.headblocks.data.hunt.behavior.spawn;
 
-import fr.aerwyn81.headblocks.ServiceRegistry;
-import fr.aerwyn81.headblocks.data.hunt.HBHunt;
-import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
 import fr.aerwyn81.headblocks.data.hunt.requirement.area.AreaProvider;
-import fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement;
-import org.bukkit.Bukkit;
-import org.bukkit.HeightMap;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
-public class RandomSpawnBehavior extends SpawnBehavior {
+public record AreaOptions(boolean surface, int maxTries, BlockFilter filter, Set<Material> blocks) {
 
-    public static final String ID = "random_spawn";
+    public static final AreaOptions DEFAULT = new AreaOptions(true, 20, BlockFilter.BLACKLIST, Set.of());
 
     public enum BlockFilter {
         BLACKLIST, WHITELIST;
@@ -30,55 +24,16 @@ public class RandomSpawnBehavior extends SpawnBehavior {
         }
     }
 
-    private final boolean surface;
-    private final int maxTries;
-    private final BlockFilter filter;
-    private final Set<Material> blocks;
-
-    public RandomSpawnBehavior(ServiceRegistry registry, boolean surface, int maxTries, BlockFilter filter,
-                               Collection<Material> blocks, int active, int goal, int maxTotalSpawns,
-                               SpawnCompletion completion, AfterGoal afterGoal, RespawnPolicy respawn,
-                               SpawnOptions options, Collection<SpawnTemplate> templates) {
-        super(registry, active, goal, maxTotalSpawns, completion, afterGoal, respawn, options, templates);
-        this.surface = surface;
-        this.maxTries = Math.max(1, maxTries);
-        this.filter = filter;
-        this.blocks = blocks.isEmpty() ? Set.of() : EnumSet.copyOf(blocks);
+    public AreaOptions {
+        maxTries = Math.max(1, maxTries);
+        blocks = Set.copyOf(blocks);
     }
 
-    public boolean surface() {
-        return surface;
+    public AreaOptions(boolean surface, int maxTries, BlockFilter filter, Collection<Material> blocks) {
+        this(surface, maxTries, filter, Set.copyOf(blocks));
     }
 
-    public int maxTries() {
-        return maxTries;
-    }
-
-    public BlockFilter filter() {
-        return filter;
-    }
-
-    public Set<Material> blocks() {
-        return blocks;
-    }
-
-    @Override
-    public String getId() {
-        return ID;
-    }
-
-    @Override
-    public String getDisplayInfo(Player player, HBHunt hunt) {
-        return registry.getLanguageService().message("Hunt.Behavior.RandomSpawn");
-    }
-
-    public static AreaProvider areaOf(HBHunt hunt) {
-        var requirement = hunt.getRequirements().findOrNull(AreaRequirement.class);
-        return requirement == null ? null : requirement.area();
-    }
-
-    public Location pickColumn(HBHunt hunt) {
-        var area = areaOf(hunt);
+    public Location pickColumn(AreaProvider area) {
         var bounds = area == null ? null : area.getBounds();
         var world = area == null ? null : Bukkit.getWorld(area.getWorldName());
         if (bounds == null || world == null) {
@@ -96,8 +51,7 @@ public class RandomSpawnBehavior extends SpawnBehavior {
         return null;
     }
 
-    public Location pickInChunk(HBHunt hunt, Location column, Predicate<Location> isFree) {
-        var area = areaOf(hunt);
+    public Location pickInChunk(AreaProvider area, Location column, Predicate<Location> isFree) {
         var bounds = area == null ? null : area.getBounds();
         var world = column.getWorld();
         if (bounds == null || world == null) {
@@ -144,37 +98,23 @@ public class RandomSpawnBehavior extends SpawnBehavior {
         return filter == BlockFilter.WHITELIST ? blocks.contains(type) : !blocks.contains(type);
     }
 
-    public float randomYaw() {
+    public static float randomYaw() {
         return ThreadLocalRandom.current().nextInt(4) * 90f;
     }
 
-    @Override
-    protected void saveSource(ConfigurationSection section) {
+    public void saveTo(ConfigurationSection section) {
         section.set("surface", surface);
         section.set("maxTries", maxTries);
         section.set("blocks.mode", filter.name());
         section.set("blocks.list", blocks.stream().map(Material::name).sorted().toList());
     }
 
-    public static RandomSpawnBehavior fromConfig(ServiceRegistry registry, ConfigurationSection section) {
+    public static AreaOptions fromConfig(ConfigurationSection section) {
         if (section == null) {
-            return new RandomSpawnBehavior(registry, true, 20, BlockFilter.BLACKLIST, List.of(), 1, 1, -1,
-                    SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, SpawnOptions.DEFAULT, List.of());
+            return DEFAULT;
         }
-
-        return new RandomSpawnBehavior(registry,
-                section.getBoolean("surface", true),
-                section.getInt("maxTries", 20),
-                BlockFilter.of(section.getString("blocks.mode")),
-                parseBlocks(section.getStringList("blocks.list")),
-                section.getInt("active", 1),
-                section.getInt("goal", 1),
-                section.getInt("maxTotalSpawns", -1),
-                SpawnCompletion.of(section.getString("completion")),
-                AfterGoal.of(section.getString("afterGoal")),
-                RespawnPolicy.fromConfig(section.getConfigurationSection("respawn")),
-                SpawnOptions.fromConfig(section),
-                readTemplates(section.getConfigurationSection("templates")));
+        return new AreaOptions(section.getBoolean("surface", true), section.getInt("maxTries", 20),
+                BlockFilter.of(section.getString("blocks.mode")), parseBlocks(section.getStringList("blocks.list")));
     }
 
     public static List<Material> parseBlocks(Collection<String> names) {

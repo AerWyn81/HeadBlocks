@@ -67,11 +67,13 @@ class SpawnDraftTest {
     }
 
     @Test
-    void randomDraft_buildThenOf_keepsEverything() {
-        var draft = SpawnDraft.random();
+    void areaDraft_buildThenOf_keepsEverything() {
+        var draft = new SpawnDraft();
+        draft.placement = fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior.Placement.AREA;
+        draft.points = new java.util.ArrayList<>(List.of(new SpawnPoint("world", 1, 2, 3, 0f)));
         draft.surface = false;
         draft.maxTries = 7;
-        draft.filter = fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.BlockFilter.WHITELIST;
+        draft.filter = fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AreaOptions.BlockFilter.WHITELIST;
         draft.blocks = new java.util.ArrayList<>(List.of(org.bukkit.Material.SAND));
         draft.goal = 5;
         draft.addTemplate(HeadContent.head("a"));
@@ -79,16 +81,15 @@ class SpawnDraftTest {
         var built = draft.build(registry);
         var copy = SpawnDraft.of(built);
 
-        assertThat(built).isInstanceOf(fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.class);
+        assertThat(built.placement()).isEqualTo(fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior.Placement.AREA);
         assertThat(copy).usingRecursiveComparison().isEqualTo(draft);
     }
 
     @Test
-    void pointsDraft_buildsSpawnPoints() {
+    void newDraft_placesHeadsOnPoints() {
         var draft = new SpawnDraft();
         draft.addTemplate(HeadContent.head("a"));
 
-        assertThat(draft.build(registry)).isInstanceOf(fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior.class);
-        assertThat(draft.random).isFalse();
+        assertThat(draft.build(registry).placement()).isEqualTo(fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior.Placement.POINTS);
     }
 }

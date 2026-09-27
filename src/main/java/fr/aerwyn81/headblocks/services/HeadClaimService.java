@@ -18,7 +18,9 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HeadClaimService {
 
@@ -30,7 +32,10 @@ public class HeadClaimService {
         PROCESSING
     }
 
+    private static final int MAX_REPLAYS = 100;
+
     private final ServiceRegistry registry;
+    private final Set<String> claiming = ConcurrentHashMap.newKeySet();
 
     public HeadClaimService(ServiceRegistry registry) {
         this.registry = registry;
@@ -67,15 +72,31 @@ public class HeadClaimService {
             return Outcome.HUNT_INACTIVE;
         }
 
-        handleHuntClick(player, headLocation, clickedLocation, wallHead, hunt);
+        handleHuntClick(player, headLocation, clickedLocation, wallHead, hunt, 0);
         return Outcome.PROCESSING;
     }
 
     private void handleHuntClick(Player player, HeadLocation headLocation, Location clickedLocation,
-                                 boolean wallHead, HBHunt hunt) {
+                                 boolean wallHead, HBHunt hunt, int replays) {
         HuntConfig huntConfig = hunt.getConfig();
 
         registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(player, allPlayerHeads -> {
+            var claimKey = player.getUniqueId() + ":" + hunt.getId();
+            if (!claiming.add(claimKey)) {
+                if (replays >= MAX_REPLAYS) {
+                    player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+                    return;
+                }
+
+                registry.getScheduler().runTaskLater(player, () -> {
+                    if (player.isOnline() && hunt.isActive()) {
+                        handleHuntClick(player, headLocation, clickedLocation, wallHead, hunt, replays + 1);
+                    }
+                }, 1L);
+                return;
+            }
+
+            boolean writing = false;
             try {
                 ArrayList<UUID> huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
                         player.getUniqueId(), hunt.getId());
@@ -122,6 +143,7 @@ public class HeadClaimService {
                     return;
                 }
 
+                boolean spawned = registry.getHeadService().isSpawned(headLocation.getUuid());
                 var commitResult = hunt.commitBehaviors(player, headLocation);
                 if (!commitResult.allowed()) {
                     if (commitResult.denyMessage() != null && !commitResult.denyMessage().isEmpty()) {
@@ -130,58 +152,86 @@ public class HeadClaimService {
                     return;
                 }
 
-                registry.getStorageService().addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
-
-                hunt.notifyHeadFound(player, headLocation);
-                registry.getAreaEnforcementService().onHeadFound(player, hunt, huntPlayerHeads.size());
-
-                registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, huntConfig, hunt.getId());
-
-                for (var reward : headLocation.getRewards()) {
-                    reward.execute(player, headLocation, registry);
-                }
-
-                registry.getVisibilityService().onHeadFound(player, headLocation);
-
-                String songName = huntConfig.getHeadClickSoundFound();
-                if (!songName.trim().isEmpty()) {
+                writing = true;
+                registry.getScheduler().runTaskAsync(() -> {
                     try {
-                        XSound.play(songName, s -> s.forPlayers(player));
+                        if (spawned) {
+                            registry.getSpawnService().storeFound(headLocation);
+                        }
+                        registry.getStorageService().addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
                     } catch (Exception ex) {
-                        LogUtil.error("Error cannot play sound on head click! Cannot parse provided name...");
+                        LogUtil.error("Error saving head {0} found by {1} in hunt {2}: {3}",
+                                headLocation.getUuid(), player.getName(), hunt.getId(), ex.getMessage());
+                        registry.getScheduler().runTask(player,
+                                () -> player.sendMessage(registry.getLanguageService().message("Messages.StorageError")));
+                        return;
+                    } finally {
+                        claiming.remove(claimKey);
                     }
-                }
 
-                if (huntConfig.isHeadClickTitleEnabled()) {
-                    String firstLine = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
-                            headLocation, huntConfig.getHeadClickTitleFirstLine(), hunt.getId());
-                    String subTitle = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
-                            headLocation, huntConfig.getHeadClickTitleSubTitle(), hunt.getId());
-                    int fadeIn = huntConfig.getHeadClickTitleFadeIn();
-                    int stay = huntConfig.getHeadClickTitleStay();
-                    int fadeOut = huntConfig.getHeadClickTitleFadeOut();
-                    player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
-                }
-
-                if (huntConfig.isFireworkEnabled()) {
-                    List<Color> colors = registry.getConfigService().headClickFireworkColors();
-                    List<Color> fadeColors = registry.getConfigService().headClickFireworkFadeColors();
-                    boolean isFlickering = registry.getConfigService().fireworkFlickerEnabled();
-                    int power = registry.getConfigService().headClickFireworkPower();
-
-                    Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
-                    FireworkUtils.launchFirework(loc, isFlickering,
-                            colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors,
-                            power, wallHead);
-                }
-
-                Bukkit.getPluginManager().callEvent(
-                        new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true, List.of(hunt.getId())));
+                    registry.getScheduler().runTask(player,
+                            () -> onHeadFound(player, headLocation, clickedLocation, wallHead, hunt, huntPlayerHeads));
+                });
             } catch (InternalException ex) {
                 LogUtil.error("Error processing hunt {0} click for player {1}: {2}",
                         hunt.getId(), player.getName(), ex.getMessage());
+            } finally {
+                if (!writing) {
+                    claiming.remove(claimKey);
+                }
             }
         });
+    }
+
+    private void onHeadFound(Player player, HeadLocation headLocation, Location clickedLocation, boolean wallHead,
+                             HBHunt hunt, List<UUID> huntPlayerHeads) {
+        HuntConfig huntConfig = hunt.getConfig();
+
+        hunt.notifyHeadFound(player, headLocation);
+        registry.getAreaEnforcementService().onHeadFound(player, hunt, huntPlayerHeads.size());
+
+        registry.getRewardService().giveReward(player, huntPlayerHeads, headLocation, huntConfig, hunt.getId());
+
+        for (var reward : headLocation.getRewards()) {
+            reward.execute(player, headLocation, registry);
+        }
+
+        registry.getVisibilityService().onHeadFound(player, headLocation);
+
+        String songName = huntConfig.getHeadClickSoundFound();
+        if (!songName.trim().isEmpty()) {
+            try {
+                XSound.play(songName, s -> s.forPlayers(player));
+            } catch (Exception ex) {
+                LogUtil.error("Error cannot play sound on head click! Cannot parse provided name...");
+            }
+        }
+
+        if (huntConfig.isHeadClickTitleEnabled()) {
+            String firstLine = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
+                    headLocation, huntConfig.getHeadClickTitleFirstLine(), hunt.getId());
+            String subTitle = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(),
+                    headLocation, huntConfig.getHeadClickTitleSubTitle(), hunt.getId());
+            int fadeIn = huntConfig.getHeadClickTitleFadeIn();
+            int stay = huntConfig.getHeadClickTitleStay();
+            int fadeOut = huntConfig.getHeadClickTitleFadeOut();
+            player.sendTitle(firstLine, subTitle, fadeIn, stay, fadeOut);
+        }
+
+        if (huntConfig.isFireworkEnabled()) {
+            List<Color> colors = registry.getConfigService().headClickFireworkColors();
+            List<Color> fadeColors = registry.getConfigService().headClickFireworkFadeColors();
+            boolean isFlickering = registry.getConfigService().fireworkFlickerEnabled();
+            int power = registry.getConfigService().headClickFireworkPower();
+
+            Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
+            FireworkUtils.launchFirework(loc, isFlickering,
+                    colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors,
+                    power, wallHead);
+        }
+
+        Bukkit.getPluginManager().callEvent(
+                new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, true, List.of(hunt.getId())));
     }
 
     private void showAlreadyClaimed(Player player, HeadLocation headLocation,

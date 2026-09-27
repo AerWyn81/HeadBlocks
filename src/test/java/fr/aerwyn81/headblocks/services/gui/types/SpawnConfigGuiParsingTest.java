@@ -35,4 +35,11 @@ class SpawnConfigGuiParsingTest {
         assertThat(MessageUtils.formatScore(1.005)).isEqualTo("1.01");
         assertThat(MessageUtils.formatScore(0.1 + 0.2)).isEqualTo("0.3");
     }
+
+    @Test
+    void formatScore_negativeValues() {
+        assertThat(MessageUtils.formatScore(-1.5)).isEqualTo("-1.5");
+        assertThat(MessageUtils.formatScore(-3.0)).isEqualTo("-3");
+        assertThat(MessageUtils.formatScore(-0.001)).isEqualTo("0");
+    }
 }

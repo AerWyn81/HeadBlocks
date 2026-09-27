@@ -100,7 +100,7 @@ public class Memory implements Storage {
 
     @Override
     public void setCachedPlayerHeads(UUID playerUuid, Set<UUID> heads) {
-        cachePlayerHeads.put(playerUuid, heads);
+        cachePlayerHeads.put(playerUuid, concurrentCopy(heads));
     }
 
     @Override
@@ -165,7 +165,13 @@ public class Memory implements Storage {
 
     @Override
     public void setCachedPlayerHeadsForHunt(UUID playerUuid, String huntId, Set<UUID> heads) {
-        cacheHuntPlayerHeads.computeIfAbsent(huntId, k -> new ConcurrentHashMap<>()).put(playerUuid, heads);
+        cacheHuntPlayerHeads.computeIfAbsent(huntId, k -> new ConcurrentHashMap<>()).put(playerUuid, concurrentCopy(heads));
+    }
+
+    private static Set<UUID> concurrentCopy(Set<UUID> heads) {
+        Set<UUID> copy = ConcurrentHashMap.newKeySet();
+        copy.addAll(heads);
+        return copy;
     }
 
     @Override

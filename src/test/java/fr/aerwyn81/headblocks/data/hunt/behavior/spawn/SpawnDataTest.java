@@ -140,7 +140,7 @@ class SpawnDataTest {
 
         assertThat(template.rewardChance()).isEqualTo(100);
         assertThat(template.trapChance()).isZero();
-        assertThat(template.points()).isZero();
+        assertThat(template.points()).isEqualTo(-3);
         assertThat(template.weight()).isZero();
     }
 
@@ -192,5 +192,13 @@ class SpawnDataTest {
         assertThat(template.trapChance()).isEqualTo(50);
         assertThat(template.points()).isEqualTo(3);
         assertThat(template.weight()).isEqualTo(4);
+    }
+
+    @Test
+    void template_negativePoints_survivesSaveAndLoad() {
+        var yaml = new org.bukkit.configuration.file.YamlConfiguration();
+        template().withPoints(-2.5).saveTo(yaml);
+
+        assertThat(SpawnTemplate.fromConfig("basic", yaml).points()).isEqualTo(-2.5);
     }
 }

@@ -2,9 +2,7 @@ package fr.aerwyn81.headblocks.data.hunt.behavior.spawn;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
-import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 import org.bukkit.Material;
 
@@ -15,11 +13,11 @@ import java.util.Map;
 import java.util.function.UnaryOperator;
 
 public class SpawnDraft {
-    public boolean random = false;
+    public SpawnBehavior.Placement placement = SpawnBehavior.Placement.POINTS;
     public List<SpawnPoint> points = new ArrayList<>();
     public boolean surface = true;
     public int maxTries = 20;
-    public RandomSpawnBehavior.BlockFilter filter = RandomSpawnBehavior.BlockFilter.BLACKLIST;
+    public AreaOptions.BlockFilter filter = AreaOptions.BlockFilter.BLACKLIST;
     public List<Material> blocks = new ArrayList<>();
     public int active = 3;
     public int goal = 10;
@@ -40,23 +38,15 @@ public class SpawnDraft {
     public boolean resetOnActivate = false;
     public final Map<String, SpawnTemplate> templates = new LinkedHashMap<>();
 
-    public static SpawnDraft random() {
-        var draft = new SpawnDraft();
-        draft.random = true;
-        return draft;
-    }
-
     public static SpawnDraft of(SpawnBehavior behavior) {
         var draft = new SpawnDraft();
-        if (behavior instanceof SpawnPointsBehavior points) {
-            draft.points = new ArrayList<>(points.points());
-        } else if (behavior instanceof RandomSpawnBehavior random) {
-            draft.random = true;
-            draft.surface = random.surface();
-            draft.maxTries = random.maxTries();
-            draft.filter = random.filter();
-            draft.blocks = new ArrayList<>(random.blocks());
-        }
+        draft.placement = behavior.placement();
+        draft.points = new ArrayList<>(behavior.points());
+        var area = behavior.area();
+        draft.surface = area.surface();
+        draft.maxTries = area.maxTries();
+        draft.filter = area.filter();
+        draft.blocks = new ArrayList<>(area.blocks());
         draft.active = behavior.active();
         draft.goal = behavior.goal();
         draft.maxTotalSpawns = behavior.maxTotalSpawns();
@@ -118,11 +108,7 @@ public class SpawnDraft {
     }
 
     public SpawnBehavior build(ServiceRegistry registry) {
-        if (random) {
-            return new RandomSpawnBehavior(registry, surface, maxTries, filter, blocks, active, goal, maxTotalSpawns,
-                    completion, afterGoal, respawnPolicy(), options(), templates.values());
-        }
-        return new SpawnPointsBehavior(registry, points, active, goal, maxTotalSpawns, completion, afterGoal,
-                respawnPolicy(), options(), templates.values());
+        return new SpawnBehavior(registry, placement, points, new AreaOptions(surface, maxTries, filter, blocks),
+                active, goal, maxTotalSpawns, completion, afterGoal, respawnPolicy(), options(), templates.values());
     }
 }

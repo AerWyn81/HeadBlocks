@@ -13,11 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class PlaceholderHook extends PlaceholderExpansion {
 
@@ -59,6 +55,30 @@ public class PlaceholderHook extends PlaceholderExpansion {
     @Override
     public @NotNull String getVersion() {
         return "1.0.0";
+    }
+
+    private String scoreTop(HBHunt hunt, String subType) {
+        String[] parts = subType.split("_");
+        if (parts.length < 3 || !hunt.scoresPoints()) {
+            return "-";
+        }
+
+        try {
+            int pos = Integer.parseInt(parts[1]);
+            var scores = new ArrayList<>(registry.getStorageService().getTopScoresForHunt(hunt.getId()).entrySet());
+            if (pos < 1 || pos > scores.size()) {
+                return "-";
+            }
+
+            var entry = scores.get(pos - 1);
+            return switch (parts[2]) {
+                case "name" -> entry.getKey().name();
+                case "score" -> MessageUtils.formatScore(entry.getValue());
+                default -> "-";
+            };
+        } catch (NumberFormatException | InternalException e) {
+            return "-";
+        }
     }
 
     @Override
@@ -191,7 +211,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // %headblocks_hunt_<huntId>_found% | %headblocks_hunt_<huntId>_total% | %headblocks_hunt_<huntId>_progress% | %headblocks_hunt_<huntId>_left%
         if (identifier.startsWith("hunt_")) {
             var knownSuffixes = Set.of("found", "total", "left", "progress", "name", "state",
-                    "besttime", "timedcount", "timeposition", "timetop", "finishers", "spawned", "active", "score");
+                    "besttime", "timedcount", "timeposition", "timetop", "finishers", "spawned", "active", "score", "scoreposition", "scoretop");
 
             // Strip leading "hunt_"
             String remainder = identifier.substring("hunt_".length());
@@ -267,6 +287,23 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 case "active" -> {
                     return String.valueOf(registry.getSpawnService().getActiveHeads(huntId).size());
                 }
+                case "scoreposition" -> {
+                    if (!hunt.scoresPoints()) {
+                        return "-";
+                    }
+
+                    try {
+                        var scores = new ArrayList<>(registry.getStorageService().getTopScoresForHunt(huntId).keySet());
+                        for (int i = 0; i < scores.size(); i++) {
+                            if (scores.get(i).uuid().equals(player.getUniqueId())) {
+                                return String.valueOf(i + 1);
+                            }
+                        }
+                        return "-";
+                    } catch (InternalException e) {
+                        return "-";
+                    }
+                }
                 case "left" -> {
                     try {
                         int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
@@ -339,6 +376,10 @@ public class PlaceholderHook extends PlaceholderExpansion {
                     }
                 }
                 default -> {
+                    if (subType.startsWith("scoretop_")) {
+                        return scoreTop(hunt, subType);
+                    }
+
                     // Handle timetop_<pos>_<name|time>
                     if (subType.startsWith("timetop_")) {
                         try {

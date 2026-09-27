@@ -15,7 +15,7 @@ public record SpawnPoint(String world, int x, int y, int z, float yaw) {
 
     public Location toLocation() {
         var bukkitWorld = Bukkit.getWorld(world);
-        return bukkitWorld == null ? null : new Location(bukkitWorld, x + 0.5, y, z + 0.5);
+        return bukkitWorld == null ? null : new Location(bukkitWorld, x, y, z);
     }
 
     public boolean matches(Location location) {

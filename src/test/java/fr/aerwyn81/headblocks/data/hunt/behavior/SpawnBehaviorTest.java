@@ -21,13 +21,15 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SpawnPointsBehaviorTest {
+class SpawnBehaviorTest {
 
     @Mock
     ServiceRegistry registry;
@@ -69,12 +71,12 @@ class SpawnPointsBehaviorTest {
         hunt = new HBHunt(configService, "spawnhunt", "Spawn Hunt", HuntState.ACTIVE, 1, "D");
     }
 
-    private SpawnPointsBehavior behavior(int goal, SpawnCompletion completion, AfterGoal afterGoal, List<SpawnPoint> points) {
-        return new SpawnPointsBehavior(registry, points, 2, goal, -1, completion, afterGoal, RespawnPolicy.DEFAULT,
+    private SpawnBehavior behavior(int goal, SpawnCompletion completion, AfterGoal afterGoal, List<SpawnPoint> points) {
+        return SpawnBehaviors.points(registry, points, 2, goal, -1, completion, afterGoal, RespawnPolicy.DEFAULT,
                 List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())));
     }
 
-    private SpawnPointsBehavior behavior(int goal, AfterGoal afterGoal) {
+    private SpawnBehavior behavior(int goal, AfterGoal afterGoal) {
         return behavior(goal, SpawnCompletion.PER_PLAYER, afterGoal, List.of());
     }
 
@@ -178,7 +180,7 @@ class SpawnPointsBehaviorTest {
     }
 
     @Test
-    void pickLocation_skipsTakenPoints() {
+    void pickPoint_skipsTakenPoints() {
         World world = mock(World.class);
         when(world.getName()).thenReturn("world");
         var points = List.of(new SpawnPoint("world", 1, 64, 1, 0f), new SpawnPoint("world", 2, 64, 2, 90f));
@@ -186,28 +188,28 @@ class SpawnPointsBehaviorTest {
 
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
-            Location picked = fixed.pickLocation(location -> location.getBlockX() == 2);
+            Location picked = fixed.pickPoint(location -> location.getBlockX() == 2);
 
             assertThat(picked.getBlockX()).isEqualTo(2);
-            assertThat(picked.getX()).isEqualTo(2.5);
+            assertThat(picked.getX()).isEqualTo(2.0);
             assertThat(fixed.yawAt(picked)).isEqualTo(90f);
         }
     }
 
     @Test
-    void pickLocation_noFreePoint_returnsNull() {
+    void pickPoint_noFreePoint_returnsNull() {
         var points = List.of(new SpawnPoint("world", 1, 64, 1, 0f));
         var fixed = behavior(1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY, points);
 
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
-            assertThat(fixed.pickLocation(location -> false)).isNull();
+            assertThat(fixed.pickPoint(location -> false)).isNull();
         }
     }
 
     @Test
     void pickTemplate_ignoresZeroWeights() {
-        var fixed = new SpawnPointsBehavior(registry, List.of(), 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
+        var fixed = SpawnBehaviors.points(registry, List.of(), 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
                 RespawnPolicy.DEFAULT, List.of(
                 new SpawnTemplate("never", "", 0, HeadContent.head("a"), List.of()),
                 new SpawnTemplate("always", "", 5, HeadContent.head("b"), List.of())));
@@ -219,7 +221,7 @@ class SpawnPointsBehaviorTest {
 
     @Test
     void saveAndLoad_roundTripsTheWholeConfiguration() {
-        var original = new SpawnPointsBehavior(registry,
+        var original = SpawnBehaviors.points(registry,
                 List.of(new SpawnPoint("world", 1, 64, -3, 45f), new SpawnPoint("nether", -10, 30, 7, 0f)),
                 3, 12, 50, SpawnCompletion.FIRST_WINS, AfterGoal.CONTINUE,
                 new RespawnPolicy(true, 5, 20, true, 600, true, false),
@@ -228,9 +230,9 @@ class SpawnPointsBehaviorTest {
                         new SpawnTemplate("basic", "", 10, HeadContent.head("basictex"), List.of())));
 
         var yaml = new YamlConfiguration();
-        original.saveTo(yaml.createSection("behaviors.spawn_points"));
-        var loaded = (SpawnPointsBehavior) Behavior.fromConfig("spawn_points", registry,
-                yaml.getConfigurationSection("behaviors.spawn_points"));
+        original.saveTo(yaml.createSection("behaviors.spawn"));
+        var loaded = (SpawnBehavior) Behavior.fromConfig("spawn", registry,
+                yaml.getConfigurationSection("behaviors.spawn"));
 
         assertThat(loaded.points()).isEqualTo(original.points());
         assertThat(loaded.active()).isEqualTo(3);
@@ -253,7 +255,7 @@ class SpawnPointsBehaviorTest {
         yaml.set("templates.ok.weight", 1);
         HeadContent.head("tex").save(yaml.getConfigurationSection("templates.ok"), "content");
 
-        var loaded = SpawnPointsBehavior.fromConfig(registry, yaml);
+        var loaded = SpawnBehavior.fromConfig(registry, yaml);
 
         assertThat(loaded.templates()).extracting(SpawnTemplate::id).containsExactly("ok");
     }
@@ -271,12 +273,12 @@ class SpawnPointsBehaviorTest {
 
     @Test
     void saveAndLoad_keepsTheHuntOptions() {
-        var original = new SpawnPointsBehavior(registry, List.of(), 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
+        var original = SpawnBehaviors.points(registry, List.of(), 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
                 RespawnPolicy.DEFAULT, new SpawnOptions(true, true, true, SpawnOptions.Scoring.POINTS), List.of());
         var yaml = new YamlConfiguration();
 
         original.saveTo(yaml);
 
-        assertThat(SpawnPointsBehavior.fromConfig(registry, yaml).options()).isEqualTo(original.options());
+        assertThat(SpawnBehavior.fromConfig(registry, yaml).options()).isEqualTo(original.options());
     }
 }

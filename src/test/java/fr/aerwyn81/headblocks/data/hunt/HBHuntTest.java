@@ -406,7 +406,7 @@ class HBHuntTest {
         HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         assertThat(hunt.scoresPoints()).isFalse();
 
-        hunt.setBehaviors(List.of(new fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior(null, List.of(), 1, 1, -1,
+        hunt.setBehaviors(List.of(fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehaviors.points(null, List.of(), 1, 1, -1,
                 fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnCompletion.PER_PLAYER,
                 fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AfterGoal.DENY,
                 fr.aerwyn81.headblocks.data.hunt.behavior.spawn.RespawnPolicy.DEFAULT,

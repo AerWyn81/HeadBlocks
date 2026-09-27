@@ -4,6 +4,10 @@ import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fr.aerwyn81.headblocks.commands.HBCommandExecutor;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.hunt.HBHunt;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnCompletion;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnOptions;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.*;
@@ -226,9 +230,37 @@ public final class HeadBlocks extends JavaPlugin {
 
                 return map;
             }));
+            m.addCustomChart(new AdvancedBarChart("spawnFeatures", () -> spawnFeatures(serviceRegistry.getHuntService().getAllHunts())));
         }
 
         LogUtil.success("HeadBlocks successfully loaded!");
+    }
+
+    static Map<String, int[]> spawnFeatures(Collection<HBHunt> hunts) {
+        var spawns = hunts.stream()
+                .flatMap(hunt -> hunt.getBehaviors().stream())
+                .filter(SpawnBehavior.class::isInstance)
+                .map(SpawnBehavior.class::cast)
+                .toList();
+        var templates = spawns.stream().flatMap(spawn -> spawn.templates().stream()).toList();
+
+        Map<String, int[]> map = new HashMap<>();
+        map.put("Placement points", usage(spawns.stream().anyMatch(s -> s.placement() == SpawnBehavior.Placement.POINTS)));
+        map.put("Placement area", usage(spawns.stream().anyMatch(s -> s.placement() == SpawnBehavior.Placement.AREA)));
+        map.put("First wins", usage(spawns.stream().anyMatch(s -> s.completion() == SpawnCompletion.FIRST_WINS)));
+        map.put("Score in points", usage(spawns.stream().anyMatch(s -> s.options().scoring() == SpawnOptions.Scoring.POINTS)));
+        map.put("Interval redraw", usage(spawns.stream().anyMatch(s -> s.respawn().interval())));
+        map.put("Reset on activation", usage(spawns.stream().anyMatch(s -> s.options().resetOnActivate())));
+        map.put("Announce", usage(spawns.stream().anyMatch(s -> s.options().announce())));
+        map.put("Log file", usage(spawns.stream().anyMatch(s -> s.options().log())));
+        map.put("Traps", usage(templates.stream().anyMatch(t -> t.trapChance() > 0)));
+        map.put("Random reward", usage(templates.stream().anyMatch(t -> t.randomReward() || t.rewardChance() < 100)));
+        map.put("Template particles", usage(templates.stream().anyMatch(t -> t.particle() != null)));
+        return map;
+    }
+
+    private static int[] usage(boolean used) {
+        return used ? new int[]{1, 0} : new int[]{0, 1};
     }
 
     private void initializeExternals() {
