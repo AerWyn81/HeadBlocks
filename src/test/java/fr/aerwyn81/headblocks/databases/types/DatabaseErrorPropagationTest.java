@@ -61,7 +61,7 @@ class DatabaseErrorPropagationTest {
                 call("insertVersion", SQLite::insertVersion),
                 call("updatePlayerInfo", d -> d.updatePlayerInfo(PROFILE)),
                 call("createNewHead", d -> d.createNewHead(HEAD, "t", "s")),
-                call("createSpawnHead", d -> d.createSpawnHead(HEAD, "t", "s")),
+                call("createSpawnHead", d -> d.createSpawnHead(HEAD, "t", 1, "s")),
                 call("deleteOrphanSpawnHeads", d -> d.deleteOrphanSpawnHeads("s")),
                 call("isHeadExist", d -> d.isHeadExist(HEAD)),
                 call("containsPlayer", d -> d.containsPlayer(PLAYER)),

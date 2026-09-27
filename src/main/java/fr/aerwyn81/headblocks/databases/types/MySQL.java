@@ -200,6 +200,26 @@ public final class MySQL extends AbstractDatabase {
         }
     }
 
+    @Override
+    public void addColumnHeadPoints() throws InternalException {
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.addColumnHeadPointsMariaDb())) {
+            ps.executeUpdate();
+        } catch (Exception ex) {
+            try (var conn = dataSource.getConnection()) {
+                if (isColumnExist(conn, Requests.getTableHeads(), "hPoints")) {
+                    return;
+                }
+
+                try (var alterStmt = conn.createStatement()) {
+                    alterStmt.executeUpdate(Requests.addColumnHeadPointsMySQL());
+                }
+            } catch (Exception exe) {
+                throw new InternalException(ex);
+            }
+        }
+    }
+
     // --- Migration v5 (MySQL: simple ALTER) ---
 
     @Override

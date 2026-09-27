@@ -782,6 +782,31 @@ public class Hunt implements Cmd {
         }
     }
 
+    private void showTopScores(CommandSender sender, HBHunt hunt, int limit) {
+        try {
+            var scores = new ArrayList<>(registry.getStorageService().getTopScoresForHunt(hunt.getId()).entrySet());
+            if (scores.isEmpty()) {
+                sender.sendMessage(registry.getLanguageService().message("Messages.TopEmpty"));
+                return;
+            }
+
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntTopHeader")
+                    .replace("%hunt%", hunt.getId())
+                    .replace("%displayName%", hunt.getDisplayName()));
+
+            for (int i = 0; i < Math.min(limit, scores.size()); i++) {
+                var entry = scores.get(i);
+                sender.sendMessage(MessageUtils.colorize(
+                        registry.getLanguageService().message("Chat.LineTop", entry.getKey().name())
+                                .replace("%pos%", String.valueOf(i + 1))
+                                .replace("%count%", MessageUtils.formatScore(entry.getValue()))));
+            }
+        } catch (InternalException e) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            LogUtil.error("Error retrieving hunt top scores: {0}", e.getMessage());
+        }
+    }
+
     private void handleTop(CommandSender sender, String[] args) {
         if (args.length < 3) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
@@ -803,6 +828,11 @@ public class Hunt implements Cmd {
                 limit = Integer.parseInt(args[3]);
             } catch (NumberFormatException ignored) {
             }
+        }
+
+        if (hunt.scoresPoints()) {
+            showTopScores(sender, hunt, limit);
+            return;
         }
 
         try {

@@ -671,7 +671,7 @@ class SQLiteIntegrationTest {
         UUID placed = UUID.randomUUID();
         UUID spawned = UUID.randomUUID();
         db.createNewHead(placed, "t1", "srv1");
-        db.createSpawnHead(spawned, "t2", "srv1");
+        db.createSpawnHead(spawned, "t2", 1, "srv1");
 
         assertThat(db.isHeadExist(spawned)).isTrue();
         assertThat(db.getHeads()).containsExactly(placed);
@@ -684,7 +684,7 @@ class SQLiteIntegrationTest {
         UUID spawned = UUID.randomUUID();
         db.updatePlayerInfo(new PlayerProfileLight(player, "P", ""));
         db.createHunt("spawnhunt", "Spawn", "ACTIVE");
-        db.createSpawnHead(spawned, "t", "srv1");
+        db.createSpawnHead(spawned, "t", 1, "srv1");
 
         db.addHeadForHunt(player, spawned, "spawnhunt");
 
@@ -701,9 +701,9 @@ class SQLiteIntegrationTest {
         UUID otherServer = UUID.randomUUID();
         UUID placed = UUID.randomUUID();
         db.updatePlayerInfo(new PlayerProfileLight(player, "P", ""));
-        db.createSpawnHead(found, "t", "srv1");
-        db.createSpawnHead(orphan, "t", "srv1");
-        db.createSpawnHead(otherServer, "t", "srv2");
+        db.createSpawnHead(found, "t", 1, "srv1");
+        db.createSpawnHead(orphan, "t", 1, "srv1");
+        db.createSpawnHead(otherServer, "t", 1, "srv2");
         db.createNewHead(placed, "t", "srv1");
         db.addHeadForHunt(player, found, "default");
 
@@ -721,7 +721,7 @@ class SQLiteIntegrationTest {
         UUID placed = UUID.randomUUID();
         UUID spawned = UUID.randomUUID();
         db.createNewHead(placed, "t", "s1");
-        db.createSpawnHead(spawned, "t", "s1");
+        db.createSpawnHead(spawned, "t", 1, "s1");
 
         var rows = db.getTableHeads();
 
@@ -730,7 +730,7 @@ class SQLiteIntegrationTest {
     }
 
     @Test
-    void addColumnHeadSpawn_onV5Schema_addsTheColumnOnce() throws Exception {
+    void spawnColumns_onV5Schema_areAddedOnce() throws Exception {
         SQLite legacy = new SQLite(tempDir.resolve("legacy.db").toString());
         legacy.open();
         try {
@@ -741,14 +741,42 @@ class SQLiteIntegrationTest {
 
             legacy.addColumnHeadSpawn();
             legacy.addColumnHeadSpawn();
+            legacy.addColumnHeadPoints();
+            legacy.addColumnHeadPoints();
             legacy.load();
 
             assertThat(legacy.getHeads()).hasSize(1);
             UUID spawned = UUID.randomUUID();
-            legacy.createSpawnHead(spawned, "t", "s1");
+            legacy.createSpawnHead(spawned, "t", 1, "s1");
             assertThat(legacy.getHeads()).hasSize(1);
         } finally {
             legacy.close();
         }
+    }
+
+    @Test
+    void getTopScoresForHunt_sumsThePointsOfTheFoundHeads() throws InternalException {
+        UUID alice = UUID.randomUUID();
+        UUID bob = UUID.randomUUID();
+        UUID gold = UUID.randomUUID();
+        UUID basic = UUID.randomUUID();
+        UUID placed = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(alice, "Alice", ""));
+        db.updatePlayerInfo(new PlayerProfileLight(bob, "Bob", ""));
+        db.createSpawnHead(gold, "t", 5.5, "s");
+        db.createSpawnHead(basic, "t", 1, "s");
+        db.createNewHead(placed, "t", "s");
+        db.addHeadForHunt(alice, gold, "h");
+        db.addHeadForHunt(alice, basic, "h");
+        db.addHeadForHunt(bob, basic, "h");
+        db.addHeadForHunt(bob, placed, "h");
+        db.addHeadForHunt(bob, gold, "other");
+
+        var scores = new java.util.ArrayList<>(db.getTopScoresForHunt("h").entrySet());
+
+        assertThat(scores).hasSize(2);
+        assertThat(scores.get(0).getKey().name()).isEqualTo("Alice");
+        assertThat(scores.get(0).getValue()).isEqualTo(6.5);
+        assertThat(scores.get(1).getValue()).isEqualTo(2.0);
     }
 }

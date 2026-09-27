@@ -68,7 +68,7 @@ public class Requests {
     }
 
     public static String createTableHeads() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8), `hSpawn` BOOLEAN NOT NULL DEFAULT 0 CHECK (hSpawn IN (0, 1)))", getTableHeads());
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8), `hSpawn` BOOLEAN NOT NULL DEFAULT 0 CHECK (hSpawn IN (0, 1)), `hPoints` DOUBLE NOT NULL DEFAULT 1)", getTableHeads());
     }
 
     public static String getContainsTableHeads() {
@@ -76,7 +76,7 @@ public class Requests {
     }
 
     public static String createTableHeadsMySQL() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8), `hSpawn` BOOLEAN NOT NULL DEFAULT 0)", getTableHeads());
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8), `hSpawn` BOOLEAN NOT NULL DEFAULT 0, `hPoints` DOUBLE NOT NULL DEFAULT 1)", getTableHeads());
     }
 
     public static String getTableHeadsData() {
@@ -140,7 +140,7 @@ public class Requests {
     }
 
     public static String insertSpawnHead() {
-        return String.format("INSERT INTO %s (hUUID, hExist, hTexture, serverId, hSpawn) VALUES (?, true, ?, ?, true)", getTableHeads());
+        return String.format("INSERT INTO %s (hUUID, hExist, hTexture, serverId, hSpawn, hPoints) VALUES (?, true, ?, ?, true, ?)", getTableHeads());
     }
 
     public static String deleteOrphanSpawnHeads() {
@@ -161,6 +161,26 @@ public class Requests {
 
     public static String addColumnHeadSpawnMariaDb() {
         return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS hSpawn BOOLEAN NOT NULL DEFAULT 0", getTableHeads());
+    }
+
+    public static String hasColumnHeadPointsSQLite() {
+        return String.format("SELECT COUNT(*) AS count FROM pragma_table_info('%s') WHERE name = 'hPoints'", getTableHeads());
+    }
+
+    public static String addColumnHeadPointsSQLite() {
+        return String.format("ALTER TABLE %s ADD COLUMN hPoints DOUBLE NOT NULL DEFAULT 1", getTableHeads());
+    }
+
+    public static String addColumnHeadPointsMariaDb() {
+        return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS hPoints DOUBLE NOT NULL DEFAULT 1", getTableHeads());
+    }
+
+    public static String addColumnHeadPointsMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN hPoints DOUBLE NOT NULL DEFAULT 1", getTableHeads());
+    }
+
+    public static String getTopScoresForHunt() {
+        return String.format("SELECT hbp.pUUID, pName, pDisplayName, SUM(hbh.hPoints) as score FROM %s hbph INNER JOIN %s hbp ON hbph.pUUID = hbp.pUUID INNER JOIN %s hbh ON hbph.hUUID = hbh.hUUID WHERE hbh.hExist = True AND hbph.huntId = ? GROUP BY hbp.pUUID, pName, pDisplayName ORDER BY score DESC", getTablePlayerHeads(), getTablePlayers(), getTableHeads());
     }
 
     public static String addColumnHeadSpawnMySQL() {

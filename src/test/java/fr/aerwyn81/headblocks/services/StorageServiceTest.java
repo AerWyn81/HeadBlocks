@@ -641,9 +641,9 @@ class StorageServiceTest {
     void createSpawnHead_writesToDatabaseOnly() throws InternalException {
         UUID head = UUID.randomUUID();
 
-        service.createSpawnHead(head, "tex");
+        service.createSpawnHead(head, "tex", 1);
 
-        verify(database).createSpawnHead(eq(head), eq("tex"), anyString());
+        verify(database).createSpawnHead(eq(head), eq("tex"), eq(1.0), anyString());
         verify(storage, never()).addCachedHead(any());
     }
 
@@ -1957,5 +1957,43 @@ class StorageServiceTest {
 
             assertThat(result).isNull();
         }
+    }
+
+    // --- Scores ---
+
+    @Test
+    void getTopScoresForHunt_isCachedUntilTheHuntChanges() throws InternalException {
+        var alice = new PlayerProfileLight(UUID.randomUUID(), "Alice", "");
+        var scores = new LinkedHashMap<PlayerProfileLight, Double>();
+        scores.put(alice, 4.5);
+        when(database.getTopScoresForHunt("h")).thenReturn(scores);
+
+        assertThat(service.getTopScoresForHunt("h")).containsEntry(alice, 4.5);
+        assertThat(service.getScoreForHunt(alice.uuid(), "h")).isEqualTo(4.5);
+        assertThat(service.getScoreForHunt(UUID.randomUUID(), "h")).isZero();
+        verify(database, times(1)).getTopScoresForHunt("h");
+
+        service.addHeadForHunt(alice.uuid(), UUID.randomUUID(), "h");
+        service.getTopScoresForHunt("h");
+
+        verify(database, times(2)).getTopScoresForHunt("h");
+    }
+
+    @Test
+    void getTopScoresForHunt_isInvalidatedByResetsAndRemovals() throws InternalException {
+        when(database.getTopScoresForHunt("h")).thenReturn(new LinkedHashMap<>());
+        when(database.getHeadsPlayer(any())).thenReturn(new ArrayList<>());
+
+        service.getTopScoresForHunt("h");
+        service.resetPlayer(UUID.randomUUID());
+        service.getTopScoresForHunt("h");
+        service.resetPlayerHead(UUID.randomUUID(), UUID.randomUUID());
+        service.getTopScoresForHunt("h");
+        service.removeHead(UUID.randomUUID(), false);
+        service.getTopScoresForHunt("h");
+        service.deletePlayerProgressForHunt("h");
+        service.getTopScoresForHunt("h");
+
+        verify(database, times(5)).getTopScoresForHunt("h");
     }
 }

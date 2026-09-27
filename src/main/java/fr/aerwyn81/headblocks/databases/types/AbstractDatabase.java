@@ -222,16 +222,38 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
-    public void createSpawnHead(UUID hUUID, String texture, String serverId) throws InternalException {
+    public void createSpawnHead(UUID hUUID, String texture, double points, String serverId) throws InternalException {
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(Requests.insertSpawnHead())) {
             ps.setString(1, hUUID.toString());
             ps.setString(2, texture);
             ps.setString(3, serverId);
+            ps.setDouble(4, points);
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
+    }
+
+    @Override
+    public LinkedHashMap<PlayerProfileLight, Double> getTopScoresForHunt(String huntId) throws InternalException {
+        var scores = new LinkedHashMap<PlayerProfileLight, Double>();
+
+        try (var conn = dataSource.getConnection();
+             var ps = conn.prepareStatement(Requests.getTopScoresForHunt())) {
+            ps.setString(1, huntId);
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    var profile = new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), rs.getString("pName"),
+                            rs.getString("pDisplayName"));
+                    scores.put(profile, rs.getDouble("score"));
+                }
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+
+        return scores;
     }
 
     @Override

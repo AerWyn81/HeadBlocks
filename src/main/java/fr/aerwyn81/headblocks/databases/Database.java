@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.UUID;
 
 public interface Database {
-    int version = 6;
+    int version = 7;
 
     record HeadExportRow(String uuid, boolean exists, boolean spawn) {
     }
@@ -31,7 +31,9 @@ public interface Database {
 
     void createNewHead(UUID hUUID, String texture, String serverIdentifier) throws InternalException;
 
-    void createSpawnHead(UUID hUUID, String texture, String serverIdentifier) throws InternalException;
+    void createSpawnHead(UUID hUUID, String texture, double points, String serverIdentifier) throws InternalException;
+
+    LinkedHashMap<PlayerProfileLight, Double> getTopScoresForHunt(String huntId) throws InternalException;
 
     int deleteOrphanSpawnHeads(String serverIdentifier) throws InternalException;
 
@@ -120,6 +122,8 @@ public interface Database {
     void migrateToV5() throws InternalException;
 
     void addColumnHeadSpawn() throws InternalException;
+
+    void addColumnHeadPoints() throws InternalException;
 
     void saveTimedRun(UUID pUUID, String huntId, long timeMs) throws InternalException;
 

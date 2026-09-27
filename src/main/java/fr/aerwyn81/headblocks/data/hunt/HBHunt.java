@@ -4,6 +4,8 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.BehaviorResult;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnOptions;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementResult;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
 import fr.aerwyn81.headblocks.services.ConfigService;
@@ -198,6 +200,11 @@ public class HBHunt {
             }
         }
         return headUUIDs.size();
+    }
+
+    public boolean scoresPoints() {
+        return behaviors.stream().anyMatch(behavior -> behavior instanceof SpawnBehavior spawn
+                && spawn.options().scoring() == SpawnOptions.Scoring.POINTS);
     }
 
     public boolean isValid() {

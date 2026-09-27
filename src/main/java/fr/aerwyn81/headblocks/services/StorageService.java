@@ -30,6 +30,12 @@ public class StorageService {
     private final ConfigService configService;
     private final File dataFolder;
 
+    private static final long SCORE_CACHE_MILLIS = 30_000L;
+
+    private record CachedScores(long at, LinkedHashMap<PlayerProfileLight, Double> scores) {
+    }
+
+    private final Map<String, CachedScores> scoreCache = new java.util.concurrent.ConcurrentHashMap<>();
     private Storage storage;
     private Database database;
     private volatile boolean storageError;
@@ -225,6 +231,11 @@ public class StorageService {
             dbVersion = 6;
         }
 
+        if (dbVersion == 6) {
+            database.addColumnHeadPoints();
+            dbVersion = 7;
+        }
+
         if (dbVersion != initialVersion) {
             database.upsertTableVersion(initialVersion);
         }
@@ -411,6 +422,7 @@ public class StorageService {
     }
 
     public void resetPlayer(UUID playerUuid) throws InternalException {
+        scoreCache.clear();
         storage.resetPlayer(playerUuid);
         database.resetPlayer(playerUuid);
 
@@ -418,6 +430,7 @@ public class StorageService {
     }
 
     public void resetPlayerHead(UUID playerUuid, UUID headUuid) throws InternalException {
+        scoreCache.clear();
         storage.resetPlayerHead(playerUuid, headUuid);
         database.resetPlayerHead(playerUuid, headUuid);
 
@@ -435,6 +448,7 @@ public class StorageService {
     }
 
     public void removeHead(UUID headUuid, boolean withDelete) throws InternalException {
+        scoreCache.clear();
         storage.removeHead(headUuid);
         database.removeHead(headUuid, withDelete);
         storage.removeCachedHead(headUuid);
@@ -472,8 +486,27 @@ public class StorageService {
         storage.addCachedHead(headUuid);
     }
 
-    public void createSpawnHead(UUID headUuid, String texture) throws InternalException {
-        database.createSpawnHead(headUuid, texture, serverIdentifier);
+    public void createSpawnHead(UUID headUuid, String texture, double points) throws InternalException {
+        database.createSpawnHead(headUuid, texture, points, serverIdentifier);
+    }
+
+    public LinkedHashMap<PlayerProfileLight, Double> getTopScoresForHunt(String huntId) throws InternalException {
+        var cached = scoreCache.get(huntId);
+        if (cached != null && System.currentTimeMillis() - cached.at() < SCORE_CACHE_MILLIS) {
+            return new LinkedHashMap<>(cached.scores());
+        }
+
+        var scores = database.getTopScoresForHunt(huntId);
+        scoreCache.put(huntId, new CachedScores(System.currentTimeMillis(), scores));
+        return new LinkedHashMap<>(scores);
+    }
+
+    public double getScoreForHunt(UUID playerUuid, String huntId) throws InternalException {
+        return getTopScoresForHunt(huntId).entrySet().stream()
+                .filter(entry -> entry.getKey().uuid().equals(playerUuid))
+                .mapToDouble(Map.Entry::getValue)
+                .findFirst()
+                .orElse(0);
     }
 
     public int purgeOrphanSpawnHeads() throws InternalException {
@@ -604,6 +637,7 @@ public class StorageService {
 
         storage.addCachedPlayerHeadForHunt(playerUuid, huntId, headUuid);
         storage.clearCachedTopPlayersForHunt(huntId);
+        scoreCache.remove(huntId);
     }
 
     public ArrayList<UUID> getHeadsPlayerForHunt(UUID playerUuid, String huntId) throws InternalException {
@@ -640,6 +674,7 @@ public class StorageService {
 
         storage.removeCachedPlayerHeadsForHunt(playerUuid, huntId);
         storage.clearCachedTopPlayersForHunt(huntId);
+        scoreCache.remove(huntId);
     }
 
     // --- Hunt DB access ---
@@ -671,6 +706,7 @@ public class StorageService {
 
         storage.clearCachedPlayerHeadsForHunt(huntId);
         storage.clearCachedTopPlayersForHunt(huntId);
+        scoreCache.remove(huntId);
     }
 
     public void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException {
@@ -678,8 +714,10 @@ public class StorageService {
 
         storage.clearCachedPlayerHeadsForHunt(fromHuntId);
         storage.clearCachedTopPlayersForHunt(fromHuntId);
+        scoreCache.remove(fromHuntId);
         storage.clearCachedPlayerHeadsForHunt(toHuntId);
         storage.clearCachedTopPlayersForHunt(toHuntId);
+        scoreCache.remove(toHuntId);
     }
 
     public void deletePlayerProgressForHunt(String huntId) throws InternalException {
@@ -687,6 +725,7 @@ public class StorageService {
 
         storage.clearCachedPlayerHeadsForHunt(huntId);
         storage.clearCachedTopPlayersForHunt(huntId);
+        scoreCache.remove(huntId);
     }
 
     // --- Timed runs ---

@@ -13,6 +13,7 @@ import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
 import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
+import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -417,16 +418,12 @@ public class SpawnConfigGui {
 
     private ItemGUI decimal(Material material, String key, double value, double min, double max,
                             DoubleConsumer setter, Runnable reopen, double step, double shiftStep) {
-        return item(material, key, "%value%", formatDecimal(value), event -> {
+        return item(material, key, "%value%", MessageUtils.formatScore(value), event -> {
             double amount = event.isShiftClick() ? shiftStep : step;
             double updated = Math.round((value + (event.isRightClick() ? -amount : amount)) * 100) / 100.0;
             setter.accept(Math.max(min, Math.min(max, updated)));
             reopen.run();
         });
-    }
-
-    static String formatDecimal(double value) {
-        return value == Math.rint(value) ? String.valueOf((long) value) : String.valueOf(value);
     }
 
     private ItemGUI choice(Material material, String key, String value, Runnable next, Runnable reopen) {

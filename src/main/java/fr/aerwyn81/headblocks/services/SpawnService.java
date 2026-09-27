@@ -170,7 +170,7 @@ public class SpawnService {
         }
 
         try {
-            registry.getStorageService().createSpawnHead(head.getUuid(), textureOf(head));
+            registry.getStorageService().createSpawnHead(head.getUuid(), textureOf(head), template == null ? 1 : template.points());
         } catch (InternalException e) {
             state.active.put(head.getUuid(), spawn);
             LogUtil.error("Cannot store the spawned head found in hunt {0}: {1}", hunt.getId(), e.getMessage());

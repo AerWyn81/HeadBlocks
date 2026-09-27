@@ -191,7 +191,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // %headblocks_hunt_<huntId>_found% | %headblocks_hunt_<huntId>_total% | %headblocks_hunt_<huntId>_progress% | %headblocks_hunt_<huntId>_left%
         if (identifier.startsWith("hunt_")) {
             var knownSuffixes = Set.of("found", "total", "left", "progress", "name", "state",
-                    "besttime", "timedcount", "timeposition", "timetop", "finishers", "spawned", "active");
+                    "besttime", "timedcount", "timeposition", "timetop", "finishers", "spawned", "active", "score");
 
             // Strip leading "hunt_"
             String remainder = identifier.substring("hunt_".length());
@@ -251,6 +251,18 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 }
                 case "spawned_formatted" -> {
                     return grouped(registry.getSpawnService().totalSpawned(huntId));
+                }
+                case "score", "score_formatted" -> {
+                    try {
+                        if (!hunt.scoresPoints()) {
+                            return String.valueOf(registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size());
+                        }
+
+                        double score = registry.getStorageService().getScoreForHunt(player.getUniqueId(), huntId);
+                        return subType.equals("score") ? MessageUtils.formatScore(score) : grouped((int) Math.round(score));
+                    } catch (InternalException e) {
+                        return "0";
+                    }
                 }
                 case "active" -> {
                     return String.valueOf(registry.getSpawnService().getActiveHeads(huntId).size());

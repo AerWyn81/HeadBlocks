@@ -16,6 +16,11 @@ public class MessageUtils {
      * @param message with {#RRGGBB}
      * @return Formatted string to be displayed by SpigotAPI
      */
+    public static String formatScore(double value) {
+        return java.math.BigDecimal.valueOf(value).setScale(2, java.math.RoundingMode.HALF_UP)
+                .stripTrailingZeros().toPlainString();
+    }
+
     public static String colorize(String message) {
         return IridiumColorAPI.process(message);
     }

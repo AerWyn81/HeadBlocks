@@ -209,7 +209,7 @@ class SpawnServiceTest {
             assertThat(head.getName()).isEqualTo("Basic");
             assertThat(head.getLocation().getX() % 1).isEqualTo(0.5);
         });
-        verify(storageService, never()).createSpawnHead(any(), any());
+        verify(storageService, never()).createSpawnHead(any(), any(), anyDouble());
     }
 
     @Test
@@ -308,7 +308,7 @@ class SpawnServiceTest {
         assertThat(service.claim(hunt, head, player)).isEqualTo(ClaimOutcome.FOUND);
         assertThat(service.claim(hunt, head, player)).isEqualTo(ClaimOutcome.TAKEN);
 
-        verify(storageService, times(1)).createSpawnHead(head.getUuid(), "tex");
+        verify(storageService, times(1)).createSpawnHead(head.getUuid(), "tex", 1.0);
         verify(headService, times(1)).removeSpawnedHead(head);
         assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
     }
@@ -318,7 +318,7 @@ class SpawnServiceTest {
         useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         var head = spawned().get(0);
-        doThrow(new InternalException("down")).when(storageService).createSpawnHead(any(), any());
+        doThrow(new InternalException("down")).when(storageService).createSpawnHead(any(), any(), anyDouble());
 
         assertThat(service.claim(hunt, head, player)).isEqualTo(ClaimOutcome.TAKEN);
 
@@ -684,7 +684,7 @@ class SpawnServiceTest {
         restart();
 
         assertThat(spawned().stream().map(HeadLocation::getUuid).toList()).containsExactlyInAnyOrderElementsOf(before);
-        verify(storageService, never()).createSpawnHead(any(), any());
+        verify(storageService, never()).createSpawnHead(any(), any(), anyDouble());
     }
 
     @Test
@@ -969,7 +969,7 @@ class SpawnServiceTest {
         assertThat(service.claim(hunt, head, player)).isEqualTo(ClaimOutcome.TRAPPED);
 
         verify(dispatcher).dispatchConsoleCommand("say boom");
-        verify(storageService, never()).createSpawnHead(any(), any());
+        verify(storageService, never()).createSpawnHead(any(), any(), anyDouble());
         verify(headService).removeSpawnedHead(head);
         assertThat(spawned()).hasSize(2);
     }
@@ -1134,5 +1134,16 @@ class SpawnServiceTest {
     void teleportCommand_targetsTheHead() {
         assertThat(SpawnService.teleportCommand(new Location(world, 1.5, 64, -2.5)))
                 .isEqualTo("/headblocks tp world 1.5 64.0 -2.5 0.0 90.0");
+    }
+
+    @Test
+    void claim_storesTheTemplatePoints() throws Exception {
+        useHunt(withTemplate(3, 1, basic().withPoints(2.5), SpawnOptions.DEFAULT), HuntState.ACTIVE);
+        service.start();
+        var head = spawned().get(0);
+
+        service.claim(hunt, head, player);
+
+        verify(storageService).createSpawnHead(head.getUuid(), "tex", 2.5);
     }
 }

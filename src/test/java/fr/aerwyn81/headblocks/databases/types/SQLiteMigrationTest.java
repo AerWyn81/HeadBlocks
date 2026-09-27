@@ -93,7 +93,7 @@ class SQLiteMigrationTest {
         var storage = new StorageService(configService, dataFolder.toFile());
         var spawned = UUID.randomUUID();
 
-        storage.createSpawnHead(spawned, "tex");
+        storage.createSpawnHead(spawned, "tex", 1);
         storage.addHeadForHunt(player, spawned, "default");
 
         assertThat(storage.getHeadsPlayerForHunt(player, "default")).containsExactlyInAnyOrder(head, spawned);
@@ -150,8 +150,8 @@ class SQLiteMigrationTest {
         var found = UUID.randomUUID();
         var orphan = UUID.randomUUID();
         storage.updatePlayerName(new fr.aerwyn81.headblocks.data.PlayerProfileLight(player, "Steve", ""));
-        storage.createSpawnHead(found, "");
-        storage.createSpawnHead(orphan, "");
+        storage.createSpawnHead(found, "", 1);
+        storage.createSpawnHead(orphan, "", 1);
         storage.addHeadForHunt(player, found, "default");
 
         assertThat(storage.purgeOrphanSpawnHeads()).isEqualTo(1);

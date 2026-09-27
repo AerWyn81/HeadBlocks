@@ -400,4 +400,19 @@ class HBHuntTest {
 
         assertThat(h1.hashCode()).isEqualTo(h2.hashCode());
     }
+
+    @Test
+    void scoresPoints_onlyForASpawnHuntScoringPoints() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        assertThat(hunt.scoresPoints()).isFalse();
+
+        hunt.setBehaviors(List.of(new fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior(null, List.of(), 1, 1, -1,
+                fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnCompletion.PER_PLAYER,
+                fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AfterGoal.DENY,
+                fr.aerwyn81.headblocks.data.hunt.behavior.spawn.RespawnPolicy.DEFAULT,
+                new fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnOptions(false, false, false,
+                        fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnOptions.Scoring.POINTS), List.of())));
+
+        assertThat(hunt.scoresPoints()).isTrue();
+    }
 }
