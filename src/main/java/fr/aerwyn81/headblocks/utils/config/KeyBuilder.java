@@ -19,19 +19,13 @@ public class KeyBuilder {
         String[] currentSplitLine = line.split(":");
         String key = currentSplitLine[0].replace("'", "").replace("\"", "");
 
-        //Checks keyBuilder path against config to see if the path is valid.
-        //If the path doesn't exist in the config it keeps removing last key in keyBuilder.
         while (!isEmpty() && !config.contains(builder.toString() + separator + key)) {
             removeLastKey();
         }
 
-        //Add the separator if there is already a key inside keyBuilder
-        //If currentSplitLine[0] is 'key2' and keyBuilder contains 'key1' the result will be 'key1.' if '.' is the separator
         if (!isEmpty())
             builder.append(separator);
 
-        //Appends the current key to keyBuilder
-        //If keyBuilder is 'key1.' and currentSplitLine[0] is 'key2' the resulting keyBuilder will be 'key1.key2' if separator is '.'
         builder.append(key);
     }
 
@@ -46,12 +40,10 @@ public class KeyBuilder {
         return builder.isEmpty();
     }
 
-    //Checks to see if subKey is a sub-key of the key path this instance represents
     public boolean isSubKey(String subKey) {
         return isSubKeyOf(builder.toString(), subKey, separator);
     }
 
-    //Checks to see if the full key path represented by this instance is a sub-key of the key parameter
     public boolean isSubKeyOf(String parentKey) {
         return isSubKeyOf(parentKey, builder.toString(), separator);
     }
@@ -81,7 +73,6 @@ public class KeyBuilder {
         return section != null && !section.getKeys(false).isEmpty();
     }
 
-    //Input: 'key1.key2' Result: 'key1'
     public void removeLastKey() {
         if (isEmpty())
             return;

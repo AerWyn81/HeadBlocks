@@ -50,8 +50,6 @@ public class SpawnConfigGui {
         sessions.remove(playerUuid);
     }
 
-    // --- Hunt settings ---
-
     private void openSettings(Player player) {
         var session = sessions.get(player.getUniqueId());
         if (session == null) {
@@ -183,8 +181,6 @@ public class SpawnConfigGui {
                 .toItemStack(), true)
                 .addOnClickEvent(event -> openTemplates((Player) event.getWhoClicked()));
     }
-
-    // --- Templates ---
 
     private void openTemplates(Player player) {
         var session = sessions.get(player.getUniqueId());
@@ -432,8 +428,6 @@ public class SpawnConfigGui {
 
         player.openInventory(menu.getInventory());
     }
-
-    // --- Items ---
 
     private HBMenu filledMenu(String title) {
         var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(), title, false, 5);

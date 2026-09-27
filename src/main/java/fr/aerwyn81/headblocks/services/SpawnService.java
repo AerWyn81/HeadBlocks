@@ -56,8 +56,6 @@ public class SpawnService {
         this.folder = new File(dataFolder, "spawns");
     }
 
-    // --- Lifecycle ---
-
     public void start() {
         if (!folder.exists() && !folder.mkdirs()) {
             LogUtil.error("Cannot create the spawns folder, spawned heads will not be persisted.");
@@ -166,8 +164,6 @@ public class SpawnService {
             markDirty(state);
         }
     }
-
-    // --- Claim flow ---
 
     public ClaimOutcome claim(HBHunt hunt, HeadLocation head, Player player) {
         var state = states.get(hunt.getId());
@@ -279,8 +275,6 @@ public class SpawnService {
         }
     }
 
-    // --- Commands ---
-
     public void reroll(HBHunt hunt, boolean resetProgress) {
         var behavior = behaviorOf(hunt);
         if (behavior == null) {
@@ -353,8 +347,6 @@ public class SpawnService {
         var state = states.get(huntId);
         return state == null ? List.of() : state.active.values().stream().map(ActiveSpawn::head).toList();
     }
-
-    // --- Spawning ---
 
     private void resume(SpawnBehavior behavior, SpawnState state, boolean fillEmptySlots) {
         if (behavior.respawn().interval()) {
@@ -660,8 +652,6 @@ public class SpawnService {
             LogUtil.error("Cannot clean unused spawned heads: {0}", e.getMessage());
         }
     }
-
-    // --- Persistence ---
 
     private SpawnState restore(HBHunt hunt, SpawnBehavior behavior) {
         var state = new SpawnState(hunt.getId());
