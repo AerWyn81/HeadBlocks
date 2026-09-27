@@ -86,12 +86,7 @@ public class KeyBuilder {
         if (isEmpty())
             return;
 
-        String keyString = builder.toString();
-        //Must be enclosed in brackets if a regular expression special character is the separator.
-        String[] split = keyString.split("[" + separator + "]");
-        //Makes sure begin index isn't < 0 (error). Occurs when there is only one key in the path.
-        int minIndex = Math.max(0, builder.length() - split[split.length - 1].length() - 1);
-        builder.replace(minIndex, builder.length(), "");
+        builder.setLength(Math.max(0, builder.lastIndexOf(String.valueOf(separator))));
     }
 
     @Override

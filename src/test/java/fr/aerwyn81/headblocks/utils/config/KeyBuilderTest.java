@@ -229,6 +229,17 @@ class KeyBuilderTest {
         }
 
         @Test
+        void keyMadeOfSeparators_isRemovedWithoutError() {
+            FileConfiguration config = mock(FileConfiguration.class);
+
+            KeyBuilder kb = new KeyBuilder(config, '.');
+            kb.parseLine("...].'");
+            kb.parseLine("next: value");
+
+            assertThat(kb.toString()).isEqualTo("next");
+        }
+
+        @Test
         void emptyBuilder_doesNothing() {
             FileConfiguration config = mock(FileConfiguration.class);
 

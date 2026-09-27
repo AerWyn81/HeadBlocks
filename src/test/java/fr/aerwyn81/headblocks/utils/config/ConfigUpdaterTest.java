@@ -589,4 +589,18 @@ class ConfigUpdaterTest {
         assertThat(result).contains("key1: custom1");
         assertThat(result).doesNotContain("obsolete");
     }
+
+    @Test
+    void update_fileWithAWrappedMessageEndingWithDots_isUpdated() throws Exception {
+        String resource = "Messages:\n  Prompt: \"Type NAME [amount] [r,g,b ...].\"\n  Other: \"x\"\n  Added: \"new\"\n";
+        File file = tempDir.resolve("messages.yml").toFile();
+        Files.writeString(file.toPath(), "Messages:\n  Prompt: 'Type NAME [amount] [r,g,b\n    ...].'\n  Other: x\n");
+
+        callUpdate(resourceLoader(resource), "messages.yml", file, List.of());
+
+        var updated = YamlConfiguration.loadConfiguration(file);
+        assertThat(updated.getString("Messages.Prompt")).isEqualTo("Type NAME [amount] [r,g,b ...].");
+        assertThat(updated.getString("Messages.Added")).isEqualTo("new");
+    }
+
 }
