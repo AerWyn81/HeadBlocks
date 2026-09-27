@@ -40,6 +40,7 @@ public interface Behavior {
             case "scheduled" -> ScheduledBehavior.fromConfig(registry, section);
             case "timed" -> TimedBehavior.fromConfig(registry, section);
             case SpawnPointsBehavior.ID -> SpawnPointsBehavior.fromConfig(registry, section);
+            case RandomSpawnBehavior.ID -> RandomSpawnBehavior.fromConfig(registry, section);
             default -> new FreeBehavior();
         };
     }

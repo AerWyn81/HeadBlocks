@@ -64,4 +64,30 @@ class SpawnDraftTest {
 
         assertThat(copy).usingRecursiveComparison().isEqualTo(draft);
     }
+
+    @Test
+    void randomDraft_buildThenOf_keepsEverything() {
+        var draft = SpawnDraft.random();
+        draft.surface = false;
+        draft.maxTries = 7;
+        draft.filter = fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.BlockFilter.WHITELIST;
+        draft.blocks = new java.util.ArrayList<>(List.of(org.bukkit.Material.SAND));
+        draft.goal = 5;
+        draft.addTemplate(HeadContent.head("a"));
+
+        var built = draft.build(registry);
+        var copy = SpawnDraft.of(built);
+
+        assertThat(built).isInstanceOf(fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.class);
+        assertThat(copy).usingRecursiveComparison().isEqualTo(draft);
+    }
+
+    @Test
+    void pointsDraft_buildsSpawnPoints() {
+        var draft = new SpawnDraft();
+        draft.addTemplate(HeadContent.head("a"));
+
+        assertThat(draft.build(registry)).isInstanceOf(fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior.class);
+        assertThat(draft.random).isFalse();
+    }
 }

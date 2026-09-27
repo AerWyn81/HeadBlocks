@@ -157,7 +157,7 @@ class SpawnServiceTest {
                 respawn, List.of(new SpawnTemplate("basic", "Basic", 1, HeadContent.head("tex"), List.of())));
     }
 
-    private void useHunt(SpawnPointsBehavior behavior, HuntState state) {
+    private void useHunt(fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior behavior, HuntState state) {
         hunt = new HBHunt(configService, "spawnhunt", "Spawn", state, 1, "D");
         hunt.setBehaviors(List.of(new FreeBehavior(), behavior));
         lenient().when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -1145,5 +1145,119 @@ class SpawnServiceTest {
         service.claim(hunt, head, player);
 
         verify(storageService).createSpawnHead(head.getUuid(), "tex", 2.5);
+    }
+
+    // --- Random spawn ---
+
+    private fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior randomBehavior(int active, SpawnOptions options) {
+        return new fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior(registry, true, 20,
+                fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.BlockFilter.BLACKLIST, List.of(),
+                active, 10, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY, onFind(0), options,
+                List.of(new SpawnTemplate("basic", "Basic", 1, HeadContent.head("tex"), List.of())));
+    }
+
+    private void useRandomHunt(int active, SpawnOptions options) {
+        useHunt(randomBehavior(active, options), HuntState.ACTIVE);
+        hunt.setRequirements(new fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet(registry,
+                fr.aerwyn81.headblocks.data.hunt.requirement.RequirementMode.ALL,
+                List.of(new fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement(registry,
+                        new fr.aerwyn81.headblocks.data.hunt.requirement.area.CuboidAreaProvider("world", 0, 50, 0, 63, 80, 63),
+                        null, false, false, null))));
+
+        lenient().when(world.getMinHeight()).thenReturn(-64);
+        lenient().when(world.getMaxHeight()).thenReturn(320);
+        lenient().when(world.isChunkLoaded(anyInt(), anyInt())).thenReturn(true);
+        lenient().when(world.getHighestBlockYAt(anyInt(), anyInt())).thenReturn(63);
+        lenient().when(world.getBlockAt(anyInt(), anyInt(), anyInt())).thenAnswer(invocation -> {
+            int x = invocation.getArgument(0);
+            int y = invocation.getArgument(1);
+            int z = invocation.getArgument(2);
+            var type = y <= 63 ? org.bukkit.Material.STONE : org.bukkit.Material.AIR;
+            var block = mock(org.bukkit.block.Block.class);
+            lenient().when(block.getType()).thenReturn(type);
+            lenient().when(block.isEmpty()).thenReturn(type == org.bukkit.Material.AIR);
+            lenient().when(block.getLocation()).thenReturn(new Location(world, x, y, z));
+            lenient().when(block.getRelative(0, -1, 0)).thenAnswer(below -> world.getBlockAt(x, y - 1, z));
+            return block;
+        });
+    }
+
+    @Test
+    void random_start_spawnsTheActiveCountOnTheGround() {
+        useRandomHunt(3, SpawnOptions.DEFAULT);
+
+        service.start();
+
+        assertThat(spawned()).hasSize(3);
+        assertThat(spawned()).allSatisfy(head -> {
+            assertThat(head.getLocation().getBlockY()).isEqualTo(64);
+            assertThat(head.getLocation().getBlockX()).isBetween(0, 63);
+        });
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(3);
+    }
+
+    @Test
+    void random_foundHead_respawnsElsewhere() {
+        useRandomHunt(1, SpawnOptions.DEFAULT);
+        service.start();
+        var head = spawned().get(0);
+
+        service.claim(hunt, head, player);
+
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(1);
+        assertThat(service.getActiveHeads("spawnhunt")).extracting(HeadLocation::getUuid).doesNotContain(head.getUuid());
+    }
+
+    @Test
+    void random_noLoadedChunk_retriesLater() {
+        useRandomHunt(2, SpawnOptions.DEFAULT);
+        when(world.isChunkLoaded(anyInt(), anyInt())).thenReturn(false);
+
+        service.start();
+
+        assertThat(spawned()).isEmpty();
+        assertThat(later).extracting(Delayed::ticks).contains(600L);
+    }
+
+    @Test
+    void random_withoutArea_retriesLater() {
+        useRandomHunt(1, SpawnOptions.DEFAULT);
+        hunt.setRequirements(new fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet(registry));
+
+        service.start();
+
+        assertThat(spawned()).isEmpty();
+        assertThat(later).extracting(Delayed::ticks).contains(600L);
+    }
+
+    @Test
+    void random_regionTaskRunningLater_announcesEachHeadWhenItAppears() {
+        when(languageService.message("Messages.SpawnHeadAppeared")).thenReturn("one in %hunt%");
+        useRandomHunt(2, new SpawnOptions(true, false, false, SpawnOptions.Scoring.HEADS));
+        var deferred = new ArrayList<Runnable>();
+        doAnswer(invocation -> deferred.add(invocation.getArgument(1)))
+                .when(scheduler).runNow(any(Location.class), any(Runnable.class));
+
+        service.start();
+        assertThat(spawned()).isEmpty();
+
+        deferred.forEach(Runnable::run);
+
+        assertThat(spawned()).hasSize(2);
+        bukkit.verify(() -> Bukkit.broadcastMessage("one in Spawn"), times(2));
+    }
+
+    @Test
+    void random_regionTaskAfterTheHuntChanged_placesNothing() {
+        useRandomHunt(1, SpawnOptions.DEFAULT);
+        var deferred = new ArrayList<Runnable>();
+        doAnswer(invocation -> deferred.add(invocation.getArgument(1)))
+                .when(scheduler).runNow(any(Location.class), any(Runnable.class));
+        service.start();
+
+        hunt.setBehaviors(List.of(new FreeBehavior(), randomBehavior(1, SpawnOptions.DEFAULT)));
+        deferred.forEach(Runnable::run);
+
+        assertThat(spawned()).isEmpty();
     }
 }

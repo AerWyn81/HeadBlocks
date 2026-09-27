@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.services.gui.types;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
+import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AfterGoal;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnCompletion;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnDraft;
@@ -61,7 +62,7 @@ public class SpawnConfigGui {
         var ls = registry.getLanguageService();
         var draft = session.draft();
         Runnable reopen = () -> openSettings(player);
-        var menu = filledMenu(ls.message("Gui.SpawnConfigTitle"));
+        var menu = filledMenu(ls.message(draft.random ? "Gui.SpawnConfigRandomTitle" : "Gui.SpawnConfigTitle"));
 
         menu.setItem(0, 10, number(Material.PLAYER_HEAD, "Active", draft.active, 1, 1, 10,
                 value -> draft.active = value, reopen));
@@ -75,6 +76,16 @@ public class SpawnConfigGui {
         menu.setItem(0, 15, choice(Material.IRON_DOOR, "AfterGoal", draft.afterGoal.name(),
                 () -> draft.afterGoal = draft.afterGoal == AfterGoal.DENY ? AfterGoal.CONTINUE : AfterGoal.DENY, reopen));
         menu.setItem(0, 16, templatesItem(draft));
+
+        if (draft.random) {
+            menu.setItem(0, 20, toggle("Surface", draft.surface, () -> draft.surface = !draft.surface, reopen));
+            menu.setItem(0, 21, number(Material.COMPASS, "MaxTries", draft.maxTries, 1, 1, 10,
+                    value -> draft.maxTries = value, reopen));
+            menu.setItem(0, 23, choice(Material.GRASS_BLOCK, "BlockFilter", draft.filter.name(),
+                    () -> draft.filter = draft.filter == RandomSpawnBehavior.BlockFilter.BLACKLIST
+                            ? RandomSpawnBehavior.BlockFilter.WHITELIST : RandomSpawnBehavior.BlockFilter.BLACKLIST, reopen));
+            menu.setItem(0, 24, blocksItem(player, draft, reopen));
+        }
 
         menu.setItem(0, 28, toggle("OnFind", draft.onFind, () -> draft.onFind = !draft.onFind, reopen));
         menu.setItem(0, 29, number(Material.CLOCK, "MinDelay", draft.minDelay, 0, 1, 10, value -> {
@@ -127,6 +138,35 @@ public class SpawnConfigGui {
                 : null);
 
         player.openInventory(menu.getInventory());
+    }
+
+    private ItemGUI blocksItem(Player player, SpawnDraft draft, Runnable reopen) {
+        var ls = registry.getLanguageService();
+        var lore = new ArrayList<>(ls.messageList("Gui.SpawnConfigBlocksLore"));
+        draft.blocks.forEach(block -> lore.add(ls.message("Gui.SpawnListEntry").replace("%value%", block.name())));
+
+        return new ItemGUI(new ItemBuilder(Material.STONE)
+                .setName(ls.message("Gui.SpawnConfigBlocks"))
+                .setLore(lore)
+                .toItemStack(), true)
+                .addOnClickEvent(event -> {
+                    if (event.isShiftClick() && event.isRightClick()) {
+                        draft.blocks = new ArrayList<>();
+                        reopen.run();
+                        return;
+                    }
+
+                    registry.getChatPromptService().prompt(player, ls.message("Gui.SpawnBlocksPrompt"),
+                            input -> {
+                                var parsed = RandomSpawnBehavior.parseBlocks(Arrays.asList(input.split("[\\s,]+")));
+                                if (parsed.isEmpty()) {
+                                    player.sendMessage(ls.message("Gui.SpawnBlocksInvalid"));
+                                }
+                                parsed.stream().filter(block -> !draft.blocks.contains(block)).forEach(draft.blocks::add);
+                                reopen.run();
+                            },
+                            p -> reopen.run());
+                });
     }
 
     private ItemGUI templatesItem(SpawnDraft draft) {

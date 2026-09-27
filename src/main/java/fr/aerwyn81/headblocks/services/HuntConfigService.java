@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.OrderedBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementMode;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
@@ -142,6 +143,10 @@ public class HuntConfigService {
         }
 
         hunt.setRequirements(requirements);
+        if (behaviors.stream().anyMatch(RandomSpawnBehavior.class::isInstance)
+                && RandomSpawnBehavior.areaOf(hunt) == null) {
+            LogUtil.warning("Hunt {0}: random spawn needs an area requirement, no head will appear.", id);
+        }
 
         HuntConfig huntConfig = loadHuntConfig(yaml);
         hunt.setConfig(huntConfig);
@@ -529,7 +534,12 @@ public class HuntConfigService {
             }
 
             ConfigurationSection behaviorSection = section.getConfigurationSection(type);
-            behaviors.add(Behavior.fromConfig(type, registry, behaviorSection));
+            Behavior behavior = Behavior.fromConfig(type, registry, behaviorSection);
+            if (behavior instanceof SpawnBehavior && behaviors.stream().anyMatch(SpawnBehavior.class::isInstance)) {
+                LogUtil.warning("Hunt {0}: only one spawn behavior can be used, {1} was ignored.", yaml.getString("id"), type);
+                continue;
+            }
+            behaviors.add(behavior);
         }
 
         if (behaviors.stream().anyMatch(SpawnBehavior.class::isInstance)

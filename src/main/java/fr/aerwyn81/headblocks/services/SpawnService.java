@@ -7,7 +7,9 @@ import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.ClaimOutcome;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnParticle;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnTemplate;
@@ -33,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -424,17 +427,53 @@ public class SpawnService {
             return false;
         }
 
-        var location = behavior.pickLocation(candidate -> isFree(candidate, avoid));
-        if (location == null && avoid != null) {
-            location = behavior.pickLocation(candidate -> isFree(candidate, null));
+        if (behavior instanceof RandomSpawnBehavior random) {
+            return spawnRandom(state, random, template, avoid);
         }
 
+        var points = (SpawnPointsBehavior) behavior;
+        var location = points.pickLocation(candidate -> isFree(candidate, avoid));
+        if (location == null && avoid != null) {
+            location = points.pickLocation(candidate -> isFree(candidate, null));
+        }
+
+        return place(state, behavior, template, location, location == null ? 0f : points.yawAt(location));
+    }
+
+    private boolean spawnRandom(SpawnState state, RandomSpawnBehavior behavior, SpawnTemplate template, Location avoid) {
+        var hunt = registry.getHuntService().getHuntById(state.huntId);
+        var column = behavior.pickColumn(hunt);
+        if (column == null) {
+            scheduleRespawn(state, RETRY_SECONDS, null);
+            return false;
+        }
+
+        var placed = new AtomicBoolean();
+        var deferred = new AtomicBoolean();
+        state.pending.incrementAndGet();
+        registry.getScheduler().runNow(column, () -> {
+            state.pending.decrementAndGet();
+            if (activeBehaviorOf(state) != behavior) {
+                return;
+            }
+
+            var location = behavior.pickInChunk(hunt, column, candidate -> isFree(candidate, avoid));
+            placed.set(place(state, behavior, template, location, behavior.randomYaw()));
+            if (placed.get() && deferred.get()) {
+                announce(state, 1);
+            }
+        });
+        deferred.set(true);
+        return placed.get();
+    }
+
+    private boolean place(SpawnState state, SpawnBehavior behavior, SpawnTemplate template, Location location, float yaw) {
         if (location == null) {
             scheduleRespawn(state, RETRY_SECONDS, null);
             return false;
         }
 
-        var head = buildHead(state.huntId, UUID.randomUUID(), template, location, behavior.yawAt(location));
+        var head = buildHead(state.huntId, UUID.randomUUID(), template, location, yaw);
         if (!activate(state, head, template)) {
             scheduleRespawn(state, RETRY_SECONDS, null);
             return false;

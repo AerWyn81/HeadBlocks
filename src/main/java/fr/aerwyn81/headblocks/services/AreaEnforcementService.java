@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.TimedRunData;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnPoint;
@@ -234,7 +235,8 @@ public class AreaEnforcementService {
 
         List<HeadLocation> heads = registry.getHeadService().getHeadLocationsForHunt(hunt);
         List<SpawnPoint> points = spawnPointsOf(hunt);
-        if (heads.isEmpty() && points.isEmpty()) {
+        boolean random = hunt.getBehaviors().stream().anyMatch(RandomSpawnBehavior.class::isInstance);
+        if (heads.isEmpty() && points.isEmpty() && !random) {
             return "no heads assigned";
         }
 

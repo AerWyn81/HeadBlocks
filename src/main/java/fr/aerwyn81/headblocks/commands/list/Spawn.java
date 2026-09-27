@@ -5,6 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnDraft;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnPoint;
@@ -58,7 +59,14 @@ public class Spawn implements Cmd {
         }
 
         switch (args[2].toLowerCase()) {
-            case "point" -> handlePoint(sender, hunt, behavior, args);
+            case "point" -> {
+                if (behavior instanceof SpawnPointsBehavior points) {
+                    handlePoint(sender, hunt, points, args);
+                } else {
+                    sender.sendMessage(registry.getLanguageService().message("Messages.SpawnPointsOnly")
+                            .replace("%hunt%", hunt.getId()));
+                }
+            }
             case "config" -> openConfig(sender, hunt, behavior);
             case "add" -> addHeads(sender, hunt, args);
             case "heads" -> listHeads(sender, hunt);
@@ -127,7 +135,7 @@ public class Spawn implements Cmd {
         }
     }
 
-    private void openConfig(CommandSender sender, HBHunt hunt, SpawnPointsBehavior behavior) {
+    private void openConfig(CommandSender sender, HBHunt hunt, SpawnBehavior behavior) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
             return;
@@ -147,7 +155,9 @@ public class Spawn implements Cmd {
             return;
         }
 
-        draft.points = new ArrayList<>(current.points());
+        if (current instanceof SpawnPointsBehavior points) {
+            draft.points = new ArrayList<>(points.points());
+        }
         var behaviors = new ArrayList<Behavior>(hunt.getBehaviors());
         behaviors.replaceAll(behavior -> behavior == current ? draft.build(registry) : behavior);
         hunt.setBehaviors(behaviors);
@@ -295,13 +305,18 @@ public class Spawn implements Cmd {
         registry.getSpawnService().refresh(hunt);
     }
 
-    private static SpawnPointsBehavior behaviorOf(HBHunt hunt) {
+    private static SpawnBehavior behaviorOf(HBHunt hunt) {
         for (Behavior behavior : hunt.getBehaviors()) {
-            if (behavior instanceof SpawnPointsBehavior fixed) {
-                return fixed;
+            if (behavior instanceof SpawnBehavior spawn) {
+                return spawn;
             }
         }
         return null;
+    }
+
+    private SpawnBehavior behaviorOf(String huntId) {
+        var hunt = registry.getHuntService().getHuntById(huntId.toLowerCase());
+        return hunt == null ? null : behaviorOf(hunt);
     }
 
     @Override
@@ -311,7 +326,9 @@ public class Spawn implements Cmd {
                     .filter(hunt -> behaviorOf(hunt) != null)
                     .map(HBHunt::getId)
                     .toList();
-            case 3 -> List.of("point", "config", "add", "heads", "reroll", "clear");
+            case 3 -> behaviorOf(args[1]) instanceof SpawnPointsBehavior
+                    ? List.of("point", "config", "add", "heads", "reroll", "clear")
+                    : List.of("config", "add", "heads", "reroll", "clear");
             case 4 -> switch (args[2].toLowerCase()) {
                 case "point" -> List.of("add", "remove", "list", "show");
                 case "reroll" -> List.of("reset");

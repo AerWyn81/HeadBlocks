@@ -83,6 +83,7 @@ public class WorldGuardAreaProvider implements AreaProvider {
         return regionId;
     }
 
+    @Override
     public int[] getBounds() {
         if (!isWorldGuardPresent()) {
             return null;

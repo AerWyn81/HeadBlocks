@@ -186,7 +186,7 @@ Show current plugin version.
 
 ## Spawn Commands
 
-For hunts using the [spawn points](../configuration/hunts.md#spawn-points) behavior. All spawn commands require `headblocks.admin`.
+For hunts using the [spawn points](../configuration/hunts.md#spawn-points) or [random spawn](../configuration/hunts.md#random-spawn) behavior. The `point` subcommands only exist for spawn points. All spawn commands require `headblocks.admin`.
 
 ### /hb spawn
 
@@ -197,6 +197,8 @@ For hunts using the [spawn points](../configuration/hunts.md#spawn-points) behav
 | `/hb spawn <hunt> point list`                 | List the spots with their number                                                                                        |
 | `/hb spawn <hunt> point show`                 | Highlight the spots with particles for 15 seconds                                                                       |
 | `/hb spawn <hunt> config`                     | Open the [configuration menu](../configuration/behaviors-gui.md#spawn-points-configuration) of the hunt               |
+| `/hb spawn <hunt> add [n]`                    | Make `n` extra heads appear now (1 by default). They are not replaced once found                                        |
+| `/hb spawn <hunt> heads`                      | List the heads currently present, click one to teleport to it                                                           |
 | `/hb spawn <hunt> reroll [reset]`             | Draw all heads again, and reset the progress of every player with `reset`                                               |
 | `/hb spawn <hunt> clear`                      | Remove the heads currently present. They come back with the next draw                                                   |
 
@@ -304,7 +306,7 @@ Show progression for a specific hunt.
 
 ### /hb hunt top
 
-Show leaderboard for a specific hunt.
+Show leaderboard for a specific hunt. For a spawn hunt with `scoring: POINTS`, players are ranked by their points.
 
 |               |                   |
 |---------------|-------------------|

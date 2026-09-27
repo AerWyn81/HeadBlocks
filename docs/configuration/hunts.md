@@ -306,6 +306,10 @@ behaviors:
     maxTotalSpawns: -1
     completion: PER_PLAYER
     afterGoal: DENY
+    announce: false
+    log: false
+    debug: false
+    scoring: HEADS
     respawn:
       onFind:
         enabled: true
@@ -320,11 +324,23 @@ behaviors:
         name: "Golden head"
         weight: 1
         content: {kind: HEAD, value: "<texture>"}
+        points: 5
         rewards:
           - {type: COMMAND, value: "give %player% diamond 1"}
+          - {type: COMMAND, value: "give %player% emerald 3"}
+        randomReward: true
+        rewardChance: 50
+        particle: {name: DUST, amount: 5, colors: ["255,215,0"]}
       basic:
         weight: 10
         content: {kind: HEAD, value: "<texture>"}
+      trap:
+        weight: 2
+        content: {kind: HEAD, value: "<texture>"}
+        trap:
+          chance: 100
+          commands:
+            - "effect give %player% minecraft:slowness 5"
 ```
 
 - **points**: the spots where heads can appear. Add them in game with [`/hb spawn <hunt> point add`](../getting-started/commands.md#hb-spawn) rather than by hand
@@ -333,14 +349,50 @@ behaviors:
 - **maxTotalSpawns**: total heads that can appear, `-1` for no limit
 - **completion**: `PER_PLAYER` (everyone plays until their own goal) or `FIRST_WINS` (the first player to reach the goal wins, the hunt is closed and its heads removed)
 - **afterGoal**: `DENY` (a player who reached the goal cannot click anymore) or `CONTINUE` (they keep finding heads)
+- **announce**: broadcast a message when heads appear (`Messages.SpawnHeadAppeared` / `SpawnHeadsAppeared`)
+- **log**: write every spawn, find and trap to `spawns/<hunt>.log`
+- **debug**: tell admins (`headblocks.admin`) where each head appeared, with a clickable teleport, and print it in the console
+- **scoring**: `HEADS` (the top counts found heads) or `POINTS` (the top sums the `points` of the found heads, see `%headblocks_hunt_<hunt>_score%`)
 - **respawn.onFind**: a found head reappears elsewhere after a random delay between `min` and `max` seconds (`0` is instant)
 - **respawn.interval**: every `seconds`, all heads are drawn again; with `resetProgress`, every draw starts a new round
 - **respawn.onStart**: heads appear as soon as the hunt is active. Otherwise they only appear with an interval draw or `/hb spawn <hunt> reroll`
-- **templates**: what can appear, picked by `weight`. `content` uses the same format as the placed heads, and each template has its own `rewards`
+- **templates**: what can appear, picked by `weight`. `content` uses the same format as the placed heads. Each template has:
+  - **rewards**: given to the finder. With **randomReward**, only one of them, picked at random. **rewardChance** (0 to 100) is the chance the head carries rewards at all
+  - **points**: the score of the head when `scoring: POINTS` (decimals allowed, default `1`)
+  - **trap.chance** (0 to 100): chance that the head is a trap. A trapped head breaks without counting, runs **trap.commands** from the console (placeholders like `%player%` work) and respawns elsewhere
+  - **particle**: replaces the hunt particles for this template: `name`, `amount`, and `colors` (`r,g,b`) for dust particles
+
+Everything above can also be edited in game with [`/hb spawn <hunt> config`](../getting-started/commands.md#hb-spawn).
 
 Heads that appeared are not placed heads: they are not saved in the hunt file, cannot be renamed, moved or given rewards per head, and are removed when the hunt is disabled or deleted. Their state is kept in `spawns/<hunt>.yml`, so a restart or a reload brings back the same heads.
 
 {% hint style="warning" %} The spawn points behavior cannot be combined with the ordered behavior. If the hunt has an area, every spot must be inside it. {% endhint %}
+
+### Random spawn
+
+Same as [spawn points](#spawn-points), but there are no spots to define: heads appear anywhere in the hunt's [area](#area) (cuboid or WorldGuard region). The hunt **must** have an area requirement.
+
+```yaml
+behaviors:
+  random_spawn:
+    surface: true
+    maxTries: 20
+    blocks:
+      mode: BLACKLIST
+      list: [WATER, LAVA, OAK_LEAVES]
+    active: 5
+    goal: 10
+    # ... every other option of spawn points, templates included
+```
+
+- **surface**: `true` puts heads on top of the ground. `false` puts them anywhere with room, caves included
+- **maxTries**: spots tested for one head. If none fits, it tries again 30 seconds later
+- **blocks.mode**: `BLACKLIST` (heads never stand on the listed blocks) or `WHITELIST` (heads only stand on the listed blocks)
+- **blocks.list**: block names
+
+A spot is valid when it is inside the area, is air (or grass, ferns, a snow layer, vines…), and stands on a solid block allowed by `blocks`. Heads only appear in loaded chunks, so no chunk is ever loaded or generated for them.
+
+{% hint style="warning" %} Random spawn cannot be combined with spawn points or the ordered behavior. Removing the area in the creation menu unselects it, and a hunt file with random spawn but no area logs a warning and shows no head. {% endhint %}
 
 {% hint style="info" %} The **bounded zone** behavior of earlier versions is now the [area requirement](#requirements). Existing hunt files are converted automatically the first time they are loaded. {% endhint %}
 

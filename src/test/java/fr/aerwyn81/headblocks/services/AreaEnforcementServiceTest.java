@@ -645,6 +645,18 @@ class AreaEnforcementServiceTest {
         assertThat(service.hasArea(hunt)).isFalse();
     }
 
+    @Test
+    void sanitize_randomSpawnWithoutAnyHead_keepsArea() {
+        HBHunt hunt = hunt(HUNT_ID, 1, 0, area, returnPoint);
+        hunt.setBehaviors(List.of(fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.fromConfig(registry, null)));
+        when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+        when(headService.getHeadLocationsForHunt(hunt)).thenReturn(new ArrayList<>());
+
+        service.sanitizeAreaHunts();
+
+        assertThat(service.hasArea(hunt)).isTrue();
+    }
+
     private SpawnPointsBehavior spawnPoints(SpawnPoint... points) {
         return new SpawnPointsBehavior(registry, List.of(points), 1, 1, -1, SpawnCompletion.PER_PLAYER,
                 AfterGoal.DENY, RespawnPolicy.DEFAULT, List.of());

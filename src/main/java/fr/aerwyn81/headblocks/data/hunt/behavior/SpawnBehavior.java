@@ -10,12 +10,10 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnOptions;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnTemplate;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
-import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 public abstract class SpawnBehavior implements Behavior {
 
@@ -43,10 +41,6 @@ public abstract class SpawnBehavior implements Behavior {
         this.templates = new LinkedHashMap<>();
         templates.forEach(template -> this.templates.put(template.id(), template));
     }
-
-    public abstract Location pickLocation(Predicate<Location> isFree);
-
-    public abstract float yawAt(Location location);
 
     protected abstract void saveSource(ConfigurationSection section);
 

@@ -453,4 +453,54 @@ class SpawnCommandTest {
 
         verify(console).sendMessage("Messages.SpawnActiveLine");
     }
+
+    private void useRandom() {
+        hunt.setBehaviors(List.of(new FreeBehavior(), new fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior(registry,
+                true, 20, fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.BlockFilter.BLACKLIST, List.of(),
+                1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, SpawnOptions.DEFAULT,
+                List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())))));
+    }
+
+    @Test
+    void randomHunt_pointSubcommands_areRefused() {
+        useRandom();
+
+        command.perform(player, new String[]{"spawn", "spawnhunt", "point", "add"});
+
+        verify(player).sendMessage("Messages.SpawnPointsOnly");
+        verifyNoInteractions(spawnService, huntConfigService);
+    }
+
+    @Test
+    void randomHunt_otherSubcommands_work() {
+        useRandom();
+
+        command.perform(player, new String[]{"spawn", "spawnhunt", "reroll"});
+
+        verify(spawnService).reroll(hunt, false);
+    }
+
+    @Test
+    void randomHunt_tabComplete_hidesPoint() {
+        useRandom();
+        when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+
+        assertThat(command.tabComplete(player, new String[]{"spawn", ""})).containsExactly("spawnhunt");
+        assertThat(command.tabComplete(player, new String[]{"spawn", "spawnhunt", ""}))
+                .containsExactly("config", "add", "heads", "reroll", "clear");
+    }
+
+    @Test
+    void randomHunt_applyConfig_keepsItRandom() {
+        useRandom();
+        var draft = SpawnDraft.of((fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior) hunt.getBehaviors().get(1));
+        draft.surface = false;
+
+        command.applyConfig(player, hunt, draft);
+
+        assertThat(hunt.getBehaviors().get(1)).isInstanceOfSatisfying(
+                fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior.class,
+                random -> assertThat(random.surface()).isFalse());
+        verify(spawnService).reconfigure(hunt);
+    }
 }

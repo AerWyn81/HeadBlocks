@@ -9,6 +9,7 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.RandomSpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.OrderedBehavior;
@@ -1165,6 +1166,39 @@ class HBHuntConfigServiceTest {
 
             huntConfigService.saveHunt(hunt);
             HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/fixed-ordered.yml"));
+
+            assertThat(loaded.getBehaviors()).hasSize(1);
+            assertThat(loaded.getBehaviors().get(0)).isInstanceOf(SpawnPointsBehavior.class);
+        }
+
+        @Test
+        void saveAndLoad_randomSpawnBehavior_roundTrips() {
+            HBHunt hunt = new HBHunt(configService, "random", "Random", HuntState.ACTIVE, 1, "CHEST");
+            hunt.setBehaviors(List.of(new FreeBehavior(), new RandomSpawnBehavior(registry, false, 12,
+                    RandomSpawnBehavior.BlockFilter.WHITELIST, List.of(org.bukkit.Material.SAND), 2, 5, -1,
+                    SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, SpawnOptions.DEFAULT,
+                    List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())))));
+
+            huntConfigService.saveHunt(hunt);
+            HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/random.yml"));
+
+            var random = (RandomSpawnBehavior) loaded.getBehaviors().get(1);
+            assertThat(random.surface()).isFalse();
+            assertThat(random.maxTries()).isEqualTo(12);
+            assertThat(random.filter()).isEqualTo(RandomSpawnBehavior.BlockFilter.WHITELIST);
+            assertThat(random.blocks()).containsExactly(org.bukkit.Material.SAND);
+            assertThat(loaded.getTargetCount()).isEqualTo(5);
+        }
+
+        @Test
+        void load_twoSpawnBehaviors_keepsTheFirstOne() {
+            HBHunt hunt = new HBHunt(configService, "both", "Both", HuntState.ACTIVE, 1, "CHEST");
+            hunt.setBehaviors(List.of(new SpawnPointsBehavior(registry, List.of(), 1, 1, -1,
+                            SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, List.of()),
+                    RandomSpawnBehavior.fromConfig(registry, null)));
+
+            huntConfigService.saveHunt(hunt);
+            HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/both.yml"));
 
             assertThat(loaded.getBehaviors()).hasSize(1);
             assertThat(loaded.getBehaviors().get(0)).isInstanceOf(SpawnPointsBehavior.class);

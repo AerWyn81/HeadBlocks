@@ -8,6 +8,7 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.*;
 import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.ScheduleMode;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnDraft;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
+import fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
 import fr.aerwyn81.headblocks.utils.gui.ItemGUI;
@@ -46,7 +47,7 @@ public class BehaviorSelectionGui {
                 registry.getLanguageService().message("Gui.BehaviorSelectionTitle"), false, 2);
 
         // Borders
-        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17};
+        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> menu.setItem(0, borders[index],
                         new ItemGUI(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setName("§7").toItemStack()))
@@ -78,6 +79,11 @@ public class BehaviorSelectionGui {
                 registry.getLanguageService().message("Gui.BehaviorSpawnPointsName"),
                 registry.getLanguageService().messageList("Gui.BehaviorSpawnPointsLore"),
                 selected.contains(SpawnPointsBehavior.ID)));
+
+        menu.setItem(0, 16, createBehaviorItem(RandomSpawnBehavior.ID,
+                registry.getLanguageService().message("Gui.BehaviorRandomSpawnName"),
+                registry.getLanguageService().messageList("Gui.BehaviorRandomSpawnLore"),
+                selected.contains(RandomSpawnBehavior.ID)));
 
         // Slot 15: Validate button
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
@@ -114,6 +120,11 @@ public class BehaviorSelectionGui {
                     } else {
                         pendingRequirements.put(uuid, set);
                     }
+
+                    var selected = selectedBehaviors.get(uuid);
+                    if (selected != null && !hasArea(player) && selected.remove(RandomSpawnBehavior.ID)) {
+                        player.sendMessage(registry.getLanguageService().message("Messages.SpawnRandomNeedsArea"));
+                    }
                     buildAndOpenGui(player);
                 },
                 this::buildAndOpenGui);
@@ -136,6 +147,11 @@ public class BehaviorSelectionGui {
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
                     toggleBehavior(p, behaviorId);
+                    if (isRandomWithoutArea(p)) {
+                        p.sendMessage(registry.getLanguageService().message("Messages.SpawnRandomNeedsArea"));
+                        openRequirements(p);
+                        return;
+                    }
                     buildAndOpenGui(p);
                 });
     }
@@ -147,19 +163,38 @@ public class BehaviorSelectionGui {
             return;
         }
 
-        selected.add(behaviorId);
-        if (SpawnPointsBehavior.ID.equals(behaviorId)) {
-            selected.remove("ordered");
-        } else if ("ordered".equals(behaviorId)) {
-            selected.remove(SpawnPointsBehavior.ID);
+        if (EXCLUSIVE.contains(behaviorId)) {
+            selected.removeAll(EXCLUSIVE);
+            pendingSpawn.remove(player.getUniqueId());
         }
+        selected.add(behaviorId);
+    }
+
+    private static final Set<String> EXCLUSIVE = Set.of("ordered", SpawnPointsBehavior.ID, RandomSpawnBehavior.ID);
+
+    private boolean hasArea(Player player) {
+        var requirements = pendingRequirements.get(player.getUniqueId());
+        return requirements != null && requirements.findOrNull(AreaRequirement.class) != null;
+    }
+
+    private boolean isRandomWithoutArea(Player player) {
+        var selected = selectedBehaviors.get(player.getUniqueId());
+        return selected != null && selected.contains(RandomSpawnBehavior.ID) && !hasArea(player);
     }
 
     private void handleValidate(Player player) {
         Set<String> selected = selectedBehaviors.get(player.getUniqueId());
 
-        if (selected != null && selected.contains(SpawnPointsBehavior.ID) && !pendingSpawn.containsKey(player.getUniqueId())) {
-            registry.getGuiService().getSpawnConfigGui().open(player, new SpawnDraft(),
+        if (isRandomWithoutArea(player)) {
+            player.sendMessage(registry.getLanguageService().message("Messages.SpawnRandomNeedsArea"));
+            openRequirements(player);
+            return;
+        }
+
+        boolean random = selected != null && selected.contains(RandomSpawnBehavior.ID);
+        if (selected != null && (random || selected.contains(SpawnPointsBehavior.ID))
+                && !pendingSpawn.containsKey(player.getUniqueId())) {
+            registry.getGuiService().getSpawnConfigGui().open(player, random ? SpawnDraft.random() : new SpawnDraft(),
                     draft -> {
                         pendingSpawn.put(player.getUniqueId(), draft);
                         handleValidate(player);
@@ -207,7 +242,7 @@ public class BehaviorSelectionGui {
                     case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, scheduleMode));
                     case "timed" ->
                             behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
-                    case SpawnPointsBehavior.ID -> {
+                    case SpawnPointsBehavior.ID, RandomSpawnBehavior.ID -> {
                         if (spawnDraft != null) {
                             behaviors.add(spawnDraft.build(registry));
                         }
@@ -240,6 +275,9 @@ public class BehaviorSelectionGui {
 
         registry.getHuntService().registerHunt(hunt);
         registry.getStorageService().incrementHuntVersion();
+        if (spawnDraft != null && spawnDraft.random) {
+            registry.getSpawnService().refresh(hunt);
+        }
 
         player.closeInventory();
 
@@ -254,7 +292,7 @@ public class BehaviorSelectionGui {
             player.sendMessage(registry.getLanguageService().message("Messages.HuntOrderedHint"));
         }
 
-        if (spawnDraft != null) {
+        if (spawnDraft != null && !spawnDraft.random) {
             player.sendMessage(registry.getLanguageService().message("Messages.HuntSpawnPointsHint")
                     .replace("%hunt%", hunt.getId()));
         }

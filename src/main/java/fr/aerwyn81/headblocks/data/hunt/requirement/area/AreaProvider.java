@@ -18,4 +18,6 @@ public interface AreaProvider {
     String getDescription();
 
     void saveTo(ConfigurationSection section);
+
+    int[] getBounds();
 }

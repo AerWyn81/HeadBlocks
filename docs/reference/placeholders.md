@@ -35,7 +35,10 @@ These placeholders work with any hunt by replacing `<huntId>` with the hunt's ID
 | Placeholder                            | Description                                  | Output  |
 |----------------------------------------|----------------------------------------------|---------|
 | `%headblocks_hunt_<huntId>_found%`     | Heads found by the player                    | Integer |
-| `%headblocks_hunt_<huntId>_total%`     | Heads to find in this hunt (the goal of a spawn points hunt) | Integer |
+| `%headblocks_hunt_<huntId>_total%`     | Heads to find in this hunt (the goal of a spawn hunt) | Integer |
+| `%headblocks_hunt_<huntId>_spawned%`   | Heads that appeared so far in a spawn hunt (`_spawned_formatted`: grouped digits) | Integer |
+| `%headblocks_hunt_<huntId>_active%`    | Heads currently present in a spawn hunt      | Integer |
+| `%headblocks_hunt_<huntId>_score%`     | Points of the player in a spawn hunt scoring points (`_score_formatted`: rounded, grouped digits) | Number  |
 | `%headblocks_hunt_<huntId>_left%`      | Heads remaining in this hunt                 | Integer |
 | `%headblocks_hunt_<huntId>_progress%`  | Progress bar for this hunt                   | String  |
 | `%headblocks_hunt_<huntId>_name%`      | Display name of the hunt                     | String  |

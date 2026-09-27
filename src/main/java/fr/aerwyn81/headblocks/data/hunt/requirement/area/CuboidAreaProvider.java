@@ -79,6 +79,11 @@ public class CuboidAreaProvider implements AreaProvider {
         return worldName;
     }
 
+    @Override
+    public int[] getBounds() {
+        return new int[]{minX, minY, minZ, maxX, maxY, maxZ};
+    }
+
     public int getMinX() {
         return minX;
     }

@@ -48,7 +48,6 @@ public class SpawnPointsBehavior extends SpawnBehavior {
         return registry.getLanguageService().message("Hunt.Behavior.SpawnPoints");
     }
 
-    @Override
     public Location pickLocation(Predicate<Location> isFree) {
         var candidates = new ArrayList<>(points);
         Collections.shuffle(candidates);
@@ -62,7 +61,6 @@ public class SpawnPointsBehavior extends SpawnBehavior {
         return null;
     }
 
-    @Override
     public float yawAt(Location location) {
         return points.stream()
                 .filter(point -> point.matches(location))
