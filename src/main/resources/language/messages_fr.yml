@@ -303,7 +303,7 @@ Gui:
   SpawnConfigMaxTries: "&eEssais par apparition"
   SpawnConfigMaxTriesLore:
     - ""
-    - "&7Emplacements testés avant de réessayer 30 s plus tard"
+    - "&7Emplacements testés avant de réessayer 3 s plus tard"
     - "&7Valeur : &e%value%"
     - ""
     - "&eClic gauche/droit : &7+/-"

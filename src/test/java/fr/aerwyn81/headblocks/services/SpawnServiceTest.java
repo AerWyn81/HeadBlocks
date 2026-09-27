@@ -1254,7 +1254,7 @@ class SpawnServiceTest {
         service.start();
 
         assertThat(spawned()).isEmpty();
-        assertThat(later).extracting(Delayed::ticks).contains(600L);
+        assertThat(later).extracting(Delayed::ticks).contains(60L);
     }
 
     @Test
@@ -1265,7 +1265,7 @@ class SpawnServiceTest {
         service.start();
 
         assertThat(spawned()).isEmpty();
-        assertThat(later).extracting(Delayed::ticks).contains(600L);
+        assertThat(later).extracting(Delayed::ticks).contains(60L);
     }
 
     @Test

@@ -388,7 +388,7 @@ behaviors:
 ```
 
 - **surface**: `true` puts heads on the ground, under the trees rather than on their leaves. `false` puts them anywhere with room, caves included
-- **maxTries**: spots tested for one head. If none fits, it tries again 30 seconds later
+- **maxTries**: spots tested for one head. If none fits, it tries again 3 seconds later
 - **blocks.mode**: `BLACKLIST` (heads never stand on the listed blocks) or `WHITELIST` (heads only stand on the listed blocks)
 - **blocks.list**: block names
 

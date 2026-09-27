@@ -147,7 +147,7 @@ With **Random spawn**, a second row holds its own options:
 | Element                  | Icon          | Action                                                         |
 |--------------------------|---------------|----------------------------------------------------------------|
 | **Surface only**         | Lime/Gray Dye | LEFT CLICK → toggle (off: caves included)                      |
-| **Attempts per spawn**   | Compass       | Number: spots tested before retrying 30 seconds later          |
+| **Attempts per spawn**   | Compass       | Number: spots tested before retrying 3 seconds later          |
 | **Support blocks**       | Grass Block   | LEFT CLICK → forbidden blocks / only these blocks              |
 | **Block list**           | Stone         | LEFT CLICK → type block names in the chat · SHIFT + RIGHT CLICK → clear |
 

@@ -308,7 +308,7 @@ Gui:
   SpawnConfigMaxTries: "&eAttempts per spawn"
   SpawnConfigMaxTriesLore:
     - ""
-    - "&7Spots tested before retrying 30 s later"
+    - "&7Spots tested before retrying 3 s later"
     - "&7Value: &e%value%"
     - ""
     - "&eLeft/right click: &7+/-"

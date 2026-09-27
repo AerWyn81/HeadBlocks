@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SpawnService {
     private static final long FLUSH_PERIOD_TICKS = 20L;
-    private static final int RETRY_SECONDS = 30;
+    private static final int RETRY_SECONDS = 3;
     private static final DateTimeFormatter LOG_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final ServiceRegistry registry;
