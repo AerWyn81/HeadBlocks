@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.services;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -284,5 +285,35 @@ class HBHuntServiceTest {
         huntService.transferHead(head, "target");
 
         assertThat(notified).containsExactly(head);
+    }
+
+    @Test
+    void changeState_persistsAndNotifiesTheListeners() throws Exception {
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Hunt", HuntState.ACTIVE, 1, "STONE");
+        huntService.registerHunt(hunt);
+        List<HBHunt> notified = new ArrayList<>();
+        huntService.onStateChanged(notified::add);
+
+        huntService.changeState(hunt, HuntState.INACTIVE);
+
+        assertThat(hunt.getState()).isEqualTo(HuntState.INACTIVE);
+        verify(huntConfigService).saveHunt(hunt);
+        verify(storageService).updateHuntStateInDb("hunt1", "INACTIVE");
+        verify(storageService).incrementHuntVersion();
+        assertThat(notified).containsExactly(hunt);
+    }
+
+    @Test
+    void changeState_storageError_doesNotNotify() throws Exception {
+        HBHunt hunt = new HBHunt(configService, "hunt1", "Hunt", HuntState.ACTIVE, 1, "STONE");
+        List<HBHunt> notified = new ArrayList<>();
+        huntService.onStateChanged(notified::add);
+        doThrow(new InternalException("db down")).when(storageService).updateHuntStateInDb("hunt1", "INACTIVE");
+
+        assertThatThrownBy(() -> huntService.changeState(hunt, HuntState.INACTIVE))
+                .isInstanceOf(InternalException.class);
+
+        verify(storageService, never()).incrementHuntVersion();
+        assertThat(notified).isEmpty();
     }
 }

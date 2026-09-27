@@ -82,7 +82,7 @@ class PreviousHuntRequirementTest {
     @Test
     void check_allHeads_huntCompleted_isSatisfied() throws InternalException {
         when(huntService.getHuntById(TARGET_ID)).thenReturn(target);
-        when(target.getHeadCount()).thenReturn(5);
+        when(target.getTargetCount()).thenReturn(5);
         foundHeads(5);
 
         var requirement = new PreviousHuntRequirement(registry, TARGET_ID, PreviousHuntRequirement.ALL_HEADS);
@@ -93,7 +93,7 @@ class PreviousHuntRequirementTest {
     @Test
     void check_allHeads_huntIncomplete_isUnmet() throws InternalException {
         when(huntService.getHuntById(TARGET_ID)).thenReturn(target);
-        when(target.getHeadCount()).thenReturn(5);
+        when(target.getTargetCount()).thenReturn(5);
         foundHeads(3);
         when(languageService.message("Hunt.Requirement.HuntUnmetAll"))
                 .thenReturn("finish %hunt% (%found%/%required%)");
@@ -136,7 +136,7 @@ class PreviousHuntRequirementTest {
     @Test
     void check_targetHuntWithoutHeads_failsOpen() {
         when(huntService.getHuntById(TARGET_ID)).thenReturn(target);
-        when(target.getHeadCount()).thenReturn(0);
+        when(target.getTargetCount()).thenReturn(0);
 
         var requirement = new PreviousHuntRequirement(registry, TARGET_ID, PreviousHuntRequirement.ALL_HEADS);
 

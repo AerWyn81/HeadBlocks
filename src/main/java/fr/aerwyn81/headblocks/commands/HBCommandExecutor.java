@@ -45,6 +45,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         this.register(new Info(registry));
         this.register(new RenameHead(registry));
         this.register(new Hunt(registry));
+        this.register(new Spawn(registry));
         this.register(new Leave(registry));
         this.register(new Debug(registry));
     }

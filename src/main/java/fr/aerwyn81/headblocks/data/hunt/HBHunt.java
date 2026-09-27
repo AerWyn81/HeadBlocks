@@ -137,6 +137,16 @@ public class HBHunt {
         return BehaviorResult.allow();
     }
 
+    public BehaviorResult commitBehaviors(Player player, HeadLocation head) {
+        for (Behavior behavior : behaviors) {
+            BehaviorResult result = behavior.tryCommit(player, head, this);
+            if (!result.allowed()) {
+                return result;
+            }
+        }
+        return BehaviorResult.allow();
+    }
+
     // --- Requirements ---
 
     public RequirementSet getRequirements() {
@@ -180,8 +190,18 @@ public class HBHunt {
         return headUUIDs.size();
     }
 
+    public int getTargetCount() {
+        for (Behavior behavior : behaviors) {
+            OptionalInt target = behavior.targetCount();
+            if (target.isPresent()) {
+                return target.getAsInt();
+            }
+        }
+        return headUUIDs.size();
+    }
+
     public boolean isValid() {
-        return !headUUIDs.isEmpty();
+        return getTargetCount() > 0;
     }
 
     public boolean containsHead(UUID headUUID) {

@@ -5,7 +5,9 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.TimedRunData;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnPoint;
 import fr.aerwyn81.headblocks.data.hunt.requirement.area.AreaMessageMode;
 import fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -180,7 +182,7 @@ public class AreaEnforcementService {
             return;
         }
 
-        int total = hunt.getHeadCount();
+        int total = hunt.getTargetCount();
         if (total > 0 && foundCount >= total) {
             AreaRunManager.disengage(uuid);
             AreaRunManager.markReleased(uuid, hunt.getId());
@@ -231,7 +233,8 @@ public class AreaEnforcementService {
         }
 
         List<HeadLocation> heads = registry.getHeadService().getHeadLocationsForHunt(hunt);
-        if (heads.isEmpty()) {
+        List<SpawnPoint> points = spawnPointsOf(hunt);
+        if (heads.isEmpty() && points.isEmpty()) {
             return "no heads assigned";
         }
 
@@ -240,6 +243,14 @@ public class AreaEnforcementService {
                 .count();
         if (outside > 0) {
             return outside + " head(s) outside the area";
+        }
+
+        long pointsOutside = points.stream()
+                .map(SpawnPoint::toLocation)
+                .filter(location -> location != null && !area.area().contains(location))
+                .count();
+        if (pointsOutside > 0) {
+            return pointsOutside + " spawn point(s) outside the area";
         }
 
         return null;
@@ -288,6 +299,15 @@ public class AreaEnforcementService {
         registry.getScheduler().runTaskLater(player, () -> registry.getPlatform().teleportAsync(player, target), 1L);
     }
 
+    private List<SpawnPoint> spawnPointsOf(HBHunt hunt) {
+        for (Behavior behavior : hunt.getBehaviors()) {
+            if (behavior instanceof FixedPositionBehavior fixed) {
+                return fixed.points();
+            }
+        }
+        return List.of();
+    }
+
     private TimedBehavior findTimedBehavior(HBHunt hunt) {
         for (Behavior behavior : hunt.getBehaviors()) {
             if (behavior instanceof TimedBehavior tb) {
@@ -298,7 +318,7 @@ public class AreaEnforcementService {
     }
 
     private boolean isCompleted(UUID uuid, String huntId, HBHunt hunt) {
-        int total = hunt.getHeadCount();
+        int total = hunt.getTargetCount();
         if (total <= 0) {
             return false;
         }

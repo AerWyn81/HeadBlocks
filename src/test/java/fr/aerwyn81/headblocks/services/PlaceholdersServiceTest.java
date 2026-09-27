@@ -118,10 +118,12 @@ class PlaceholdersServiceTest {
         when(languageService.prefix()).thenReturn("");
         UUID pUuid = UUID.randomUUID();
 
-        Set<UUID> playerHeads = Set.of(UUID.randomUUID(), UUID.randomUUID());
+        UUID h1 = UUID.randomUUID();
+        UUID h2 = UUID.randomUUID();
+        Set<UUID> playerHeads = Set.of(h1, h2, UUID.randomUUID());
         when(storageService.getHeadsPlayer(pUuid)).thenReturn(fakeFutureResult(playerHeads));
 
-        ArrayList<UUID> allHeads = new ArrayList<>(List.of(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
+        ArrayList<UUID> allHeads = new ArrayList<>(List.of(h1, h2, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
         when(storageService.getHeads()).thenReturn(allHeads);
 
         try (MockedStatic<MessageUtils> mocked = mockStatic(MessageUtils.class)) {
@@ -206,10 +208,11 @@ class PlaceholdersServiceTest {
         when(languageService.prefix()).thenReturn("");
         UUID pUuid = UUID.randomUUID();
 
-        Set<UUID> playerHeads = Set.of(UUID.randomUUID());
+        UUID found = UUID.randomUUID();
+        Set<UUID> playerHeads = Set.of(found);
         when(storageService.getHeadsPlayer(pUuid)).thenReturn(fakeFutureResult(playerHeads));
 
-        ArrayList<UUID> allHeads = new ArrayList<>(List.of(UUID.randomUUID(), UUID.randomUUID()));
+        ArrayList<UUID> allHeads = new ArrayList<>(List.of(found, UUID.randomUUID()));
         when(storageService.getHeads()).thenReturn(allHeads);
 
         when(configService.progressBarBars()).thenReturn(10);

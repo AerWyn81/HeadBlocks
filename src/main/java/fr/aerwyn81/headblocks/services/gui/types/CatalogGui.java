@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class CatalogGui {
 
@@ -107,6 +108,40 @@ public class CatalogGui {
             case BACK_BUTTON -> categoryButton(finalState, heads);
             case CURRENT_BUTTON -> huntButton(finalState);
             default -> null;
+        });
+
+        player.openInventory(menu.getInventory());
+    }
+
+    public void openPicker(Player player, Consumer<HeadContent> onPick, Consumer<Player> onBack) {
+        var ls = registry.getLanguageService();
+        var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
+                ls.message("Gui.CatalogPickerTitle"), false, 5);
+
+        int slot = 0;
+        for (var head : registry.getHeadService().getHeads()) {
+            menu.addItem(slot++, new ItemGUI(head.getItemStack().clone(), true)
+                    .addOnClickEvent(event -> {
+                        var clicker = (Player) event.getWhoClicked();
+                        var content = head instanceof LoadableHead loadable && !loadable.isLoaded() ? null : head.getContent();
+                        if (content == null) {
+                            clicker.sendMessage(ls.message("Messages.HeadNotYetLoaded")
+                                    .replace("%id%", head instanceof LoadableHead loadable ? loadable.getDisplayId() : "?"));
+                            return;
+                        }
+                        onPick.accept(content);
+                    }));
+        }
+
+        menu.setPaginationButtonBuilder((type, inventory) -> {
+            if (type == HBPaginationButtonType.BACK_BUTTON) {
+                return new ItemGUI(registry.getConfigService().guiBackIcon()
+                        .setName(ls.message("Gui.Back"))
+                        .setLore(ls.messageList("Gui.BackLore"))
+                        .toItemStack())
+                        .addOnClickEvent(event -> onBack.accept((Player) event.getWhoClicked()));
+            }
+            return null;
         });
 
         player.openInventory(menu.getInventory());

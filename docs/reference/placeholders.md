@@ -6,8 +6,8 @@ HeadBlocks supports placeholders through [PlaceholderAPI](https://www.spigotmc.o
 
 | Placeholder                                            | Description                                                           | Output         |
 |--------------------------------------------------------|-----------------------------------------------------------------------|----------------|
-| `%headblocks_current%`                                 | Number of heads found by the player                                   | Integer        |
-| `%headblocks_left%`                                    | Number of heads remaining to be found                                 | Integer        |
+| `%headblocks_current%`                                 | Number of placed heads found by the player                            | Integer        |
+| `%headblocks_left%`                                    | Number of placed heads remaining to be found                          | Integer        |
 | `%headblocks_max%`                                     | Total number of heads placed                                          | Integer        |
 | `%headblocks_hasHead_<uuid\|name>%`                    | Whether the player has found the head (by UUID or name)               | Boolean        |
 | `%headblocks_order_previous%`                          | Previous named head found (if order is set)                           | Integer or `-` |
@@ -35,7 +35,7 @@ These placeholders work with any hunt by replacing `<huntId>` with the hunt's ID
 | Placeholder                            | Description                                  | Output  |
 |----------------------------------------|----------------------------------------------|---------|
 | `%headblocks_hunt_<huntId>_found%`     | Heads found by the player                    | Integer |
-| `%headblocks_hunt_<huntId>_total%`     | Total heads in this hunt                     | Integer |
+| `%headblocks_hunt_<huntId>_total%`     | Heads to find in this hunt (the goal of a fixed position hunt) | Integer |
 | `%headblocks_hunt_<huntId>_left%`      | Heads remaining in this hunt                 | Integer |
 | `%headblocks_hunt_<huntId>_progress%`  | Progress bar for this hunt                   | String  |
 | `%headblocks_hunt_<huntId>_name%`      | Display name of the hunt                     | String  |

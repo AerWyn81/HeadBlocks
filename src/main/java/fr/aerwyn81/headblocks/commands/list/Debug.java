@@ -77,6 +77,11 @@ public class Debug implements Cmd {
                     return true;
                 }
 
+                if (registry.getHeadService().isSpawned(headLoc.getUuid())) {
+                    sender.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
+                    return true;
+                }
+
                 var applied = HeadUtils.applyTextureToBlock(blockLocation.getBlock(), args[2]);
 
                 if (applied) {

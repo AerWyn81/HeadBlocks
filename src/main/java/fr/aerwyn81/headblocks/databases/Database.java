@@ -4,13 +4,14 @@ import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
 public interface Database {
-    int version = 5;
+    int version = 6;
 
-    record HeadExportRow(String uuid, boolean exists) {
+    record HeadExportRow(String uuid, boolean exists, boolean spawn) {
     }
 
     record PlayerHeadExportRow(String playerUuid, String headUuid) {
@@ -30,6 +31,12 @@ public interface Database {
     void updatePlayerInfo(PlayerProfileLight profile) throws InternalException;
 
     void createNewHead(UUID hUUID, String texture, String serverIdentifier) throws InternalException;
+
+    void createSpawnHead(UUID hUUID, String texture, String serverIdentifier) throws InternalException;
+
+    void deleteHeads(Collection<UUID> hUUIDs) throws InternalException;
+
+    ArrayList<UUID> getOrphanSpawnHeads(String serverIdentifier) throws InternalException;
 
     boolean containsPlayer(UUID pUUID) throws InternalException;
 
@@ -114,6 +121,8 @@ public interface Database {
     void addColumnHuntId() throws InternalException;
 
     void migrateToV5() throws InternalException;
+
+    void addColumnHeadSpawn() throws InternalException;
 
     void saveTimedRun(UUID pUUID, String huntId, long timeMs) throws InternalException;
 

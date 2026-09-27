@@ -2818,4 +2818,180 @@ class HeadServiceTest {
             assertThat(headService.getHeadAt(worldLocation("world", -1.2, 319, -1.9))).isNull();
         }
     }
+
+    // =========================================================================
+    // Spawned heads
+    // =========================================================================
+
+    @Nested
+    class SpawnedHeads {
+
+        private World world;
+
+        private HeadLocation spawnedAt(double x, double y, double z, boolean chunkLoaded) {
+            world = mock(World.class);
+            lenient().when(world.getName()).thenReturn("world");
+            lenient().when(world.isChunkLoaded(anyInt(), anyInt())).thenReturn(chunkLoaded);
+            Location location = mock(Location.class);
+            lenient().when(location.getWorld()).thenReturn(world);
+            lenient().when(location.getX()).thenReturn(x);
+            lenient().when(location.getY()).thenReturn(y);
+            lenient().when(location.getZ()).thenReturn(z);
+            lenient().when(location.getBlockX()).thenReturn((int) x);
+            lenient().when(location.getBlockZ()).thenReturn((int) z);
+            return new HeadLocation("", UUID.randomUUID(), location, "spawnhunt");
+        }
+
+        @Test
+        void add_indexesForLookupsButNotForPlacedHeadListings() {
+            HeadLocation head = spawnedAt(10, 64, 10, true);
+            when(visualService.placeBlock(head)).thenReturn(true);
+
+            assertThat(headService.addSpawnedHead(head)).isTrue();
+
+            assertThat(headService.getHeadByUUID(head.getUuid())).isSameAs(head);
+            assertThat(headService.getHeadAt(worldLocation("world", 10, 64, 10))).isSameAs(head);
+            assertThat(headService.getHeadsInChunk("world", 0, 0)).containsExactly(head);
+            assertThat(headService.isSpawned(head.getUuid())).isTrue();
+            assertThat(headService.getSpawnedHeads()).containsExactly(head);
+            assertThat(headService.getHeadLocations()).isEmpty();
+            assertThat(headService.getChargedHeadLocations()).isEmpty();
+        }
+
+        @Test
+        void add_occupiedPosition_isRefused() throws Exception {
+            addHead(createPlacedHead("placed", "world", 10, 64, 10));
+            HeadLocation head = spawnedAt(10, 64, 10, true);
+
+            assertThat(headService.addSpawnedHead(head)).isFalse();
+
+            assertThat(headService.isSpawned(head.getUuid())).isFalse();
+            verify(visualService, never()).placeBlock(any());
+        }
+
+        @Test
+        void add_entityRendered_spawnsTheEntity() {
+            HeadLocation head = spawnedAt(10, 64, 10, true);
+            when(visualService.isEntityRendered(head)).thenReturn(true);
+
+            headService.addSpawnedHead(head);
+
+            verify(visualService).ensureSpawned(head);
+            verify(visualService, never()).placeBlock(any());
+        }
+
+        @Test
+        void add_chunkNotLoaded_defersTheRender() {
+            HeadLocation head = spawnedAt(10, 64, 10, false);
+
+            headService.addSpawnedHead(head);
+
+            assertThat(headService.isSpawned(head.getUuid())).isTrue();
+            verify(visualService, never()).placeBlock(any());
+            verify(visualService, never()).ensureSpawned(any());
+        }
+
+        @Test
+        void materialize_blockCannotBePlaced_dropsTheHeadAndNotifies() {
+            HeadLocation head = spawnedAt(10, 64, 10, true);
+            when(visualService.placeBlock(head)).thenReturn(false);
+            List<HeadLocation> lost = new ArrayList<>();
+            headService.onSpawnedLost(lost::add);
+
+            headService.addSpawnedHead(head);
+
+            assertThat(lost).containsExactly(head);
+            assertThat(headService.isSpawned(head.getUuid())).isFalse();
+            assertThat(headService.getHeadByUUID(head.getUuid())).isNull();
+        }
+
+        @Test
+        void remove_unindexesBeforeRemovingTheBlock() {
+            HeadLocation head = spawnedAt(10, 64, 10, true);
+            when(visualService.placeBlock(head)).thenReturn(true);
+            headService.addSpawnedHead(head);
+            AtomicBoolean indexedDuringRemoval = new AtomicBoolean(true);
+            doAnswer(invocation -> {
+                indexedDuringRemoval.set(headService.getHeadByUUID(head.getUuid()) != null);
+                return null;
+            }).when(visualService).removeBlock(head);
+
+            assertThat(headService.removeSpawnedHead(head)).isTrue();
+
+            verify(visualService).despawn(head);
+            verify(visualService).removeBlock(head);
+            assertThat(indexedDuringRemoval).isFalse();
+            assertThat(headService.getHeadAt(worldLocation("world", 10, 64, 10))).isNull();
+            assertThat(headService.getHeadsInChunk("world", 0, 0)).isEmpty();
+        }
+
+        @Test
+        void remove_unknownHead_isNoOp() {
+            HeadLocation head = spawnedAt(10, 64, 10, true);
+
+            assertThat(headService.removeSpawnedHead(head)).isFalse();
+
+            verify(visualService, never()).despawn(any());
+        }
+
+        @Test
+        void remove_removesTheHolograms() {
+            HeadLocation head = spawnedAt(10, 64, 10, true);
+            when(visualService.placeBlock(head)).thenReturn(true);
+            when(configService.hologramsEnabled()).thenReturn(true);
+            headService.addSpawnedHead(head);
+
+            headService.removeSpawnedHead(head);
+
+            verify(hologramService).removeHolograms(head.getLocation());
+        }
+
+        @Test
+        void materialize_afterRemoval_doesNothing() {
+            HeadLocation head = spawnedAt(10, 64, 10, false);
+            headService.addSpawnedHead(head);
+            headService.removeSpawnedHead(head);
+
+            headService.materializeSpawned(head);
+
+            verify(visualService, never()).placeBlock(any());
+        }
+    }
+
+    @Nested
+    class SpawnedHeadAdminActions {
+
+        private HeadLocation registeredSpawned() {
+            World world = mock(World.class);
+            lenient().when(world.getName()).thenReturn("world");
+            lenient().when(world.isChunkLoaded(anyInt(), anyInt())).thenReturn(true);
+            var head = new HeadLocation("", UUID.randomUUID(), new Location(world, 3.5, 64, 3.5), "spawnhunt");
+            when(visualService.placeBlock(head)).thenReturn(true);
+            headService.addSpawnedHead(head);
+            return head;
+        }
+
+        @Test
+        void removeHeadLocation_spawnedHead_notifiesTheEngineInsteadOfTouchingStorage() throws Exception {
+            var head = registeredSpawned();
+            List<HeadLocation> discarded = new ArrayList<>();
+            headService.onSpawnedDiscarded(discarded::add);
+
+            headService.removeHeadLocation(head, true);
+
+            assertThat(discarded).containsExactly(head);
+            assertThat(headService.isSpawned(head.getUuid())).isFalse();
+            verify(storageService, never()).removeHead(any(), anyBoolean());
+            verify(huntConfigService, never()).removeLocationFromHunt(any(), any());
+        }
+
+        @Test
+        void saveHeadInConfig_spawnedHead_isNeverPersisted() {
+            var head = registeredSpawned();
+
+            headService.saveHeadInConfig(head);
+
+            verify(huntConfigService, never()).saveLocationInHunt(any(), any());
+        }
+    }
 }

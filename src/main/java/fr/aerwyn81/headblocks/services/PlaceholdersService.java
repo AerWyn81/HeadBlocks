@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -80,11 +81,12 @@ public class PlaceholdersService {
             if (huntId != null) {
                 var hunt = huntService.getHuntById(huntId);
                 current = storageService.getHeadsPlayerForHunt(pUuid, huntId).size();
-                total = hunt != null ? hunt.getHeadCount() : 0;
+                total = hunt != null ? hunt.getTargetCount() : 0;
             } else {
                 var future = storageService.getHeadsPlayer(pUuid).asFuture();
-                current = future.get().size();
-                total = storageService.getHeads().size();
+                var heads = new HashSet<>(storageService.getHeads());
+                current = (int) future.get().stream().filter(heads::contains).count();
+                total = heads.size();
             }
 
             message = message.replace("%current%", String.valueOf(current))
@@ -101,7 +103,7 @@ public class PlaceholdersService {
             }
 
             if (message.contains("%left%")) {
-                message = message.replace("%left%", String.valueOf(total - current));
+                message = message.replace("%left%", String.valueOf(Math.max(0, total - current)));
             }
         } catch (Exception ignored) {
             LogUtil.error("Error retrieving heads from storage, cannot parse all HeadBlocks placeholders");

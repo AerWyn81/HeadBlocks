@@ -100,19 +100,40 @@ class PlaceholderHookTest {
 
         @SuppressWarnings("unchecked")
         @Test
-        void current_singleHunt_returnsCount() {
+        void current_singleHunt_returnsCount() throws InternalException {
             UUID playerUuid = UUID.randomUUID();
             when(player.getUniqueId()).thenReturn(playerUuid);
             when(huntService.isMultiHunt()).thenReturn(false);
 
+            UUID h1 = UUID.randomUUID();
+            UUID h2 = UUID.randomUUID();
             BukkitFutureResult<Set<UUID>> futureResult = mock(BukkitFutureResult.class);
-            CompletableFuture<Set<UUID>> cf = CompletableFuture.completedFuture(Set.of(UUID.randomUUID(), UUID.randomUUID()));
+            CompletableFuture<Set<UUID>> cf = CompletableFuture.completedFuture(Set.of(h1, h2));
             when(futureResult.asFuture()).thenReturn(cf);
             when(storageService.getHeadsPlayer(playerUuid)).thenReturn(futureResult);
+            when(storageService.getHeads()).thenReturn(new ArrayList<>(java.util.List.of(h1, h2, UUID.randomUUID())));
 
             String result = hook.onRequest(player, "current");
 
             assertThat(result).isEqualTo("2");
+        }
+
+        @SuppressWarnings("unchecked")
+        @Test
+        void current_ignoresSpawnedHeadsFound() throws InternalException {
+            UUID playerUuid = UUID.randomUUID();
+            when(player.getUniqueId()).thenReturn(playerUuid);
+            when(huntService.isMultiHunt()).thenReturn(false);
+
+            UUID placed = UUID.randomUUID();
+            BukkitFutureResult<Set<UUID>> futureResult = mock(BukkitFutureResult.class);
+            CompletableFuture<Set<UUID>> cf = CompletableFuture.completedFuture(Set.of(placed, UUID.randomUUID(), UUID.randomUUID()));
+            when(futureResult.asFuture()).thenReturn(cf);
+            when(storageService.getHeadsPlayer(playerUuid)).thenReturn(futureResult);
+            when(storageService.getHeads()).thenReturn(new ArrayList<>(java.util.List.of(placed, UUID.randomUUID())));
+
+            assertThat(hook.onRequest(player, "current")).isEqualTo("1");
+            assertThat(hook.onRequest(player, "left")).isEqualTo("1");
         }
 
         @SuppressWarnings("unchecked")
@@ -122,11 +143,12 @@ class PlaceholderHookTest {
             when(player.getUniqueId()).thenReturn(playerUuid);
             when(huntService.isMultiHunt()).thenReturn(false);
 
+            UUID found = UUID.randomUUID();
             BukkitFutureResult<Set<UUID>> futureResult = mock(BukkitFutureResult.class);
-            CompletableFuture<Set<UUID>> cf = CompletableFuture.completedFuture(Set.of(UUID.randomUUID()));
+            CompletableFuture<Set<UUID>> cf = CompletableFuture.completedFuture(Set.of(found));
             when(futureResult.asFuture()).thenReturn(cf);
             when(storageService.getHeadsPlayer(playerUuid)).thenReturn(futureResult);
-            when(storageService.getHeads()).thenReturn(new ArrayList<>(java.util.List.of(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())));
+            when(storageService.getHeads()).thenReturn(new ArrayList<>(java.util.List.of(found, UUID.randomUUID(), UUID.randomUUID())));
 
             String result = hook.onRequest(player, "left");
 
@@ -218,7 +240,7 @@ class PlaceholderHookTest {
         @Test
         void huntTotal_returnsHeadCount() {
             HBHunt hunt = mock(HBHunt.class);
-            when(hunt.getHeadCount()).thenReturn(7);
+            when(hunt.getTargetCount()).thenReturn(7);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             String result = hook.onRequest(player, "hunt_myhunt_total");
@@ -232,7 +254,7 @@ class PlaceholderHookTest {
             when(player.getUniqueId()).thenReturn(playerUuid);
 
             HBHunt hunt = mock(HBHunt.class);
-            when(hunt.getHeadCount()).thenReturn(5);
+            when(hunt.getTargetCount()).thenReturn(5);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getHeadsPlayerForHunt(playerUuid, "myhunt"))
                     .thenReturn(new ArrayList<>(java.util.List.of(UUID.randomUUID(), UUID.randomUUID())));
@@ -314,7 +336,7 @@ class PlaceholderHookTest {
             when(player.getUniqueId()).thenReturn(playerUuid);
 
             HBHunt hunt = mock(HBHunt.class);
-            when(hunt.getHeadCount()).thenReturn(5);
+            when(hunt.getTargetCount()).thenReturn(5);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getHeadsPlayerForHunt(playerUuid, "myhunt"))
                     .thenReturn(new ArrayList<>(java.util.List.of(UUID.randomUUID(), UUID.randomUUID())));
@@ -466,7 +488,7 @@ class PlaceholderHookTest {
             when(player.getUniqueId()).thenReturn(playerUuid);
 
             HBHunt hunt = mock(HBHunt.class);
-            when(hunt.getHeadCount()).thenReturn(5);
+            when(hunt.getTargetCount()).thenReturn(5);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getHeadsPlayerForHunt(playerUuid, "myhunt"))
                     .thenThrow(new InternalException("db error"));
@@ -494,7 +516,7 @@ class PlaceholderHookTest {
         @Test
         void huntFinishers_returnsCompletedPlayerCount() throws InternalException {
             HBHunt hunt = mock(HBHunt.class);
-            when(hunt.getHeadCount()).thenReturn(3);
+            when(hunt.getTargetCount()).thenReturn(3);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
@@ -511,7 +533,7 @@ class PlaceholderHookTest {
         @Test
         void huntFinishers_noHeads_returnsZero() {
             HBHunt hunt = mock(HBHunt.class);
-            when(hunt.getHeadCount()).thenReturn(0);
+            when(hunt.getTargetCount()).thenReturn(0);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             String result = hook.onRequest(player, "hunt_myhunt_finishers");
@@ -522,7 +544,7 @@ class PlaceholderHookTest {
         @Test
         void huntFinishers_storageError_returnsZero() throws InternalException {
             HBHunt hunt = mock(HBHunt.class);
-            when(hunt.getHeadCount()).thenReturn(3);
+            when(hunt.getTargetCount()).thenReturn(3);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
             when(storageService.getTopPlayersForHunt("myhunt"))
                     .thenThrow(new InternalException("db error"));

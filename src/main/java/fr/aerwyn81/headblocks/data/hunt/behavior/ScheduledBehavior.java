@@ -74,6 +74,12 @@ public class ScheduledBehavior implements Behavior {
         return scheduleMode.getDisplayInfo();
     }
 
+    @Override
+    public void saveTo(ConfigurationSection section) {
+        section.set("mode", scheduleMode.getModeId());
+        scheduleMode.saveTo(section);
+    }
+
     public static ScheduledBehavior fromConfig(ServiceRegistry registry, ConfigurationSection section) {
         return new ScheduledBehavior(registry, ScheduleModeFactory.fromConfig(section));
     }

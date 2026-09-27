@@ -59,7 +59,7 @@ public class Progress implements Cmd {
                 ArrayList<java.util.UUID> huntHeads = registry.getStorageService().getHeadsPlayerForHunt(
                         profile.uuid(), hunt.getId());
                 int current = huntHeads.size();
-                int total = hunt.getHeadCount();
+                int total = hunt.getTargetCount();
 
                 String progress = MessageUtils.createProgressBar(current, total,
                         registry.getConfigService().progressBarBars(),

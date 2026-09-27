@@ -46,6 +46,11 @@ public class Move implements Cmd {
 
         if (!hasConfirmInCommand) {
             HeadLocation entityHead = HeadTargeting.lookedAtEntity(player, registry, 100);
+            if (entityHead != null && registry.getHeadService().isSpawned(entityHead.getUuid())) {
+                player.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
+                return true;
+            }
+
             if (entityHead != null) {
                 var entityLoc = entityHead.getLocation().getBlock().getLocation();
                 String message = registry.getLanguageService().message("Messages.TargetBlockInfo")
@@ -73,6 +78,11 @@ public class Move implements Cmd {
                 player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
                 return true;
             }
+
+        if (registry.getHeadService().isSpawned(headLocation.getUuid())) {
+            player.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
+            return true;
+        }
 
             String message = registry.getLanguageService().message("Messages.TargetBlockInfo")
                     .replace("%uuid%", headLocation.getNameOrUuid());

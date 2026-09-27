@@ -59,6 +59,9 @@ public class HeadService {
     private final Map<String, Map<Long, HeadLocation>> headsByBlock = new ConcurrentHashMap<>();
     private final Map<UUID, HeadLocation> headsByUuid = new ConcurrentHashMap<>();
     private final Map<String, Set<HeadLocation>> headsByChunk = new ConcurrentHashMap<>();
+    private final Map<UUID, HeadLocation> spawnedHeads = new ConcurrentHashMap<>();
+    private final List<java.util.function.Consumer<HeadLocation>> spawnLostListeners = new CopyOnWriteArrayList<>();
+    private final List<java.util.function.Consumer<HeadLocation>> spawnDiscardedListeners = new CopyOnWriteArrayList<>();
 
     public static String HB_KEY = "HB_HEAD";
     public static String HB_HUNT_KEY = "HB_HUNT";
@@ -141,6 +144,7 @@ public class HeadService {
         headsByBlock.clear();
         headsByUuid.clear();
         headsByChunk.clear();
+        spawnedHeads.clear();
 
         if (storageService.isStorageError()) {
             LogUtil.error("Cannot load locations from storage, theres an issue with the database.");
@@ -254,6 +258,84 @@ public class HeadService {
         return uniqueUuid;
     }
 
+    public boolean addSpawnedHead(HeadLocation headLocation) {
+        var location = headLocation.getLocation();
+        if (location == null || location.getWorld() == null || getHeadAt(location) != null) {
+            return false;
+        }
+
+        spawnedHeads.put(headLocation.getUuid(), headLocation);
+        headsByUuid.put(headLocation.getUuid(), headLocation);
+        indexPosition(headLocation);
+        addHeadToSpin(headLocation, 1);
+
+        scheduler.runNow(location, () -> materializeSpawned(headLocation));
+        return true;
+    }
+
+    public boolean removeSpawnedHead(HeadLocation headLocation) {
+        if (spawnedHeads.remove(headLocation.getUuid()) == null) {
+            return false;
+        }
+
+        headsByUuid.remove(headLocation.getUuid(), headLocation);
+        unindexPosition(headLocation);
+
+        var spinTask = tasksHeadSpin.remove(headLocation.getUuid());
+        if (spinTask != null) {
+            spinTask.cancel();
+        }
+
+        var location = headLocation.getLocation();
+        scheduler.runNow(location, () -> {
+            visualService.despawn(headLocation);
+            if (visualService.isBlockRendered(headLocation)) {
+                visualService.removeBlock(headLocation);
+            }
+
+            if (configService.hologramsEnabled() && hologramService != null) {
+                hologramService.removeHolograms(location);
+            }
+        });
+        return true;
+    }
+
+    public void materializeSpawned(HeadLocation headLocation) {
+        if (!spawnedHeads.containsKey(headLocation.getUuid())) {
+            return;
+        }
+
+        var location = headLocation.getLocation();
+        if (!location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
+            return;
+        }
+
+        if (visualService.isEntityRendered(headLocation)) {
+            visualService.ensureSpawned(headLocation);
+            return;
+        }
+
+        if (!visualService.placeBlock(headLocation) && removeSpawnedHead(headLocation)) {
+            spawnLostListeners.forEach(listener -> listener.accept(headLocation));
+        }
+    }
+
+    public void onSpawnedLost(java.util.function.Consumer<HeadLocation> listener) {
+        spawnLostListeners.add(listener);
+    }
+
+    public void onSpawnedDiscarded(java.util.function.Consumer<HeadLocation> listener) {
+        spawnDiscardedListeners.add(listener);
+    }
+
+    public boolean isSpawned(UUID headUuid) {
+        return headUuid != null && spawnedHeads.containsKey(headUuid);
+    }
+
+    public Collection<HeadLocation> getSpawnedHeads() {
+        return Collections.unmodifiableCollection(spawnedHeads.values());
+    }
+
     private void register(HeadLocation headLocation) {
         headLocations.add(headLocation);
         headsByUuid.putIfAbsent(headLocation.getUuid(), headLocation);
@@ -326,6 +408,10 @@ public class HeadService {
     }
 
     public void saveHeadInConfig(HeadLocation headLocation) {
+        if (isSpawned(headLocation.getUuid())) {
+            return;
+        }
+
         huntConfigService.saveLocationInHunt(headLocation.getHuntId(), headLocation);
     }
 
@@ -336,6 +422,13 @@ public class HeadService {
     }
 
     public void removeHeadLocation(HeadLocation headLocation, boolean withDelete) throws InternalException {
+        if (headLocation != null && isSpawned(headLocation.getUuid())) {
+            if (removeSpawnedHead(headLocation)) {
+                spawnDiscardedListeners.forEach(listener -> listener.accept(headLocation));
+            }
+            return;
+        }
+
         if (headLocation != null) {
             storageService.removeHead(headLocation.getUuid(), withDelete);
 

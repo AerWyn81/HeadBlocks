@@ -290,6 +290,58 @@ behaviors:
 - **repeatable**: if `true`, players can replay after completion (progress is reset)
 - Players can leave a run with `/hb leave`
 
+### Fixed position
+
+Heads appear on spots you define, a few at a time. When someone finds one, it disappears for everybody and a new one appears on another free spot. Every player collects heads until they reach the goal.
+
+```yaml
+behaviors:
+  fixed_position:
+    points:
+      - {world: world, x: 10, y: 64, z: 10}
+      - {world: world, x: 20, y: 64, z: 15, yaw: 90}
+      - {world: world, x: 30, y: 65, z: -5}
+    active: 2
+    goal: 5
+    maxTotalSpawns: -1
+    completion: PER_PLAYER
+    afterGoal: DENY
+    respawn:
+      onFind:
+        enabled: true
+        delay: {min: 0, max: 0}
+      interval:
+        enabled: false
+        seconds: 3600
+        resetProgress: false
+      onStart: true
+    templates:
+      gold:
+        name: "Golden head"
+        weight: 1
+        content: {kind: HEAD, value: "<texture>"}
+        rewards:
+          - {type: COMMAND, value: "give %player% diamond 1"}
+      basic:
+        weight: 10
+        content: {kind: HEAD, value: "<texture>"}
+```
+
+- **points**: the spots where heads can appear. Add them in game with [`/hb spawn <hunt> point add`](../getting-started/commands.md#hb-spawn) rather than by hand
+- **active**: heads present at the same time
+- **goal**: heads a player must find to complete the hunt. Progress, placeholders, timed runs and areas use this number instead of the number of placed heads
+- **maxTotalSpawns**: total heads that can appear, `-1` for no limit
+- **completion**: `PER_PLAYER` (everyone plays until their own goal) or `FIRST_WINS` (the first player to reach the goal wins, the hunt is closed and its heads removed)
+- **afterGoal**: `DENY` (a player who reached the goal cannot click anymore) or `CONTINUE` (they keep finding heads)
+- **respawn.onFind**: a found head reappears elsewhere after a random delay between `min` and `max` seconds (`0` is instant)
+- **respawn.interval**: every `seconds`, all heads are drawn again; with `resetProgress`, every draw starts a new round
+- **respawn.onStart**: heads appear as soon as the hunt is active. Otherwise they only appear with an interval draw or `/hb spawn <hunt> reroll`
+- **templates**: what can appear, picked by `weight`. `content` uses the same format as the placed heads, and each template has its own `rewards`
+
+Heads that appeared are not placed heads: they are not saved in the hunt file, cannot be renamed, moved or given rewards per head, and are removed when the hunt is disabled or deleted. Their state is kept in `spawns/<hunt>.yml`, so a restart or a reload brings back the same heads.
+
+{% hint style="warning" %} The fixed position behavior cannot be combined with the ordered behavior. If the hunt has an area, every spot must be inside it. {% endhint %}
+
 {% hint style="info" %} The **bounded zone** behavior of earlier versions is now the [area requirement](#requirements). Existing hunt files are converted automatically the first time they are loaded. {% endhint %}
 
 ## Requirements

@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.*;
 import fr.aerwyn81.headblocks.data.hunt.behavior.schedule.ScheduleMode;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnDraft;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
 import fr.aerwyn81.headblocks.utils.bukkit.ItemBuilder;
 import fr.aerwyn81.headblocks.utils.gui.HBMenu;
@@ -25,6 +26,7 @@ public class BehaviorSelectionGui {
     private final ConcurrentHashMap<UUID, Set<String>> selectedBehaviors = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> pendingHuntNames = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, RequirementSet> pendingRequirements = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, SpawnDraft> pendingSpawn = new ConcurrentHashMap<>();
 
     public BehaviorSelectionGui(ServiceRegistry registry) {
         this.registry = registry;
@@ -34,6 +36,7 @@ public class BehaviorSelectionGui {
         pendingHuntNames.put(player.getUniqueId(), huntName);
         selectedBehaviors.put(player.getUniqueId(), new HashSet<>());
         pendingRequirements.remove(player.getUniqueId());
+        pendingSpawn.remove(player.getUniqueId());
 
         buildAndOpenGui(player);
     }
@@ -43,7 +46,7 @@ public class BehaviorSelectionGui {
                 registry.getLanguageService().message("Gui.BehaviorSelectionTitle"), false, 2);
 
         // Borders
-        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 16, 17};
+        int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
                 index -> menu.setItem(0, borders[index],
                         new ItemGUI(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setName("§7").toItemStack()))
@@ -70,6 +73,11 @@ public class BehaviorSelectionGui {
                 registry.getLanguageService().message("Gui.BehaviorTimedName"),
                 registry.getLanguageService().messageList("Gui.BehaviorTimedLore"),
                 selected.contains("timed")));
+
+        menu.setItem(0, 14, createBehaviorItem(FixedPositionBehavior.ID,
+                registry.getLanguageService().message("Gui.BehaviorFixedPositionName"),
+                registry.getLanguageService().messageList("Gui.BehaviorFixedPositionLore"),
+                selected.contains(FixedPositionBehavior.ID)));
 
         // Slot 15: Validate button
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
@@ -136,13 +144,29 @@ public class BehaviorSelectionGui {
         Set<String> selected = selectedBehaviors.computeIfAbsent(player.getUniqueId(), k -> new HashSet<>());
         if (selected.contains(behaviorId)) {
             selected.remove(behaviorId);
-        } else {
-            selected.add(behaviorId);
+            return;
+        }
+
+        selected.add(behaviorId);
+        if (FixedPositionBehavior.ID.equals(behaviorId)) {
+            selected.remove("ordered");
+        } else if ("ordered".equals(behaviorId)) {
+            selected.remove(FixedPositionBehavior.ID);
         }
     }
 
     private void handleValidate(Player player) {
         Set<String> selected = selectedBehaviors.get(player.getUniqueId());
+
+        if (selected != null && selected.contains(FixedPositionBehavior.ID) && !pendingSpawn.containsKey(player.getUniqueId())) {
+            registry.getGuiService().getSpawnConfigGui().open(player, new SpawnDraft(),
+                    draft -> {
+                        pendingSpawn.put(player.getUniqueId(), draft);
+                        handleValidate(player);
+                    },
+                    this::buildAndOpenGui);
+            return;
+        }
 
         if (selected != null && selected.contains("timed")) {
             registry.getGuiService().getTimedConfigManager().open(player);
@@ -162,6 +186,7 @@ public class BehaviorSelectionGui {
         String huntName = pendingHuntNames.remove(player.getUniqueId());
         Set<String> selected = selectedBehaviors.remove(player.getUniqueId());
         RequirementSet requirements = pendingRequirements.remove(player.getUniqueId());
+        SpawnDraft spawnDraft = pendingSpawn.remove(player.getUniqueId());
 
         if (huntName == null) {
             player.closeInventory();
@@ -182,6 +207,11 @@ public class BehaviorSelectionGui {
                     case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, scheduleMode));
                     case "timed" ->
                             behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
+                    case FixedPositionBehavior.ID -> {
+                        if (spawnDraft != null) {
+                            behaviors.add(spawnDraft.build(registry));
+                        }
+                    }
                     default -> {
                     }
                 }
@@ -223,6 +253,11 @@ public class BehaviorSelectionGui {
         if (selected != null && selected.contains("ordered")) {
             player.sendMessage(registry.getLanguageService().message("Messages.HuntOrderedHint"));
         }
+
+        if (spawnDraft != null) {
+            player.sendMessage(registry.getLanguageService().message("Messages.HuntFixedPositionHint")
+                    .replace("%hunt%", hunt.getId()));
+        }
     }
 
     public Set<String> getSelectedBehaviors(UUID playerUuid) {
@@ -233,5 +268,6 @@ public class BehaviorSelectionGui {
         pendingHuntNames.remove(playerUuid);
         selectedBehaviors.remove(playerUuid);
         pendingRequirements.remove(playerUuid);
+        pendingSpawn.remove(playerUuid);
     }
 }

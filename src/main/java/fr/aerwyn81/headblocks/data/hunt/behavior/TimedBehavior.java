@@ -80,7 +80,7 @@ public class TimedBehavior implements Behavior {
                 foundCount++;
             }
 
-            int totalHeads = hunt.getHeadCount();
+            int totalHeads = hunt.getTargetCount();
 
             if (foundCount >= totalHeads) {
                 long elapsed = TimedRunManager.getElapsedMillis(player.getUniqueId());
@@ -123,6 +123,20 @@ public class TimedBehavior implements Behavior {
     @Override
     public String getDisplayInfo(Player player, HBHunt hunt) {
         return registry.getLanguageService().message("Hunt.Behavior.Timed");
+    }
+
+    @Override
+    public void saveTo(ConfigurationSection section) {
+        section.set("repeatable", repeatable);
+        section.set("limitSeconds", limitSeconds);
+        section.set("resetOnExpire", resetOnExpire);
+
+        if (startPlateLocation != null && startPlateLocation.getWorld() != null) {
+            section.set("startPlate.world", startPlateLocation.getWorld().getName());
+            section.set("startPlate.x", startPlateLocation.getBlockX());
+            section.set("startPlate.y", startPlateLocation.getBlockY());
+            section.set("startPlate.z", startPlateLocation.getBlockZ());
+        }
     }
 
     public static TimedBehavior fromConfig(ServiceRegistry registry, ConfigurationSection section) {

@@ -181,6 +181,7 @@ public final class HeadBlocks extends JavaPlugin {
 
         timedRunTask = scheduler.runTaskTimer(new TimedRunTask(serviceRegistry), 0, 2);
         areaOutlineTask = scheduler.runTaskTimer(new AreaOutlineTask(serviceRegistry), 20, 10);
+        serviceRegistry.getSpawnService().start();
         serviceRegistry.getVisualService().spawnLoaded();
         serviceRegistry.getVisibilityService().loadOnlinePlayers();
         visualTask = scheduler.runTaskTimer(() -> serviceRegistry.getVisualService().tick(), 20, 20);

@@ -47,7 +47,7 @@ public class TimedRunTask implements Runnable {
             }
 
             String huntName = hunt != null ? hunt.getDisplayName() : data.huntId();
-            int totalHeads = hunt != null ? hunt.getHeadCount() : 0;
+            int totalHeads = hunt != null ? hunt.getTargetCount() : 0;
 
             int foundHeads = 0;
             try {

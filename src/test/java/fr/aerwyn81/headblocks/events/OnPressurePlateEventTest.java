@@ -197,7 +197,7 @@ class OnPressurePlateEventTest {
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
-        when(hunt.getHeadCount()).thenReturn(3);
+        when(hunt.getTargetCount()).thenReturn(3);
         when(hunt.isValid()).thenReturn(true);
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
 
@@ -237,7 +237,7 @@ class OnPressurePlateEventTest {
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
-        when(hunt.getHeadCount()).thenReturn(5);
+        when(hunt.getTargetCount()).thenReturn(5);
         when(hunt.isValid()).thenReturn(true);
         when(hunt.getDisplayName()).thenReturn("Test Hunt");
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -318,7 +318,7 @@ class OnPressurePlateEventTest {
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt1");
-        when(hunt.getHeadCount()).thenReturn(5);
+        when(hunt.getTargetCount()).thenReturn(5);
         when(hunt.isValid()).thenReturn(true);
         when(hunt.getDisplayName()).thenReturn("Test Hunt");
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -383,7 +383,7 @@ class OnPressurePlateEventTest {
         when(hunt.isActive()).thenReturn(true);
         when(hunt.getBehaviors()).thenReturn(List.<Behavior>of(timed));
         when(hunt.getId()).thenReturn("hunt2");
-        when(hunt.getHeadCount()).thenReturn(5);
+        when(hunt.getTargetCount()).thenReturn(5);
         when(hunt.isValid()).thenReturn(true);
         when(hunt.getDisplayName()).thenReturn("Hunt Two");
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));

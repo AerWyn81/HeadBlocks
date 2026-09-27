@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class StorageService {
@@ -181,7 +182,7 @@ public class StorageService {
 
         if (dbVersion == -1) {
             database.migrate();
-            dbVersion = Database.version;
+            dbVersion = 5;
         }
 
         if (dbVersion == 0) {
@@ -189,7 +190,7 @@ public class StorageService {
             database.addColumnHeadTexture();
             database.addColumnDisplayName();
             database.addColumnServerIdentifier();
-            dbVersion = Database.version;
+            dbVersion = 5;
         }
 
         if (dbVersion == 1) {
@@ -218,6 +219,11 @@ public class StorageService {
             }
             dbVersion = 5;
             LogUtil.success("Database migration to v5 completed successfully.");
+        }
+
+        if (dbVersion == 5) {
+            database.addColumnHeadSpawn();
+            dbVersion = 6;
         }
 
         if (dbVersion != initialVersion) {
@@ -467,6 +473,21 @@ public class StorageService {
         storage.addCachedHead(headUuid);
     }
 
+    public void createSpawnHead(UUID headUuid, String texture) throws InternalException {
+        database.createSpawnHead(headUuid, texture, serverIdentifier);
+    }
+
+    public void deleteSpawnHeads(Collection<UUID> headUuids) throws InternalException {
+        database.deleteHeads(headUuids);
+    }
+
+    public int purgeOrphanSpawnHeads(Supplier<Set<UUID>> keep) throws InternalException {
+        var orphans = database.getOrphanSpawnHeads(serverIdentifier);
+        orphans.removeAll(keep.get());
+        database.deleteHeads(orphans);
+        return orphans.size();
+    }
+
     public boolean isHeadExist(UUID headUuid) throws InternalException {
         return database.isHeadExist(headUuid);
     }
@@ -484,8 +505,8 @@ public class StorageService {
 
         ArrayList<Database.HeadExportRow> heads = database.getTableHeads();
         for (Database.HeadExportRow head : heads) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + escapeSql(head.uuid()) +
-                    "', " + (head.exists() ? 1 : 0) + ", '', '" + escapeSql(serverIdentifier) + "');");
+            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId, hSpawn) VALUES ('" + escapeSql(head.uuid()) +
+                    "', " + (head.exists() ? 1 : 0) + ", '', '" + escapeSql(serverIdentifier) + "', " + (head.spawn() ? 1 : 0) + ");");
         }
 
         instructions.add("");

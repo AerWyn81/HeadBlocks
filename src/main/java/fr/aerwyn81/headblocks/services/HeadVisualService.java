@@ -252,7 +252,9 @@ public class HeadVisualService {
     public void onChunkLoad(Chunk chunk) {
         for (var head : registry.getHeadService().getHeadsInChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ())) {
             var location = head.getLocation();
-            if (location != null && isEntityRendered(head)) {
+            if (location != null && registry.getHeadService().isSpawned(head.getUuid())) {
+                registry.getScheduler().runTask(location, () -> registry.getHeadService().materializeSpawned(head));
+            } else if (location != null && isEntityRendered(head)) {
                 registry.getScheduler().runTask(location, () -> ensureSpawned(head));
             }
         }

@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -286,6 +287,75 @@ class HBHuntTest {
 
         verify(b1).onHeadFound(player, headLocation, hunt);
         verify(b2).onHeadFound(player, headLocation, hunt);
+    }
+
+    @Test
+    void commitBehaviors_allAllow_returnsAllow() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        Behavior b1 = mock(Behavior.class);
+        Behavior b2 = mock(Behavior.class);
+        when(b1.tryCommit(player, headLocation, hunt)).thenReturn(BehaviorResult.allow());
+        when(b2.tryCommit(player, headLocation, hunt)).thenReturn(BehaviorResult.allow());
+        hunt.setBehaviors(List.of(b1, b2));
+
+        assertThat(hunt.commitBehaviors(player, headLocation).allowed()).isTrue();
+    }
+
+    @Test
+    void commitBehaviors_firstDeny_returnsDenyAndSkipsSecond() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        Behavior b1 = mock(Behavior.class);
+        Behavior b2 = mock(Behavior.class);
+        when(b1.tryCommit(player, headLocation, hunt)).thenReturn(BehaviorResult.deny("taken"));
+        hunt.setBehaviors(List.of(b1, b2));
+
+        BehaviorResult result = hunt.commitBehaviors(player, headLocation);
+
+        assertThat(result.allowed()).isFalse();
+        assertThat(result.denyMessage()).isEqualTo("taken");
+        verify(b2, never()).tryCommit(any(), any(), any());
+    }
+
+    @Test
+    void commitBehaviors_defaultBehavior_allows() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        assertThat(hunt.commitBehaviors(player, headLocation).allowed()).isTrue();
+    }
+
+    @Test
+    void getTargetCount_noOverride_isHeadCount() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        hunt.addHead(UUID.randomUUID());
+        hunt.addHead(UUID.randomUUID());
+
+        assertThat(hunt.getTargetCount()).isEqualTo(2);
+    }
+
+    @Test
+    void getTargetCount_behaviorOverride_winsOverHeadCount() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+        hunt.addHead(UUID.randomUUID());
+
+        Behavior target = mock(Behavior.class);
+        when(target.targetCount()).thenReturn(OptionalInt.of(10));
+        hunt.setBehaviors(List.of(new FreeBehavior(), target));
+
+        assertThat(hunt.getTargetCount()).isEqualTo(10);
+        assertThat(hunt.getHeadCount()).isEqualTo(1);
+    }
+
+    @Test
+    void isValid_noHeadsButBehaviorTarget_isTrue() {
+        HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
+
+        Behavior target = mock(Behavior.class);
+        when(target.targetCount()).thenReturn(OptionalInt.of(5));
+        hunt.setBehaviors(List.of(target));
+
+        assertThat(hunt.isValid()).isTrue();
     }
 
     @Test

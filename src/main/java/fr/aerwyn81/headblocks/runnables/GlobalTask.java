@@ -44,17 +44,24 @@ public class GlobalTask implements Runnable {
             registry.getHuntService().checkRemoteChanges();
         }
 
-        registry.getHeadService().getChargedHeadLocations().forEach(headLocation -> {
-            var location = headLocation.getLocation();
-            if (location.getWorld() == null) {
-                return;
-            }
+        registry.getHeadService().getChargedHeadLocations().forEach(this::scheduleHead);
+        registry.getHeadService().getSpawnedHeads().forEach(this::scheduleHead);
+    }
 
-            registry.getScheduler().runNow(location, () -> handleHead(headLocation, location));
-        });
+    private void scheduleHead(HeadLocation headLocation) {
+        var location = headLocation.getLocation();
+        if (location.getWorld() == null) {
+            return;
+        }
+
+        registry.getScheduler().runNow(location, () -> handleHead(headLocation, location));
     }
 
     private void handleHead(HeadLocation headLocation, Location location) {
+        if (registry.getHeadService().getHeadByUUID(headLocation.getUuid()) != headLocation) {
+            return;
+        }
+
         if (!location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
             return;
         }

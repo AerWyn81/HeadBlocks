@@ -122,6 +122,14 @@ public class HeadClaimService {
                     return;
                 }
 
+                var commitResult = hunt.commitBehaviors(player, headLocation);
+                if (!commitResult.allowed()) {
+                    if (commitResult.denyMessage() != null && !commitResult.denyMessage().isEmpty()) {
+                        player.sendMessage(commitResult.denyMessage());
+                    }
+                    return;
+                }
+
                 registry.getStorageService().addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
 
                 hunt.notifyHeadFound(player, headLocation);

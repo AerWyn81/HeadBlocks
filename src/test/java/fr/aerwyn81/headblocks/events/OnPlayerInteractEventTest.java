@@ -619,6 +619,8 @@ class OnPlayerInteractEventTest {
                     .thenReturn(BehaviorResult.allow());
             lenient().when(activeHunt.evaluateBehaviors(any(), any()))
                     .thenReturn(BehaviorResult.allow());
+            lenient().when(activeHunt.commitBehaviors(any(), any()))
+                    .thenReturn(BehaviorResult.allow());
             lenient().when(activeHunt.evaluateRequirements(any(), any()))
                     .thenReturn(RequirementResult.ok());
 
@@ -991,6 +993,34 @@ class OnPlayerInteractEventTest {
 
                 // Behavior denied, so "already claimed" path is NOT taken
                 verify(languageService, never()).message("Messages.AlreadyClaimHead");
+            }
+        }
+
+        @Nested
+        class CommitDeny {
+            @Test
+            void commitDenied_doesNotAddHeadNorReward() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(new ArrayList<>());
+                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
+                when(activeHunt.commitBehaviors(player, headLocation)).thenReturn(BehaviorResult.deny("Too late"));
+
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(storageService, never()).addHeadForHunt(any(), any(), anyString());
+                verify(activeHunt, never()).notifyHeadFound(any(), any());
+                verify(rewardService, never()).giveReward(any(), any(), any(), any(HuntConfig.class), any());
+                verify(player).sendMessage("Too late");
+            }
+
+            @Test
+            void insufficientSlots_doesNotCommit() throws InternalException {
+                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(new ArrayList<>());
+                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(false);
+                when(languageService.message("Messages.InventoryFullReward")).thenReturn("full");
+
+                triggerHandleHuntClick(new HashSet<>());
+
+                verify(activeHunt, never()).commitBehaviors(any(), any());
             }
         }
 

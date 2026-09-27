@@ -635,6 +635,39 @@ class StorageServiceTest {
         verify(storage).addCachedHead(head);
     }
 
+    // --- Spawn heads ---
+
+    @Test
+    void createSpawnHead_writesToDatabaseOnly() throws InternalException {
+        UUID head = UUID.randomUUID();
+
+        service.createSpawnHead(head, "tex");
+
+        verify(database).createSpawnHead(eq(head), eq("tex"), anyString());
+        verify(storage, never()).addCachedHead(any());
+    }
+
+    @Test
+    void deleteSpawnHeads_delegatesToDatabase() throws InternalException {
+        List<UUID> heads = List.of(UUID.randomUUID(), UUID.randomUUID());
+
+        service.deleteSpawnHeads(heads);
+
+        verify(database).deleteHeads(heads);
+    }
+
+    @Test
+    void purgeOrphanSpawnHeads_keepsTheGivenHeads() throws InternalException {
+        UUID active = UUID.randomUUID();
+        UUID orphan = UUID.randomUUID();
+        when(database.getOrphanSpawnHeads(anyString())).thenReturn(new ArrayList<>(List.of(active, orphan)));
+
+        int purged = service.purgeOrphanSpawnHeads(() -> Set.of(active));
+
+        assertThat(purged).isEqualTo(1);
+        verify(database).deleteHeads(List.of(orphan));
+    }
+
     // ====================================================================
     // NEW TESTS: expand coverage for untested / under-tested methods
     // ====================================================================
@@ -952,8 +985,8 @@ class StorageServiceTest {
                 lenient().when(configService.databasePrefix()).thenReturn("");
 
                 ArrayList<Database.HeadExportRow> heads = new ArrayList<>();
-                heads.add(new Database.HeadExportRow("head-uuid-1", true));
-                heads.add(new Database.HeadExportRow("head-uuid-2", false));
+                heads.add(new Database.HeadExportRow("head-uuid-1", true, false));
+                heads.add(new Database.HeadExportRow("head-uuid-2", false, true));
                 when(database.getTableHeads()).thenReturn(heads);
 
                 ArrayList<Database.PlayerHeadExportRow> playerHeads = new ArrayList<>();
@@ -976,6 +1009,8 @@ class StorageServiceTest {
                         .filter(s -> s.contains("head-uuid-2") && s.contains("INSERT INTO"))
                         .findFirst().orElse("");
                 assertThat(headInsert2).contains("0"); // false -> 0
+                assertThat(headInsert1).contains("hSpawn").endsWith("', 0);");
+                assertThat(headInsert2).endsWith("', 1);");
 
                 // Check player head inserts
                 String playerHeadInsert = result.stream()
@@ -1779,6 +1814,7 @@ class StorageServiceTest {
             invokeVerifyDatabaseMigration();
 
             verify(database).migrate();
+            verify(database).addColumnHeadSpawn();
             verify(database).upsertTableVersion(-1);
         }
 
@@ -1793,6 +1829,7 @@ class StorageServiceTest {
             verify(database).addColumnHeadTexture();
             verify(database).addColumnDisplayName();
             verify(database).addColumnServerIdentifier();
+            verify(database).addColumnHeadSpawn();
             verify(database).upsertTableVersion(0);
         }
 
@@ -1849,7 +1886,21 @@ class StorageServiceTest {
             verify(database, never()).addColumnDisplayName();
             verify(database, never()).addColumnServerIdentifier();
             verify(database).migrateToV5();
+            verify(database).addColumnHeadSpawn();
             verify(database).upsertTableVersion(4);
+        }
+
+        @Test
+        void version5_onlyAddsHeadSpawnColumn() throws Throwable {
+            when(database.isDefaultTablesExist()).thenReturn(true);
+            when(database.checkVersion()).thenReturn(5);
+
+            invokeVerifyDatabaseMigration();
+
+            verify(database, never()).migrateToV5();
+            verify(database, never()).addColumnServerIdentifier();
+            verify(database).addColumnHeadSpawn();
+            verify(database).upsertTableVersion(5);
         }
 
         @Test

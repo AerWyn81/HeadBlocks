@@ -8,8 +8,8 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.OrderedBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementMode;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementType;
@@ -532,6 +532,12 @@ public class HuntConfigService {
             behaviors.add(Behavior.fromConfig(type, registry, behaviorSection));
         }
 
+        if (behaviors.stream().anyMatch(SpawnBehavior.class::isInstance)
+                && behaviors.removeIf(OrderedBehavior.class::isInstance)) {
+            LogUtil.warning("Hunt {0}: the ordered behavior cannot be combined with spawned heads, it was ignored.",
+                    yaml.getString("id"));
+        }
+
         return behaviors;
     }
 
@@ -549,31 +555,7 @@ public class HuntConfigService {
         yaml.set("behaviors", null);
 
         for (Behavior behavior : behaviors) {
-            String key = "behaviors." + behavior.getId();
-            yaml.createSection(key);
-
-            if (behavior instanceof ScheduledBehavior sb) {
-                var section = yaml.getConfigurationSection(key);
-                if (section != null) {
-                    section.set("mode", sb.getScheduleMode().getModeId());
-                    sb.getScheduleMode().saveTo(section);
-                }
-            }
-
-            if (behavior instanceof TimedBehavior tb) {
-                yaml.set(key + ".repeatable", tb.repeatable());
-                yaml.set(key + ".limitSeconds", tb.limitSeconds());
-                yaml.set(key + ".resetOnExpire", tb.resetOnExpire());
-                if (tb.startPlateLocation() != null) {
-                    var loc = tb.startPlateLocation();
-                    if (loc.getWorld() != null) {
-                        yaml.set(key + ".startPlate.world", loc.getWorld().getName());
-                        yaml.set(key + ".startPlate.x", loc.getBlockX());
-                        yaml.set(key + ".startPlate.y", loc.getBlockY());
-                        yaml.set(key + ".startPlate.z", loc.getBlockZ());
-                    }
-                }
-            }
+            behavior.saveTo(yaml.createSection("behaviors." + behavior.getId()));
         }
     }
 

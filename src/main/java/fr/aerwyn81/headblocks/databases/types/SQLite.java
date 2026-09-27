@@ -124,6 +124,27 @@ public class SQLite extends AbstractDatabase {
         }
     }
 
+    @Override
+    public void addColumnHeadSpawn() throws InternalException {
+        try (var conn = dataSource.getConnection()) {
+            boolean exists;
+            try (var ps = conn.prepareStatement(Requests.hasColumnHeadSpawnSQLite());
+                 var rs = ps.executeQuery()) {
+                exists = rs.next() && rs.getInt("count") > 0;
+            }
+
+            if (exists) {
+                return;
+            }
+
+            try (var alter = conn.createStatement()) {
+                alter.executeUpdate(Requests.addColumnHeadSpawnSQLite());
+            }
+        } catch (Exception ex) {
+            throw new InternalException(ex);
+        }
+    }
+
     // --- Migration v5 (SQLite: temp table strategy) ---
 
     @Override

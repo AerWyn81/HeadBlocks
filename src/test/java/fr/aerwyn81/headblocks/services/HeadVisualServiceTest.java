@@ -372,6 +372,21 @@ class HeadVisualServiceTest {
         }
 
         @Test
+        void chunkLoad_spawnedHead_isMaterializedByTheHeadService() {
+            Chunk chunk = mock(Chunk.class);
+            when(chunk.getWorld()).thenReturn(world);
+            when(chunk.getX()).thenReturn(3);
+            when(chunk.getZ()).thenReturn(-2);
+            when(headService.getHeadsInChunk("world", 3, -2)).thenReturn(List.of(mob));
+            when(headService.isSpawned(mob.getUuid())).thenReturn(true);
+
+            visualService.onChunkLoad(chunk);
+
+            verify(headService).materializeSpawned(mob);
+            verify(world, never()).spawnEntity(any(), any());
+        }
+
+        @Test
         void chunkUnloaded_dropsTheTrackedEntities() {
             Cat cat = spawnableCat();
             when(world.spawnEntity(location, EntityType.CAT)).thenReturn(cat);

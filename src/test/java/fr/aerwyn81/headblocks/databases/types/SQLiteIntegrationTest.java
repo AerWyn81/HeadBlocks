@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.databases.types;
 
 import fr.aerwyn81.headblocks.data.PlayerProfileLight;
+import fr.aerwyn81.headblocks.databases.Database;
 import fr.aerwyn81.headblocks.databases.Requests;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -418,7 +419,7 @@ class SQLiteIntegrationTest {
     void checkVersion_returns_version_after_load() throws InternalException {
         int version = db.checkVersion();
 
-        assertThat(version).isEqualTo(5);
+        assertThat(version).isEqualTo(Database.version);
     }
 
     @Test
@@ -432,7 +433,7 @@ class SQLiteIntegrationTest {
 
         db.upsertTableVersion(currentVersion);
 
-        assertThat(db.checkVersion()).isEqualTo(5);
+        assertThat(db.checkVersion()).isEqualTo(Database.version);
     }
 
     // ---- Additional AbstractDatabase coverage ----
@@ -661,5 +662,103 @@ class SQLiteIntegrationTest {
         boolean renamed = db.hasPlayerRenamed(new PlayerProfileLight(player, "Same", "NewDisplay"));
 
         assertThat(renamed).isTrue();
+    }
+
+    // ---- Spawn heads ----
+
+    @Test
+    void createSpawnHead_isExcludedFromHeadListings() throws InternalException {
+        UUID placed = UUID.randomUUID();
+        UUID spawned = UUID.randomUUID();
+        db.createNewHead(placed, "t1", "srv1");
+        db.createSpawnHead(spawned, "t2", "srv1");
+
+        assertThat(db.isHeadExist(spawned)).isTrue();
+        assertThat(db.getHeads()).containsExactly(placed);
+        assertThat(db.getHeads("srv1")).containsExactly(placed);
+    }
+
+    @Test
+    void createSpawnHead_foundByPlayer_countsInProgressAndTop() throws InternalException {
+        UUID player = UUID.randomUUID();
+        UUID spawned = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(player, "P", ""));
+        db.createHunt("spawnhunt", "Spawn", "ACTIVE");
+        db.createSpawnHead(spawned, "t", "srv1");
+
+        db.addHeadForHunt(player, spawned, "spawnhunt");
+
+        assertThat(db.getHeadsPlayerForHunt(player, "spawnhunt")).containsExactly(spawned);
+        assertThat(db.getHeadsPlayer(player)).containsExactly(spawned);
+        assertThat(db.getTopPlayersForHunt("spawnhunt").values()).containsExactly(1);
+    }
+
+    @Test
+    void getOrphanSpawnHeads_returnsOnlyUnfoundSpawnHeadsOfTheServer() throws InternalException {
+        UUID player = UUID.randomUUID();
+        UUID found = UUID.randomUUID();
+        UUID orphan = UUID.randomUUID();
+        UUID otherServer = UUID.randomUUID();
+        UUID placed = UUID.randomUUID();
+        db.updatePlayerInfo(new PlayerProfileLight(player, "P", ""));
+        db.createSpawnHead(found, "t", "srv1");
+        db.createSpawnHead(orphan, "t", "srv1");
+        db.createSpawnHead(otherServer, "t", "srv2");
+        db.createNewHead(placed, "t", "srv1");
+        db.addHeadForHunt(player, found, "default");
+
+        assertThat(db.getOrphanSpawnHeads("srv1")).containsExactly(orphan);
+    }
+
+    @Test
+    void deleteHeads_removesAllGivenHeads() throws InternalException {
+        UUID h1 = UUID.randomUUID();
+        UUID h2 = UUID.randomUUID();
+        UUID kept = UUID.randomUUID();
+        db.createSpawnHead(h1, "t", "srv1");
+        db.createSpawnHead(h2, "t", "srv1");
+        db.createSpawnHead(kept, "t", "srv1");
+
+        db.deleteHeads(java.util.List.of(h1, h2));
+
+        assertThat(db.isHeadExist(h1)).isFalse();
+        assertThat(db.isHeadExist(h2)).isFalse();
+        assertThat(db.isHeadExist(kept)).isTrue();
+    }
+
+    @Test
+    void getTableHeads_exposesTheSpawnFlag() throws InternalException {
+        UUID placed = UUID.randomUUID();
+        UUID spawned = UUID.randomUUID();
+        db.createNewHead(placed, "t", "s1");
+        db.createSpawnHead(spawned, "t", "s1");
+
+        var rows = db.getTableHeads();
+
+        assertThat(rows).anyMatch(r -> r.uuid().equals(placed.toString()) && !r.spawn());
+        assertThat(rows).anyMatch(r -> r.uuid().equals(spawned.toString()) && r.spawn());
+    }
+
+    @Test
+    void addColumnHeadSpawn_onV5Schema_addsTheColumnOnce() throws Exception {
+        SQLite legacy = new SQLite(tempDir.resolve("legacy.db").toString());
+        legacy.open();
+        try {
+            try (var conn = legacy.dataSource.getConnection(); var st = conn.createStatement()) {
+                st.execute("CREATE TABLE hb_heads (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8))");
+                st.execute("INSERT INTO hb_heads (hUUID, hExist, hTexture, serverId) VALUES ('" + UUID.randomUUID() + "', 1, 't', 's1')");
+            }
+
+            legacy.addColumnHeadSpawn();
+            legacy.addColumnHeadSpawn();
+            legacy.load();
+
+            assertThat(legacy.getHeads()).hasSize(1);
+            UUID spawned = UUID.randomUUID();
+            legacy.createSpawnHead(spawned, "t", "s1");
+            assertThat(legacy.getHeads()).hasSize(1);
+        } finally {
+            legacy.close();
+        }
     }
 }

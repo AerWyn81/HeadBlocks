@@ -475,7 +475,7 @@ class RequestsTest {
 
             String sql = Requests.getHeadsByServerId();
 
-            assertThat(sql).contains("hExist = True AND serverId = ?");
+            assertThat(sql).contains("hExist = True AND hSpawn = False AND serverId = ?");
         }
 
         @Test
@@ -536,12 +536,12 @@ class RequestsTest {
         }
 
         @Test
-        void getTableHeadsData_selects_hUUID_and_hExist() {
+        void getTableHeadsData_selects_hUUID_hExist_and_hSpawn() {
             initWithPrefix("");
 
             String sql = Requests.getTableHeadsData();
 
-            assertThat(sql).isEqualTo("SELECT hUUID, hExist FROM hb_heads");
+            assertThat(sql).isEqualTo("SELECT hUUID, hExist, hSpawn FROM hb_heads");
         }
 
         @Test

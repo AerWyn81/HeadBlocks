@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 
 import java.util.*;
@@ -19,6 +20,7 @@ public class HuntService {
     private final Map<UUID, String> selectedHunt = new HashMap<>();
     private long knownHuntVersion = 0;
     private final List<Consumer<HeadLocation>> transferListeners = new ArrayList<>();
+    private final List<Consumer<HBHunt>> stateListeners = new ArrayList<>();
 
     // --- Constructor ---
 
@@ -125,6 +127,19 @@ public class HuntService {
         selectedHunt.values().removeIf(huntId::equals);
         TimedRunManager.leaveAllForHunt(huntId);
         AreaRunManager.clearAllForHunt(huntId);
+    }
+
+    public void changeState(HBHunt hunt, HuntState state) throws InternalException {
+        hunt.setState(state);
+        huntConfigService.saveHunt(hunt);
+        storageService.updateHuntStateInDb(hunt.getId(), state.name());
+        storageService.incrementHuntVersion();
+
+        stateListeners.forEach(listener -> listener.accept(hunt));
+    }
+
+    public void onStateChanged(Consumer<HBHunt> listener) {
+        stateListeners.add(listener);
     }
 
     public List<String> getHuntNames() {

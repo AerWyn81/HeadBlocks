@@ -78,6 +78,7 @@ class HBHuntCommandTest {
     @BeforeEach
     void setUp() {
         lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
+        lenient().when(registry.getSpawnService()).thenReturn(mock(SpawnService.class));
         lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(registry.getStorageService()).thenReturn(storageService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
@@ -311,10 +312,7 @@ class HBHuntCommandTest {
 
                 huntCommand.perform(consoleSender, new String[]{"hunt", "enable", "myhunt"});
 
-                verify(hunt).setState(HuntState.ACTIVE);
-                verify(huntConfigService).saveHunt(hunt);
-                verify(storageService).updateHuntStateInDb("myhunt", "ACTIVE");
-                verify(storageService).incrementHuntVersion();
+                verify(huntService).changeState(hunt, HuntState.ACTIVE);
             }
         }
 
@@ -349,9 +347,7 @@ class HBHuntCommandTest {
 
                 huntCommand.perform(consoleSender, new String[]{"hunt", "disable", "myhunt"});
 
-                verify(hunt).setState(HuntState.INACTIVE);
-                verify(huntConfigService).saveHunt(hunt);
-                verify(storageService).updateHuntStateInDb("myhunt", "INACTIVE");
+                verify(huntService).changeState(hunt, HuntState.INACTIVE);
             }
         }
     }
@@ -651,7 +647,7 @@ class HBHuntCommandTest {
             HBHunt hunt = mock(HBHunt.class);
             when(hunt.getId()).thenReturn("myhunt");
             when(hunt.getDisplayName()).thenReturn("My Hunt");
-            when(hunt.getHeadCount()).thenReturn(5);
+            when(hunt.getTargetCount()).thenReturn(5);
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             UUID playerUuid = UUID.randomUUID();

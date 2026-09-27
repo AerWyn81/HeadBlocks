@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -73,12 +74,13 @@ public class PlaceholderHook extends PlaceholderExpansion {
             var future = registry.getStorageService().getHeadsPlayer(player.getUniqueId()).asFuture();
 
             try {
-                var current = future.get().size();
+                var heads = new HashSet<>(registry.getStorageService().getHeads());
+                var current = future.get().stream().filter(heads::contains).count();
 
                 if (identifier.equals("current")) {
                     return "" + current;
                 } else {
-                    return "" + (registry.getStorageService().getHeads().size() - current);
+                    return "" + (heads.size() - current);
                 }
             } catch (Exception ex) {
                 return "Future error get heads";
@@ -240,20 +242,20 @@ public class PlaceholderHook extends PlaceholderExpansion {
                     }
                 }
                 case "total" -> {
-                    return String.valueOf(hunt.getHeadCount());
+                    return String.valueOf(hunt.getTargetCount());
                 }
                 case "left" -> {
                     try {
                         int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
-                        return String.valueOf(hunt.getHeadCount() - found);
+                        return String.valueOf(Math.max(0, hunt.getTargetCount() - found));
                     } catch (InternalException e) {
-                        return String.valueOf(hunt.getHeadCount());
+                        return String.valueOf(hunt.getTargetCount());
                     }
                 }
                 case "progress" -> {
                     try {
                         int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
-                        int total = hunt.getHeadCount();
+                        int total = hunt.getTargetCount();
                         return MessageUtils.createProgressBar(found, total,
                                 registry.getConfigService().progressBarBars(),
                                 registry.getConfigService().progressBarSymbol(),
@@ -289,7 +291,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 }
                 case "finishers" -> {
                     try {
-                        int total = hunt.getHeadCount();
+                        int total = hunt.getTargetCount();
                         if (total <= 0) {
                             return "0";
                         }

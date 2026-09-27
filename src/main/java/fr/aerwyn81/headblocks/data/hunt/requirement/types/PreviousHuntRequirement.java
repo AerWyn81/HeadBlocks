@@ -77,7 +77,7 @@ public class PreviousHuntRequirement implements Requirement {
     }
 
     private int neededHeads(HBHunt target) {
-        return requiredHeads == ALL_HEADS ? target.getHeadCount() : requiredHeads;
+        return requiredHeads == ALL_HEADS ? target.getTargetCount() : requiredHeads;
     }
 
     @Override

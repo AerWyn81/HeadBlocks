@@ -1,30 +1,31 @@
-# HeadBlocks v3.5.0
+# HeadBlocks v3.6.0
 
 ## What's New
 
 ### ✨ New Features
 
-- **Hide more than heads.** The `heads` list now accepts blocks (`block:LANTERN`), items (`item:DIAMOND:1001`), item frames (`frame:FILLED_MAP`), floating texts (`text:&6Find me!`) and mobs without AI (`mob:CAT`). Options go between brackets, e.g. `mob:ZOMBIE[head=DIAMOND_HELMET,baby=true]`. See the [documentation](https://aerwyn81.gitbook.io/headblocks/configuration-config.yml/rendering).
-- **Contents of other plugins**, when installed: custom items and furniture from **Nexo**, **ItemsAdder** and **Oraxen**, mobs from **MythicMobs**, 3D models from **ModelEngine** and **BetterModel**, and NPCs from **Citizens**, **FancyNpcs** and **ZNPCsPlus**.
-- **Rendering modes.** A new `rendering` section (`mode`, `scale`, `glow`) in `config.yml`, overridable per hunt: heads and blocks are placed as real blocks (`BLOCK`) or as floating, scalable display entities (`DISPLAY`) that spin smoothly.
-- `/hb hunt rendering <hunt> <block|display>` converts the heads already placed in a hunt, keeping their content, position and player progress. `/hb hunt info` shows the rendering of the hunt.
-- **Catalog.** `/hb give` opens a menu to take the items: filter by type, pick the hunt the items are linked to, shift + click to take a stack. `/hb give <player>` opens it for that player, and can be run from the console.
+- **Fixed position hunts.** A new behavior where heads appear on spots you define, a few at a time. When someone finds one, it disappears for everybody and a new one appears on another free spot: players race to collect heads until they reach the goal. See the [documentation](https://aerwyn81.gitbook.io/headblocks) (Hunt Files, Fixed position).
+  - Choose how many heads are present at once, how many a player must find, and an optional limit of total spawns.
+  - The hunt ends per player, or the first player to reach the goal wins and the hunt closes.
+  - Heads reappear instantly or after a random delay, can all be drawn again at a regular interval (optionally starting a new round with reset progress), and appear as soon as the hunt starts or only on demand.
+  - Heads are picked from templates with a weight, each with its own content (heads, blocks, items, mobs, contents of other plugins) and its own rewards.
+  - Heads that appeared survive restarts and reloads, and wait for their world if it is loaded later by another plugin.
+- **Behavior menu**: a **Fixed position** entry opens a configuration menu with the templates, their weights and their rewards.
+- **`/hb spawn <hunt>`** manages a fixed position hunt: `point add|remove|list|show` to place the spots in game, `config` to change its settings, `reroll [reset]` to draw the heads again and `clear` to remove them.
 
 ### 🚀 Improvements
 
-- Heads rendered as entities are hidden natively for players who found them with `hideFoundHeads`: no PacketEvents needed, and no invisible collision left behind.
-- Entities are never saved in the world: they are spawned when their chunk loads and respawned if something removes them, so uninstalling the plugin leaves nothing behind.
-- Placed block heads are protected: they don't burn, melt, decay, pop off when their support is removed or get pulled by a sticky piston, and clicking one only claims it (a chest doesn't open, a lever doesn't toggle).
-- Item frames are placed on the face you click, including floors and ceilings.
-- `/hb move` also moves heads rendered as entities.
-- A head moved to another hunt takes the rendering of its new hunt.
-- Holograms are raised above tall contents such as mobs.
-- Spin settings of a hunt are now applied to its heads.
-- Faster head lookups on servers with many heads.
+- Progress, timed runs, areas, the previous hunt requirement and the per-hunt placeholders use the number of heads to find of a hunt, which is the goal for a fixed position hunt.
+- Heads that appeared are protected from the per-head commands (`rename`, `move`, hunt transfer, per-head rewards). Breaking one as an admin makes it appear elsewhere.
+
+### 🐛 Bug Fixes
+
+- `%headblocks_current%`, `%headblocks_left%` and `%current%` only count placed heads, so they stay consistent with `%headblocks_max%`.
 
 ### ⚠️ Breaking Changes
 
-- `/hb give <player> <number|*> [hunt]` is replaced by the catalog: the head number, `*` and hunt arguments no longer exist. Scripts or commands giving heads by number must be updated.
+- The database is migrated to version 6 on the first start (a column is added to the heads table). SQLite databases are backed up before the migration.
+- The ordered behavior cannot be combined with the fixed position behavior: a hunt file combining both ignores the ordered behavior.
 
 ---
 

@@ -115,7 +115,7 @@ class ProgressCommandTest {
             HBHunt hunt1 = mock(HBHunt.class);
             when(hunt1.getId()).thenReturn("hunt1");
             when(hunt1.getDisplayName()).thenReturn("Hunt One");
-            when(hunt1.getHeadCount()).thenReturn(10);
+            when(hunt1.getTargetCount()).thenReturn(10);
             var huntState = mock(HuntState.class);
             when(hunt1.getState()).thenReturn(huntState);
             when(huntState.getLocalizedName(languageService)).thenReturn("Active");

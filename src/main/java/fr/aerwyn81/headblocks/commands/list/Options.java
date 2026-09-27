@@ -39,6 +39,11 @@ public class Options implements Cmd {
                                     .replace("%headName%", argHead));
                             return true;
                         }
+
+                        if (registry.getHeadService().isSpawned(head.getUuid())) {
+                            sender.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
+                            return true;
+                        }
                     }
 
                     registry.getGuiService().getRewardsManager().openRewardsSelectionGui((Player) sender, head);

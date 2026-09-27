@@ -30,6 +30,11 @@ public class RenameHead implements Cmd {
             return true;
         }
 
+        if (registry.getHeadService().isSpawned(headLocation.getUuid())) {
+            player.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
+            return true;
+        }
+
         args = Arrays.copyOfRange(args, 1, args.length);
 
         var name = String.join(" ", args);

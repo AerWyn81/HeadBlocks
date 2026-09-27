@@ -1,6 +1,6 @@
 # Behavior GUI
 
-Creating a hunt with **`/hb hunt create <name>`** opens the **Behaviors** menu, which chains into the Timed and Scheduled configuration menus depending on what you select, and gives access to the **Requirements** menu. This page lists every clickable element and its exact click/drop action.
+Creating a hunt with **`/hb hunt create <name>`** opens the **Behaviors** menu, which chains into the Fixed position, Timed and Scheduled configuration menus depending on what you select, and gives access to the **Requirements** menu. This page lists every clickable element and its exact click/drop action.
 
 For the per-head menus opened by `/hb options` (Hint, Order, Rewards), see [Options GUI](options-gui.md). For what each behavior does at runtime, see [Hunt Files](hunts.md).
 
@@ -24,9 +24,10 @@ Toggle the behaviors you want, then validate.
 | **Ordered**      | Lime/Gray Dye | LEFT CLICK → toggle the Ordered behavior                          |
 | **Scheduled**    | Lime/Gray Dye | LEFT CLICK → toggle the Scheduled behavior                        |
 | **Timed**        | Lime/Gray Dye | LEFT CLICK → toggle the Timed behavior                            |
+| **Fixed position** | Lime/Gray Dye | LEFT CLICK → toggle the Fixed position behavior (unselects Ordered) |
 | **Validate**     | Diamond       | LEFT CLICK → create the hunt (chains into the config menus below) |
 
-A green dye means selected, gray means not selected. If Timed or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created. Requirements are configured in their own menu and the item shows how many are set.
+A green dye means selected, gray means not selected. If Timed or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created. Fixed position opens its own configuration first. Fixed position and Ordered cannot be selected together. Requirements are configured in their own menu and the item shows how many are set.
 
 ---
 
@@ -111,6 +112,45 @@ First pick the hunt in the paginated list, then set the threshold.
 | **Comparison**     | Comparator | LEFT CLICK → cycle `=` → `!=` → `>` → `>=` → `<` → `<=` → `contains` |
 | **Expected value** | Name Tag   | LEFT CLICK → close the menu and type the value in chat               |
 | **Validate**       | Diamond    | LEFT CLICK → confirm (needs the placeholder and the value)           |
+
+---
+
+## Fixed position configuration
+
+Opened when validating with **Fixed position** selected, or with `/hb spawn <hunt> config` for an existing hunt. Numbers: **LEFT CLICK** → +, **RIGHT CLICK** → -, hold **SHIFT** for a bigger step.
+
+| Element                          | Icon              | Action                                                          |
+|----------------------------------|-------------------|-----------------------------------------------------------------|
+| **Heads present at once**        | Player Head       | Number: heads visible at the same time                          |
+| **Heads to find**                | Target            | Number: the goal of each player                                 |
+| **Maximum spawns**               | Hopper            | Number: total heads that can appear (below 1 = unlimited)       |
+| **Completion**                   | Golden Helmet     | LEFT CLICK → per player / first to the goal wins                |
+| **Once the goal is reached**     | Iron Door         | LEFT CLICK → cannot click anymore / keeps finding heads         |
+| **Templates**                    | Chest             | LEFT CLICK → open the templates                                 |
+| **Respawn when found**           | Lime/Gray Dye     | LEFT CLICK → toggle                                             |
+| **Minimum / maximum delay**      | Clock             | Number: seconds before a found head reappears                   |
+| **Spawn when the hunt starts**   | Lime/Gray Dye     | LEFT CLICK → toggle                                             |
+| **Redraw regularly**             | Lime/Gray Dye     | LEFT CLICK → toggle                                             |
+| **Redraw interval**              | Recovery Compass  | Number: seconds between two draws (steps of 60, SHIFT: 600)     |
+| **Reset progress on redraw**     | Lime/Gray Dye     | LEFT CLICK → toggle                                             |
+| **Validate**                     | Diamond/Barrier   | LEFT CLICK → save (needs a template with a weight above 0)      |
+| **Back**                         | Back icon         | LEFT CLICK → discard the changes                                |
+
+### Templates
+
+| Element              | Icon           | Action                                                                                                                   |
+|----------------------|----------------|--------------------------------------------------------------------------------------------------------------------------|
+| Template             | Its content    | **LEFT CLICK** → weight +1 · **RIGHT CLICK** → weight -1 · **SHIFT + LEFT CLICK** → rewards · **SHIFT + RIGHT CLICK** → remove |
+| **Add a template**   | Lime Concrete  | LEFT CLICK → pick a head, block, item or mob from the catalog                                                            |
+
+### Template rewards
+
+| Element                        | Icon          | Action                                                   |
+|--------------------------------|---------------|----------------------------------------------------------|
+| Reward                         | Paper         | SHIFT + RIGHT CLICK → remove                             |
+| **Add a MESSAGE / COMMAND / BROADCAST reward** | Lime Concrete | LEFT CLICK → type the value in the chat |
+
+Spots are not set in this menu: add them in game with `/hb spawn <hunt> point add`.
 
 ---
 

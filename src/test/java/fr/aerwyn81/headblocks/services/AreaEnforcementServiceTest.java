@@ -4,14 +4,20 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
+import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AfterGoal;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.RespawnPolicy;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnCompletion;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnPoint;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementMode;
 import fr.aerwyn81.headblocks.data.hunt.requirement.RequirementSet;
 import fr.aerwyn81.headblocks.data.hunt.requirement.area.AreaMessageMode;
 import fr.aerwyn81.headblocks.data.hunt.requirement.area.AreaProvider;
 import fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -21,6 +27,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -602,6 +609,45 @@ class AreaEnforcementServiceTest {
         service.sanitizeAreaHunts();
 
         assertThat(service.hasArea(hunt)).isTrue();
+    }
+
+    @Test
+    void sanitize_fixedPositionWithoutPlacedHeads_pointsInside_keepsArea() {
+        HBHunt hunt = hunt(HUNT_ID, 1, 0, area, returnPoint);
+        hunt.setBehaviors(List.of(fixedPosition(new SpawnPoint("world", 1, 64, 1, 0f))));
+        World world = mock(World.class);
+        when(area.contains(any(Location.class))).thenReturn(true);
+        when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+        when(headService.getHeadLocationsForHunt(hunt)).thenReturn(new ArrayList<>());
+
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+            service.sanitizeAreaHunts();
+        }
+
+        assertThat(service.hasArea(hunt)).isTrue();
+    }
+
+    @Test
+    void sanitize_fixedPositionPointOutside_disablesArea() {
+        HBHunt hunt = hunt(HUNT_ID, 1, 0, area, returnPoint);
+        hunt.setBehaviors(List.of(fixedPosition(new SpawnPoint("world", 1, 64, 1, 0f))));
+        World world = mock(World.class);
+        when(area.contains(any(Location.class))).thenReturn(false);
+        when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+        when(headService.getHeadLocationsForHunt(hunt)).thenReturn(new ArrayList<>());
+
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+            service.sanitizeAreaHunts();
+        }
+
+        assertThat(service.hasArea(hunt)).isFalse();
+    }
+
+    private FixedPositionBehavior fixedPosition(SpawnPoint... points) {
+        return new FixedPositionBehavior(registry, List.of(points), 1, 1, -1, SpawnCompletion.PER_PLAYER,
+                AfterGoal.DENY, RespawnPolicy.DEFAULT, List.of());
     }
 
     @Test

@@ -68,7 +68,7 @@ public class Requests {
     }
 
     public static String createTableHeads() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8))", getTableHeads());
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTOINCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8), `hSpawn` BOOLEAN NOT NULL DEFAULT 0 CHECK (hSpawn IN (0, 1)))", getTableHeads());
     }
 
     public static String getContainsTableHeads() {
@@ -76,11 +76,11 @@ public class Requests {
     }
 
     public static String createTableHeadsMySQL() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8))", getTableHeads());
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`hId` INTEGER PRIMARY KEY AUTO_INCREMENT, `hUUID` VARCHAR(36) UNIQUE NOT NULL,`hExist` BOOLEAN NOT NULL CHECK (hExist IN (0, 1)), `hTexture` VARCHAR(255), `serverId` VARCHAR(8), `hSpawn` BOOLEAN NOT NULL DEFAULT 0)", getTableHeads());
     }
 
     public static String getTableHeadsData() {
-        return String.format("SELECT hUUID, hExist FROM %s", getTableHeads());
+        return String.format("SELECT hUUID, hExist, hSpawn FROM %s", getTableHeads());
     }
 
     public static String createTablePlayerHeads() {
@@ -120,15 +120,15 @@ public class Requests {
     }
 
     public static String getHeads() {
-        return String.format("SELECT * FROM %s WHERE hExist = True", getTableHeads());
+        return String.format("SELECT * FROM %s WHERE hExist = True AND hSpawn = False", getTableHeads());
     }
 
     public static String getHeadsMySQL() {
-        return String.format("SELECT * FROM %s WHERE hExist = True AND serverId != ''", getTableHeads());
+        return String.format("SELECT * FROM %s WHERE hExist = True AND hSpawn = False AND serverId != ''", getTableHeads());
     }
 
     public static String getHeadsByServerId() {
-        return String.format("SELECT * FROM %s WHERE hExist = True AND serverId = ?", getTableHeads());
+        return String.format("SELECT * FROM %s WHERE hExist = True AND hSpawn = False AND serverId = ?", getTableHeads());
     }
 
     public static String updateHead() {
@@ -137,6 +137,30 @@ public class Requests {
 
     public static String updateHeadMySQL() {
         return String.format("REPLACE INTO %s (hUUID, hExist, hTexture, serverId) VALUES (?, true, ?, ?)", getTableHeads());
+    }
+
+    public static String insertSpawnHead() {
+        return String.format("INSERT INTO %s (hUUID, hExist, hTexture, serverId, hSpawn) VALUES (?, true, ?, ?, true)", getTableHeads());
+    }
+
+    public static String getOrphanSpawnHeads() {
+        return String.format("SELECT hbh.hUUID FROM %s hbh WHERE hbh.hSpawn = True AND hbh.serverId = ? AND NOT EXISTS (SELECT 1 FROM %s hbph WHERE hbph.hUUID = hbh.hUUID)", getTableHeads(), getTablePlayerHeads());
+    }
+
+    public static String hasColumnHeadSpawnSQLite() {
+        return String.format("SELECT COUNT(*) AS count FROM pragma_table_info('%s') WHERE name = 'hSpawn'", getTableHeads());
+    }
+
+    public static String addColumnHeadSpawnSQLite() {
+        return String.format("ALTER TABLE %s ADD COLUMN hSpawn BOOLEAN NOT NULL DEFAULT 0 CHECK (hSpawn IN (0, 1))", getTableHeads());
+    }
+
+    public static String addColumnHeadSpawnMariaDb() {
+        return String.format("ALTER TABLE %s ADD COLUMN IF NOT EXISTS hSpawn BOOLEAN NOT NULL DEFAULT 0", getTableHeads());
+    }
+
+    public static String addColumnHeadSpawnMySQL() {
+        return String.format("ALTER TABLE %s ADD COLUMN hSpawn BOOLEAN NOT NULL DEFAULT 0", getTableHeads());
     }
 
     public static String savePlayerHead() {

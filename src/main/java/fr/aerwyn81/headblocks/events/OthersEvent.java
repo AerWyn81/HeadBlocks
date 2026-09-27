@@ -124,6 +124,7 @@ public class OthersEvent implements Listener {
         registry.getGuiService().getRewardsManager().cancelPendingRewardInput(e.getPlayer());
         registry.getGuiService().getHintManager().clearCache(e.getPlayer().getUniqueId());
         registry.getGuiService().getCatalogGui().clearState(e.getPlayer().getUniqueId());
+        registry.getGuiService().getSpawnConfigGui().clearState(e.getPlayer().getUniqueId());
 
         registry.getVisibilityService().onQuit(e.getPlayer().getUniqueId());
     }
@@ -154,6 +155,8 @@ public class OthersEvent implements Listener {
             registry.getHologramService().createHolograms(head.getLocation(), registry.getHuntService().configOf(head.getHuntId()));
             registry.getVisualService().ensureSpawned(head);
         }
+
+        registry.getSpawnService().onWorldLoaded(e.getWorld());
     }
 
     @EventHandler

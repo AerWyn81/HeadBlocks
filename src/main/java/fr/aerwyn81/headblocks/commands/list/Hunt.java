@@ -219,6 +219,7 @@ public class Hunt implements Cmd {
                 .replace("%hunt%", huntId));
 
         removeStartPlate(hunt);
+        registry.getSpawnService().deleteHunt(huntId);
 
         // Collect HeadLocation objects for this hunt
         var headsToRemove = new ArrayList<HeadLocation>();
@@ -251,6 +252,7 @@ public class Hunt implements Cmd {
 
     private void handleDeleteKeepHeads(CommandSender sender, HBHunt hunt, String huntId, String fallbackHuntId) {
         removeStartPlate(hunt);
+        registry.getSpawnService().deleteHunt(huntId);
 
         try {
             // Transfer heads to fallback hunt via YAML
@@ -315,17 +317,12 @@ public class Hunt implements Cmd {
             return;
         }
 
-        hunt.setState(HuntState.ACTIVE);
-        registry.getHuntConfigService().saveHunt(hunt);
-
         try {
-            registry.getStorageService().updateHuntStateInDb(huntId, HuntState.ACTIVE.name());
+            registry.getHuntService().changeState(hunt, HuntState.ACTIVE);
         } catch (Exception e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             return;
         }
-
-        registry.getStorageService().incrementHuntVersion();
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntEnabled")
                 .replace("%hunt%", huntId));
@@ -358,17 +355,12 @@ public class Hunt implements Cmd {
             return;
         }
 
-        hunt.setState(HuntState.INACTIVE);
-        registry.getHuntConfigService().saveHunt(hunt);
-
         try {
-            registry.getStorageService().updateHuntStateInDb(huntId, HuntState.INACTIVE.name());
+            registry.getHuntService().changeState(hunt, HuntState.INACTIVE);
         } catch (Exception e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             return;
         }
-
-        registry.getStorageService().incrementHuntVersion();
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntDisabled")
                 .replace("%hunt%", huntId));
@@ -544,6 +536,11 @@ public class Hunt implements Cmd {
             return;
         }
 
+        if (registry.getHeadService().isSpawned(headLocation.getUuid())) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
+            return;
+        }
+
         HBHunt targetHunt = registry.getHuntService().getHuntById(huntId);
         if (registry.getAreaEnforcementService().isLocationOutsideArea(targetHunt, headLocation.getLocation())) {
             sender.sendMessage(registry.getLanguageService().message("Messages.AreaHeadOutsideAssign")
@@ -690,6 +687,11 @@ public class Hunt implements Cmd {
             return;
         }
 
+        if (registry.getHeadService().isSpawned(headLocation.getUuid())) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
+            return;
+        }
+
         String huntId = args[3].toLowerCase();
 
         if (!registry.getHuntService().huntExists(huntId)) {
@@ -759,7 +761,7 @@ public class Hunt implements Cmd {
         try {
             ArrayList<UUID> huntHeads = registry.getStorageService().getHeadsPlayerForHunt(profile.uuid(), huntId);
             int current = huntHeads.size();
-            int total = hunt.getHeadCount();
+            int total = hunt.getTargetCount();
 
             String progress = MessageUtils.createProgressBar(current, total,
                     registry.getConfigService().progressBarBars(),

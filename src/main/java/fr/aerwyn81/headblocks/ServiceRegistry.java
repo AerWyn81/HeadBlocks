@@ -37,6 +37,7 @@ public class ServiceRegistry {
     private ChatPromptService chatPromptService;
     private HeadVisualService visualService;
     private HeadVisibilityService visibilityService;
+    private SpawnService spawnService;
 
     private final File configFile;
     private final File locationFile;
@@ -128,10 +129,16 @@ public class ServiceRegistry {
 
         this.areaEnforcementService = new AreaEnforcementService(this);
         this.areaEnforcementService.sanitizeAreaHunts();
+
+        this.spawnService = new SpawnService(this, pluginProvider.getDataFolder());
+        headService.onSpawnedLost(spawnService::onLost);
+        headService.onSpawnedDiscarded(spawnService::onDiscarded);
+        huntService.onStateChanged(spawnService::onStateChanged);
     }
 
     public void reload() {
         // Shutdown what needs shutting
+        spawnService.stop();
         guiService.clearCache();
         hologramService.unload();
         storageService.close();
@@ -151,6 +158,7 @@ public class ServiceRegistry {
         huntConfigService.initialize();
         huntService.initialize();
         headService.load();
+        spawnService.start();
         visualService.spawnLoaded();
         visibilityService.loadOnlinePlayers();
 
@@ -160,6 +168,7 @@ public class ServiceRegistry {
     }
 
     public void shutdown() {
+        spawnService.stop();
         visualService.shutdown();
         hologramService.unload();
         storageService.close();
@@ -234,6 +243,10 @@ public class ServiceRegistry {
 
     public AreaEnforcementService getAreaEnforcementService() {
         return areaEnforcementService;
+    }
+
+    public SpawnService getSpawnService() {
+        return spawnService;
     }
 
     public HeadVisualService getVisualService() {

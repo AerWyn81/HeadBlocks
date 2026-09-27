@@ -86,7 +86,7 @@ public class PreviousHuntRequirementEditor extends AbstractRequirementEditor {
         List<String> lore = registry.getLanguageService().messageList("Gui.RequirementHuntPickerLore").stream()
                 .map(line -> line
                         .replace("%hunt%", hunt.getDisplayName())
-                        .replace("%headCount%", String.valueOf(hunt.getHeadCount())))
+                        .replace("%headCount%", String.valueOf(hunt.getTargetCount())))
                 .collect(Collectors.toList());
 
         return new ItemGUI(new ItemBuilder(hunt.getIconMaterial())

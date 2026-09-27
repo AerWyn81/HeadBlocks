@@ -87,7 +87,7 @@ public class OnPressurePlateEvent implements Listener {
         // Check if player already completed all heads for this hunt
         try {
             ArrayList<UUID> foundHeads = registry.getStorageService().getHeadsPlayerForHunt(pUuid, hunt.getId());
-            if (foundHeads.size() >= hunt.getHeadCount() && hunt.getHeadCount() > 0) {
+            if (foundHeads.size() >= hunt.getTargetCount() && hunt.getTargetCount() > 0) {
                 player.sendMessage(registry.getLanguageService().message("Messages.TimedAlreadyCompleted"));
                 return;
             }
