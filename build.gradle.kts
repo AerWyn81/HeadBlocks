@@ -493,6 +493,8 @@ tasks {
 // because runServer's config is not reusable here: the plugin jar has to be set explicitly (the
 // auto-detected shadowJar is disabled) and the run directory must not be shared with Paper.
 runPaper {
+    disablePluginJarDetection()
+
     folia {
         pluginsMode.set(RunPaperExtension.Folia.PluginsMode.INHERIT_NONE)
 
