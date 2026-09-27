@@ -176,7 +176,8 @@ class StorageServiceIntegrationTest {
             UUID head2 = UUID.randomUUID();
             String huntId = "halloween-2025";
 
-            // Step 1: Player finds heads in a hunt
+            // Step 1: Player progress is read (as the claim flow does), then heads are found
+            service.getHeadsPlayerForHunt(player, huntId);
             service.addHeadForHunt(player, head1, huntId);
             service.addHeadForHunt(player, head2, huntId);
 
@@ -187,7 +188,7 @@ class StorageServiceIntegrationTest {
             // Step 3: Query goes through cache (no DB call)
             var progress = service.getHeadsPlayerForHunt(player, huntId);
             assertThat(progress).containsExactlyInAnyOrder(head1, head2);
-            verify(database, never()).getHeadsPlayerForHunt(any(), any());
+            verify(database, times(1)).getHeadsPlayerForHunt(player, huntId);
 
             // Step 4: Global cache also updated
             assertThat(service.hasHead(player, head1)).isTrue();
@@ -214,7 +215,7 @@ class StorageServiceIntegrationTest {
             when(database.getHeadsPlayerForHunt(player, huntId)).thenReturn(new ArrayList<>());
             var afterReset = service.getHeadsPlayerForHunt(player, huntId);
             assertThat(afterReset).isEmpty();
-            verify(database, times(1)).getHeadsPlayerForHunt(player, huntId);
+            verify(database, times(2)).getHeadsPlayerForHunt(player, huntId);
 
             // Step 9: Global cache also rebuilt — player has no heads globally
             assertThat(service.hasHead(player, head1)).isFalse();
@@ -234,6 +235,8 @@ class StorageServiceIntegrationTest {
             String hunt2 = "hunt-beta";
 
             // Player finds different heads in different hunts
+            service.getHeadsPlayerForHunt(player, hunt1);
+            service.getHeadsPlayerForHunt(player, hunt2);
             service.addHeadForHunt(player, headA, hunt1);
             service.addHeadForHunt(player, headB, hunt2);
 
@@ -571,6 +574,10 @@ class StorageServiceIntegrationTest {
             UUID head3 = UUID.randomUUID();
             String huntId = "event";
 
+            for (UUID player : List.of(alice, bob, charlie)) {
+                service.getHeadsPlayerForHunt(player, huntId);
+            }
+
             // Alice finds head1 and head2 in the hunt
             service.addHeadForHunt(alice, head1, huntId);
             service.addHeadForHunt(alice, head2, huntId);
@@ -616,6 +623,8 @@ class StorageServiceIntegrationTest {
             UUID head = UUID.randomUUID();
             String huntId = "deletable-hunt";
 
+            service.getHeadsPlayerForHunt(player1, huntId);
+            service.getHeadsPlayerForHunt(player2, huntId);
             service.addHeadForHunt(player1, head, huntId);
             service.addHeadForHunt(player2, head, huntId);
 

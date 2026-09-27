@@ -170,8 +170,11 @@ public class Memory implements Storage {
 
     @Override
     public void addCachedPlayerHeadForHunt(UUID playerUuid, String huntId, UUID headUuid) {
-        var huntMap = cacheHuntPlayerHeads.computeIfAbsent(huntId, k -> new ConcurrentHashMap<>());
-        huntMap.computeIfAbsent(playerUuid, k -> ConcurrentHashMap.newKeySet()).add(headUuid);
+        var huntMap = cacheHuntPlayerHeads.get(huntId);
+        var heads = huntMap == null ? null : huntMap.get(playerUuid);
+        if (heads != null) {
+            heads.add(headUuid);
+        }
     }
 
     @Override

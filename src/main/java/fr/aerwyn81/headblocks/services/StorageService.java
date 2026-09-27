@@ -189,7 +189,7 @@ public class StorageService {
             database.addColumnHeadTexture();
             database.addColumnDisplayName();
             database.addColumnServerIdentifier();
-            dbVersion = 5;
+            dbVersion = 4;
         }
 
         if (dbVersion == 1) {

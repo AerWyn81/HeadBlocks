@@ -284,13 +284,25 @@ class MemoryStorageTest {
     }
 
     @Test
-    void addCachedPlayerHeadForHunt_createsNestedMaps() throws InternalException {
+    void addCachedPlayerHeadForHunt_withoutCachedProgress_doesNotCreateAPartialCache() throws InternalException {
         UUID player = UUID.randomUUID();
         UUID head = UUID.randomUUID();
 
         storage.addCachedPlayerHeadForHunt(player, "hunt1", head);
 
-        assertThat(storage.getCachedPlayerHeadsForHunt(player, "hunt1")).contains(head);
+        assertThat(storage.getCachedPlayerHeadsForHunt(player, "hunt1")).isNull();
+    }
+
+    @Test
+    void addCachedPlayerHeadForHunt_withCachedProgress_addsTheHead() throws InternalException {
+        UUID player = UUID.randomUUID();
+        UUID known = UUID.randomUUID();
+        UUID head = UUID.randomUUID();
+        storage.setCachedPlayerHeadsForHunt(player, "hunt1", new java.util.HashSet<>(Set.of(known)));
+
+        storage.addCachedPlayerHeadForHunt(player, "hunt1", head);
+
+        assertThat(storage.getCachedPlayerHeadsForHunt(player, "hunt1")).containsExactlyInAnyOrder(known, head);
     }
 
     @Test
@@ -518,6 +530,7 @@ class MemoryStorageTest {
         UUID player = UUID.randomUUID();
         UUID head1 = UUID.randomUUID();
         UUID head2 = UUID.randomUUID();
+        storage.setCachedPlayerHeadsForHunt(player, "hunt1", new java.util.HashSet<>());
 
         storage.addCachedPlayerHeadForHunt(player, "hunt1", head1);
         storage.addCachedPlayerHeadForHunt(player, "hunt1", head2);
@@ -530,6 +543,7 @@ class MemoryStorageTest {
     void addCachedPlayerHeadForHunt_duplicateHead_doesNotDuplicate() throws InternalException {
         UUID player = UUID.randomUUID();
         UUID head = UUID.randomUUID();
+        storage.setCachedPlayerHeadsForHunt(player, "hunt1", new java.util.HashSet<>());
 
         storage.addCachedPlayerHeadForHunt(player, "hunt1", head);
         storage.addCachedPlayerHeadForHunt(player, "hunt1", head);
