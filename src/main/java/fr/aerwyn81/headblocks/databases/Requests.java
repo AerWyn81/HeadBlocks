@@ -143,8 +143,12 @@ public class Requests {
         return String.format("INSERT INTO %s (hUUID, hExist, hTexture, serverId, hSpawn) VALUES (?, true, ?, ?, true)", getTableHeads());
     }
 
-    public static String getOrphanSpawnHeads() {
-        return String.format("SELECT hbh.hUUID FROM %s hbh WHERE hbh.hSpawn = True AND hbh.serverId = ? AND NOT EXISTS (SELECT 1 FROM %s hbph WHERE hbph.hUUID = hbh.hUUID)", getTableHeads(), getTablePlayerHeads());
+    public static String deleteOrphanSpawnHeads() {
+        return String.format("DELETE FROM %1$s WHERE hSpawn = True AND serverId = ? AND NOT EXISTS (SELECT 1 FROM %2$s WHERE %2$s.hUUID = %1$s.hUUID)", getTableHeads(), getTablePlayerHeads());
+    }
+
+    public static String createIndexPlayerHeadsHeadSQLite() {
+        return String.format("CREATE INDEX IF NOT EXISTS %1$s_hUUID ON %1$s (hUUID)", getTablePlayerHeads());
     }
 
     public static String hasColumnHeadSpawnSQLite() {

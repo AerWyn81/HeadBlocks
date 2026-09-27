@@ -215,5 +215,9 @@ public class SQLite extends AbstractDatabase {
         try (var statement = conn.prepareStatement(Requests.createTableTimedRuns())) {
             statement.execute();
         }
+
+        try (var statement = conn.prepareStatement(Requests.createIndexPlayerHeadsHeadSQLite())) {
+            statement.execute();
+        }
     }
 }

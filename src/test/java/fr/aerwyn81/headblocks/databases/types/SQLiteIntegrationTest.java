@@ -694,7 +694,7 @@ class SQLiteIntegrationTest {
     }
 
     @Test
-    void getOrphanSpawnHeads_returnsOnlyUnfoundSpawnHeadsOfTheServer() throws InternalException {
+    void deleteOrphanSpawnHeads_removesOnlyUnfoundSpawnHeadsOfTheServer() throws InternalException {
         UUID player = UUID.randomUUID();
         UUID found = UUID.randomUUID();
         UUID orphan = UUID.randomUUID();
@@ -707,23 +707,13 @@ class SQLiteIntegrationTest {
         db.createNewHead(placed, "t", "srv1");
         db.addHeadForHunt(player, found, "default");
 
-        assertThat(db.getOrphanSpawnHeads("srv1")).containsExactly(orphan);
-    }
+        assertThat(db.deleteOrphanSpawnHeads("srv1")).isEqualTo(1);
 
-    @Test
-    void deleteHeads_removesAllGivenHeads() throws InternalException {
-        UUID h1 = UUID.randomUUID();
-        UUID h2 = UUID.randomUUID();
-        UUID kept = UUID.randomUUID();
-        db.createSpawnHead(h1, "t", "srv1");
-        db.createSpawnHead(h2, "t", "srv1");
-        db.createSpawnHead(kept, "t", "srv1");
-
-        db.deleteHeads(java.util.List.of(h1, h2));
-
-        assertThat(db.isHeadExist(h1)).isFalse();
-        assertThat(db.isHeadExist(h2)).isFalse();
-        assertThat(db.isHeadExist(kept)).isTrue();
+        assertThat(db.isHeadExist(orphan)).isFalse();
+        assertThat(db.isHeadExist(found)).isTrue();
+        assertThat(db.isHeadExist(otherServer)).isTrue();
+        assertThat(db.isHeadExist(placed)).isTrue();
+        assertThat(db.getHeadsPlayerForHunt(player, "default")).containsExactly(found);
     }
 
     @Test

@@ -3,6 +3,7 @@ package fr.aerwyn81.headblocks.services;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.api.events.HuntStateChangeEvent;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
@@ -14,6 +15,7 @@ import fr.aerwyn81.headblocks.utils.scheduler.Task;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
@@ -22,26 +24,19 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 public class SpawnService {
     private static final long FLUSH_PERIOD_TICKS = 20L;
     private static final int RETRY_SECONDS = 30;
-    private static final long BLOCKED_POINT_MILLIS = 60_000L;
 
     private final ServiceRegistry registry;
     private final File folder;
     private final Map<String, SpawnState> states = new ConcurrentHashMap<>();
     private final Set<String> dirty = ConcurrentHashMap.newKeySet();
-    private final Map<String, Long> writtenVersions = new HashMap<>();
-    private final AtomicBoolean writing = new AtomicBoolean();
-    private final AtomicLong versions = new AtomicLong();
+    private ExecutorService writer;
     private Task flushTask;
 
     public SpawnService(ServiceRegistry registry, File dataFolder) {
@@ -55,6 +50,9 @@ public class SpawnService {
         if (!folder.exists() && !folder.mkdirs()) {
             LogUtil.error("Cannot create the spawns folder, spawned heads will not be persisted.");
         }
+        writer = Executors.newSingleThreadExecutor();
+
+        purgeOrphanRows();
 
         for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
             var behavior = behaviorOf(hunt);
@@ -63,14 +61,12 @@ public class SpawnService {
             }
 
             var state = restore(hunt, behavior);
-
             if (hunt.isActive()) {
-                resume(hunt, behavior, state);
+                resume(behavior, state);
             }
         }
 
         cleanupOrphanFiles();
-        purgeOrphansAsync();
         flushTask = registry.getScheduler().runTaskTimer(this::flush, FLUSH_PERIOD_TICKS, FLUSH_PERIOD_TICKS);
     }
 
@@ -81,13 +77,20 @@ public class SpawnService {
         }
 
         for (SpawnState state : states.values()) {
-            state.closed = true;
             state.cancelTasks();
-            write(state.huntId, snapshot(state), state.version.get());
+            save(state);
         }
-
         states.clear();
         dirty.clear();
+
+        if (writer != null) {
+            writer.shutdown();
+            try {
+                writer.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     public void onStateChanged(HBHunt hunt) {
@@ -104,10 +107,9 @@ public class SpawnService {
         state.cancelTasks();
 
         if (hunt.isActive()) {
-            resume(hunt, behavior, state);
+            resume(behavior, state);
         } else {
             clearHeads(state);
-            state.pending.clear();
             state.nextIntervalAt.set(0);
             markDirty(state);
         }
@@ -115,22 +117,20 @@ public class SpawnService {
 
     public void onWorldLoaded(World world) {
         for (SpawnState state : states.values()) {
-            var hunt = registry.getHuntService().getHuntById(state.huntId);
-            var behavior = hunt == null ? null : behaviorOf(hunt);
-            if (behavior == null || !hunt.isActive()) {
+            var behavior = activeBehaviorOf(state);
+            if (behavior == null) {
                 continue;
             }
 
-            for (var dormant : new ArrayList<>(state.dormant.values())) {
+            for (var dormant : List.copyOf(state.dormant.values())) {
                 if (!dormant.world().equals(world.getName())) {
                     continue;
                 }
 
                 state.dormant.remove(dormant.uuid());
                 var template = behavior.template(dormant.templateId());
-                var location = new Location(world, dormant.x(), dormant.y(), dormant.z());
-                if (template == null || !activate(state, withRender(buildHead(state.huntId, dormant.uuid(), template, location, dormant.yaw()), dormant.render()), template)) {
-                    deleteRowsAsync(List.of(dormant.uuid()));
+                if (template != null) {
+                    activate(state, restoredHead(state.huntId, dormant, world, template), template);
                 }
             }
             markDirty(state);
@@ -141,75 +141,48 @@ public class SpawnService {
 
     public boolean consume(HBHunt hunt, HeadLocation head) {
         var state = states.get(hunt.getId());
-        if (state == null || state.active.remove(head.getUuid()) == null) {
+        var spawn = state == null ? null : state.active.remove(head.getUuid());
+        if (spawn == null) {
             return false;
         }
 
-        state.reserved.add(head.getUuid());
+        try {
+            registry.getStorageService().createSpawnHead(head.getUuid(), textureOf(head));
+        } catch (InternalException e) {
+            state.active.put(head.getUuid(), spawn);
+            LogUtil.error("Cannot store the spawned head found in hunt {0}: {1}", hunt.getId(), e.getMessage());
+            return false;
+        }
+
         registry.getHeadService().removeSpawnedHead(head);
         markDirty(state);
-
-        var behavior = behaviorOf(hunt);
-        if (behavior != null && behavior.respawn().onFind()) {
-            scheduleRespawn(state, behavior.respawn().nextFindDelay(), head.getLocation());
-        }
+        respawnAfterFind(state, head.getLocation());
         return true;
     }
 
-    public void release(HBHunt hunt, HeadLocation head) {
-        var state = states.get(hunt.getId());
-        if (state != null) {
-            state.reserved.remove(head.getUuid());
-        }
-    }
-
     public void onLost(HeadLocation head) {
-        for (SpawnState state : states.values()) {
-            if (state.active.remove(head.getUuid()) != null) {
-                state.blockedUntil.put(blockKey(head.getLocation()), System.currentTimeMillis() + BLOCKED_POINT_MILLIS);
-                deleteRowsAsync(List.of(head.getUuid()));
-                markDirty(state);
-                scheduleRespawn(state, RETRY_SECONDS, null);
-                return;
-            }
+        var state = removeFromItsState(head);
+        if (state != null) {
+            scheduleRespawn(state, RETRY_SECONDS, head.getLocation());
         }
     }
 
     public void onDiscarded(HeadLocation head) {
-        for (SpawnState state : states.values()) {
-            if (state.active.remove(head.getUuid()) == null) {
-                continue;
-            }
-
-            deleteRowsAsync(List.of(head.getUuid()));
-            markDirty(state);
-
-            var hunt = registry.getHuntService().getHuntById(state.huntId);
-            var behavior = hunt == null ? null : behaviorOf(hunt);
-            if (behavior != null && behavior.respawn().onFind()) {
-                scheduleRespawn(state, behavior.respawn().nextFindDelay(), head.getLocation());
-            }
-            return;
+        var state = removeFromItsState(head);
+        if (state != null) {
+            respawnAfterFind(state, head.getLocation());
         }
     }
 
     public void deleteHunt(String huntId) {
         var state = states.remove(huntId);
         if (state != null) {
-            state.closed = true;
             state.cancelTasks();
             clearHeads(state);
         }
 
         dirty.remove(huntId);
-        synchronized (this) {
-            writtenVersions.put(huntId, versions.incrementAndGet());
-            try {
-                Files.deleteIfExists(fileOf(huntId).toPath());
-            } catch (Exception e) {
-                LogUtil.error("Cannot delete the spawned heads file of hunt {0}: {1}", huntId, e.getMessage());
-            }
-        }
+        onWriter(() -> deleteFile(fileOf(huntId)));
     }
 
     public void win(HBHunt hunt, Player player) {
@@ -243,20 +216,29 @@ public class SpawnService {
 
         var state = states.computeIfAbsent(hunt.getId(), SpawnState::new);
         state.cancelRespawns();
-        state.pending.clear();
         clearHeads(state);
         markDirty(state);
 
-        if (resetProgress) {
-            resetProgressAsync(hunt.getId(), () -> {
-                if (!state.closed) {
-                    fill(state, behavior);
-                }
-            });
+        if (!resetProgress) {
+            fill(state, behavior);
             return;
         }
 
-        fill(state, behavior);
+        var online = Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).toList();
+        registry.getScheduler().runTaskAsync(() -> {
+            try {
+                registry.getStorageService().deletePlayerProgressForHunt(hunt.getId());
+                online.forEach(registry.getStorageService()::invalidateCachePlayer);
+            } catch (InternalException e) {
+                LogUtil.error("Cannot reset the progress of hunt {0}: {1}", hunt.getId(), e.getMessage());
+            }
+
+            registry.getScheduler().runTask(() -> {
+                if (states.get(hunt.getId()) == state) {
+                    fill(state, behavior);
+                }
+            });
+        });
     }
 
     public void refresh(HBHunt hunt) {
@@ -272,10 +254,9 @@ public class SpawnService {
         }
 
         if (!known) {
-            resume(hunt, behavior, state);
+            resume(behavior, state);
         } else if (behavior.respawn().onStart()) {
             state.cancelRespawns();
-            state.pending.clear();
             fill(state, behavior);
         }
     }
@@ -287,7 +268,6 @@ public class SpawnService {
         }
 
         state.cancelRespawns();
-        state.pending.clear();
         clearHeads(state);
         markDirty(state);
     }
@@ -299,32 +279,22 @@ public class SpawnService {
 
     // --- Spawning ---
 
-    private void resume(HBHunt hunt, SpawnBehavior behavior, SpawnState state) {
-        long now = System.currentTimeMillis();
-        for (Long due : List.copyOf(state.pending)) {
-            state.pending.remove(due);
-            scheduleRespawn(state, (int) Math.max(0, (due - now + 999) / 1000), null);
-        }
-
+    private void resume(SpawnBehavior behavior, SpawnState state) {
         if (behavior.respawn().interval()) {
+            long now = System.currentTimeMillis();
             long period = behavior.respawn().intervalSeconds() * 1000L;
-            long next = state.nextIntervalAt.get();
-            if (next <= now) {
-                next = now + period;
-                state.nextIntervalAt.set(next);
+            if (state.nextIntervalAt.get() <= now) {
+                state.nextIntervalAt.set(now + period);
             }
 
             state.intervalTask = registry.getScheduler().runTaskTimer(() -> {
                 state.nextIntervalAt.set(System.currentTimeMillis() + period);
-                var current = registry.getHuntService().getHuntById(state.huntId);
-                var currentBehavior = current == null ? null : behaviorOf(current);
-                if (currentBehavior != null && current.isActive()) {
-                    reroll(current, currentBehavior.respawn().resetProgress());
+                var current = activeBehaviorOf(state);
+                if (current != null) {
+                    reroll(registry.getHuntService().getHuntById(state.huntId), current.respawn().resetProgress());
                 }
-            }, Math.max(1L, (next - now) / 50L), period / 50L);
+            }, Math.max(1L, (state.nextIntervalAt.get() - now) / 50L), period / 50L);
         }
-
-        refillPoolAsync(state, behavior.active());
 
         if (behavior.respawn().onStart()) {
             fill(state, behavior);
@@ -333,10 +303,16 @@ public class SpawnService {
     }
 
     private void fill(SpawnState state, SpawnBehavior behavior) {
-        int missing = behavior.active() - state.active.size() - state.dormant.size()
-                - state.inflight.get() - state.pending.size();
+        int missing = behavior.active() - state.active.size() - state.dormant.size() - state.pending.get();
         for (int i = 0; i < missing; i++) {
             spawnOne(state, null);
+        }
+    }
+
+    private void respawnAfterFind(SpawnState state, Location freed) {
+        var behavior = activeBehaviorOf(state);
+        if (behavior != null && behavior.respawn().onFind()) {
+            scheduleRespawn(state, behavior.respawn().nextFindDelay(), freed);
         }
     }
 
@@ -346,30 +322,20 @@ public class SpawnService {
             return;
         }
 
-        long due = System.currentTimeMillis() + delaySeconds * 1000L;
-        state.pending.add(due);
-        markDirty(state);
-
+        state.pending.incrementAndGet();
         state.respawnTasks.add(registry.getScheduler().runTaskLater(() -> {
-            state.pending.remove(due);
-            markDirty(state);
+            state.pending.decrementAndGet();
             spawnOne(state, avoid);
         }, delaySeconds * 20L));
     }
 
     private void spawnOne(SpawnState state, Location avoid) {
-        if (state.closed) {
+        var behavior = activeBehaviorOf(state);
+        if (behavior == null) {
             return;
         }
 
-        var hunt = registry.getHuntService().getHuntById(state.huntId);
-        var behavior = hunt == null ? null : behaviorOf(hunt);
-        if (behavior == null || !hunt.isActive()) {
-            return;
-        }
-
-        if (behavior.maxTotalSpawns() >= 0
-                && state.totalSpawned.get() + state.inflight.get() >= behavior.maxTotalSpawns()) {
+        if (behavior.maxTotalSpawns() >= 0 && state.totalSpawned.get() >= behavior.maxTotalSpawns()) {
             return;
         }
 
@@ -379,39 +345,22 @@ public class SpawnService {
             return;
         }
 
-        state.inflight.incrementAndGet();
-        Consumer<Location> onPicked = location -> {
-            if (location == null) {
-                state.inflight.decrementAndGet();
-                scheduleRespawn(state, RETRY_SECONDS, null);
-                return;
-            }
+        var location = behavior.pickLocation(candidate -> isFree(candidate, avoid));
+        if (location == null && avoid != null) {
+            location = behavior.pickLocation(candidate -> isFree(candidate, null));
+        }
 
-            acquireUuid(state, behavior, uuid -> {
-                state.inflight.decrementAndGet();
-                if (uuid == null || state.closed) {
-                    return;
-                }
+        if (location == null) {
+            scheduleRespawn(state, RETRY_SECONDS, null);
+            return;
+        }
 
-                var current = registry.getHuntService().getHuntById(state.huntId);
-                if (current == null || !current.isActive()
-                        || !activate(state, buildHead(state.huntId, uuid, template, location, behavior.yawAt(location)), template)) {
-                    state.pool.add(uuid);
-                    markDirty(state);
-                    return;
-                }
-
-                state.totalSpawned.incrementAndGet();
-            });
-        };
-
-        behavior.pickLocation(location -> isFree(state, location, avoid), location -> {
-            if (location == null && avoid != null) {
-                behavior.pickLocation(candidate -> isFree(state, candidate, null), onPicked);
-            } else {
-                onPicked.accept(location);
-            }
-        });
+        var head = buildHead(state.huntId, UUID.randomUUID(), template, location, behavior.yawAt(location));
+        if (activate(state, head, template)) {
+            state.totalSpawned.incrementAndGet();
+        } else {
+            scheduleRespawn(state, RETRY_SECONDS, null);
+        }
     }
 
     private boolean activate(SpawnState state, HeadLocation head, SpawnTemplate template) {
@@ -425,17 +374,9 @@ public class SpawnService {
         return true;
     }
 
-    private boolean isFree(SpawnState state, Location location, Location avoid) {
+    private boolean isFree(Location location, Location avoid) {
         if (registry.getHeadService().getHeadAt(location) != null) {
             return false;
-        }
-
-        var blocked = state.blockedUntil.get(blockKey(location));
-        if (blocked != null) {
-            if (blocked > System.currentTimeMillis()) {
-                return false;
-            }
-            state.blockedUntil.remove(blockKey(location));
         }
 
         return avoid == null || avoid.getWorld() != location.getWorld()
@@ -453,130 +394,52 @@ public class SpawnService {
         return head;
     }
 
-    private static HeadLocation withRender(HeadLocation head, RenderMode render) {
-        if (render != null) {
-            head.setRenderMode(render);
+    private HeadLocation restoredHead(String huntId, SavedSpawn saved, World world, SpawnTemplate template) {
+        var head = buildHead(huntId, saved.uuid(), template, new Location(world, saved.x(), saved.y(), saved.z()), saved.yaw());
+        if (saved.render() != null) {
+            head.setRenderMode(saved.render());
         }
         return head;
     }
 
     private void clearHeads(SpawnState state) {
-        var removed = new ArrayList<UUID>();
         for (var spawn : List.copyOf(state.active.values())) {
             if (state.active.remove(spawn.head().getUuid()) != null) {
                 registry.getHeadService().removeSpawnedHead(spawn.head());
-                removed.add(spawn.head().getUuid());
             }
         }
-
-        removed.addAll(state.dormant.keySet());
         state.dormant.clear();
-        deleteRowsAsync(removed);
     }
 
-    // --- Database rows ---
-
-    private void acquireUuid(SpawnState state, SpawnBehavior behavior, Consumer<UUID> consumer) {
-        var pooled = state.pool.poll();
-        if (pooled != null) {
-            markDirty(state);
-            consumer.accept(pooled);
-            refillPoolAsync(state, behavior.active());
-            return;
-        }
-
-        registry.getScheduler().runTaskAsync(() -> {
-            var uuid = createRow(state);
-            registry.getScheduler().runTask(() -> consumer.accept(uuid));
-        });
-    }
-
-    private void refillPoolAsync(SpawnState state, int target) {
-        if (!state.refilling.compareAndSet(false, true)) {
-            return;
-        }
-
-        registry.getScheduler().runTaskAsync(() -> {
-            try {
-                while (state.pool.size() < target) {
-                    var uuid = createRow(state);
-                    if (uuid == null) {
-                        return;
-                    }
-                    state.pool.add(uuid);
-                    state.reserved.remove(uuid);
-                }
-            } finally {
-                state.refilling.set(false);
-                markDirty(state);
-            }
-        });
-    }
-
-    private UUID createRow(SpawnState state) {
-        var uuid = UUID.randomUUID();
-        state.reserved.add(uuid);
-        try {
-            registry.getStorageService().createSpawnHead(uuid, "");
-            return uuid;
-        } catch (InternalException e) {
-            state.reserved.remove(uuid);
-            LogUtil.error("Cannot prepare a spawned head for hunt {0}: {1}", state.huntId, e.getMessage());
-            return null;
-        }
-    }
-
-    private void deleteRowsAsync(Collection<UUID> uuids) {
-        if (uuids.isEmpty()) {
-            return;
-        }
-
-        var toDelete = List.copyOf(uuids);
-        registry.getScheduler().runTaskAsync(() -> {
-            try {
-                registry.getStorageService().deleteSpawnHeads(toDelete);
-            } catch (InternalException e) {
-                LogUtil.error("Cannot delete {0} spawned head(s): {1}", toDelete.size(), e.getMessage());
-            }
-        });
-    }
-
-    private void purgeOrphansAsync() {
-        registry.getScheduler().runTaskAsync(() -> {
-            try {
-                int purged = registry.getStorageService().purgeOrphanSpawnHeads(this::keptRows);
-                if (purged > 0) {
-                    LogUtil.info("Cleaned {0} unused spawned head(s) from the database.", purged);
-                }
-            } catch (InternalException e) {
-                LogUtil.error("Cannot clean unused spawned heads: {0}", e.getMessage());
-            }
-        });
-    }
-
-    private Set<UUID> keptRows() {
-        var keep = new HashSet<UUID>();
+    private SpawnState removeFromItsState(HeadLocation head) {
         for (SpawnState state : states.values()) {
-            keep.addAll(state.active.keySet());
-            keep.addAll(state.dormant.keySet());
-            keep.addAll(state.pool);
-            keep.addAll(state.reserved);
+            if (state.active.remove(head.getUuid()) != null) {
+                markDirty(state);
+                return state;
+            }
         }
-        return keep;
+        return null;
     }
 
-    private void resetProgressAsync(String huntId, Runnable then) {
-        var online = Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).toList();
-        registry.getScheduler().runTaskAsync(() -> {
-            try {
-                registry.getStorageService().deletePlayerProgressForHunt(huntId);
-                online.forEach(registry.getStorageService()::invalidateCachePlayer);
-            } catch (InternalException e) {
-                LogUtil.error("Cannot reset the progress of hunt {0}: {1}", huntId, e.getMessage());
+    private SpawnBehavior activeBehaviorOf(SpawnState state) {
+        var hunt = registry.getHuntService().getHuntById(state.huntId);
+        return hunt == null || !hunt.isActive() ? null : behaviorOf(hunt);
+    }
+
+    private static String textureOf(HeadLocation head) {
+        var content = head.getContent();
+        return content != null && content.kind() == ContentKind.HEAD ? content.value() : "";
+    }
+
+    private void purgeOrphanRows() {
+        try {
+            int purged = registry.getStorageService().purgeOrphanSpawnHeads();
+            if (purged > 0) {
+                LogUtil.info("Cleaned {0} unused spawned head(s) from the database.", purged);
             }
-            registry.getScheduler().runTask(then);
-            purgeOrphansAsync();
-        });
+        } catch (InternalException e) {
+            LogUtil.error("Cannot clean unused spawned heads: {0}", e.getMessage());
+        }
     }
 
     // --- Persistence ---
@@ -584,6 +447,7 @@ public class SpawnService {
     private SpawnState restore(HBHunt hunt, SpawnBehavior behavior) {
         var state = new SpawnState(hunt.getId());
         states.put(hunt.getId(), state);
+
         var file = fileOf(hunt.getId());
         if (!file.exists()) {
             return state;
@@ -592,46 +456,21 @@ public class SpawnService {
         var yaml = YamlConfiguration.loadConfiguration(file);
         state.totalSpawned.set(yaml.getInt("totalSpawned", 0));
         state.nextIntervalAt.set(yaml.getLong("nextIntervalAt", 0));
-        yaml.getStringList("pool").forEach(raw -> parseUuid(raw).ifPresent(state.pool::add));
-        yaml.getLongList("pending").forEach(state.pending::add);
 
-        var discarded = new ArrayList<UUID>();
-        var activeSection = yaml.getConfigurationSection("active");
-        if (activeSection != null) {
-            for (String key : activeSection.getKeys(false)) {
-                var uuid = parseUuid(key).orElse(null);
-                var entry = activeSection.getConfigurationSection(key);
-                if (uuid == null || entry == null) {
-                    continue;
+        for (var saved : readSpawns(yaml)) {
+            var world = Bukkit.getWorld(saved.world());
+            var template = behavior.template(saved.templateId());
+
+            if (world == null) {
+                if (hunt.isActive() && template != null) {
+                    state.dormant.put(saved.uuid(), saved);
                 }
-
-                var dormant = new DormantSpawn(uuid, entry.getString("template", ""), entry.getString("world", ""),
-                        entry.getDouble("x"), entry.getDouble("y"), entry.getDouble("z"), (float) entry.getDouble("yaw"),
-                        RenderMode.of(entry.getString("render")));
-                var world = Bukkit.getWorld(dormant.world());
-                var template = behavior.template(dormant.templateId());
-
-                if (world == null && hunt.isActive() && template != null) {
-                    state.dormant.put(uuid, dormant);
-                    continue;
-                }
-
-                var location = world == null ? null : new Location(world, dormant.x(), dormant.y(), dormant.z());
-                if (location == null || template == null || !hunt.isActive()) {
-                    if (location != null) {
-                        removeLeftover(state.huntId, uuid, location, template, dormant.render());
-                    }
-                    discarded.add(uuid);
-                    continue;
-                }
-
-                if (!activate(state, withRender(buildHead(hunt.getId(), uuid, template, location, dormant.yaw()), dormant.render()), template)) {
-                    discarded.add(uuid);
-                }
+            } else if (template == null || !hunt.isActive()) {
+                removeLeftover(saved, world, template);
+            } else {
+                activate(state, restoredHead(hunt.getId(), saved, world, template), template);
             }
         }
-
-        deleteRowsAsync(discarded);
         return state;
     }
 
@@ -647,140 +486,107 @@ public class SpawnService {
                 continue;
             }
 
-            var active = YamlConfiguration.loadConfiguration(file).getConfigurationSection("active");
-            if (active != null) {
-                for (String key : active.getKeys(false)) {
-                    var entry = active.getConfigurationSection(key);
-                    var uuid = parseUuid(key).orElse(null);
-                    var world = entry == null ? null : Bukkit.getWorld(entry.getString("world", ""));
-                    if (uuid != null && world != null) {
-                        removeLeftover(huntId, uuid, new Location(world, entry.getDouble("x"), entry.getDouble("y"), entry.getDouble("z")),
-                                null, RenderMode.of(entry.getString("render")));
-                    }
+            for (var saved : readSpawns(YamlConfiguration.loadConfiguration(file))) {
+                var world = Bukkit.getWorld(saved.world());
+                if (world != null) {
+                    removeLeftover(saved, world, null);
                 }
             }
 
-            synchronized (this) {
-                writtenVersions.put(huntId, versions.incrementAndGet());
-                try {
-                    Files.deleteIfExists(file.toPath());
-                } catch (Exception e) {
-                    LogUtil.error("Cannot delete the spawned heads file {0}: {1}", file.getName(), e.getMessage());
-                }
-            }
+            deleteFile(file);
             LogUtil.info("Removed the spawned heads of {0}, the hunt no longer uses them.", huntId);
         }
     }
 
-    private void removeLeftover(String huntId, UUID uuid, Location location, SpawnTemplate template, RenderMode render) {
-        var head = new HeadLocation("", uuid, location, huntId);
+    private void removeLeftover(SavedSpawn saved, World world, SpawnTemplate template) {
+        var head = new HeadLocation("", saved.uuid(), new Location(world, saved.x(), saved.y(), saved.z()), "");
         if (template != null) {
             head.setContent(template.content());
         }
-        head.setRenderMode(render != null ? render : registry.getHuntService().configOf(huntId).getRenderMode());
+        head.setRenderMode(saved.render());
 
         if (registry.getVisualService().isBlockRendered(head)) {
-            registry.getScheduler().runNow(location, () -> registry.getVisualService().removeBlock(head));
+            registry.getScheduler().runNow(head.getLocation(), () -> registry.getVisualService().removeBlock(head));
         }
     }
 
     private void markDirty(SpawnState state) {
-        state.version.set(versions.incrementAndGet());
         dirty.add(state.huntId);
     }
 
     private void flush() {
-        if (dirty.isEmpty() || !writing.compareAndSet(false, true)) {
-            return;
-        }
-
-        var snapshots = new ArrayList<Snapshot>();
         for (String huntId : List.copyOf(dirty)) {
             dirty.remove(huntId);
             var state = states.get(huntId);
             if (state != null) {
-                snapshots.add(new Snapshot(huntId, snapshot(state), state.version.get()));
+                save(state);
             }
         }
-
-        registry.getScheduler().runTaskAsync(() -> {
-            try {
-                snapshots.forEach(s -> write(s.huntId(), s.content(), s.version()));
-            } finally {
-                writing.set(false);
-            }
-        });
     }
 
-    private String snapshot(SpawnState state) {
+    private void save(SpawnState state) {
+        onWriter(() -> writeFile(fileOf(state.huntId), snapshot(state)));
+    }
+
+    private void onWriter(Runnable task) {
+        if (writer == null || writer.isShutdown()) {
+            task.run();
+        } else {
+            writer.submit(task);
+        }
+    }
+
+    private static String snapshot(SpawnState state) {
         var yaml = new YamlConfiguration();
         yaml.set("totalSpawned", state.totalSpawned.get());
         yaml.set("nextIntervalAt", state.nextIntervalAt.get());
-        yaml.set("pool", state.pool.stream().map(UUID::toString).toList());
-        yaml.set("pending", List.copyOf(state.pending));
 
-        var activeSection = yaml.createSection("active");
-        for (var spawn : state.active.values()) {
-            var location = spawn.head().getLocation();
-            var entry = activeSection.createSection(spawn.head().getUuid().toString());
-            entry.set("template", spawn.templateId());
-            entry.set("world", location.getWorld() == null ? "" : location.getWorld().getName());
-            entry.set("x", location.getX());
-            entry.set("y", location.getY());
-            entry.set("z", location.getZ());
-            entry.set("yaw", (double) spawn.head().getYaw());
-            entry.set("render", spawn.head().getRenderMode() == null ? null : spawn.head().getRenderMode().name());
-        }
-
-        for (var dormant : state.dormant.values()) {
-            var entry = activeSection.createSection(dormant.uuid().toString());
-            entry.set("template", dormant.templateId());
-            entry.set("world", dormant.world());
-            entry.set("x", dormant.x());
-            entry.set("y", dormant.y());
-            entry.set("z", dormant.z());
-            entry.set("yaw", (double) dormant.yaw());
-            entry.set("render", dormant.render() == null ? null : dormant.render().name());
-        }
-
+        var section = yaml.createSection("active");
+        state.active.values().forEach(spawn -> SavedSpawn.of(spawn).saveTo(section));
+        state.dormant.values().forEach(dormant -> dormant.saveTo(section));
         return yaml.saveToString();
     }
 
-    private synchronized void write(String huntId, String content, long version) {
-        if (writtenVersions.getOrDefault(huntId, -1L) >= version) {
-            return;
+    private static List<SavedSpawn> readSpawns(YamlConfiguration yaml) {
+        var section = yaml.getConfigurationSection("active");
+        if (section == null) {
+            return List.of();
         }
 
-        var target = fileOf(huntId).toPath();
+        var spawns = new ArrayList<SavedSpawn>();
+        for (String key : section.getKeys(false)) {
+            var saved = SavedSpawn.read(key, section.getConfigurationSection(key));
+            if (saved != null) {
+                spawns.add(saved);
+            }
+        }
+        return spawns;
+    }
+
+    private void writeFile(File file, String content) {
         try {
-            var temp = Files.createTempFile(folder.toPath(), huntId, ".tmp");
+            var temp = Files.createTempFile(folder.toPath(), file.getName(), ".tmp");
             Files.writeString(temp, content);
             try {
-                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                Files.move(temp, file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             } catch (AtomicMoveNotSupportedException ex) {
-                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(temp, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
-            writtenVersions.put(huntId, version);
         } catch (Exception e) {
-            LogUtil.error("Cannot save the spawned heads of hunt {0}: {1}", huntId, e.getMessage());
+            LogUtil.error("Cannot save the spawned heads file {0}: {1}", file.getName(), e.getMessage());
+        }
+    }
+
+    private static void deleteFile(File file) {
+        try {
+            Files.deleteIfExists(file.toPath());
+        } catch (Exception e) {
+            LogUtil.error("Cannot delete the spawned heads file {0}: {1}", file.getName(), e.getMessage());
         }
     }
 
     private File fileOf(String huntId) {
         return new File(folder, huntId + ".yml");
-    }
-
-    private static String blockKey(Location location) {
-        return (location.getWorld() == null ? "" : location.getWorld().getName())
-                + ":" + location.getBlockX() + ":" + location.getBlockY() + ":" + location.getBlockZ();
-    }
-
-    private static Optional<UUID> parseUuid(String raw) {
-        try {
-            return Optional.of(UUID.fromString(raw));
-        } catch (IllegalArgumentException e) {
-            return Optional.empty();
-        }
     }
 
     private static SpawnBehavior behaviorOf(HBHunt hunt) {
@@ -795,29 +601,52 @@ public class SpawnService {
     private record ActiveSpawn(HeadLocation head, String templateId) {
     }
 
-    private record DormantSpawn(UUID uuid, String templateId, String world, double x, double y, double z, float yaw,
-                                RenderMode render) {
-    }
+    private record SavedSpawn(UUID uuid, String templateId, String world, double x, double y, double z, float yaw,
+                              RenderMode render) {
 
-    private record Snapshot(String huntId, String content, long version) {
+        static SavedSpawn of(ActiveSpawn spawn) {
+            var head = spawn.head();
+            var location = head.getLocation();
+            return new SavedSpawn(head.getUuid(), spawn.templateId(),
+                    location.getWorld() == null ? "" : location.getWorld().getName(),
+                    location.getX(), location.getY(), location.getZ(), head.getYaw(), head.getRenderMode());
+        }
+
+        static SavedSpawn read(String key, ConfigurationSection entry) {
+            if (entry == null) {
+                return null;
+            }
+
+            try {
+                return new SavedSpawn(UUID.fromString(key), entry.getString("template", ""), entry.getString("world", ""),
+                        entry.getDouble("x"), entry.getDouble("y"), entry.getDouble("z"), (float) entry.getDouble("yaw"),
+                        RenderMode.of(entry.getString("render")));
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+
+        void saveTo(ConfigurationSection section) {
+            var entry = section.createSection(uuid.toString());
+            entry.set("template", templateId);
+            entry.set("world", world);
+            entry.set("x", x);
+            entry.set("y", y);
+            entry.set("z", z);
+            entry.set("yaw", (double) yaw);
+            entry.set("render", render == null ? null : render.name());
+        }
     }
 
     private static final class SpawnState {
         private final String huntId;
         private final Map<UUID, ActiveSpawn> active = new ConcurrentHashMap<>();
-        private final Map<UUID, DormantSpawn> dormant = new ConcurrentHashMap<>();
-        private final Deque<UUID> pool = new ConcurrentLinkedDeque<>();
-        private final Set<UUID> reserved = ConcurrentHashMap.newKeySet();
-        private final List<Long> pending = new CopyOnWriteArrayList<>();
+        private final Map<UUID, SavedSpawn> dormant = new ConcurrentHashMap<>();
         private final List<Task> respawnTasks = new CopyOnWriteArrayList<>();
-        private final Map<String, Long> blockedUntil = new ConcurrentHashMap<>();
-        private final AtomicInteger inflight = new AtomicInteger();
+        private final AtomicInteger pending = new AtomicInteger();
         private final AtomicInteger totalSpawned = new AtomicInteger();
         private final AtomicLong nextIntervalAt = new AtomicLong();
-        private final AtomicLong version = new AtomicLong();
-        private final AtomicBoolean refilling = new AtomicBoolean();
         private volatile Task intervalTask;
-        private volatile boolean closed;
 
         private SpawnState(String huntId) {
             this.huntId = huntId;
@@ -826,6 +655,7 @@ public class SpawnService {
         private void cancelRespawns() {
             respawnTasks.forEach(Task::cancel);
             respawnTasks.clear();
+            pending.set(0);
         }
 
         private void cancelTasks() {

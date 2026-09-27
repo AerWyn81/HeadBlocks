@@ -648,24 +648,10 @@ class StorageServiceTest {
     }
 
     @Test
-    void deleteSpawnHeads_delegatesToDatabase() throws InternalException {
-        List<UUID> heads = List.of(UUID.randomUUID(), UUID.randomUUID());
+    void purgeOrphanSpawnHeads_delegatesToDatabaseForThisServer() throws InternalException {
+        when(database.deleteOrphanSpawnHeads(anyString())).thenReturn(3);
 
-        service.deleteSpawnHeads(heads);
-
-        verify(database).deleteHeads(heads);
-    }
-
-    @Test
-    void purgeOrphanSpawnHeads_keepsTheGivenHeads() throws InternalException {
-        UUID active = UUID.randomUUID();
-        UUID orphan = UUID.randomUUID();
-        when(database.getOrphanSpawnHeads(anyString())).thenReturn(new ArrayList<>(List.of(active, orphan)));
-
-        int purged = service.purgeOrphanSpawnHeads(() -> Set.of(active));
-
-        assertThat(purged).isEqualTo(1);
-        verify(database).deleteHeads(List.of(orphan));
+        assertThat(service.purgeOrphanSpawnHeads()).isEqualTo(3);
     }
 
     // ====================================================================

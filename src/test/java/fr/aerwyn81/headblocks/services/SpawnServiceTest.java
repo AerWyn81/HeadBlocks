@@ -8,8 +8,8 @@ import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
@@ -138,10 +138,11 @@ class SpawnServiceTest {
 
     @AfterEach
     void tearDown() {
+        service.stop();
         bukkit.close();
     }
 
-    private SpawnPointsBehavior fixed(int points, int active, int max, RespawnPolicy respawn) {
+    private SpawnPointsBehavior spawnPoints(int points, int active, int max, RespawnPolicy respawn) {
         var spawnPoints = new ArrayList<SpawnPoint>();
         for (int i = 0; i < points; i++) {
             spawnPoints.add(new SpawnPoint("world", i * 10, 64, 0, 0f));
@@ -167,9 +168,29 @@ class SpawnServiceTest {
         return new RespawnPolicy(true, delay, delay, false, 3600, false, true);
     }
 
+    private RespawnPolicy noRespawn() {
+        return new RespawnPolicy(false, 0, 0, false, 3600, false, true);
+    }
+
+    private Path stateFile() {
+        return dataFolder.resolve("spawns").resolve("spawnhunt.yml");
+    }
+
+    private SpawnService restart() {
+        service.stop();
+        clearInvocations(headService, storageService, visualService);
+        occupied.clear();
+        later.clear();
+        service = new SpawnService(registry, dataFolder.toFile());
+        service.start();
+        return service;
+    }
+
+    // --- Spawning ---
+
     @Test
-    void start_activeHunt_spawnsTheActiveCountOnDistinctPoints() throws Exception {
-        useHunt(fixed(5, 3, -1, onFind(0)), HuntState.ACTIVE);
+    void start_activeHunt_spawnsTheActiveCountOnDistinctPoints_withoutTouchingTheDatabase() throws Exception {
+        useHunt(spawnPoints(5, 3, -1, onFind(0)), HuntState.ACTIVE);
 
         service.start();
 
@@ -182,13 +203,43 @@ class SpawnServiceTest {
             assertThat(head.getName()).isEqualTo("Basic");
             assertThat(head.getLocation().getX() % 1).isEqualTo(0.5);
         });
-        assertThat(service.getActiveHeads("spawnhunt")).hasSize(3);
-        verify(storageService, atLeast(3)).createSpawnHead(any(), eq(""));
+        verify(storageService, never()).createSpawnHead(any(), any());
+    }
+
+    @Test
+    void start_purgesOrphanRowsBeforeAnyHeadAppears() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+
+        service.start();
+
+        var order = inOrder(storageService, headService);
+        order.verify(storageService).purgeOrphanSpawnHeads();
+        order.verify(headService).addSpawnedHead(any());
+    }
+
+    @Test
+    void start_purgeFailing_isOnlyLogged() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        when(storageService.purgeOrphanSpawnHeads()).thenThrow(new InternalException("down"));
+
+        service.start();
+
+        assertThat(spawned()).hasSize(1);
+    }
+
+    @Test
+    void start_purgeReportsCleanedRows() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        when(storageService.purgeOrphanSpawnHeads()).thenReturn(4);
+
+        service.start();
+
+        verify(storageService).purgeOrphanSpawnHeads();
     }
 
     @Test
     void start_inactiveHunt_spawnsNothing() {
-        useHunt(fixed(5, 3, -1, onFind(0)), HuntState.INACTIVE);
+        useHunt(spawnPoints(5, 3, -1, onFind(0)), HuntState.INACTIVE);
 
         service.start();
 
@@ -197,7 +248,7 @@ class SpawnServiceTest {
 
     @Test
     void start_onStartDisabled_spawnsNothing() {
-        useHunt(fixed(5, 3, -1, new RespawnPolicy(true, 0, 0, false, 3600, false, false)), HuntState.ACTIVE);
+        useHunt(spawnPoints(5, 3, -1, new RespawnPolicy(true, 0, 0, false, 3600, false, false)), HuntState.ACTIVE);
 
         service.start();
 
@@ -205,21 +256,73 @@ class SpawnServiceTest {
     }
 
     @Test
-    void consume_isAtomic() {
-        useHunt(fixed(5, 1, -1, new RespawnPolicy(false, 0, 0, false, 3600, false, true)), HuntState.ACTIVE);
+    void noFreePoint_retriesLater() {
+        useHunt(spawnPoints(1, 1, -1, onFind(0)), HuntState.ACTIVE);
+        occupied.add(new Location(world, 0.5, 64, 0.5));
+
+        service.start();
+
+        assertThat(spawned()).isEmpty();
+        assertThat(later).hasSize(1);
+    }
+
+    @Test
+    void refusedByTheHeadService_retriesLater() {
+        useHunt(spawnPoints(1, 1, -1, onFind(0)), HuntState.ACTIVE);
+        doReturn(false).when(headService).addSpawnedHead(any());
+
+        service.start();
+
+        assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
+        assertThat(later).hasSize(1);
+    }
+
+    @Test
+    void noTemplateWithWeight_spawnsNothing() {
+        hunt = new HBHunt(configService, "spawnhunt", "Spawn", HuntState.ACTIVE, 1, "D");
+        hunt.setBehaviors(List.of(new SpawnPointsBehavior(registry, List.of(new SpawnPoint("world", 0, 64, 0, 0f)), 1, 1, -1,
+                SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, List.of())));
+        when(huntService.getAllHunts()).thenReturn(List.of(hunt));
+        when(huntService.getHuntById("spawnhunt")).thenReturn(hunt);
+
+        service.start();
+
+        assertThat(spawned()).isEmpty();
+        assertThat(later).isEmpty();
+    }
+
+    // --- Finding ---
+
+    @Test
+    void consume_isAtomic_andStoresTheRowOnce() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, noRespawn()), HuntState.ACTIVE);
         service.start();
         var head = spawned().get(0);
 
         assertThat(service.consume(hunt, head)).isTrue();
         assertThat(service.consume(hunt, head)).isFalse();
 
+        verify(storageService, times(1)).createSpawnHead(head.getUuid(), "tex");
         verify(headService, times(1)).removeSpawnedHead(head);
         assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
     }
 
     @Test
+    void consume_databaseDown_keepsTheHead() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        var head = spawned().get(0);
+        doThrow(new InternalException("down")).when(storageService).createSpawnHead(any(), any());
+
+        assertThat(service.consume(hunt, head)).isFalse();
+
+        verify(headService, never()).removeSpawnedHead(any());
+        assertThat(service.getActiveHeads("spawnhunt")).containsExactly(head);
+    }
+
+    @Test
     void consume_noDelay_respawnsInstantlyOnAnotherPoint() {
-        useHunt(fixed(2, 1, -1, onFind(0)), HuntState.ACTIVE);
+        useHunt(spawnPoints(2, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         var first = spawned().get(0);
 
@@ -233,7 +336,7 @@ class SpawnServiceTest {
 
     @Test
     void consume_singlePoint_respawnsOnTheSamePoint() {
-        useHunt(fixed(1, 1, -1, onFind(0)), HuntState.ACTIVE);
+        useHunt(spawnPoints(1, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         var first = spawned().get(0);
 
@@ -246,14 +349,13 @@ class SpawnServiceTest {
 
     @Test
     void consume_withDelay_respawnsWhenTheDelayElapses() {
-        useHunt(fixed(3, 1, -1, onFind(5)), HuntState.ACTIVE);
+        useHunt(spawnPoints(3, 1, -1, onFind(5)), HuntState.ACTIVE);
         service.start();
 
         service.consume(hunt, spawned().get(0));
 
         assertThat(spawned()).hasSize(1);
-        assertThat(later).hasSize(1);
-        assertThat(later.get(0).ticks()).isEqualTo(100L);
+        assertThat(later).singleElement().extracting(Delayed::ticks).isEqualTo(100L);
 
         later.get(0).task().run();
 
@@ -261,18 +363,8 @@ class SpawnServiceTest {
     }
 
     @Test
-    void consume_doesNotDeleteTheFoundRow() throws Exception {
-        useHunt(fixed(3, 1, -1, onFind(0)), HuntState.ACTIVE);
-        service.start();
-
-        service.consume(hunt, spawned().get(0));
-
-        verify(storageService, never()).deleteSpawnHeads(any());
-    }
-
-    @Test
     void maxTotalSpawns_stopsSpawning() {
-        useHunt(fixed(5, 1, 2, onFind(0)), HuntState.ACTIVE);
+        useHunt(spawnPoints(5, 1, 2, onFind(0)), HuntState.ACTIVE);
         service.start();
 
         service.consume(hunt, spawned().get(0));
@@ -282,41 +374,29 @@ class SpawnServiceTest {
     }
 
     @Test
-    void deactivation_removesEveryHeadAndDeletesTheirRows() throws Exception {
-        useHunt(fixed(5, 2, -1, onFind(0)), HuntState.ACTIVE);
+    void unknownHeads_areIgnored() {
+        useHunt(spawnPoints(3, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
-        var heads = spawned();
+        var stranger = new HeadLocation("", UUID.randomUUID(), new Location(world, 0.5, 64, 0.5), "spawnhunt");
 
-        hunt.setState(HuntState.INACTIVE);
-        service.onStateChanged(hunt);
+        service.onLost(stranger);
+        service.onDiscarded(stranger);
 
-        heads.forEach(head -> verify(headService).removeSpawnedHead(head));
-        verify(storageService).deleteSpawnHeads(argThat(uuids ->
-                uuids.containsAll(heads.stream().map(HeadLocation::getUuid).toList())));
-        assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
+        assertThat(service.consume(hunt, stranger)).isFalse();
+        assertThat(spawned()).hasSize(1);
     }
 
-    @Test
-    void reactivation_spawnsAgain() {
-        useHunt(fixed(5, 2, -1, onFind(0)), HuntState.INACTIVE);
-        service.start();
-
-        hunt.setState(HuntState.ACTIVE);
-        service.onStateChanged(hunt);
-
-        assertThat(spawned()).hasSize(2);
-    }
+    // --- Lost and discarded heads ---
 
     @Test
-    void lostHead_blocksThePointAndRetriesLater() throws Exception {
-        useHunt(fixed(2, 1, -1, onFind(0)), HuntState.ACTIVE);
+    void lostHead_retriesLaterPreferringAnotherPoint() {
+        useHunt(spawnPoints(2, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         var lost = spawned().get(0);
         occupied.clear();
 
         service.onLost(lost);
 
-        verify(storageService).deleteSpawnHeads(List.of(lost.getUuid()));
         assertThat(spawned()).hasSize(1);
         assertThat(later).hasSize(1);
 
@@ -328,182 +408,144 @@ class SpawnServiceTest {
     }
 
     @Test
-    void noFreePoint_retriesLater() {
-        useHunt(fixed(1, 1, -1, onFind(0)), HuntState.ACTIVE);
-        occupied.add(new Location(world, 0.5, 64, 0.5));
-
-        service.start();
-
-        assertThat(spawned()).isEmpty();
-        assertThat(later).hasSize(1);
-    }
-
-    @Test
-    void reroll_withReset_replacesTheHeadsAndResetsProgress() throws Exception {
-        useHunt(fixed(5, 2, -1, onFind(0)), HuntState.ACTIVE);
-        service.start();
-        var before = spawned();
-
-        service.reroll(hunt, true);
-
-        before.forEach(head -> verify(headService).removeSpawnedHead(head));
-        verify(storageService).deletePlayerProgressForHunt("spawnhunt");
-        assertThat(spawned()).hasSize(4);
-        assertThat(service.getActiveHeads("spawnhunt")).hasSize(2);
-    }
-
-    @Test
-    void intervalReroll_isScheduled() {
-        useHunt(fixed(5, 1, -1, new RespawnPolicy(true, 0, 0, true, 60, false, true)), HuntState.ACTIVE);
-        service.start();
-
-        assertThat(timers).hasSize(2);
-        timers.get(0).run();
-
-        assertThat(spawned()).hasSize(2);
-    }
-
-    @Test
-    void restart_restoresTheSameHeadsWithoutNewRows() throws Exception {
-        useHunt(fixed(5, 2, -1, onFind(0)), HuntState.ACTIVE);
-        service.start();
-        var before = spawned().stream().map(HeadLocation::getUuid).toList();
-        service.stop();
-        assertThat(Files.exists(dataFolder.resolve("spawns").resolve("spawnhunt.yml"))).isTrue();
-
-        clearInvocations(headService, storageService);
-        occupied.clear();
-        new SpawnService(registry, dataFolder.toFile()).start();
-
-        assertThat(spawned().stream().map(HeadLocation::getUuid).toList()).containsExactlyInAnyOrderElementsOf(before);
-        verify(storageService, never()).createSpawnHead(argThat(before::contains), any());
-    }
-
-    @Test
-    void restart_templateRemoved_dropsTheHeadAndItsRow() throws Exception {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
-        service.start();
-        var head = spawned().get(0);
-        service.stop();
-
-        var renamed = new SpawnPointsBehavior(registry, fixed(5, 1, -1, onFind(0)).points(), 1, 10, -1,
-                SpawnCompletion.PER_PLAYER, AfterGoal.DENY, new RespawnPolicy(true, 0, 0, false, 3600, false, false),
-                List.of(new SpawnTemplate("other", "", 1, HeadContent.head("x"), List.of())));
-        useHunt(renamed, HuntState.ACTIVE);
-        clearInvocations(headService, storageService);
-        occupied.clear();
-
-        new SpawnService(registry, dataFolder.toFile()).start();
-
-        assertThat(spawned()).isEmpty();
-        verify(storageService).deleteSpawnHeads(List.of(head.getUuid()));
-    }
-
-    @Test
-    void restart_worldNotLoaded_keepsTheHeadUntilTheWorldLoads() throws Exception {
-        useHunt(fixed(5, 1, -1, new RespawnPolicy(true, 0, 0, false, 3600, false, true)), HuntState.ACTIVE);
-        service.start();
-        var head = spawned().get(0);
-        service.stop();
-
-        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(null);
-        clearInvocations(headService, storageService);
-        occupied.clear();
-        var restarted = new SpawnService(registry, dataFolder.toFile());
-        restarted.start();
-
-        assertThat(spawned()).isEmpty();
-        verify(storageService, never()).deleteSpawnHeads(any());
-
-        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
-        restarted.onWorldLoaded(world);
-
-        assertThat(spawned()).extracting(HeadLocation::getUuid).containsExactly(head.getUuid());
-    }
-
-    @Test
-    void win_closesTheHunt() throws Exception {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
-        when(languageService.message("Messages.SpawnHuntWon")).thenReturn("%player% won %hunt%");
-        Player player = mock(Player.class);
-        when(player.getName()).thenReturn("Steve");
-
-        service.win(hunt, player);
-
-        bukkit.verify(() -> Bukkit.broadcastMessage("Steve won Spawn"));
-        verify(huntService).changeState(hunt, HuntState.INACTIVE);
-    }
-
-    @Test
-    void startup_purgesOrphansButKeepsActiveAndPooledRows() throws Exception {
-        useHunt(fixed(5, 2, -1, onFind(0)), HuntState.ACTIVE);
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<java.util.function.Supplier<Set<UUID>>> keep = ArgumentCaptor.forClass(java.util.function.Supplier.class);
-
-        service.start();
-
-        verify(storageService).purgeOrphanSpawnHeads(keep.capture());
-        var kept = keep.getValue().get();
-        assertThat(kept).containsAll(spawned().stream().map(HeadLocation::getUuid).toList());
-    }
-
-    @Test
-    void discardedByAnAdmin_deletesTheRowAndRespawnsElsewhere() throws Exception {
-        useHunt(fixed(3, 1, -1, onFind(0)), HuntState.ACTIVE);
+    void discardedByAnAdmin_respawnsElsewhere() {
+        useHunt(spawnPoints(3, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         var head = spawned().get(0);
         occupied.clear();
 
         service.onDiscarded(head);
 
-        verify(storageService).deleteSpawnHeads(List.of(head.getUuid()));
         var heads = spawned();
         assertThat(heads).hasSize(2);
         assertThat(heads.get(1).getLocation().getBlockX()).isNotEqualTo(head.getLocation().getBlockX());
     }
 
     @Test
-    void deleteHunt_removesTheHeadsAndTheFileForGood() throws Exception {
-        useHunt(fixed(5, 2, -1, onFind(0)), HuntState.ACTIVE);
+    void discard_withoutRespawnOnFind_leavesTheSlotEmpty() {
+        useHunt(spawnPoints(3, 1, -1, noRespawn()), HuntState.ACTIVE);
+        service.start();
+
+        service.onDiscarded(spawned().get(0));
+
+        assertThat(spawned()).hasSize(1);
+        assertThat(later).isEmpty();
+    }
+
+    // --- Hunt state and commands ---
+
+    @Test
+    void deactivation_removesEveryHead() {
+        useHunt(spawnPoints(5, 2, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         var heads = spawned();
-        service.stop();
-        service.start();
-        var file = dataFolder.resolve("spawns").resolve("spawnhunt.yml");
-        assertThat(Files.exists(file)).isTrue();
 
-        service.deleteHunt("spawnhunt");
-        service.stop();
+        hunt.setState(HuntState.INACTIVE);
+        service.onStateChanged(hunt);
 
-        heads.forEach(head -> verify(headService, atLeastOnce()).removeSpawnedHead(argThat(h -> h.getUuid().equals(head.getUuid()))));
-        assertThat(Files.exists(file)).isFalse();
+        heads.forEach(head -> verify(headService).removeSpawnedHead(head));
         assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
     }
 
     @Test
-    void reloadingTheSameService_keepsPersistingChanges() throws Exception {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+    void reactivation_spawnsAgain() {
+        useHunt(spawnPoints(5, 2, -1, onFind(0)), HuntState.INACTIVE);
         service.start();
-        service.stop();
-        occupied.clear();
 
-        service.start();
-        var head = service.getActiveHeads("spawnhunt").iterator().next();
-        service.consume(hunt, head);
-        service.stop();
+        hunt.setState(HuntState.ACTIVE);
+        service.onStateChanged(hunt);
 
-        var yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
-                dataFolder.resolve("spawns").resolve("spawnhunt.yml").toFile());
-        assertThat(yaml.getConfigurationSection("active").getKeys(false)).doesNotContain(head.getUuid().toString());
+        assertThat(spawned()).hasSize(2);
     }
 
-    private Path stateFile() {
-        return dataFolder.resolve("spawns").resolve("spawnhunt.yml");
+    @Test
+    void reconfigure_appliesTheNewActiveCount() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+
+        useHunt(spawnPoints(5, 3, -1, onFind(0)), HuntState.ACTIVE);
+        service.reconfigure(hunt);
+
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(3);
+    }
+
+    @Test
+    void reroll_withoutReset_replacesTheHeads() throws Exception {
+        useHunt(spawnPoints(5, 2, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        var before = spawned();
+
+        service.reroll(hunt, false);
+
+        before.forEach(head -> verify(headService).removeSpawnedHead(head));
+        verify(storageService, never()).deletePlayerProgressForHunt(any());
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(2);
+    }
+
+    @Test
+    void reroll_withReset_spawnsOnlyAfterTheProgressIsDeleted() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        List<Runnable> asyncTasks = new ArrayList<>();
+        doAnswer(invocation -> {
+            asyncTasks.add(invocation.getArgument(0));
+            return mock(Task.class);
+        }).when(scheduler).runTaskAsync(any(Runnable.class));
+
+        service.reroll(hunt, true);
+
+        assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
+        verify(storageService, never()).deletePlayerProgressForHunt(any());
+
+        asyncTasks.forEach(Runnable::run);
+
+        verify(storageService).deletePlayerProgressForHunt("spawnhunt");
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(1);
+    }
+
+    @Test
+    void reroll_withReset_afterAReload_neverRegistersAGhostHead() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        List<Runnable> asyncTasks = new ArrayList<>();
+        doAnswer(invocation -> {
+            asyncTasks.add(invocation.getArgument(0));
+            return mock(Task.class);
+        }).when(scheduler).runTaskAsync(any(Runnable.class));
+
+        service.reroll(hunt, true);
+        service.stop();
+        clearInvocations(headService);
+        asyncTasks.forEach(Runnable::run);
+
+        assertThat(spawned()).isEmpty();
+    }
+
+    @Test
+    void reroll_resetFailing_stillSpawns() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        doThrow(new InternalException("down")).when(storageService).deletePlayerProgressForHunt(any());
+
+        service.reroll(hunt, true);
+
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(1);
+    }
+
+    @Test
+    void intervalRedraw_isScheduledAndRuns() {
+        useHunt(spawnPoints(5, 1, -1, new RespawnPolicy(true, 0, 0, true, 60, false, true)), HuntState.ACTIVE);
+        service.start();
+
+        timers.get(0).run();
+
+        assertThat(spawned()).hasSize(2);
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(1);
     }
 
     @Test
     void refresh_unknownActiveHunt_startsSpawning() {
-        useHunt(fixed(3, 2, -1, onFind(0)), HuntState.ACTIVE);
+        useHunt(spawnPoints(3, 2, -1, onFind(0)), HuntState.ACTIVE);
 
         service.refresh(hunt);
 
@@ -511,12 +553,12 @@ class SpawnServiceTest {
     }
 
     @Test
-    void refresh_knownHunt_fillsTheMissingHeadsOnly() {
-        useHunt(fixed(1, 2, -1, onFind(0)), HuntState.ACTIVE);
+    void refresh_knownHunt_fillsTheMissingHeads() {
+        useHunt(spawnPoints(1, 2, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         assertThat(spawned()).hasSize(1);
 
-        useHunt(fixed(3, 2, -1, onFind(0)), HuntState.ACTIVE);
+        useHunt(spawnPoints(3, 2, -1, onFind(0)), HuntState.ACTIVE);
         service.refresh(hunt);
 
         assertThat(service.getActiveHeads("spawnhunt")).hasSize(2);
@@ -524,205 +566,34 @@ class SpawnServiceTest {
 
     @Test
     void refresh_inactiveOrNotSpawnHunt_doesNothing() {
-        useHunt(fixed(3, 2, -1, onFind(0)), HuntState.INACTIVE);
+        useHunt(spawnPoints(3, 2, -1, onFind(0)), HuntState.INACTIVE);
         service.refresh(hunt);
 
-        var plain = new HBHunt(configService, "plain", "Plain", HuntState.ACTIVE, 1, "D");
-        service.refresh(plain);
+        service.refresh(new HBHunt(configService, "plain", "Plain", HuntState.ACTIVE, 1, "D"));
 
         assertThat(spawned()).isEmpty();
     }
 
     @Test
-    void clear_removesTheHeadsWithoutRespawning() throws Exception {
-        useHunt(fixed(5, 2, -1, onFind(0)), HuntState.ACTIVE);
+    void clear_removesTheHeadsWithoutRespawning() {
+        useHunt(spawnPoints(5, 2, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         var heads = spawned();
 
         service.clear(hunt);
 
         heads.forEach(head -> verify(headService).removeSpawnedHead(head));
-        verify(storageService).deleteSpawnHeads(any());
         assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
         assertThat(spawned()).hasSize(2);
     }
 
     @Test
     void clear_unknownHunt_isNoOp() {
-        useHunt(fixed(5, 2, -1, onFind(0)), HuntState.ACTIVE);
+        useHunt(spawnPoints(5, 2, -1, onFind(0)), HuntState.ACTIVE);
 
         service.clear(hunt);
 
         verifyNoInteractions(headService);
-    }
-
-    @Test
-    void pendingRespawn_survivesARestart() {
-        useHunt(fixed(3, 1, -1, onFind(30)), HuntState.ACTIVE);
-        service.start();
-        service.consume(hunt, spawned().get(0));
-        service.stop();
-        later.clear();
-
-        new SpawnService(registry, dataFolder.toFile()).start();
-
-        assertThat(later).hasSize(1);
-        assertThat(later.get(0).ticks()).isBetween(500L, 600L);
-    }
-
-    @Test
-    void flushTimer_writesTheStateFile() {
-        useHunt(fixed(3, 1, -1, onFind(0)), HuntState.ACTIVE);
-        service.start();
-        assertThat(Files.exists(stateFile())).isFalse();
-
-        timers.get(timers.size() - 1).run();
-
-        assertThat(Files.exists(stateFile())).isTrue();
-    }
-
-    @Test
-    void flushTimer_nothingDirty_writesNothing() {
-        var plain = new HBHunt(configService, "plain", "Plain", HuntState.ACTIVE, 1, "D");
-        when(huntService.getAllHunts()).thenReturn(List.of(plain));
-        service.start();
-
-        timers.get(timers.size() - 1).run();
-
-        assertThat(dataFolder.resolve("spawns").toFile().list()).isEmpty();
-    }
-
-    @Test
-    void databaseDown_noHeadAppearsAndNothingBreaks() throws Exception {
-        useHunt(fixed(3, 2, -1, onFind(0)), HuntState.ACTIVE);
-        doThrow(new InternalException("down")).when(storageService).createSpawnHead(any(), any());
-
-        service.start();
-
-        assertThat(spawned()).isEmpty();
-    }
-
-    @Test
-    void failingDeletesAndPurges_areOnlyLogged() throws Exception {
-        useHunt(fixed(3, 1, -1, onFind(0)), HuntState.ACTIVE);
-        doThrow(new InternalException("down")).when(storageService).deleteSpawnHeads(any());
-        doThrow(new InternalException("down")).when(storageService).purgeOrphanSpawnHeads(any());
-
-        service.start();
-        service.clear(hunt);
-
-        assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
-    }
-
-    @Test
-    void purge_reportsTheCleanedRows() throws Exception {
-        useHunt(fixed(3, 1, -1, onFind(0)), HuntState.ACTIVE);
-        when(storageService.purgeOrphanSpawnHeads(any())).thenReturn(4);
-
-        service.start();
-
-        verify(storageService).purgeOrphanSpawnHeads(any());
-    }
-
-    @Test
-    void restart_huntNowInactive_removesTheLeftoverBlocks() throws Exception {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
-        service.start();
-        var head = spawned().get(0);
-        service.stop();
-
-        hunt.setState(HuntState.INACTIVE);
-        clearInvocations(headService, storageService);
-        when(visualService.isBlockRendered(any())).thenReturn(true);
-        new SpawnService(registry, dataFolder.toFile()).start();
-
-        verify(visualService).removeBlock(argThat(h -> h.getUuid().equals(head.getUuid())));
-        verify(storageService).deleteSpawnHeads(List.of(head.getUuid()));
-        assertThat(spawned()).isEmpty();
-    }
-
-    @Test
-    void dormantHeads_arePersistedAgain() {
-        useHunt(fixed(5, 1, -1, new RespawnPolicy(true, 0, 0, false, 3600, false, true)), HuntState.ACTIVE);
-        service.start();
-        var head = spawned().get(0);
-        service.stop();
-
-        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(null);
-        var dormant = new SpawnService(registry, dataFolder.toFile());
-        dormant.start();
-        dormant.stop();
-
-        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
-        clearInvocations(headService);
-        occupied.clear();
-        new SpawnService(registry, dataFolder.toFile()).start();
-
-        assertThat(spawned()).extracting(HeadLocation::getUuid).containsExactly(head.getUuid());
-    }
-
-    @Test
-    void corruptedStateFile_isIgnored() throws Exception {
-        useHunt(fixed(3, 1, -1, onFind(0)), HuntState.ACTIVE);
-        Files.createDirectories(stateFile().getParent());
-        Files.writeString(stateFile(), String.join(System.lineSeparator(),
-                "active:", "  not-a-uuid:", "    template: basic", "    world: world", "pool:", "  - also-bad", ""));
-
-        service.start();
-
-        assertThat(spawned()).hasSize(1);
-    }
-
-    @Test
-    void win_cancelledEvent_keepsTheHuntOpen() throws Exception {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
-        PluginManager pluginManager = mock(PluginManager.class);
-        bukkit.when(Bukkit::getPluginManager).thenReturn(pluginManager);
-        doAnswer(invocation -> {
-            ((HuntStateChangeEvent) invocation.getArgument(0)).setCancelled(true);
-            return null;
-        }).when(pluginManager).callEvent(any());
-
-        service.win(hunt, mock(Player.class));
-
-        verify(huntService, never()).changeState(any(), any());
-    }
-
-    @Test
-    void win_storageError_isOnlyLogged() throws Exception {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
-        when(languageService.message("Messages.SpawnHuntWon")).thenReturn("");
-        doThrow(new InternalException("down")).when(huntService).changeState(any(), any());
-        Player player = mock(Player.class);
-        when(player.getName()).thenReturn("Steve");
-
-        service.win(hunt, player);
-
-        bukkit.verify(() -> Bukkit.broadcastMessage(anyString()), never());
-    }
-
-    @Test
-    void unknownHeads_areIgnored() {
-        useHunt(fixed(3, 1, -1, onFind(0)), HuntState.ACTIVE);
-        service.start();
-        var stranger = new HeadLocation("", UUID.randomUUID(), new Location(world, 0.5, 64, 0.5), "spawnhunt");
-
-        service.onLost(stranger);
-        service.onDiscarded(stranger);
-
-        assertThat(service.consume(hunt, stranger)).isFalse();
-        assertThat(spawned()).hasSize(1);
-    }
-
-    @Test
-    void discard_withoutRespawnOnFind_leavesTheSlotEmpty() {
-        useHunt(fixed(3, 1, -1, new RespawnPolicy(false, 0, 0, false, 3600, false, true)), HuntState.ACTIVE);
-        service.start();
-
-        service.onDiscarded(spawned().get(0));
-
-        assertThat(spawned()).hasSize(1);
-        assertThat(later).isEmpty();
     }
 
     @Test
@@ -739,119 +610,228 @@ class SpawnServiceTest {
     }
 
     @Test
-    void reconfigure_appliesTheNewActiveCount() {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+    void deleteHunt_removesTheHeadsAndTheFileForGood() {
+        useHunt(spawnPoints(5, 2, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
+        var heads = spawned();
+        restart();
+        assertThat(Files.exists(stateFile())).isTrue();
 
-        useHunt(fixed(5, 3, -1, onFind(0)), HuntState.ACTIVE);
-        service.reconfigure(hunt);
+        service.deleteHunt("spawnhunt");
+        service.stop();
 
-        assertThat(service.getActiveHeads("spawnhunt")).hasSize(3);
+        heads.forEach(head -> verify(headService).removeSpawnedHead(argThat(h -> h.getUuid().equals(head.getUuid()))));
+        assertThat(Files.exists(stateFile())).isFalse();
+    }
+
+    // --- Winning ---
+
+    @Test
+    void win_closesTheHunt() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        when(languageService.message("Messages.SpawnHuntWon")).thenReturn("%player% won %hunt%");
+        Player player = mock(Player.class);
+        when(player.getName()).thenReturn("Steve");
+
+        service.win(hunt, player);
+
+        bukkit.verify(() -> Bukkit.broadcastMessage("Steve won Spawn"));
+        verify(huntService).changeState(hunt, HuntState.INACTIVE);
     }
 
     @Test
-    void onWorldLoaded_otherWorld_keepsTheHeadsDormant() {
-        useHunt(fixed(5, 1, -1, new RespawnPolicy(true, 0, 0, false, 3600, false, true)), HuntState.ACTIVE);
+    void win_cancelledEvent_keepsTheHuntOpen() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        PluginManager pluginManager = mock(PluginManager.class);
+        bukkit.when(Bukkit::getPluginManager).thenReturn(pluginManager);
+        doAnswer(invocation -> {
+            ((HuntStateChangeEvent) invocation.getArgument(0)).setCancelled(true);
+            return null;
+        }).when(pluginManager).callEvent(any());
+
+        service.win(hunt, mock(Player.class));
+
+        verify(huntService, never()).changeState(any(), any());
+    }
+
+    @Test
+    void win_storageError_isOnlyLogged() throws Exception {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        when(languageService.message("Messages.SpawnHuntWon")).thenReturn("");
+        doThrow(new InternalException("down")).when(huntService).changeState(any(), any());
+        Player player = mock(Player.class);
+        when(player.getName()).thenReturn("Steve");
+
+        service.win(hunt, player);
+
+        bukkit.verify(() -> Bukkit.broadcastMessage(anyString()), never());
+    }
+
+    // --- Persistence ---
+
+    @Test
+    void restart_restoresTheSameHeads() throws Exception {
+        useHunt(spawnPoints(5, 2, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
-        service.stop();
-        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(null);
-        var restarted = new SpawnService(registry, dataFolder.toFile());
-        restarted.start();
-        clearInvocations(headService);
+        var before = spawned().stream().map(HeadLocation::getUuid).toList();
 
-        World other = mock(World.class);
-        when(other.getName()).thenReturn("nether");
-        restarted.onWorldLoaded(other);
+        restart();
 
-        assertThat(spawned()).isEmpty();
+        assertThat(spawned().stream().map(HeadLocation::getUuid).toList()).containsExactlyInAnyOrderElementsOf(before);
+        verify(storageService, never()).createSpawnHead(any(), any());
+    }
+
+    @Test
+    void restart_keepsTheTotalSpawnedForTheLimit() {
+        useHunt(spawnPoints(5, 1, 2, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        service.consume(hunt, spawned().get(0));
+
+        restart();
+        service.consume(hunt, spawned().get(0));
+
+        assertThat(spawned()).hasSize(1);
     }
 
     @Test
     void restart_keepsTheRenderModeTheHeadAppearedWith() {
         when(configService.renderingMode()).thenReturn(RenderMode.BLOCK);
-        useHunt(fixed(5, 1, -1, new RespawnPolicy(true, 0, 0, false, 3600, false, true)), HuntState.ACTIVE);
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
-        service.stop();
-
         when(configService.renderingMode()).thenReturn(RenderMode.DISPLAY);
-        clearInvocations(headService);
-        occupied.clear();
-        new SpawnService(registry, dataFolder.toFile()).start();
+
+        restart();
 
         assertThat(spawned()).singleElement().extracting(HeadLocation::getRenderMode).isEqualTo(RenderMode.BLOCK);
     }
 
     @Test
-    void consumedRow_isKeptFromThePurgeUntilTheProgressIsStored() throws Exception {
-        useHunt(fixed(3, 1, -1, new RespawnPolicy(false, 0, 0, false, 3600, false, true)), HuntState.ACTIVE);
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<java.util.function.Supplier<Set<UUID>>> keep = ArgumentCaptor.forClass(java.util.function.Supplier.class);
+    void restart_templateRemoved_removesTheLeftoverBlock() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
-        verify(storageService).purgeOrphanSpawnHeads(keep.capture());
+        var head = spawned().get(0);
+        service.stop();
+
+        useHunt(new SpawnPointsBehavior(registry, spawnPoints(5, 1, -1, onFind(0)).points(), 1, 10, -1,
+                SpawnCompletion.PER_PLAYER, AfterGoal.DENY, new RespawnPolicy(true, 0, 0, false, 3600, false, false),
+                List.of(new SpawnTemplate("other", "", 1, HeadContent.head("x"), List.of()))), HuntState.ACTIVE);
+        when(visualService.isBlockRendered(any())).thenReturn(true);
+        restart();
+
+        assertThat(spawned()).isEmpty();
+        verify(visualService).removeBlock(argThat(h -> h.getUuid().equals(head.getUuid())));
+    }
+
+    @Test
+    void restart_huntNowInactive_removesTheLeftoverBlock() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        var head = spawned().get(0);
+        service.stop();
+
+        hunt.setState(HuntState.INACTIVE);
+        when(visualService.isBlockRendered(any())).thenReturn(true);
+        restart();
+
+        assertThat(spawned()).isEmpty();
+        verify(visualService).removeBlock(argThat(h -> h.getUuid().equals(head.getUuid())));
+    }
+
+    @Test
+    void restart_huntNoLongerUsingSpawns_removesItsHeadsAndFile() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        var head = spawned().get(0);
+        service.stop();
+
+        hunt.setBehaviors(List.of(new FreeBehavior()));
+        when(visualService.isBlockRendered(any())).thenReturn(true);
+        restart();
+
+        verify(visualService).removeBlock(argThat(h -> h.getUuid().equals(head.getUuid())));
+        assertThat(Files.exists(stateFile())).isFalse();
+    }
+
+    @Test
+    void restart_worldNotLoaded_keepsTheHeadUntilTheWorldLoads() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
         var head = spawned().get(0);
 
-        service.consume(hunt, head);
-        assertThat(keep.getValue().get()).contains(head.getUuid());
+        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(null);
+        restart();
+        assertThat(spawned()).isEmpty();
 
-        service.release(hunt, head);
-        assertThat(keep.getValue().get()).doesNotContain(head.getUuid());
+        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+        service.onWorldLoaded(world);
+
+        assertThat(spawned()).extracting(HeadLocation::getUuid).containsExactly(head.getUuid());
     }
 
     @Test
-    void rerollWithReset_spawnsOnlyAfterTheProgressIsDeleted() throws Exception {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+    void restart_dormantHeads_arePersistedAgain() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
-        List<Runnable> asyncTasks = new ArrayList<>();
-        doAnswer(invocation -> {
-            asyncTasks.add(invocation.getArgument(0));
-            return mock(Task.class);
-        }).when(scheduler).runTaskAsync(any(Runnable.class));
+        var head = spawned().get(0);
 
-        service.reroll(hunt, true);
+        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(null);
+        restart();
+        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+        restart();
 
-        assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
-        verify(storageService, never()).deletePlayerProgressForHunt(any());
-
-        doAnswer(invocation -> {
-            ((Runnable) invocation.getArgument(0)).run();
-            return mock(Task.class);
-        }).when(scheduler).runTaskAsync(any(Runnable.class));
-        new ArrayList<>(asyncTasks).forEach(Runnable::run);
-
-        verify(storageService).deletePlayerProgressForHunt("spawnhunt");
-        assertThat(service.getActiveHeads("spawnhunt")).hasSize(1);
+        assertThat(spawned()).extracting(HeadLocation::getUuid).containsExactly(head.getUuid());
     }
 
     @Test
-    void stop_duringAnAsyncRowCreation_neverRegistersAGhostHead() {
-        useHunt(fixed(5, 1, -1, new RespawnPolicy(true, 0, 0, false, 3600, false, false)), HuntState.ACTIVE);
-        List<Runnable> asyncTasks = new ArrayList<>();
-        doAnswer(invocation -> {
-            asyncTasks.add(invocation.getArgument(0));
-            return mock(Task.class);
-        }).when(scheduler).runTaskAsync(any(Runnable.class));
+    void onWorldLoaded_otherWorld_keepsTheHeadsDormant() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
+        bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(null);
+        restart();
 
-        service.reroll(hunt, false);
-        service.stop();
-        new ArrayList<>(asyncTasks).forEach(Runnable::run);
+        World other = mock(World.class);
+        when(other.getName()).thenReturn("nether");
+        service.onWorldLoaded(other);
 
         assertThat(spawned()).isEmpty();
     }
 
     @Test
-    void restart_huntNoLongerUsingSpawns_removesItsHeadsAndFile() {
-        useHunt(fixed(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+    void corruptedStateFile_isIgnored() throws Exception {
+        useHunt(spawnPoints(3, 1, -1, onFind(0)), HuntState.ACTIVE);
+        Files.createDirectories(stateFile().getParent());
+        Files.writeString(stateFile(), String.join(System.lineSeparator(),
+                "active:", "  not-a-uuid:", "    template: basic", "    world: world", ""));
+
         service.start();
-        var head = spawned().get(0);
+
+        assertThat(spawned()).hasSize(1);
+    }
+
+    @Test
+    void flushTimer_writesTheChangedStates() {
+        useHunt(spawnPoints(3, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+
+        timers.get(timers.size() - 1).run();
         service.stop();
+
         assertThat(Files.exists(stateFile())).isTrue();
+    }
 
-        hunt.setBehaviors(List.of(new FreeBehavior()));
-        when(visualService.isBlockRendered(any())).thenReturn(true);
-        new SpawnService(registry, dataFolder.toFile()).start();
+    @Test
+    void reloadingTheSameService_keepsPersistingChanges() {
+        useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
+        service.start();
+        service.stop();
+        occupied.clear();
 
-        verify(visualService).removeBlock(argThat(h -> h.getUuid().equals(head.getUuid())));
-        assertThat(Files.exists(stateFile())).isFalse();
+        service.start();
+        var head = service.getActiveHeads("spawnhunt").iterator().next();
+        service.consume(hunt, head);
+        service.stop();
+
+        var yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(stateFile().toFile());
+        assertThat(yaml.getConfigurationSection("active").getKeys(false)).doesNotContain(head.getUuid().toString());
     }
 }

@@ -8,7 +8,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class SpawnPointsBehavior extends SpawnBehavior {
@@ -44,19 +43,17 @@ public class SpawnPointsBehavior extends SpawnBehavior {
     }
 
     @Override
-    public void pickLocation(Predicate<Location> isFree, Consumer<Location> onPicked) {
+    public Location pickLocation(Predicate<Location> isFree) {
         var candidates = new ArrayList<>(points);
         Collections.shuffle(candidates);
 
         for (SpawnPoint point : candidates) {
             var location = point.toLocation();
             if (location != null && isFree.test(location)) {
-                onPicked.accept(location);
-                return;
+                return location;
             }
         }
-
-        onPicked.accept(null);
+        return null;
     }
 
     @Override

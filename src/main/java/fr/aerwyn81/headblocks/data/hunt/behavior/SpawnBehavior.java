@@ -14,7 +14,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public abstract class SpawnBehavior implements Behavior {
@@ -42,7 +41,7 @@ public abstract class SpawnBehavior implements Behavior {
         templates.forEach(template -> this.templates.put(template.id(), template));
     }
 
-    public abstract void pickLocation(Predicate<Location> isFree, Consumer<Location> onPicked);
+    public abstract Location pickLocation(Predicate<Location> isFree);
 
     public abstract float yawAt(Location location);
 
@@ -126,8 +125,6 @@ public abstract class SpawnBehavior implements Behavior {
 
     @Override
     public void onHeadFound(Player player, HeadLocation head, HBHunt hunt) {
-        registry.getSpawnService().release(hunt, head);
-
         if (completion == SpawnCompletion.FIRST_WINS && hunt.isActive() && foundCount(player, hunt) >= goal) {
             registry.getSpawnService().win(hunt, player);
         }

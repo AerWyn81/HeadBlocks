@@ -4,7 +4,6 @@ import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
@@ -34,9 +33,7 @@ public interface Database {
 
     void createSpawnHead(UUID hUUID, String texture, String serverIdentifier) throws InternalException;
 
-    void deleteHeads(Collection<UUID> hUUIDs) throws InternalException;
-
-    ArrayList<UUID> getOrphanSpawnHeads(String serverIdentifier) throws InternalException;
+    int deleteOrphanSpawnHeads(String serverIdentifier) throws InternalException;
 
     boolean containsPlayer(UUID pUUID) throws InternalException;
 

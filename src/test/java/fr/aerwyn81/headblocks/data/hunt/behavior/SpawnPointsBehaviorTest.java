@@ -186,14 +186,11 @@ class SpawnPointsBehaviorTest {
 
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
-            List<Location> picked = new ArrayList<>();
+            Location picked = fixed.pickLocation(location -> location.getBlockX() == 2);
 
-            fixed.pickLocation(location -> location.getBlockX() == 2, picked::add);
-
-            assertThat(picked).hasSize(1);
-            assertThat(picked.get(0).getBlockX()).isEqualTo(2);
-            assertThat(picked.get(0).getX()).isEqualTo(2.5);
-            assertThat(fixed.yawAt(picked.get(0))).isEqualTo(90f);
+            assertThat(picked.getBlockX()).isEqualTo(2);
+            assertThat(picked.getX()).isEqualTo(2.5);
+            assertThat(fixed.yawAt(picked)).isEqualTo(90f);
         }
     }
 
@@ -204,11 +201,7 @@ class SpawnPointsBehaviorTest {
 
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
-            List<Location> picked = new ArrayList<>();
-
-            fixed.pickLocation(location -> false, picked::add);
-
-            assertThat(picked).containsExactly((Location) null);
+            assertThat(fixed.pickLocation(location -> false)).isNull();
         }
     }
 

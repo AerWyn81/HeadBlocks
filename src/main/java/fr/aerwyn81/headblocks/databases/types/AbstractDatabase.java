@@ -10,7 +10,6 @@ import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
@@ -236,40 +235,14 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
-    public void deleteHeads(Collection<UUID> hUUIDs) throws InternalException {
-        if (hUUIDs.isEmpty()) {
-            return;
-        }
-
+    public int deleteOrphanSpawnHeads(String serverId) throws InternalException {
         try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.deleteHead())) {
-            for (UUID hUUID : hUUIDs) {
-                ps.setString(1, hUUID.toString());
-                ps.addBatch();
-            }
-            ps.executeBatch();
-        } catch (Exception ex) {
-            throw new InternalException(ex);
-        }
-    }
-
-    @Override
-    public ArrayList<UUID> getOrphanSpawnHeads(String serverId) throws InternalException {
-        var heads = new ArrayList<UUID>();
-
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(Requests.getOrphanSpawnHeads())) {
+             var ps = conn.prepareStatement(Requests.deleteOrphanSpawnHeads())) {
             ps.setString(1, serverId);
-            try (var rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    heads.add(UUID.fromString(rs.getString("hUUID")));
-                }
-            }
+            return ps.executeUpdate();
         } catch (Exception ex) {
             throw new InternalException(ex);
         }
-
-        return heads;
     }
 
     @Override

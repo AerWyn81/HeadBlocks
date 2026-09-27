@@ -24,7 +24,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class StorageService {
@@ -477,15 +476,8 @@ public class StorageService {
         database.createSpawnHead(headUuid, texture, serverIdentifier);
     }
 
-    public void deleteSpawnHeads(Collection<UUID> headUuids) throws InternalException {
-        database.deleteHeads(headUuids);
-    }
-
-    public int purgeOrphanSpawnHeads(Supplier<Set<UUID>> keep) throws InternalException {
-        var orphans = database.getOrphanSpawnHeads(serverIdentifier);
-        orphans.removeAll(keep.get());
-        database.deleteHeads(orphans);
-        return orphans.size();
+    public int purgeOrphanSpawnHeads() throws InternalException {
+        return database.deleteOrphanSpawnHeads(serverIdentifier);
     }
 
     public boolean isHeadExist(UUID headUuid) throws InternalException {
