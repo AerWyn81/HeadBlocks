@@ -9,10 +9,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.Bisected;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
@@ -131,20 +129,11 @@ public class RandomSpawnBehavior extends SpawnBehavior {
     private Location firstSpotFrom(World world, int x, int z, int from, int to, int maxY) {
         for (int y = from; y <= Math.min(to, maxY); y++) {
             var block = world.getBlockAt(x, y, z);
-            if (isOpen(block) && canStandOn(block.getRelative(0, -1, 0))) {
+            if (block.isEmpty() && canStandOn(block.getRelative(0, -1, 0))) {
                 return block.getLocation();
             }
         }
         return null;
-    }
-
-    private static boolean isOpen(Block block) {
-        if (block.isEmpty()) {
-            return true;
-        }
-        var type = block.getType();
-        return !block.isLiquid() && !type.isSolid() && !(block.getBlockData() instanceof Bisected)
-                && Tag.REPLACEABLE.isTagged(type);
     }
 
     private boolean canStandOn(Block block) {

@@ -468,10 +468,11 @@ public class SpawnService {
         }
 
         var placed = new AtomicBoolean();
-        var deferred = new AtomicBoolean();
+        var ran = new AtomicBoolean();
         int generation = state.generation.get();
         state.pending.incrementAndGet();
         registry.getScheduler().runNow(column, () -> {
+            ran.set(true);
             if (state.generation.get() != generation) {
                 return;
             }
@@ -483,12 +484,8 @@ public class SpawnService {
 
             var location = behavior.pickInChunk(hunt, column, candidate -> isFree(candidate, avoid));
             placed.set(place(state, behavior, template, location, behavior.randomYaw()));
-            if (placed.get() && deferred.get()) {
-                announce(state, 1);
-            }
         });
-        deferred.set(true);
-        return placed.get();
+        return placed.get() || !ran.get();
     }
 
     private boolean place(SpawnState state, SpawnBehavior behavior, SpawnTemplate template, Location location, float yaw) {

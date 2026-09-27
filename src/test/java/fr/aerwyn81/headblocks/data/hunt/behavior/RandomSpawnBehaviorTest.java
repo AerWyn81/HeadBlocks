@@ -91,9 +91,6 @@ class RandomSpawnBehaviorTest {
             lenient().when(block.getType()).thenReturn(type);
             lenient().when(block.isEmpty()).thenReturn(type == Material.AIR);
             lenient().when(block.isLiquid()).thenReturn(type == Material.WATER);
-            if (type == Material.TALL_GRASS) {
-                lenient().when(block.getBlockData()).thenReturn(mock(org.bukkit.block.data.Bisected.class));
-            }
             lenient().when(block.getLocation()).thenReturn(new Location(world, x, y, z));
             lenient().when(block.getRelative(0, -1, 0)).thenAnswer(invocation -> block(x, y - 1, z));
             return block;
@@ -295,8 +292,8 @@ class RandomSpawnBehaviorTest {
     }
 
     @Test
-    void tallPlants_areNotReplaced() {
-        column = y -> y < 64 ? Material.GRASS_BLOCK : y == 64 ? Material.TALL_GRASS : Material.AIR;
+    void plantsAndSnow_blockTheSpot() {
+        column = y -> y < 64 ? Material.GRASS_BLOCK : y == 64 ? Material.SNOW : Material.AIR;
         when(world.getHighestBlockYAt(anyInt(), anyInt(), any(org.bukkit.HeightMap.class))).thenReturn(63);
 
         assertThat(pick(behavior(true, BlockFilter.BLACKLIST, List.of()))).isNull();

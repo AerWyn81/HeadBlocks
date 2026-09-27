@@ -1269,7 +1269,8 @@ class SpawnServiceTest {
     }
 
     @Test
-    void random_regionTaskRunningLater_announcesEachHeadWhenItAppears() {
+    void random_regionTaskRunningLater_countsTheHeadsBeingPlaced() {
+        when(languageService.message("Messages.SpawnHeadsAppeared")).thenReturn("%count% in %hunt%");
         when(languageService.message("Messages.SpawnHeadAppeared")).thenReturn("one in %hunt%");
         useRandomHunt(2, new SpawnOptions(true, false, false, SpawnOptions.Scoring.HEADS));
         var deferred = new ArrayList<Runnable>();
@@ -1279,10 +1280,13 @@ class SpawnServiceTest {
         service.start();
         assertThat(spawned()).isEmpty();
 
-        deferred.forEach(Runnable::run);
+        bukkit.verify(() -> Bukkit.broadcastMessage("2 in Spawn"));
+        assertThat(service.addHeads(hunt, 1)).isEqualTo(1);
+        bukkit.verify(() -> Bukkit.broadcastMessage("one in Spawn"));
 
-        assertThat(spawned()).hasSize(2);
-        bukkit.verify(() -> Bukkit.broadcastMessage("one in Spawn"), times(2));
+        List.copyOf(deferred).forEach(Runnable::run);
+
+        assertThat(spawned()).hasSize(3);
     }
 
     @Test
