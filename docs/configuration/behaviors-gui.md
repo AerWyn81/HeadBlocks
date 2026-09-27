@@ -138,6 +138,7 @@ Opened when validating with **Spawn points** or **Random spawn** selected, or wi
 | **Log file**                     | Lime/Gray Dye     | LEFT CLICK → toggle `spawns/<hunt>.log`                         |
 | **Debug traces**                 | Lime/Gray Dye     | LEFT CLICK → toggle the admin traces of each spawn              |
 | **Score**                        | Experience Bottle | LEFT CLICK → heads found / points of the heads                  |
+| **Reset progress on activation** | Lime/Gray Dye     | LEFT CLICK → toggle: everyone starts from zero when the hunt is enabled again |
 | **Validate**                     | Diamond/Barrier   | LEFT CLICK → save (needs a template with a weight above 0)      |
 | **Back**                         | Back icon         | LEFT CLICK → discard the changes                                |
 

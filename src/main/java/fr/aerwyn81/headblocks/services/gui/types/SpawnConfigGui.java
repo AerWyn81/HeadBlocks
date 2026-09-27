@@ -109,6 +109,8 @@ public class SpawnConfigGui {
         menu.setItem(0, 41, choice(Material.EXPERIENCE_BOTTLE, "Scoring", draft.scoring.name(),
                 () -> draft.scoring = draft.scoring == SpawnOptions.Scoring.HEADS
                         ? SpawnOptions.Scoring.POINTS : SpawnOptions.Scoring.HEADS, reopen));
+        menu.setItem(0, 42, toggle("ResetOnActivate", draft.resetOnActivate,
+                () -> draft.resetOnActivate = !draft.resetOnActivate, reopen));
 
         if (draft.isValid()) {
             menu.setItem(0, 40, new ItemGUI(new ItemBuilder(Material.DIAMOND)

@@ -310,6 +310,7 @@ behaviors:
     log: false
     debug: false
     scoring: HEADS
+    resetOnActivate: false
     respawn:
       onFind:
         enabled: true
@@ -353,6 +354,7 @@ behaviors:
 - **log**: write every spawn, find and trap to `spawns/<hunt>.log`
 - **debug**: tell admins (`headblocks.admin`) where each head appeared, with a clickable teleport, and print it in the console
 - **scoring**: `HEADS` (the top counts found heads) or `POINTS` (the top sums the `points` of the found heads, see `%headblocks_hunt_<hunt>_score%`)
+- **resetOnActivate**: every time the hunt is enabled again, the progress of every player is reset. Useful with `FIRST_WINS` to start a new round after a winner closed the hunt. Off by default
 - **respawn.onFind**: a found head reappears elsewhere after a random delay between `min` and `max` seconds (`0` is instant)
 - **respawn.interval**: every `seconds`, all heads are drawn again; with `resetProgress`, every draw starts a new round
 - **respawn.onStart**: heads appear as soon as the hunt is active. Otherwise they only appear with an interval draw or `/hb spawn <hunt> reroll`

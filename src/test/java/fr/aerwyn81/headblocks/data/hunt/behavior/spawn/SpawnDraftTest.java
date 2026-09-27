@@ -58,6 +58,7 @@ class SpawnDraftTest {
         draft.intervalSeconds = 120;
         draft.resetProgress = true;
         draft.onStart = false;
+        draft.resetOnActivate = true;
         draft.addTemplate(HeadContent.head("a"));
 
         var copy = SpawnDraft.of(draft.build(registry));

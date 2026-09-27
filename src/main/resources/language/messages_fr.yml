@@ -401,6 +401,13 @@ Gui:
     - "&7Les admins reçoivent un message cliquable à chaque apparition"
     - ""
     - "%status%"
+  SpawnConfigResetOnActivate: "&eRéinitialiser à l'activation"
+  SpawnConfigResetOnActivateLore:
+    - ""
+    - "&7À chaque réactivation de la hunt,"
+    - "&7tout le monde repart de zéro"
+    - ""
+    - "%status%"
   SpawnConfigScoring: "&eScore"
   SpawnConfigScoringLore:
     - ""

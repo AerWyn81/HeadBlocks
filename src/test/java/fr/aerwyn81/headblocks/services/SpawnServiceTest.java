@@ -465,6 +465,44 @@ class SpawnServiceTest {
     }
 
     @Test
+    void reactivation_keepsTheProgressByDefault() throws Exception {
+        useHunt(spawnPoints(5, 2, -1, onFind(0)), HuntState.INACTIVE);
+        service.start();
+
+        hunt.setState(HuntState.ACTIVE);
+        service.onStateChanged(hunt);
+
+        verify(storageService, never()).deletePlayerProgressForHunt(any());
+    }
+
+    @Test
+    void reactivation_withResetOnActivate_resetsTheProgressThenSpawns() throws Exception {
+        useHunt(withTemplate(5, 2, basic(), new SpawnOptions(false, false, false, SpawnOptions.Scoring.HEADS, true)),
+                HuntState.INACTIVE);
+        service.start();
+
+        hunt.setState(HuntState.ACTIVE);
+        service.onStateChanged(hunt);
+
+        var order = inOrder(storageService, headService);
+        order.verify(storageService).deletePlayerProgressForHunt("spawnhunt");
+        order.verify(headService, times(2)).addSpawnedHead(any());
+    }
+
+    @Test
+    void deactivation_withResetOnActivate_keepsTheProgress() throws Exception {
+        useHunt(withTemplate(5, 2, basic(), new SpawnOptions(false, false, false, SpawnOptions.Scoring.HEADS, true)),
+                HuntState.ACTIVE);
+        service.start();
+
+        hunt.setState(HuntState.INACTIVE);
+        service.onStateChanged(hunt);
+
+        verify(storageService, never()).deletePlayerProgressForHunt(any());
+        assertThat(service.getActiveHeads("spawnhunt")).isEmpty();
+    }
+
+    @Test
     void reconfigure_appliesTheNewActiveCount() {
         useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();

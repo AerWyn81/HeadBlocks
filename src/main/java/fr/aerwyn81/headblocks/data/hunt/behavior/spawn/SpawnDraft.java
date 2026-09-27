@@ -37,6 +37,7 @@ public class SpawnDraft {
     public boolean log = false;
     public boolean debug = false;
     public SpawnOptions.Scoring scoring = SpawnOptions.Scoring.HEADS;
+    public boolean resetOnActivate = false;
     public final Map<String, SpawnTemplate> templates = new LinkedHashMap<>();
 
     public static SpawnDraft random() {
@@ -76,6 +77,7 @@ public class SpawnDraft {
         draft.log = options.log();
         draft.debug = options.debug();
         draft.scoring = options.scoring();
+        draft.resetOnActivate = options.resetOnActivate();
 
         behavior.templates().forEach(template -> draft.templates.put(template.id(), template));
         return draft;
@@ -112,7 +114,7 @@ public class SpawnDraft {
     }
 
     public SpawnOptions options() {
-        return new SpawnOptions(announce, log, debug, scoring);
+        return new SpawnOptions(announce, log, debug, scoring, resetOnActivate);
     }
 
     public SpawnBehavior build(ServiceRegistry registry) {

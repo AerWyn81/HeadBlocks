@@ -107,7 +107,22 @@ public class SpawnService {
     }
 
     public void onStateChanged(HBHunt hunt) {
-        reconfigure(hunt);
+        var behavior = behaviorOf(hunt);
+        if (behavior == null || !hunt.isActive() || !behavior.options().resetOnActivate()) {
+            reconfigure(hunt);
+            return;
+        }
+
+        var state = states.computeIfAbsent(hunt.getId(), SpawnState::new);
+        state.cancelTasks();
+        clearHeads(state);
+        state.waiting = 0;
+        markDirty(state);
+        resetProgress(hunt, () -> {
+            if (states.get(hunt.getId()) == state && hunt.isActive()) {
+                reconfigure(hunt);
+            }
+        });
     }
 
     public void reconfigure(HBHunt hunt) {
@@ -282,6 +297,14 @@ public class SpawnService {
             return;
         }
 
+        resetProgress(hunt, () -> {
+            if (states.get(hunt.getId()) == state) {
+                fill(state, behavior);
+            }
+        });
+    }
+
+    private void resetProgress(HBHunt hunt, Runnable then) {
         var online = Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).toList();
         registry.getScheduler().runTaskAsync(() -> {
             try {
@@ -291,11 +314,7 @@ public class SpawnService {
                 LogUtil.error("Cannot reset the progress of hunt {0}: {1}", hunt.getId(), e.getMessage());
             }
 
-            registry.getScheduler().runTask(() -> {
-                if (states.get(hunt.getId()) == state) {
-                    fill(state, behavior);
-                }
-            });
+            registry.getScheduler().runTask(then);
         });
     }
 

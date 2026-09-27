@@ -16,7 +16,7 @@
   - **one random reward** instead of all of them, and a **chance** to carry rewards at all;
   - **traps**: a chance that the head breaks without counting and runs console commands, then moves elsewhere;
   - their own **particles**, colors included.
-- **Spawn hunt options**: broadcast when heads appear, a log file of every spawn, find and trap (`spawns/<hunt>.log`), and admin debug traces with a clickable teleport.
+- **Spawn hunt options**: optional progress reset each time the hunt is enabled again (a new round after a `FIRST_WINS` winner), broadcast when heads appear, a log file of every spawn, find and trap (`spawns/<hunt>.log`), and admin debug traces with a clickable teleport.
 - **Behavior menu**: **Spawn points** and **Random spawn** entries open a configuration menu with every setting above, the templates, their weights and their rewards.
 - **`/hb spawn <hunt>`** manages a spawn hunt: `point add|remove|list|show` to place the spots of a spawn points hunt in game, `config` to change its settings, `add [n]` to make extra heads appear now, `heads` to list the heads present (click to teleport), `reroll [reset]` to draw the heads again and `clear` to remove them.
 - New placeholders: `%headblocks_hunt_<hunt>_spawned%` (heads that appeared so far), `_active%` (heads present) and `_score%` (points of the player), with `_formatted` variants.

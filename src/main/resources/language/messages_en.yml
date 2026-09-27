@@ -406,6 +406,13 @@ Gui:
     - "&7Admins get a clickable message on each spawn"
     - ""
     - "%status%"
+  SpawnConfigResetOnActivate: "&eReset progress on activation"
+  SpawnConfigResetOnActivateLore:
+    - ""
+    - "&7Every time the hunt is enabled again,"
+    - "&7everyone starts from zero"
+    - ""
+    - "%status%"
   SpawnConfigScoring: "&eScore"
   SpawnConfigScoringLore:
     - ""
