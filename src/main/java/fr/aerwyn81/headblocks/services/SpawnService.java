@@ -60,9 +60,10 @@ public class SpawnService {
                 continue;
             }
 
+            boolean firstStart = !fileOf(hunt.getId()).exists();
             var state = restore(hunt, behavior);
             if (hunt.isActive()) {
-                resume(behavior, state);
+                resume(behavior, state, firstStart);
             }
         }
 
@@ -77,7 +78,7 @@ public class SpawnService {
         }
 
         for (SpawnState state : states.values()) {
-            state.cancelTasks();
+            state.stopTasks();
             save(state);
         }
         states.clear();
@@ -104,11 +105,13 @@ public class SpawnService {
         }
 
         var state = states.computeIfAbsent(hunt.getId(), SpawnState::new);
+        state.waiting += state.pending.get();
         state.cancelTasks();
 
         if (hunt.isActive()) {
-            resume(behavior, state);
+            resume(behavior, state, true);
         } else {
+            state.waiting = 0;
             clearHeads(state);
             state.nextIntervalAt.set(0);
             markDirty(state);
@@ -129,8 +132,8 @@ public class SpawnService {
 
                 state.dormant.remove(dormant.uuid());
                 var template = behavior.template(dormant.templateId());
-                if (template != null) {
-                    activate(state, restoredHead(state.huntId, dormant, world, template), template);
+                if (template == null || !activate(state, restoredHead(state.huntId, dormant, world, template), template)) {
+                    spawnOne(state, null);
                 }
             }
             markDirty(state);
@@ -254,7 +257,7 @@ public class SpawnService {
         }
 
         if (!known) {
-            resume(behavior, state);
+            resume(behavior, state, true);
         } else if (behavior.respawn().onStart()) {
             state.cancelRespawns();
             fill(state, behavior);
@@ -279,7 +282,7 @@ public class SpawnService {
 
     // --- Spawning ---
 
-    private void resume(SpawnBehavior behavior, SpawnState state) {
+    private void resume(SpawnBehavior behavior, SpawnState state, boolean fillEmptySlots) {
         if (behavior.respawn().interval()) {
             long now = System.currentTimeMillis();
             long period = behavior.respawn().intervalSeconds() * 1000L;
@@ -296,17 +299,27 @@ public class SpawnService {
             }, Math.max(1L, (state.nextIntervalAt.get() - now) / 50L), period / 50L);
         }
 
-        if (behavior.respawn().onStart()) {
+        int waiting = Math.min(state.waiting, freeSlots(state, behavior));
+        state.waiting = 0;
+        for (int i = 0; i < waiting; i++) {
+            spawnOne(state, null);
+        }
+
+        if (fillEmptySlots && behavior.respawn().onStart()) {
             fill(state, behavior);
         }
         markDirty(state);
     }
 
     private void fill(SpawnState state, SpawnBehavior behavior) {
-        int missing = behavior.active() - state.active.size() - state.dormant.size() - state.pending.get();
+        int missing = freeSlots(state, behavior);
         for (int i = 0; i < missing; i++) {
             spawnOne(state, null);
         }
+    }
+
+    private static int freeSlots(SpawnState state, SpawnBehavior behavior) {
+        return behavior.active() - state.active.size() - state.dormant.size() - state.pending.get();
     }
 
     private void respawnAfterFind(SpawnState state, Location freed) {
@@ -455,6 +468,7 @@ public class SpawnService {
 
         var yaml = YamlConfiguration.loadConfiguration(file);
         state.totalSpawned.set(yaml.getInt("totalSpawned", 0));
+        state.waiting = yaml.getInt("pending", 0);
         state.nextIntervalAt.set(yaml.getLong("nextIntervalAt", 0));
 
         for (var saved : readSpawns(yaml)) {
@@ -467,8 +481,9 @@ public class SpawnService {
                 }
             } else if (template == null || !hunt.isActive()) {
                 removeLeftover(saved, world, template);
-            } else {
-                activate(state, restoredHead(hunt.getId(), saved, world, template), template);
+                state.waiting++;
+            } else if (!activate(state, restoredHead(hunt.getId(), saved, world, template), template)) {
+                state.waiting++;
             }
         }
         return state;
@@ -539,6 +554,7 @@ public class SpawnService {
     private static String snapshot(SpawnState state) {
         var yaml = new YamlConfiguration();
         yaml.set("totalSpawned", state.totalSpawned.get());
+        yaml.set("pending", state.pending.get());
         yaml.set("nextIntervalAt", state.nextIntervalAt.get());
 
         var section = yaml.createSection("active");
@@ -645,11 +661,21 @@ public class SpawnService {
         private final List<Task> respawnTasks = new CopyOnWriteArrayList<>();
         private final AtomicInteger pending = new AtomicInteger();
         private final AtomicInteger totalSpawned = new AtomicInteger();
+        private int waiting;
         private final AtomicLong nextIntervalAt = new AtomicLong();
         private volatile Task intervalTask;
 
         private SpawnState(String huntId) {
             this.huntId = huntId;
+        }
+
+        private void stopTasks() {
+            respawnTasks.forEach(Task::cancel);
+            respawnTasks.clear();
+            if (intervalTask != null) {
+                intervalTask.cancel();
+                intervalTask = null;
+            }
         }
 
         private void cancelRespawns() {
@@ -659,11 +685,8 @@ public class SpawnService {
         }
 
         private void cancelTasks() {
-            cancelRespawns();
-            if (intervalTask != null) {
-                intervalTask.cancel();
-                intervalTask = null;
-            }
+            stopTasks();
+            pending.set(0);
         }
     }
 }
