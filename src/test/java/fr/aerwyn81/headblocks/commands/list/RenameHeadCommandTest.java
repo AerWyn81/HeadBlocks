@@ -38,7 +38,8 @@ class RenameHeadCommandTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
+        var headVisualServiceMock = mock(HeadVisualService.class);
+        lenient().when(registry.getVisualService()).thenReturn(headVisualServiceMock);
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
@@ -53,9 +54,8 @@ class RenameHeadCommandTest {
         when(block.getLocation()).thenReturn(targetLoc);
         when(headService.getHeadAt(targetLoc)).thenReturn(null);
 
-        boolean result = command.perform(player, new String[]{"rename", "newName"});
+        command.perform(player, new String[]{"rename", "newName"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.NoTargetHeadBlock");
     }
 
@@ -69,9 +69,8 @@ class RenameHeadCommandTest {
         when(headService.getHeadAt(targetLoc)).thenReturn(headLocation);
 
         // args = ["rename"] -> after copyOfRange(1, 1) -> empty, join = ""
-        boolean result = command.perform(player, new String[]{"rename"});
+        command.perform(player, new String[]{"rename"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.NameCannotBeEmpty");
     }
 
@@ -87,9 +86,8 @@ class RenameHeadCommandTest {
         try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
             mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-            boolean result = command.perform(player, new String[]{"rename", "My", "New", "Name"});
+            command.perform(player, new String[]{"rename", "My", "New", "Name"});
 
-            assertThat(result).isTrue();
             verify(headLocation).setName("My New Name");
             verify(headService).saveHeadInConfig(headLocation);
             verify(languageService).message("Messages.HeadRenamed");

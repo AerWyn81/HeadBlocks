@@ -29,16 +29,12 @@ public class BukkitFutureResult<T> {
         whenComplete(plugin, callback);
     }
 
-    public void whenComplete(@NotNull Consumer<? super T> callback, Consumer<Throwable> throwable) {
-        whenComplete(plugin, callback, throwable);
-    }
-
-    public void whenComplete(@NotNull Plugin plugin, @NotNull Consumer<? super T> callback, Consumer<Throwable> throwableConsumer) {
+    public void whenComplete(@NotNull Consumer<? super T> callback, Consumer<Throwable> throwableConsumer) {
         dispatch(r -> HeadBlocks.getScheduler().runTask(r), callback, throwableConsumer);
     }
 
     public void whenComplete(@NotNull Plugin plugin, @NotNull Consumer<? super T> callback) {
-        whenComplete(plugin, callback, throwable ->
+        whenComplete(callback, throwable ->
                 plugin.getLogger().log(Level.SEVERE, "Exception in Future Result", throwable));
     }
 

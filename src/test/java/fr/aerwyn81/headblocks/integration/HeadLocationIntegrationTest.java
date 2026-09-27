@@ -97,9 +97,9 @@ class HeadLocationIntegrationTest {
     void saveAndLoad_roundtrip_preservesAllData() {
         UUID uuid = UUID.randomUUID();
 
-        // Create a HeadLocation with all fields (rewards excluded — Paper's YamlConfiguration
-        // returns List, not ArrayList, causing the instanceof check in fromConfig to fail;
-        // reward serialization is tested separately in Tier 2)
+        // Create a HeadLocation with all fields, rewards excluded: Paper's YamlConfiguration
+        // gives back a plain list which fails the instanceof check in fromConfig.
+        // Reward serialization is tested separately in Tier 2.
         Location loc = new Location(world, 50.5, 80.0, -30.5);
         HeadLocation original = new HeadLocation("&aGreenHead", uuid, loc, "default");
         original.setOrderIndex(5);

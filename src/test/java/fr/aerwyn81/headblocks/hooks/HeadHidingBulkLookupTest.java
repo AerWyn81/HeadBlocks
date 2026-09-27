@@ -73,7 +73,8 @@ class HeadHidingBulkLookupTest {
         headBlocks.when(HeadBlocks::getScheduler).thenReturn(scheduler);
 
         bukkit = mockStatic(Bukkit.class);
-        bukkit.when(() -> Bukkit.createBlockData(any(Material.class))).thenReturn(mock(BlockData.class));
+        var blockDataMock = mock(BlockData.class);
+        bukkit.when(() -> Bukkit.createBlockData(any(Material.class))).thenReturn(blockDataMock);
 
         lenient().when(scheduler.runTaskLater(nullable(Player.class), any(Runnable.class), anyLong()))
                 .thenAnswer(invocation -> {

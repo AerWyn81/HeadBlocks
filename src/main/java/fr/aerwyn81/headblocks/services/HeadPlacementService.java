@@ -25,6 +25,8 @@ import org.bukkit.inventory.ItemStack;
 import java.util.UUID;
 
 public class HeadPlacementService {
+    private static final String MESSAGES_STORAGE_ERROR = "Messages.StorageError";
+
     private final ServiceRegistry registry;
 
     public HeadPlacementService(ServiceRegistry registry) {
@@ -68,13 +70,13 @@ public class HeadPlacementService {
 
         if (registry.getStorageService().isStorageError()) {
             cancel.run();
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message(MESSAGES_STORAGE_ERROR));
             return false;
         }
 
         if (content == null) {
             cancel.run();
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message(MESSAGES_STORAGE_ERROR));
             LogUtil.error("Error, head texture not resolved when trying to save the head for player {0}", player.getName());
             return false;
         }
@@ -101,7 +103,7 @@ public class HeadPlacementService {
             headUuid = registry.getHeadService().saveHeadLocation(location, content, yaw, huntId);
         } catch (InternalException ex) {
             cancel.run();
-            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            player.sendMessage(registry.getLanguageService().message(MESSAGES_STORAGE_ERROR));
             LogUtil.error("Error while trying to create new HeadBlocks from the storage: {0}", ex.getMessage());
             return false;
         }
@@ -110,6 +112,13 @@ public class HeadPlacementService {
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadPlaced"), location));
 
+        offerReassign(player, huntId, headUuid);
+
+        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, location, huntId));
+        return true;
+    }
+
+    private void offerReassign(Player player, String huntId, UUID headUuid) {
         if (HBHunt.DEFAULT_ID.equals(huntId) && registry.getHuntService().isMultiHunt()) {
             TextComponent msg = new TextComponent(MessageUtils.colorize(
                     registry.getLanguageService().prefix() + " &7Assigned to &edefault&7. "));
@@ -121,8 +130,5 @@ public class HeadPlacementService {
             msg.addExtra(clickable);
             player.spigot().sendMessage(msg);
         }
-
-        Bukkit.getPluginManager().callEvent(new HeadCreatedEvent(headUuid, location, huntId));
-        return true;
     }
 }

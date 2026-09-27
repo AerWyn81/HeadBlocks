@@ -251,8 +251,8 @@ class RangeScheduleModeTest {
 
         String detail = mode.getDenyDetail(DenyReason.OUTSIDE_SLOT);
 
-        assertThat(detail).contains("WED");
-        assertThat(detail).contains("09:00-12:00");
+        assertThat(detail).contains("WED")
+                .contains("09:00-12:00");
     }
 
     @Test

@@ -15,8 +15,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -79,7 +78,7 @@ class HBHuntServiceTest {
 
     @Test
     void unregisterHunt_nonExistent_noError() {
-        huntService.unregisterHunt("nonexistent"); // should not throw
+        assertThatNoException().isThrownBy(() -> huntService.unregisterHunt("nonexistent"));
     }
 
     @Test
@@ -113,8 +112,8 @@ class HBHuntServiceTest {
         huntService.registerHunt(archived);
 
         List<HBHunt> activeHunts = huntService.getActiveHunts();
-        assertThat(activeHunts).contains(active);
-        assertThat(activeHunts).doesNotContain(inactive, archived);
+        assertThat(activeHunts).contains(active)
+                .doesNotContain(inactive, archived);
     }
 
     @Test
@@ -124,7 +123,8 @@ class HBHuntServiceTest {
 
         Collection<HBHunt> all = huntService.getAllHunts();
         assertThat(all).hasSizeGreaterThanOrEqualTo(1);
-        assertThatThrownBy(() -> all.add(new HBHunt(configService, "h2", "X", HuntState.ACTIVE, 1, "D")))
+        var otherHunt = new HBHunt(configService, "h2", "X", HuntState.ACTIVE, 1, "D");
+        assertThatThrownBy(() -> all.add(otherHunt))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 

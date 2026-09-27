@@ -13,10 +13,10 @@ class RewardSerializationTest {
     void serialize_producesCorrectMap() {
         Reward reward = new Reward(RewardType.COMMAND, "give %player% diamond");
 
-        HashMap<String, String> map = reward.serialize();
+        var map = reward.serialize();
 
-        assertThat(map).containsEntry("type", "COMMAND");
-        assertThat(map).containsEntry("value", "give %player% diamond");
+        assertThat(map).containsEntry("type", "COMMAND")
+                .containsEntry("value", "give %player% diamond");
     }
 
     @Test

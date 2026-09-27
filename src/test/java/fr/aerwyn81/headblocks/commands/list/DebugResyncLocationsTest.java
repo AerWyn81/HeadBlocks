@@ -42,7 +42,8 @@ class DebugResyncLocationsTest {
     @BeforeEach
     void setUp() {
         registry = mock(ServiceRegistry.class);
-        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
+        var headVisualServiceMock = mock(HeadVisualService.class);
+        lenient().when(registry.getVisualService()).thenReturn(headVisualServiceMock);
         headService = mock(HeadService.class);
         languageService = mock(LanguageService.class);
         storageService = mock(StorageService.class);

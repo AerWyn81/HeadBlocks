@@ -72,5 +72,6 @@ public class BasicHologram implements IHologram {
 
     @Override
     public void refresh(Player player) {
+        // nothing to refresh: basic holograms have no per-player content
     }
 }

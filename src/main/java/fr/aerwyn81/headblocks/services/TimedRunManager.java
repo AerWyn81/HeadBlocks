@@ -5,8 +5,13 @@ import org.bukkit.Location;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class TimedRunManager {
+
+    private TimedRunManager() {
+    }
+
     private static final ConcurrentHashMap<UUID, TimedRunData> activeRuns = new ConcurrentHashMap<>();
 
     public static void startRun(UUID playerUuid, String huntId) {
@@ -52,7 +57,7 @@ public class TimedRunManager {
             return Long.MAX_VALUE;
         }
 
-        return (long) limitSeconds * 1000L - elapsedMillis;
+        return limitSeconds * 1000L - elapsedMillis;
     }
 
     // Horizontal offset (one block) on the approach side of the plate, i.e. opposite to the
@@ -74,7 +79,7 @@ public class TimedRunManager {
                 yaw, 0f);
     }
 
-    public static ConcurrentHashMap<UUID, TimedRunData> getActiveRuns() {
+    public static ConcurrentMap<UUID, TimedRunData> getActiveRuns() {
         return activeRuns;
     }
 

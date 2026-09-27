@@ -59,7 +59,7 @@ class ChatPageUtilsTest {
         @Test
         void firstPage_returnsZero() {
             var utils = createForPlayer(20, "cmd");
-            assertThat(utils.getFirstPos()).isEqualTo(0);
+            assertThat(utils.getFirstPos()).isZero();
         }
 
         @Test
@@ -83,7 +83,7 @@ class ChatPageUtilsTest {
             var utils = new ChatPageUtils(player, languageService);
             utils.currentPage(new String[]{"cmd"});
             utils.entriesCount(20);
-            assertThat(utils.getFirstPos()).isEqualTo(0);
+            assertThat(utils.getFirstPos()).isZero();
         }
 
         @Test
@@ -95,19 +95,19 @@ class ChatPageUtilsTest {
         @Test
         void negativePageNumber_clampedTo1() {
             var utils = createForPlayer(20, "cmd", "-1");
-            assertThat(utils.getFirstPos()).isEqualTo(0);
+            assertThat(utils.getFirstPos()).isZero();
         }
 
         @Test
         void zeroPageNumber_clampedTo1() {
             var utils = createForPlayer(20, "cmd", "0");
-            assertThat(utils.getFirstPos()).isEqualTo(0);
+            assertThat(utils.getFirstPos()).isZero();
         }
 
         @Test
         void nonNumericArg_defaultsToPage1() {
             var utils = createForPlayer(20, "cmd", "abc");
-            assertThat(utils.getFirstPos()).isEqualTo(0);
+            assertThat(utils.getFirstPos()).isZero();
         }
 
         @Test
@@ -124,7 +124,7 @@ class ChatPageUtilsTest {
         @Test
         void emptyList_sizeIsZero() {
             var utils = createForPlayer(0, "cmd");
-            assertThat(utils.getSize()).isEqualTo(0);
+            assertThat(utils.getSize()).isZero();
         }
 
         @Test
@@ -137,7 +137,7 @@ class ChatPageUtilsTest {
         void exactPageHeight_onePage() {
             var utils = createForPlayer(8, "cmd");
             // 8 items / 8 pageHeight = 1 page, firstPos of page 1 = 0
-            assertThat(utils.getFirstPos()).isEqualTo(0);
+            assertThat(utils.getFirstPos()).isZero();
             assertThat(utils.getSize()).isEqualTo(8);
         }
 
@@ -155,7 +155,7 @@ class ChatPageUtilsTest {
         @Test
         void consoleSender_allItemsFitOnOnePage() {
             var utils = createForConsole(1000);
-            assertThat(utils.getFirstPos()).isEqualTo(0);
+            assertThat(utils.getFirstPos()).isZero();
             assertThat(utils.getPageHeight()).isEqualTo(Integer.MAX_VALUE);
         }
     }

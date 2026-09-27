@@ -67,9 +67,8 @@ class ListCommandTest {
         void noHeadLocations_sendsListHeadEmpty() {
             when(headService.getHeadLocations()).thenReturn(new ArrayList<>());
 
-            boolean result = command.perform(playerSender, new String[]{"list"});
+            command.perform(playerSender, new String[]{"list"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.ListHeadEmpty");
             verify(playerSender).sendMessage("mock-message");
         }
@@ -78,9 +77,8 @@ class ListCommandTest {
         void noHeadLocations_consoleSender_sendsListHeadEmpty() {
             when(headService.getHeadLocations()).thenReturn(new ArrayList<>());
 
-            boolean result = command.perform(consoleSender, new String[]{"list"});
+            command.perform(consoleSender, new String[]{"list"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.ListHeadEmpty");
             verify(consoleSender).sendMessage("mock-message");
         }
@@ -100,9 +98,8 @@ class ListCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"list"});
+                command.perform(consoleSender, new String[]{"list"});
 
-                assertThat(result).isTrue();
                 // Console sender gets the title message
                 verify(consoleSender).sendMessage("mock-message");
                 // Console sender gets the head name with color code
@@ -121,9 +118,8 @@ class ListCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"list"});
+                command.perform(consoleSender, new String[]{"list"});
 
-                assertThat(result).isTrue();
                 verify(consoleSender).sendMessage("&c&oBrokenHead");
             }
         }
@@ -148,9 +144,8 @@ class ListCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"list"});
+                command.perform(consoleSender, new String[]{"list"});
 
-                assertThat(result).isTrue();
                 // Title + 3 heads
                 verify(consoleSender, times(4)).sendMessage(anyString());
             }
@@ -188,9 +183,8 @@ class ListCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"list"});
+                command.perform(playerSender, new String[]{"list"});
 
-                assertThat(result).isTrue();
                 // Player sender gets rich messages via spigot
                 verify(spigot, atLeastOnce()).sendMessage(any(net.md_5.bungee.api.chat.BaseComponent.class));
                 // Should request Remove and Teleport messages
@@ -220,9 +214,8 @@ class ListCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"list"});
+                command.perform(playerSender, new String[]{"list"});
 
-                assertThat(result).isTrue();
                 verify(spigot, atLeastOnce()).sendMessage(any(net.md_5.bungee.api.chat.BaseComponent.class));
             }
         }
@@ -243,9 +236,8 @@ class ListCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"list"});
+                command.perform(playerSender, new String[]{"list"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Chat.LineWorldNotFound");
                 verify(spigot, atLeastOnce()).sendMessage(any(net.md_5.bungee.api.chat.BaseComponent.class));
             }
@@ -272,9 +264,8 @@ class ListCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"list", "1"});
+                command.perform(consoleSender, new String[]{"list", "1"});
 
-                assertThat(result).isTrue();
                 verify(consoleSender, times(3)).sendMessage(anyString()); // title + 2 heads
             }
         }

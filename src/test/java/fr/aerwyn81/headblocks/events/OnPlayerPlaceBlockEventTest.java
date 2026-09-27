@@ -344,7 +344,8 @@ class OnPlayerPlaceBlockEventTest {
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
             locationUtils.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
                     .thenReturn("parsed-message");
-            bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+            var pluginManagerMock = mock(PluginManager.class);
+            bukkit.when(Bukkit::getPluginManager).thenReturn(pluginManagerMock);
 
             handler.onPlayerPlaceBlock(event);
 
@@ -777,7 +778,8 @@ class OnPlayerPlaceBlockEventTest {
             headUtils.when(() -> HeadUtils.getContent(eventItemInHand))
                     .thenReturn(HeadContent.of(ContentKind.BLOCK, "LANTERN", null));
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
-            bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+            var pluginManagerMock = mock(PluginManager.class);
+            bukkit.when(Bukkit::getPluginManager).thenReturn(pluginManagerMock);
 
             handler.onPlayerPlaceBlock(event);
 
@@ -917,7 +919,8 @@ class OnPlayerPlaceBlockEventTest {
                 headUtils.when(() -> HeadUtils.isHeadBlocksItem(item)).thenReturn(true);
                 headUtils.when(() -> HeadUtils.getContent(item)).thenReturn(content);
                 playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
-                bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+                var pluginManagerMock = mock(PluginManager.class);
+                bukkit.when(Bukkit::getPluginManager).thenReturn(pluginManagerMock);
 
                 handler.onEntityHeadPlace(interact);
 
@@ -955,7 +958,8 @@ class OnPlayerPlaceBlockEventTest {
             Location targetLocation = mock(Location.class);
             when(target.getLocation()).thenReturn(targetLocation);
             when(targetLocation.add(0.5, 0, 0.5)).thenReturn(targetLocation);
-            when(player.getLocation()).thenReturn(mock(Location.class));
+            var locationMock = mock(Location.class);
+            when(player.getLocation()).thenReturn(locationMock);
             ArgumentCaptor<HeadContent> saved = ArgumentCaptor.forClass(HeadContent.class);
 
             try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class);
@@ -967,7 +971,8 @@ class OnPlayerPlaceBlockEventTest {
                 headUtils.when(() -> HeadUtils.getContent(item)).thenReturn(content);
                 headUtils.when(() -> HeadUtils.yawOf(BlockFace.EAST)).thenReturn(270f);
                 playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
-                bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+                var pluginManagerMock = mock(PluginManager.class);
+                bukkit.when(Bukkit::getPluginManager).thenReturn(pluginManagerMock);
 
                 handler.onEntityHeadPlace(interact);
 

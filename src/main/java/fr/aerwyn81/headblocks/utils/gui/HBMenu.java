@@ -140,15 +140,15 @@ public class HBMenu implements InventoryHolder {
     }
 
     public int getMaxPage() {
-        return (int) Math.ceil(((double) getHighestFilledSlot() + 1) / ((double) getPageSize()));
+        return (int) Math.ceil(((double) getHighestFilledSlot() + 1) / getPageSize());
     }
 
     public int getHighestFilledSlot() {
         int slot = 0;
 
-        for (int nextSlot : items.keySet()) {
-            if (items.get(nextSlot) != null && nextSlot > slot) {
-                slot = nextSlot;
+        for (var entry : items.entrySet()) {
+            if (entry.getValue() != null && entry.getKey() > slot) {
+                slot = entry.getKey();
             }
         }
 
@@ -198,6 +198,16 @@ public class HBMenu implements InventoryHolder {
 
         Inventory inventory = Bukkit.createInventory(this, (needsPagination ? getPageSize() + 9 : getPageSize()), name);
 
+        fillCurrentPage(inventory);
+
+        if (needsPagination) {
+            addPaginationButtons(inventory);
+        }
+
+        return inventory;
+    }
+
+    private void fillCurrentPage(Inventory inventory) {
         for (int key = currentPage * getPageSize(); key < (currentPage + 1) * getPageSize(); key++) {
             if (key > getHighestFilledSlot()) {
                 break;
@@ -210,29 +220,27 @@ public class HBMenu implements InventoryHolder {
                 inventory.setItem(key - (currentPage * getPageSize()), icon);
             }
         }
+    }
 
-        if (needsPagination) {
-            int pageSize = getPageSize();
-            for (int i = pageSize; i < pageSize + 9; i++) {
-                int offset = i - pageSize;
+    private void addPaginationButtons(Inventory inventory) {
+        int pageSize = getPageSize();
+        for (int i = pageSize; i < pageSize + 9; i++) {
+            int offset = i - pageSize;
 
-                HBPaginationButtonType buttonType = HBPaginationButtonType.forSlot(offset);
-                ItemGUI paginationButton = null;
+            HBPaginationButtonType buttonType = HBPaginationButtonType.forSlot(offset);
+            ItemGUI paginationButton = null;
 
-                if (paginationButtonBuilder != null) {
-                    paginationButton = paginationButtonBuilder.buildPaginationButton(buttonType, this);
-                }
+            if (paginationButtonBuilder != null) {
+                paginationButton = paginationButtonBuilder.buildPaginationButton(buttonType, this);
+            }
 
-                if (paginationButton == null && guiService != null) {
-                    paginationButton = guiService.getDefaultPaginationButtonBuilder(buttonType, this);
-                }
+            if (paginationButton == null && guiService != null) {
+                paginationButton = guiService.getDefaultPaginationButtonBuilder(buttonType, this);
+            }
 
-                if (!items.containsKey(i)) {
-                    inventory.setItem(i, paginationButton != null ? paginationButton.getIcon() : null);
-                }
+            if (!items.containsKey(i)) {
+                inventory.setItem(i, paginationButton != null ? paginationButton.getIcon() : null);
             }
         }
-
-        return inventory;
     }
 }

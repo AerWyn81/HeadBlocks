@@ -353,8 +353,8 @@ class RecurringScheduleModeTest {
 
         String detail = mode.getDenyDetail(DenyReason.NOT_IN_RECURRENCE);
 
-        assertThat(detail).contains("year");
-        assertThat(detail).contains("12/01");
+        assertThat(detail).contains("year")
+                .contains("12/01");
     }
 
     @Test
@@ -365,8 +365,8 @@ class RecurringScheduleModeTest {
 
         String detail = mode.getDenyDetail(DenyReason.OUTSIDE_SLOT);
 
-        assertThat(detail).contains("MON");
-        assertThat(detail).contains("14:00");
+        assertThat(detail).contains("MON")
+                .contains("14:00");
     }
 
     @Test
@@ -394,9 +394,9 @@ class RecurringScheduleModeTest {
 
         String info = mode.getDisplayInfo();
 
-        assertThat(info).contains("year");
-        assertThat(info).contains("12/01");
-        assertThat(info).contains("31d");
+        assertThat(info).contains("year")
+                .contains("12/01")
+                .contains("31d");
     }
 
     @Test
@@ -407,8 +407,8 @@ class RecurringScheduleModeTest {
 
         String info = mode.getDisplayInfo();
 
-        assertThat(info).contains("[");
-        assertThat(info).contains("MON 09:00-17:00");
+        assertThat(info).contains("[")
+                .contains("MON 09:00-17:00");
     }
 
     @Test

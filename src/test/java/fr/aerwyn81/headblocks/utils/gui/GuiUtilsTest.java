@@ -126,7 +126,7 @@ class GuiUtilsTest {
             @Test
             void noItems_returnsZero() {
                 var menu = createMenu("test", 3);
-                assertThat(menu.getHighestFilledSlot()).isEqualTo(0);
+                assertThat(menu.getHighestFilledSlot()).isZero();
             }
 
             @Test
@@ -197,7 +197,7 @@ class GuiUtilsTest {
                 when(topInv.getHolder()).thenReturn(null);
 
                 menu.previousPage(viewer);
-                assertThat(menu.getCurrentPage()).isEqualTo(0);
+                assertThat(menu.getCurrentPage()).isZero();
             }
 
             @Test
@@ -207,7 +207,7 @@ class GuiUtilsTest {
 
                 var viewer = mock(HumanEntity.class);
                 menu.previousPage(viewer);
-                assertThat(menu.getCurrentPage()).isEqualTo(0);
+                assertThat(menu.getCurrentPage()).isZero();
             }
         }
 
@@ -308,7 +308,7 @@ class GuiUtilsTest {
 
         @Test
         void getSlot_returnsCorrectValues() {
-            assertThat(HBPaginationButtonType.BACK_BUTTON.getSlot()).isEqualTo(0);
+            assertThat(HBPaginationButtonType.BACK_BUTTON.getSlot()).isZero();
             assertThat(HBPaginationButtonType.PREV_BUTTON.getSlot()).isEqualTo(3);
             assertThat(HBPaginationButtonType.CURRENT_BUTTON.getSlot()).isEqualTo(4);
             assertThat(HBPaginationButtonType.NEXT_BUTTON.getSlot()).isEqualTo(5);

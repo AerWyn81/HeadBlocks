@@ -91,7 +91,7 @@ class OnPlayerBreakBlockEventTest {
     void notAHeadBlocksBlock_ignored() {
         when(block.getLocation()).thenReturn(location);
 
-        handler.OnBlockBreakEvent(event);
+        handler.onBlockBreakEvent(event);
 
         verify(event, never()).setCancelled(anyBoolean());
         verify(headService).getBlockHeadAt(location);
@@ -106,7 +106,7 @@ class OnPlayerBreakBlockEventTest {
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
 
-            handler.OnBlockBreakEvent(event);
+            handler.onBlockBreakEvent(event);
 
             verify(event, never()).setCancelled(anyBoolean());
         }
@@ -124,7 +124,7 @@ class OnPlayerBreakBlockEventTest {
 
         try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
 
-            handler.OnBlockBreakEvent(event);
+            handler.onBlockBreakEvent(event);
 
             verify(event).setCancelled(true);
             verify(languageService).message("Messages.PluginReloading");
@@ -144,7 +144,7 @@ class OnPlayerBreakBlockEventTest {
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(false);
 
-            handler.OnBlockBreakEvent(event);
+            handler.onBlockBreakEvent(event);
 
             verify(event).setCancelled(true);
         }
@@ -164,7 +164,7 @@ class OnPlayerBreakBlockEventTest {
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
-            handler.OnBlockBreakEvent(event);
+            handler.onBlockBreakEvent(event);
 
             verify(event).setCancelled(true);
             verify(languageService).message("Messages.CreativeSneakRemoveHead");
@@ -186,7 +186,7 @@ class OnPlayerBreakBlockEventTest {
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
-            handler.OnBlockBreakEvent(event);
+            handler.onBlockBreakEvent(event);
 
             verify(event).setCancelled(true);
             verify(languageService).message("Messages.CreativeSneakRemoveHead");
@@ -209,7 +209,7 @@ class OnPlayerBreakBlockEventTest {
              MockedStatic<PlayerUtils> playerUtils = mockStatic(PlayerUtils.class)) {
             playerUtils.when(() -> PlayerUtils.hasPermission(player, "headblocks.admin")).thenReturn(true);
 
-            handler.OnBlockBreakEvent(event);
+            handler.onBlockBreakEvent(event);
 
             verify(event).setCancelled(true);
             verify(languageService).message("Messages.StorageError");
@@ -280,7 +280,7 @@ class OnPlayerBreakBlockEventTest {
             PluginManager pm = mock(PluginManager.class);
             bukkit.when(Bukkit::getPluginManager).thenReturn(pm);
 
-            handler.OnBlockBreakEvent(event);
+            handler.onBlockBreakEvent(event);
 
             verify(headService).removeHeadLocation(headLocation, true);
             verify(event).setCancelled(false);

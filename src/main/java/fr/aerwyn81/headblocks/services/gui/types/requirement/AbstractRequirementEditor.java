@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * The plumbing every requirement editor shares: the callbacks of the current edition, the common items.
@@ -89,7 +88,7 @@ public abstract class AbstractRequirementEditor implements RequirementEditor {
     protected ItemGUI fieldItem(Material material, String nameKey, String loreKey, String placeholder, String value) {
         List<String> lore = registry.getLanguageService().messageList(loreKey).stream()
                 .map(line -> line.replace(placeholder, value))
-                .collect(Collectors.toList());
+                .toList();
 
         return new ItemGUI(new ItemBuilder(material)
                 .setName(registry.getLanguageService().message(nameKey))

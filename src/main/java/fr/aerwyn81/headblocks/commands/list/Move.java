@@ -25,7 +25,7 @@ public class Move implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         Player player = (Player) sender;
 
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
@@ -36,103 +36,126 @@ public class Move implements Cmd {
             if (hd != null) {
                 player.sendMessage(registry.getLanguageService().message("Messages.HeadMoveCancel"));
             }
-            return true;
+            return;
         }
 
         if (!hasConfirmInCommand && registry.getHeadService().getHeadMoves().containsKey(player.getUniqueId())) {
             player.sendMessage(registry.getLanguageService().message("Messages.HeadMoveAlready"));
-            return true;
+            return;
         }
 
-        if (!hasConfirmInCommand) {
-            HeadLocation entityHead = HeadTargeting.lookedAtEntity(player, registry, 100);
-            if (entityHead != null && registry.getHeadService().isSpawned(entityHead.getUuid())) {
-                player.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
-                return true;
-            }
-
-            if (entityHead != null) {
-                var entityLoc = entityHead.getLocation().getBlock().getLocation();
-                String message = registry.getLanguageService().message("Messages.TargetBlockInfo")
-                        .replace("%uuid%", entityHead.getNameOrUuid());
-
-                registry.getHeadService().getHeadMoves().put(player.getUniqueId(), new HeadMove(entityHead.getUuid(), entityLoc));
-
-                player.sendMessage(LocationUtils.parseLocationPlaceholders(message, entityLoc));
-                return true;
-            }
+        if (!hasConfirmInCommand && selectLookedAtEntity(player)) {
+            return;
         }
 
         Block targetBlock = player.getTargetBlock(null, 100);
         if (targetBlock.isEmpty()) {
             player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
-            return true;
+            return;
         }
 
         Location targetLoc = targetBlock.getLocation();
 
         if (!hasConfirmInCommand) {
-            HeadLocation headLocation = registry.getHeadService().getHeadAt(targetLoc);
+            selectTargetedHead(player, targetLoc);
+            return;
+        }
 
-            if (headLocation == null) {
-                player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
-                return true;
-            }
+        confirmMove(player, targetLoc);
+    }
 
-        if (registry.getHeadService().isSpawned(headLocation.getUuid())) {
+    private boolean selectLookedAtEntity(Player player) {
+        HeadLocation entityHead = HeadTargeting.lookedAtEntity(player, registry, 100);
+        if (entityHead != null && registry.getHeadService().isSpawned(entityHead.getUuid())) {
             player.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
             return true;
         }
 
+        if (entityHead != null) {
+            var entityLoc = entityHead.getLocation().getBlock().getLocation();
             String message = registry.getLanguageService().message("Messages.TargetBlockInfo")
-                    .replace("%uuid%", headLocation.getNameOrUuid());
+                    .replace("%uuid%", entityHead.getNameOrUuid());
 
-            registry.getHeadService().getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), targetLoc));
+            registry.getHeadService().getHeadMoves().put(player.getUniqueId(), new HeadMove(entityHead.getUuid(), entityLoc));
 
-            player.sendMessage(LocationUtils.parseLocationPlaceholders(message, targetLoc));
+            player.sendMessage(LocationUtils.parseLocationPlaceholders(message, entityLoc));
             return true;
         }
 
+        return false;
+    }
+
+    private void selectTargetedHead(Player player, Location targetLoc) {
+        HeadLocation headLocation = registry.getHeadService().getHeadAt(targetLoc);
+
+        if (headLocation == null) {
+            player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
+            return;
+        }
+
+        if (registry.getHeadService().isSpawned(headLocation.getUuid())) {
+            player.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
+            return;
+        }
+
+        String message = registry.getLanguageService().message("Messages.TargetBlockInfo")
+                .replace("%uuid%", headLocation.getNameOrUuid());
+
+        registry.getHeadService().getHeadMoves().put(player.getUniqueId(), new HeadMove(headLocation.getUuid(), targetLoc));
+
+        player.sendMessage(LocationUtils.parseLocationPlaceholders(message, targetLoc));
+    }
+
+    private void confirmMove(Player player, Location targetLoc) {
         HeadMove headMove = registry.getHeadService().getHeadMoves().getOrDefault(player.getUniqueId(), null);
 
         if (headMove == null) {
             player.sendMessage(registry.getLanguageService().message("Messages.HeadMoveNoPlayer"));
-            return true;
+            return;
         }
 
         Location newHeadBlockLoc = targetLoc.clone().add(0, 1, 0);
 
         if (LocationUtils.areEquals(newHeadBlockLoc, headMove.oldLoc())) {
             player.sendMessage(registry.getLanguageService().message("Messages.HeadMoveOtherLoc"));
-            return true;
+            return;
         }
 
         var movedHead = registry.getHeadService().getHeadByUUID(headMove.hUuid());
-        if (movedHead != null && registry.getVisualService().isEntityRendered(movedHead)) {
-            var newBlock = newHeadBlockLoc.getBlock();
-            if (targetLoc.getBlock().isEmpty() || !newBlock.isPassable() || newBlock.isLiquid()
-                    || registry.getHeadService().getHeadAt(newHeadBlockLoc) != null) {
-                player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockInvalid"));
-                return true;
-            }
-
-            registry.getHeadService().moveEntityHead(movedHead, newHeadBlockLoc.clone().add(0.5, 0, 0.5));
+        if (movedHead == null) {
             registry.getHeadService().getHeadMoves().remove(player.getUniqueId());
+            player.sendMessage(registry.getLanguageService().message("Messages.HeadMoveNoPlayer"));
+            return;
+        }
 
-            player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.TargetBlockMoved"), newHeadBlockLoc));
-            return true;
+        if (registry.getVisualService().isEntityRendered(movedHead)) {
+            moveRenderedHead(player, targetLoc, newHeadBlockLoc, movedHead);
+            return;
         }
 
         if (isTargetBlockInvalid(targetLoc.getBlock()) || !newHeadBlockLoc.getBlock().isEmpty()) {
             player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockInvalid"));
-            return true;
+            return;
         }
 
         registry.getHeadService().changeHeadLocation(headMove.hUuid(), headMove.oldLoc().getBlock(), newHeadBlockLoc.getBlock());
         registry.getHeadService().getHeadMoves().remove(player.getUniqueId());
 
         player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.TargetBlockMoved"), newHeadBlockLoc));
-        return true;
+    }
+
+    private void moveRenderedHead(Player player, Location targetLoc, Location newHeadBlockLoc, HeadLocation movedHead) {
+        var newBlock = newHeadBlockLoc.getBlock();
+        if (targetLoc.getBlock().isEmpty() || !newBlock.isPassable() || newBlock.isLiquid()
+                || registry.getHeadService().getHeadAt(newHeadBlockLoc) != null) {
+            player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockInvalid"));
+            return;
+        }
+
+        registry.getHeadService().moveEntityHead(movedHead, newHeadBlockLoc.clone().add(0.5, 0, 0.5));
+        registry.getHeadService().getHeadMoves().remove(player.getUniqueId());
+
+        player.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.TargetBlockMoved"), newHeadBlockLoc));
     }
 
     private boolean isTargetBlockInvalid(Block block) {

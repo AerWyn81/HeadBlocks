@@ -3,6 +3,8 @@ package fr.aerwyn81.headblocks.databases;
 import fr.aerwyn81.headblocks.services.ConfigService;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -87,10 +89,10 @@ class RequestsTest {
 
             String sql = Requests.createTablePlayers();
 
-            assertThat(sql).contains("PRIMARY KEY");
-            assertThat(sql).contains("hb_players");
-            assertThat(sql).contains("pUUID");
-            assertThat(sql).contains("pName");
+            assertThat(sql).contains("PRIMARY KEY")
+                    .contains("hb_players")
+                    .contains("pUUID")
+                    .contains("pName");
         }
 
         @Test
@@ -106,11 +108,11 @@ class RequestsTest {
 
             String sql = Requests.createTablePlayersMySQL();
 
-            assertThat(sql).contains("AUTO_INCREMENT");
-            assertThat(sql).contains("hb_players");
-            assertThat(sql).contains("pUUID");
-            assertThat(sql).contains("pName");
-            assertThat(sql).contains("pDisplayName");
+            assertThat(sql).contains("AUTO_INCREMENT")
+                    .contains("hb_players")
+                    .contains("pUUID")
+                    .contains("pName")
+                    .contains("pDisplayName");
         }
 
         @Test
@@ -141,30 +143,17 @@ class RequestsTest {
 
             String sql = Requests.createTableHeads();
 
-            assertThat(sql).contains("UNIQUE");
-            assertThat(sql).contains("hb_heads");
-            assertThat(sql).contains("hUUID");
+            assertThat(sql).contains("UNIQUE")
+                    .contains("hb_heads")
+                    .contains("hUUID");
         }
 
-        @Test
-        void createTableHeads_contains_hExist_check() {
+        @ParameterizedTest
+        @ValueSource(strings = {"CHECK (hExist IN (0, 1))", "hTexture", "serverId"})
+        void createTableHeads_contains(String expected) {
             initWithPrefix("");
 
-            assertThat(Requests.createTableHeads()).contains("CHECK (hExist IN (0, 1))");
-        }
-
-        @Test
-        void createTableHeads_contains_hTexture_column() {
-            initWithPrefix("");
-
-            assertThat(Requests.createTableHeads()).contains("hTexture");
-        }
-
-        @Test
-        void createTableHeads_contains_serverId_column() {
-            initWithPrefix("");
-
-            assertThat(Requests.createTableHeads()).contains("serverId");
+            assertThat(Requests.createTableHeads()).contains(expected);
         }
 
         @Test
@@ -173,8 +162,8 @@ class RequestsTest {
 
             String sql = Requests.createTableHeadsMySQL();
 
-            assertThat(sql).contains("AUTO_INCREMENT");
-            assertThat(sql).contains("hb_heads");
+            assertThat(sql).contains("AUTO_INCREMENT")
+                    .contains("hb_heads");
         }
 
         @Test
@@ -198,8 +187,8 @@ class RequestsTest {
 
             String sql = Requests.createTablePlayerHeads();
 
-            assertThat(sql).contains("PRIMARY KEY(pUUID, hUUID, huntId)");
-            assertThat(sql).contains("hb_playerHeads");
+            assertThat(sql).contains("PRIMARY KEY(pUUID, hUUID, huntId)")
+                    .contains("hb_playerHeads");
         }
 
         @Test
@@ -224,9 +213,9 @@ class RequestsTest {
 
             String sql = Requests.createTablePlayerHeadsMySQL();
 
-            assertThat(sql).contains("FOREIGN KEY");
-            assertThat(sql).contains("ON DELETE CASCADE");
-            assertThat(sql).contains("hb_playerHeads");
+            assertThat(sql).contains("FOREIGN KEY")
+                    .contains("ON DELETE CASCADE")
+                    .contains("hb_playerHeads");
         }
 
         @Test
@@ -251,9 +240,9 @@ class RequestsTest {
 
             String sql = Requests.createTableHunts();
 
-            assertThat(sql).contains("PRIMARY KEY");
-            assertThat(sql).contains("hb_hunts");
-            assertThat(sql).contains("hId");
+            assertThat(sql).contains("PRIMARY KEY")
+                    .contains("hb_hunts")
+                    .contains("hId");
         }
 
         @Test
@@ -262,9 +251,9 @@ class RequestsTest {
 
             String sql = Requests.createTableHunts();
 
-            assertThat(sql).contains("hName");
-            assertThat(sql).contains("hState");
-            assertThat(sql).contains("DEFAULT 'ACTIVE'");
+            assertThat(sql).contains("hName")
+                    .contains("hState")
+                    .contains("DEFAULT 'ACTIVE'");
         }
     }
 
@@ -282,9 +271,9 @@ class RequestsTest {
 
             String sql = Requests.createTableVersion();
 
-            assertThat(sql).contains("hb_version");
-            assertThat(sql).contains("current");
-            assertThat(sql).contains("INTEGER");
+            assertThat(sql).contains("hb_version")
+                    .contains("current")
+                    .contains("INTEGER");
         }
 
         @Test
@@ -308,9 +297,9 @@ class RequestsTest {
 
             String sql = Requests.createTableTimedRuns();
 
-            assertThat(sql).contains("BIGINT");
-            assertThat(sql).contains("hb_timed_runs");
-            assertThat(sql).contains("timeMs");
+            assertThat(sql).contains("BIGINT")
+                    .contains("hb_timed_runs")
+                    .contains("timeMs");
         }
 
         @Test
@@ -327,9 +316,9 @@ class RequestsTest {
 
             String sql = Requests.createTableTimedRunsMySQL();
 
-            assertThat(sql).contains("BIGINT");
-            assertThat(sql).contains("hb_timed_runs");
-            assertThat(sql).contains("PRIMARY KEY");
+            assertThat(sql).contains("BIGINT")
+                    .contains("hb_timed_runs")
+                    .contains("PRIMARY KEY");
         }
 
         @Test
@@ -392,9 +381,9 @@ class RequestsTest {
 
             String sql = Requests.updatePlayer();
 
-            assertThat(sql).contains("INSERT OR REPLACE INTO");
-            assertThat(sql).contains("hb_players");
-            assertThat(sql).contains("(?, ?, ?)");
+            assertThat(sql).contains("INSERT OR REPLACE INTO")
+                    .contains("hb_players")
+                    .contains("(?, ?, ?)");
         }
 
         @Test
@@ -403,9 +392,9 @@ class RequestsTest {
 
             String sql = Requests.updatePlayerMySQL();
 
-            assertThat(sql).startsWith("REPLACE INTO");
-            assertThat(sql).contains("hb_players");
-            assertThat(sql).contains("(?, ?, ?)");
+            assertThat(sql).startsWith("REPLACE INTO")
+                    .contains("hb_players")
+                    .contains("(?, ?, ?)");
         }
 
         @Test
@@ -465,8 +454,8 @@ class RequestsTest {
 
             String sql = Requests.getHeadsMySQL();
 
-            assertThat(sql).contains("hExist = True");
-            assertThat(sql).contains("serverId != ''");
+            assertThat(sql).contains("hExist = True")
+                    .contains("serverId != ''");
         }
 
         @Test
@@ -484,9 +473,9 @@ class RequestsTest {
 
             String sql = Requests.updateHead();
 
-            assertThat(sql).contains("INSERT OR REPLACE INTO");
-            assertThat(sql).contains("hb_heads");
-            assertThat(sql).contains("(?, true, ?, ?)");
+            assertThat(sql).contains("INSERT OR REPLACE INTO")
+                    .contains("hb_heads")
+                    .contains("(?, true, ?, ?)");
         }
 
         @Test
@@ -495,8 +484,8 @@ class RequestsTest {
 
             String sql = Requests.updateHeadMySQL();
 
-            assertThat(sql).startsWith("REPLACE INTO");
-            assertThat(sql).contains("(?, true, ?, ?)");
+            assertThat(sql).startsWith("REPLACE INTO")
+                    .contains("(?, true, ?, ?)");
         }
 
         @Test
@@ -568,9 +557,9 @@ class RequestsTest {
 
             String sql = Requests.getDistinctServerIds();
 
-            assertThat(sql).contains("SELECT DISTINCT serverId FROM hb_heads");
-            assertThat(sql).contains("serverId IS NOT NULL");
-            assertThat(sql).contains("serverId != ''");
+            assertThat(sql).contains("SELECT DISTINCT serverId FROM hb_heads")
+                    .contains("serverId IS NOT NULL")
+                    .contains("serverId != ''");
         }
     }
 
@@ -596,10 +585,10 @@ class RequestsTest {
 
             String sql = Requests.getPlayerHeads();
 
-            assertThat(sql).contains("INNER JOIN hb_heads");
-            assertThat(sql).contains("INNER JOIN hb_players");
-            assertThat(sql).contains("hbp.pUUID = ?");
-            assertThat(sql).contains("hbh.hExist = True");
+            assertThat(sql).contains("INNER JOIN hb_heads")
+                    .contains("INNER JOIN hb_players")
+                    .contains("hbp.pUUID = ?")
+                    .contains("hbh.hExist = True");
         }
 
         @Test
@@ -629,11 +618,11 @@ class RequestsTest {
 
             String sql = Requests.getTopPlayers();
 
-            assertThat(sql).contains("COUNT(*) as hCount");
-            assertThat(sql).contains("ORDER BY hCount DESC");
-            assertThat(sql).contains("INNER JOIN hb_players");
-            assertThat(sql).contains("INNER JOIN hb_heads");
-            assertThat(sql).contains("GROUP BY pName");
+            assertThat(sql).contains("COUNT(*) as hCount")
+                    .contains("ORDER BY hCount DESC")
+                    .contains("INNER JOIN hb_players")
+                    .contains("INNER JOIN hb_heads")
+                    .contains("GROUP BY pName");
         }
     }
 
@@ -681,8 +670,8 @@ class RequestsTest {
 
             String sql = Requests.getIsTablePlayersExistSQLite();
 
-            assertThat(sql).contains("sqlite_master");
-            assertThat(sql).contains("hb_players");
+            assertThat(sql).contains("sqlite_master")
+                    .contains("hb_players");
         }
 
         @Test
@@ -691,8 +680,8 @@ class RequestsTest {
 
             String sql = Requests.getTableHeadsColumnsSQLite();
 
-            assertThat(sql).contains("pragma_table_info");
-            assertThat(sql).contains("hb_heads");
+            assertThat(sql).contains("pragma_table_info")
+                    .contains("hb_heads");
         }
     }
 
@@ -709,9 +698,9 @@ class RequestsTest {
 
             String sql = Requests.getIsTablePlayersExistMySQL();
 
-            assertThat(sql).contains("information_schema.tables");
-            assertThat(sql).contains("mydb");
-            assertThat(sql).contains("hb_players");
+            assertThat(sql).contains("information_schema.tables")
+                    .contains("mydb")
+                    .contains("hb_players");
         }
 
         @Test
@@ -720,8 +709,8 @@ class RequestsTest {
 
             String sql = Requests.getTableHeadsColumnsMySQL();
 
-            assertThat(sql).contains("INFORMATION_SCHEMA.COLUMNS");
-            assertThat(sql).contains("hb_heads");
+            assertThat(sql).contains("INFORMATION_SCHEMA.COLUMNS")
+                    .contains("hb_heads");
         }
 
         @Test
@@ -730,10 +719,10 @@ class RequestsTest {
 
             String sql = Requests.isColumnExist();
 
-            assertThat(sql).contains("information_schema.COLUMNS");
-            assertThat(sql).contains("testdb");
-            assertThat(sql).contains("TABLE_NAME = ?");
-            assertThat(sql).contains("COLUMN_NAME = ?");
+            assertThat(sql).contains("information_schema.COLUMNS")
+                    .contains("testdb")
+                    .contains("TABLE_NAME = ?")
+                    .contains("COLUMN_NAME = ?");
         }
     }
 
@@ -814,8 +803,8 @@ class RequestsTest {
 
             String sql = Requests.savePlayerHeadHunt();
 
-            assertThat(sql).contains("(?, ?, ?)");
-            assertThat(sql).contains("hb_playerHeads");
+            assertThat(sql).contains("(?, ?, ?)")
+                    .contains("hb_playerHeads");
         }
 
         @Test
@@ -824,10 +813,10 @@ class RequestsTest {
 
             String sql = Requests.getPlayerHeadsForHunt();
 
-            assertThat(sql).contains("INNER JOIN hb_heads");
-            assertThat(sql).contains("hbph.pUUID = ?");
-            assertThat(sql).contains("hbph.huntId = ?");
-            assertThat(sql).contains("hbh.hExist = True");
+            assertThat(sql).contains("INNER JOIN hb_heads")
+                    .contains("hbph.pUUID = ?")
+                    .contains("hbph.huntId = ?")
+                    .contains("hbh.hExist = True");
         }
 
         @Test
@@ -850,10 +839,10 @@ class RequestsTest {
 
             String sql = Requests.getTopPlayersForHunt();
 
-            assertThat(sql).contains("COUNT(*) as hCount");
-            assertThat(sql).contains("ORDER BY hCount DESC");
-            assertThat(sql).contains("hbph.huntId = ?");
-            assertThat(sql).contains("hbh.hExist = True");
+            assertThat(sql).contains("COUNT(*) as hCount")
+                    .contains("ORDER BY hCount DESC")
+                    .contains("hbph.huntId = ?")
+                    .contains("hbh.hExist = True");
         }
 
         @Test
@@ -862,9 +851,9 @@ class RequestsTest {
 
             String sql = Requests.transferPlayerProgressSQLite();
 
-            assertThat(sql).contains("INSERT OR IGNORE INTO hb_playerHeads");
-            assertThat(sql).contains("SELECT pUUID, hUUID, ?");
-            assertThat(sql).contains("WHERE huntId = ?");
+            assertThat(sql).contains("INSERT OR IGNORE INTO hb_playerHeads")
+                    .contains("SELECT pUUID, hUUID, ?")
+                    .contains("WHERE huntId = ?");
         }
 
         @Test
@@ -873,9 +862,9 @@ class RequestsTest {
 
             String sql = Requests.transferPlayerProgressMySQL();
 
-            assertThat(sql).contains("INSERT IGNORE INTO hb_playerHeads");
-            assertThat(sql).contains("SELECT pUUID, hUUID, ?");
-            assertThat(sql).contains("WHERE huntId = ?");
+            assertThat(sql).contains("INSERT IGNORE INTO hb_playerHeads")
+                    .contains("SELECT pUUID, hUUID, ?")
+                    .contains("WHERE huntId = ?");
         }
 
         @Test
@@ -908,11 +897,11 @@ class RequestsTest {
 
             String sql = Requests.getTimedLeaderboard();
 
-            assertThat(sql).contains("MIN(tr.timeMs) as bestTime");
-            assertThat(sql).contains("ORDER BY bestTime ASC");
-            assertThat(sql).contains("LIMIT ?");
-            assertThat(sql).contains("INNER JOIN hb_players");
-            assertThat(sql).contains("tr.huntId = ?");
+            assertThat(sql).contains("MIN(tr.timeMs) as bestTime")
+                    .contains("ORDER BY bestTime ASC")
+                    .contains("LIMIT ?")
+                    .contains("INNER JOIN hb_players")
+                    .contains("tr.huntId = ?");
         }
 
         @Test
@@ -921,9 +910,9 @@ class RequestsTest {
 
             String sql = Requests.getBestTime();
 
-            assertThat(sql).contains("MIN(timeMs) as bestTime");
-            assertThat(sql).contains("pUUID = ?");
-            assertThat(sql).contains("huntId = ?");
+            assertThat(sql).contains("MIN(timeMs) as bestTime")
+                    .contains("pUUID = ?")
+                    .contains("huntId = ?");
         }
 
         @Test
@@ -932,9 +921,9 @@ class RequestsTest {
 
             String sql = Requests.getTimedRunCount();
 
-            assertThat(sql).contains("COUNT(*) as cnt");
-            assertThat(sql).contains("pUUID = ?");
-            assertThat(sql).contains("huntId = ?");
+            assertThat(sql).contains("COUNT(*) as cnt")
+                    .contains("pUUID = ?")
+                    .contains("huntId = ?");
         }
 
         @Test
@@ -958,8 +947,8 @@ class RequestsTest {
 
             String sql = Requests.migArchiveTable();
 
-            assertThat(sql).contains("hb_players_old");
-            assertThat(sql).contains("PRIMARY KEY");
+            assertThat(sql).contains("hb_players_old")
+                    .contains("PRIMARY KEY");
         }
 
         @Test
@@ -991,8 +980,8 @@ class RequestsTest {
 
             String sql = Requests.migInsertPlayer();
 
-            assertThat(sql).contains("INSERT INTO hb_players");
-            assertThat(sql).contains("(?, ?)");
+            assertThat(sql).contains("INSERT INTO hb_players")
+                    .contains("(?, ?)");
         }
 
         @Test
@@ -1001,8 +990,8 @@ class RequestsTest {
 
             String sql = Requests.migImportOldHeads();
 
-            assertThat(sql).contains("INSERT INTO hb_heads");
-            assertThat(sql).contains("hb_players_old");
+            assertThat(sql).contains("INSERT INTO hb_heads")
+                    .contains("hb_players_old");
         }
 
         @Test
@@ -1011,8 +1000,8 @@ class RequestsTest {
 
             String sql = Requests.migRemap();
 
-            assertThat(sql).contains("INSERT INTO hb_playerHeads");
-            assertThat(sql).contains("hb_players_old");
+            assertThat(sql).contains("INSERT INTO hb_playerHeads")
+                    .contains("hb_players_old");
         }
 
         @Test
@@ -1045,8 +1034,8 @@ class RequestsTest {
 
             String sql = Requests.addColumnHeadTextureMySQL();
 
-            assertThat(sql).contains("ALTER TABLE hb_heads ADD COLUMN hTexture");
-            assertThat(sql).doesNotContain("IF NOT EXISTS");
+            assertThat(sql).contains("ALTER TABLE hb_heads ADD COLUMN hTexture")
+                    .doesNotContain("IF NOT EXISTS");
         }
 
         @Test
@@ -1135,8 +1124,8 @@ class RequestsTest {
 
             String sql = Requests.addColumnHuntIdSQLite();
 
-            assertThat(sql).contains("ALTER TABLE hb_playerHeads ADD COLUMN huntId");
-            assertThat(sql).contains("DEFAULT 'default'");
+            assertThat(sql).contains("ALTER TABLE hb_playerHeads ADD COLUMN huntId")
+                    .contains("DEFAULT 'default'");
         }
 
         @Test
@@ -1145,8 +1134,8 @@ class RequestsTest {
 
             String sql = Requests.addColumnHuntIdMariaDb();
 
-            assertThat(sql).contains("IF NOT EXISTS");
-            assertThat(sql).contains("huntId");
+            assertThat(sql).contains("IF NOT EXISTS")
+                    .contains("huntId");
         }
 
         @Test
@@ -1164,10 +1153,10 @@ class RequestsTest {
 
             String sql = Requests.migV5InsertDefaultHunt();
 
-            assertThat(sql).contains("INSERT INTO hb_hunts");
-            assertThat(sql).contains("'default'");
-            assertThat(sql).contains("'Default'");
-            assertThat(sql).contains("'ACTIVE'");
+            assertThat(sql).contains("INSERT INTO hb_hunts")
+                    .contains("'default'")
+                    .contains("'Default'")
+                    .contains("'ACTIVE'");
         }
 
         @Test
@@ -1176,8 +1165,8 @@ class RequestsTest {
 
             String sql = Requests.migV5CreateTempPlayerHeadsSQLite();
 
-            assertThat(sql).contains("hb_playerHeads_v5tmp");
-            assertThat(sql).contains("PRIMARY KEY(pUUID, hUUID, huntId)");
+            assertThat(sql).contains("hb_playerHeads_v5tmp")
+                    .contains("PRIMARY KEY(pUUID, hUUID, huntId)");
         }
 
         @Test
@@ -1186,9 +1175,9 @@ class RequestsTest {
 
             String sql = Requests.migV5CopyPlayerHeadsToTempSQLite();
 
-            assertThat(sql).contains("INSERT INTO hb_playerHeads_v5tmp");
-            assertThat(sql).contains("'default'");
-            assertThat(sql).contains("FROM hb_playerHeads");
+            assertThat(sql).contains("INSERT INTO hb_playerHeads_v5tmp")
+                    .contains("'default'")
+                    .contains("FROM hb_playerHeads");
         }
 
         @Test
@@ -1327,8 +1316,8 @@ class RequestsTest {
 
             String sql = Requests.getPlayerHeadsForHunt();
 
-            assertThat(sql).contains("h_hb_playerHeads");
-            assertThat(sql).contains("h_hb_heads");
+            assertThat(sql).contains("h_hb_playerHeads")
+                    .contains("h_hb_heads");
         }
 
         @Test
@@ -1351,9 +1340,9 @@ class RequestsTest {
 
             String sql = Requests.getTopPlayersForHunt();
 
-            assertThat(sql).contains("h_hb_playerHeads");
-            assertThat(sql).contains("h_hb_players");
-            assertThat(sql).contains("h_hb_heads");
+            assertThat(sql).contains("h_hb_playerHeads")
+                    .contains("h_hb_players")
+                    .contains("h_hb_heads");
         }
 
         @Test
@@ -1419,8 +1408,8 @@ class RequestsTest {
 
             String sql = Requests.migV5CreateTempPlayerHeadsSQLite();
 
-            assertThat(sql).contains("m_hb_playerHeads_v5tmp");
-            assertThat(sql).contains("m_hb_heads");
+            assertThat(sql).contains("m_hb_playerHeads_v5tmp")
+                    .contains("m_hb_heads");
         }
 
         @Test
@@ -1429,8 +1418,8 @@ class RequestsTest {
 
             String sql = Requests.migV5CopyPlayerHeadsToTempSQLite();
 
-            assertThat(sql).contains("m_hb_playerHeads_v5tmp");
-            assertThat(sql).contains("m_hb_playerHeads");
+            assertThat(sql).contains("m_hb_playerHeads_v5tmp")
+                    .contains("m_hb_playerHeads");
         }
 
         @Test
@@ -1446,8 +1435,8 @@ class RequestsTest {
 
             String sql = Requests.migV5RenameTempPlayerHeadsSQLite();
 
-            assertThat(sql).contains("m_hb_playerHeads_v5tmp");
-            assertThat(sql).contains("m_hb_playerHeads");
+            assertThat(sql).contains("m_hb_playerHeads_v5tmp")
+                    .contains("m_hb_playerHeads");
         }
     }
 
@@ -1464,8 +1453,8 @@ class RequestsTest {
 
             String sql = Requests.getTimedLeaderboard();
 
-            assertThat(sql).contains("t_hb_timed_runs");
-            assertThat(sql).contains("t_hb_players");
+            assertThat(sql).contains("t_hb_timed_runs")
+                    .contains("t_hb_players");
         }
 
         @Test
@@ -1503,8 +1492,8 @@ class RequestsTest {
 
             String sql = Requests.isColumnExist();
 
-            assertThat(sql).contains("production_db");
-            assertThat(sql).contains("TABLE_SCHEMA = 'production_db'");
+            assertThat(sql).contains("production_db")
+                    .contains("TABLE_SCHEMA = 'production_db'");
         }
 
         @Test

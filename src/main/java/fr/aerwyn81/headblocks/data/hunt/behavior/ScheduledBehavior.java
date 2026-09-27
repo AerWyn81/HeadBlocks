@@ -11,6 +11,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 public class ScheduledBehavior implements Behavior {
@@ -43,7 +44,7 @@ public class ScheduledBehavior implements Behavior {
 
     @Override
     public BehaviorResult canPlayerClick(Player player, HeadLocation head, HBHunt hunt) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         DenyReason reason = scheduleMode.getDenyReason(now);
 
         if (reason == null) {

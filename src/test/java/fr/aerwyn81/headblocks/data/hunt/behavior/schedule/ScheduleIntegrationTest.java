@@ -492,10 +492,10 @@ class ScheduleIntegrationTest {
             RecurringScheduleMode mode = createHalloweenEvent();
 
             String info = mode.getDisplayInfo();
-            assertThat(info).contains("Recurring");
-            assertThat(info).contains("year");
-            assertThat(info).contains("10/25");
-            assertThat(info).contains("1w");
+            assertThat(info).contains("Recurring")
+                    .contains("year")
+                    .contains("10/25")
+                    .contains("1w");
         }
     }
 

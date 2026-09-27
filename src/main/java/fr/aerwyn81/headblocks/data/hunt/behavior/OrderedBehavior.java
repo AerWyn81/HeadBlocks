@@ -5,11 +5,8 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.UUID;
 
 public class OrderedBehavior implements Behavior {
 
@@ -32,7 +29,7 @@ public class OrderedBehavior implements Behavior {
         }
 
         try {
-            ArrayList<UUID> playerHuntHeads = registry.getStorageService().getHeadsPlayerForHunt(
+            var playerHuntHeads = registry.getStorageService().getHeadsPlayerForHunt(
                     player.getUniqueId(), hunt.getId());
 
             // Check if there are heads in this hunt with a lower orderIndex that the player hasn't found
@@ -64,7 +61,7 @@ public class OrderedBehavior implements Behavior {
         return registry.getLanguageService().message("Hunt.Behavior.Ordered");
     }
 
-    public static OrderedBehavior fromConfig(ServiceRegistry registry, ConfigurationSection section) {
+    public static OrderedBehavior fromConfig(ServiceRegistry registry) {
         return new OrderedBehavior(registry);
     }
 }

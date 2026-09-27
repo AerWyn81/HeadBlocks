@@ -20,15 +20,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Excluded from JaCoCo coverage (requires Minecraft server internals).
  */
 public class HeadAdapterNbtApi {
+    private static final String TEXTURES = "textures";
+    private static final String SKULL_OWNER = "SkullOwner";
+    private static final String PROPERTIES = "Properties";
+    private static final String VALUE = "Value";
+
+    private HeadAdapterNbtApi() {
+    }
 
     public static ItemStack applyTextureToItemStack(ItemStack itemStack, String texture) {
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.V1_20_R5)) {
             NBT.modifyComponents(itemStack, nbt -> {
                 ReadWriteNBT profileCompound = nbt.getOrCreateCompound("minecraft:profile");
                 profileCompound.setUUID("id", UUID.randomUUID());
 
                 ReadWriteNBT propertiesCompound = profileCompound.getCompoundList("properties").addCompound();
-                propertiesCompound.setString("name", "textures");
+                propertiesCompound.setString("name", TEXTURES);
                 propertiesCompound.setString("value", texture);
             });
 
@@ -36,14 +43,14 @@ public class HeadAdapterNbtApi {
         }
 
         NBT.modify(itemStack, nbt -> {
-            ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound("SkullOwner");
+            ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound(SKULL_OWNER);
 
             skullOwnerCompound.setUUID("Id", UUID.randomUUID());
 
-            skullOwnerCompound.getOrCreateCompound("Properties")
-                    .getCompoundList("textures")
+            skullOwnerCompound.getOrCreateCompound(PROPERTIES)
+                    .getCompoundList(TEXTURES)
                     .addCompound()
-                    .setString("Value", texture);
+                    .setString(VALUE, texture);
         });
 
         return itemStack;
@@ -54,7 +61,7 @@ public class HeadAdapterNbtApi {
 
         var skull = (Skull) block.getState();
 
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.V1_20_R5)) {
             var playerProfile = Bukkit.createPlayerProfile(UUID.randomUUID());
             var textures = playerProfile.getTextures();
 
@@ -62,7 +69,7 @@ public class HeadAdapterNbtApi {
             try {
                 var decoded = Base64.getDecoder().decode(texture);
                 var jsonObject = JsonParser.parseString(new String(decoded)).getAsJsonObject();
-                url = new URI(jsonObject.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString()).toURL();
+                url = new URI(jsonObject.getAsJsonObject(TEXTURES).getAsJsonObject("SKIN").get("url").getAsString()).toURL();
             } catch (Exception ex) {
                 LogUtil.error("Error when trying to decode texture: {0}", ex.getMessage());
                 isApplied.set(false);
@@ -76,14 +83,14 @@ public class HeadAdapterNbtApi {
             skull.update(true, false);
         } else {
             NBT.modify(skull, nbt -> {
-                ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound("SkullOwner");
+                ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound(SKULL_OWNER);
 
                 skullOwnerCompound.setUUID("Id", UUID.randomUUID());
 
-                skullOwnerCompound.getOrCreateCompound("Properties")
-                        .getCompoundList("textures")
+                skullOwnerCompound.getOrCreateCompound(PROPERTIES)
+                        .getCompoundList(TEXTURES)
                         .addCompound()
-                        .setString("Value", texture);
+                        .setString(VALUE, texture);
 
                 skull.update(true, false);
             });
@@ -93,22 +100,22 @@ public class HeadAdapterNbtApi {
     }
 
     public static String getHeadTextureFromItemStack(ItemStack head) {
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.V1_20_R5)) {
             return NBT.modifyComponents(head, nbt -> (String) nbt.resolveOrDefault("minecraft:profile.properties[0].value", ""));
         } else {
             try {
                 return NBT.get(head, nbt -> {
-                    var skullOwner = nbt.getCompound("SkullOwner");
+                    var skullOwner = nbt.getCompound(SKULL_OWNER);
                     if (skullOwner == null) {
                         return "";
                     }
 
-                    var properties = skullOwner.getCompound("Properties");
+                    var properties = skullOwner.getCompound(PROPERTIES);
                     if (properties == null) {
                         return "";
                     }
 
-                    return properties.getCompoundList("textures").get(0).getString("Value");
+                    return properties.getCompoundList(TEXTURES).get(0).getString(VALUE);
                 });
             } catch (Exception ex) {
                 return "";
@@ -117,12 +124,12 @@ public class HeadAdapterNbtApi {
     }
 
     public static String getHeadTextureFromBlock(Block headBlock) {
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.V1_20_R5)) {
             return NBT.get(headBlock.getState(), nbt -> (String) nbt.resolveOrDefault("profile.properties[0].value", ""));
         } else {
             try {
                 // noinspection DataFlowIssue
-                return NBT.get(headBlock.getState(), nbt -> (String) nbt.getCompound("SkullOwner").getCompound("Properties").getCompoundList("textures").get(0).getString("Value"));
+                return NBT.get(headBlock.getState(), nbt -> (String) nbt.getCompound(SKULL_OWNER).getCompound(PROPERTIES).getCompoundList(TEXTURES).get(0).getString(VALUE));
             } catch (Exception ex) {
                 return "";
             }

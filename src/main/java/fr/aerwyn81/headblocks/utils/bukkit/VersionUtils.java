@@ -8,28 +8,28 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public enum VersionUtils {
-    v1_20_R1(1201, 120),
-    v1_20_R2(1202),
-    v1_20_R3(1203),
-    v1_20_R4(1204),
-    v1_20_R5(1205),
-    v1_20_R6(1206),
-    v1_21_R1(1211, 121),
-    v1_21_R2(1212, 122),
-    v1_21_R3(1213, 123),
-    v1_21_R4(1214, 124),
-    v1_21_R5(1215, 125),
-    v1_21_R6(1216, 126),
-    v1_21_R7(1217, 127),
-    v1_21_R8(1218, 128),
-    v1_21_R9(1219, 129),
-    v1_21_R10(12110, 1210),
-    v1_21_R11(12111, 12111),
-    v26_1(26010000, 261, 26),
-    v26_1_1(26010001, 2611),
-    v26_1_2(26010002, 2612),
-    v26_2(26020000, 262),
-    v26_3(26030000, 263);
+    V1_20_R1(1201, 120),
+    V1_20_R2(1202),
+    V1_20_R3(1203),
+    V1_20_R4(1204),
+    V1_20_R5(1205),
+    V1_20_R6(1206),
+    V1_21_R1(1211, 121),
+    V1_21_R2(1212, 122),
+    V1_21_R3(1213, 123),
+    V1_21_R4(1214, 124),
+    V1_21_R5(1215, 125),
+    V1_21_R6(1216, 126),
+    V1_21_R7(1217, 127),
+    V1_21_R8(1218, 128),
+    V1_21_R9(1219, 129),
+    V1_21_R10(12110, 1210),
+    V1_21_R11(12111, 12111),
+    V26_1(26010000, 261, 26),
+    V26_1_1(26010001, 2611),
+    V26_1_2(26010002, 2612),
+    V26_2(26020000, 262),
+    V26_3(26030000, 263);
 
     private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
 
@@ -55,8 +55,8 @@ public enum VersionUtils {
         try {
             version = extractFromString(Bukkit.getBukkitVersion());
         } catch (Exception e) {
-            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), v26_3.name());
-            version = v26_3;
+            LogUtil.error("Error extracting server version: {0}. Using default: {1}", e.getMessage(), V26_3.name());
+            version = V26_3;
         }
 
         return version;
@@ -83,7 +83,7 @@ public enum VersionUtils {
             }
         }
 
-        throw new RuntimeException("Unknown version: " + bukkitVersion + ". Please report to developer. HeadBlocks will use latest.");
+        throw new IllegalStateException("Unknown version: " + bukkitVersion + ". Please report to developer. HeadBlocks will use latest.");
     }
 
     public static boolean isAtLeastVersion(VersionUtils version) {

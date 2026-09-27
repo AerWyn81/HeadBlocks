@@ -16,7 +16,6 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.hooks.HeadProviderHook;
 import fr.aerwyn81.headblocks.hooks.visual.VisualProviders;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
-import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.InternalUtils;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -39,9 +38,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 public class HeadService {
+    private static final String FRAME_TYPE = "frame";
+
     private final ConfigService configService;
     private final StorageService storageService;
     private final LanguageService languageService;
@@ -70,14 +72,13 @@ public class HeadService {
     // --- Constructor + instance lifecycle ---
 
     public HeadService(ConfigService configService, StorageService storageService,
-                       LanguageService languageService, SchedulerAdapter scheduler,
-                       PluginProvider pluginProvider) {
-        this(configService, storageService, languageService, scheduler, pluginProvider, Collections.emptyMap());
+                       LanguageService languageService, SchedulerAdapter scheduler) {
+        this(configService, storageService, languageService, scheduler, Collections.emptyMap());
     }
 
     public HeadService(ConfigService configService, StorageService storageService,
                        LanguageService languageService, SchedulerAdapter scheduler,
-                       PluginProvider pluginProvider, Map<String, HeadProviderHook> headProviders) {
+                       Map<String, HeadProviderHook> headProviders) {
         this.configService = configService;
         this.storageService = storageService;
         this.languageService = languageService;
@@ -158,51 +159,60 @@ public class HeadService {
             for (var headLoc : huntLocations) {
                 i++;
 
-                try {
-                    boolean isExist = storageService.isHeadExist(headLoc.getUuid());
-                    if (!isExist) {
-                        storageService.createOrUpdateHead(headLoc.getUuid(), textureOf(headLoc));
-                    }
-                } catch (Exception ex) {
-                    LogUtil.error("Error while trying to create a head ({0}) in the storage: {1}", headLoc.getUuid(), ex.getMessage());
-                    continue;
+                if (ensureStoredHead(headLoc)) {
+                    hunt.addHead(headLoc.getUuid());
+                    addHeadToSpin(headLoc, i);
+                    register(headLoc);
                 }
-
-                hunt.addHead(headLoc.getUuid());
-                addHeadToSpin(headLoc, i);
-                register(headLoc);
             }
         }
 
         // Purge for remote database
         if (configService.databaseEnabled()) {
-            try {
-                var dbHeads = storageService.getHeadsByServerId();
-                if (dbHeads.isEmpty()) {
-                    for (var headLoc : getHeadLocations()) {
-                        storageService.createOrUpdateHead(headLoc.getUuid(), textureOf(headLoc));
-                    }
-                } else {
-                    dbHeads.removeAll(getHeadLocations().stream().map(HeadLocation::getUuid).toList());
-
-                    if (!dbHeads.isEmpty()) {
-                        LogUtil.error("Found {0} heads ({1}) out of sync with the server, deleting...",
-                                dbHeads.size(),
-                                String.join(", ", dbHeads.stream().map(UUID::toString).toList()));
-
-                        for (var head : dbHeads) {
-                            storageService.removeHead(head, true);
-                        }
-
-                        LogUtil.success("Headblocks heads table cleaned!");
-                    }
-                }
-            } catch (Exception e) {
-                LogUtil.error("Error when purging heads out of sync in the database: {0}", e.getMessage());
-            }
+            purgeHeadsOutOfSync();
         }
 
         LogUtil.success("Loaded {0} locations!", headLocations.size());
+    }
+
+    private boolean ensureStoredHead(HeadLocation headLoc) {
+        try {
+            boolean isExist = storageService.isHeadExist(headLoc.getUuid());
+            if (!isExist) {
+                storageService.createOrUpdateHead(headLoc.getUuid(), textureOf(headLoc));
+            }
+            return true;
+        } catch (Exception ex) {
+            LogUtil.error("Error while trying to create a head ({0}) in the storage: {1}", headLoc.getUuid(), ex.getMessage());
+            return false;
+        }
+    }
+
+    private void purgeHeadsOutOfSync() {
+        try {
+            var dbHeads = storageService.getHeadsByServerId();
+            if (dbHeads.isEmpty()) {
+                for (var headLoc : getHeadLocations()) {
+                    storageService.createOrUpdateHead(headLoc.getUuid(), textureOf(headLoc));
+                }
+            } else {
+                dbHeads.removeAll(getHeadLocations().stream().map(HeadLocation::getUuid).toList());
+
+                if (!dbHeads.isEmpty()) {
+                    LogUtil.error("Found {0} heads ({1}) out of sync with the server, deleting...",
+                            dbHeads.size(),
+                            String.join(", ", dbHeads.stream().map(UUID::toString).toList()));
+
+                    for (var head : dbHeads) {
+                        storageService.removeHead(head, true);
+                    }
+
+                    LogUtil.success("Headblocks heads table cleaned!");
+                }
+            }
+        } catch (Exception e) {
+            LogUtil.error("Error when purging heads out of sync in the database: {0}", e.getMessage());
+        }
     }
 
     private void addHeadToSpin(HeadLocation headLoc, int offset) {
@@ -229,7 +239,7 @@ public class HeadService {
     }
 
     public UUID saveHeadLocation(Location location, HeadContent content, float yaw, String huntId) throws InternalException {
-        UUID uniqueUuid = InternalUtils.generateNewUUID(headLocations.stream().map(HeadLocation::getUuid).collect(Collectors.toList()));
+        UUID uniqueUuid = InternalUtils.generateNewUUID(headLocations.stream().map(HeadLocation::getUuid).toList());
 
         var texture = content != null && content.kind() == ContentKind.HEAD ? content.value() : "";
         storageService.createOrUpdateHead(uniqueUuid, texture);
@@ -355,13 +365,13 @@ public class HeadService {
     }
 
     private void unindexPosition(HeadLocation headLocation) {
-        headsByBlock.computeIfPresent(worldOf(headLocation), (k, heads) -> {
-            heads.remove(blockKey(headLocation.getX(), headLocation.getY(), headLocation.getZ()), headLocation);
-            return heads.isEmpty() ? null : heads;
+        headsByBlock.computeIfPresent(worldOf(headLocation), (k, worldHeads) -> {
+            worldHeads.remove(blockKey(headLocation.getX(), headLocation.getY(), headLocation.getZ()), headLocation);
+            return worldHeads.isEmpty() ? null : worldHeads;
         });
-        headsByChunk.computeIfPresent(chunkKey(headLocation), (k, heads) -> {
-            heads.remove(headLocation);
-            return heads.isEmpty() ? null : heads;
+        headsByChunk.computeIfPresent(chunkKey(headLocation), (k, chunkHeads) -> {
+            chunkHeads.remove(headLocation);
+            return chunkHeads.isEmpty() ? null : chunkHeads;
         });
     }
 
@@ -381,8 +391,8 @@ public class HeadService {
     }
 
     public Collection<HeadLocation> getHeadsInChunk(String world, int chunkX, int chunkZ) {
-        var heads = headsByChunk.get(chunkKey(world, chunkX, chunkZ));
-        return heads == null ? List.of() : List.copyOf(heads);
+        var chunkHeads = headsByChunk.get(chunkKey(world, chunkX, chunkZ));
+        return chunkHeads == null ? List.of() : List.copyOf(chunkHeads);
     }
 
     private static String worldOf(HeadLocation headLocation) {
@@ -394,7 +404,7 @@ public class HeadService {
     }
 
     private static long blockKey(int x, int y, int z) {
-        return ((long) x & 0x3FFFFFFL) << 38 | ((long) z & 0x3FFFFFFL) << 12 | (y & 0xFFFL);
+        return (x & 0x3FFFFFFL) << 38 | (z & 0x3FFFFFFL) << 12 | (y & 0xFFFL);
     }
 
     private String textureOf(HeadLocation headLocation) {
@@ -451,7 +461,7 @@ public class HeadService {
 
             unregister(headLocation);
 
-            headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
+            headMoves.values().removeIf(move -> headLocation.getUuid().equals(move.hUuid()));
             var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
             if (spinTaskId != null) {
                 spinTaskId.cancel();
@@ -459,61 +469,65 @@ public class HeadService {
         }
     }
 
-    public void removeAllHeadLocationsAsync(ArrayList<HeadLocation> headsToRemove, boolean withDelete,
-                                            java.util.function.Consumer<Integer> onComplete) {
+    public void removeAllHeadLocationsAsync(List<HeadLocation> headsToRemove, boolean withDelete,
+                                            IntConsumer onComplete) {
         scheduler.runTaskAsync(() -> {
             int removed = 0;
 
             for (HeadLocation headLocation : headsToRemove) {
-                if (headLocation == null) {
-                    continue;
+                if (headLocation != null && removeStoredHead(headLocation, withDelete)) {
+                    removed++;
                 }
-
-                try {
-                    storageService.removeHead(headLocation.getUuid(), withDelete);
-                } catch (InternalException ex) {
-                    LogUtil.error("Error removing head {0} from storage: {1}", headLocation.getNameOrUuid(), ex.getMessage());
-                    continue;
-                }
-
-                var location = headLocation.getLocation();
-                if (location != null) {
-                    scheduler.runTask(location, () -> {
-                        visualService.clear(headLocation);
-
-                        if (configService.hologramsEnabled() && hologramService != null) {
-                            hologramService.removeHolograms(location);
-                        }
-                    });
-                }
-
-                unregister(headLocation);
-
-                huntConfigService.removeLocationFromHunt(headLocation.getHuntId(), headLocation.getUuid());
-
-                headMoves.entrySet().removeIf(hM -> headLocation.getUuid().equals(hM.getKey()));
-                var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
-                if (spinTaskId != null) {
-                    spinTaskId.cancel();
-                }
-
-                removed++;
             }
 
             final int finalRemoved = removed;
             scheduler.runTask(() -> {
-                for (HeadLocation hl : headsToRemove) {
-                    if (hl != null) {
-                        var hunt = huntService.getHuntById(hl.getHuntId());
-                        if (hunt != null) {
-                            hunt.removeHead(hl.getUuid());
-                        }
-                    }
-                }
-
+                detachFromHunts(headsToRemove);
                 onComplete.accept(finalRemoved);
             });
         });
+    }
+
+    private void detachFromHunts(List<HeadLocation> headsToRemove) {
+        for (HeadLocation hl : headsToRemove) {
+            if (hl != null) {
+                var hunt = huntService.getHuntById(hl.getHuntId());
+                if (hunt != null) {
+                    hunt.removeHead(hl.getUuid());
+                }
+            }
+        }
+    }
+
+    private boolean removeStoredHead(HeadLocation headLocation, boolean withDelete) {
+        try {
+            storageService.removeHead(headLocation.getUuid(), withDelete);
+        } catch (InternalException ex) {
+            LogUtil.error("Error removing head {0} from storage: {1}", headLocation.getNameOrUuid(), ex.getMessage());
+            return false;
+        }
+
+        var location = headLocation.getLocation();
+        if (location != null) {
+            scheduler.runTask(location, () -> {
+                visualService.clear(headLocation);
+
+                if (configService.hologramsEnabled() && hologramService != null) {
+                    hologramService.removeHolograms(location);
+                }
+            });
+        }
+
+        unregister(headLocation);
+
+        huntConfigService.removeLocationFromHunt(headLocation.getHuntId(), headLocation.getUuid());
+
+        headMoves.values().removeIf(move -> headLocation.getUuid().equals(move.hUuid()));
+        var spinTaskId = tasksHeadSpin.remove(headLocation.getUuid());
+        if (spinTaskId != null) {
+            spinTaskId.cancel();
+        }
+        return true;
     }
 
     public HeadLocation getHeadByUUID(UUID headUuid) {
@@ -534,17 +548,17 @@ public class HeadService {
             return null;
         }
 
-        var heads = headsByBlock.get(location.getWorld().getName());
-        return heads == null ? null : heads.get(blockKey(location.getX(), location.getY(), location.getZ()));
+        var worldHeads = headsByBlock.get(location.getWorld().getName());
+        return worldHeads == null ? null : worldHeads.get(blockKey(location.getX(), location.getY(), location.getZ()));
     }
 
     public HeadLocation getBlockHeadAt(Block block) {
-        var heads = headsByBlock.get(block.getWorld().getName());
-        if (heads == null) {
+        var worldHeads = headsByBlock.get(block.getWorld().getName());
+        if (worldHeads == null) {
             return null;
         }
 
-        var headLocation = heads.get(blockKey(block.getX(), block.getY(), block.getZ()));
+        var headLocation = worldHeads.get(blockKey(block.getX(), block.getY(), block.getZ()));
         return headLocation != null && visualService.isBlockRendered(headLocation) ? headLocation : null;
     }
 
@@ -554,6 +568,25 @@ public class HeadService {
             return null;
         }
         return headLocation;
+    }
+
+    private void loadCatalogHead(Object raw, int line) {
+        var entry = CatalogEntry.parse(raw);
+
+        if (entry == null) {
+            LogUtil.error("Invalid format for {0} in HBHeads configuration section (l.{1})", raw, line);
+            return;
+        }
+
+        if (entry.value().trim().isEmpty()) {
+            LogUtil.error("Value cannot be empty for {0} in HBHeads configuration section (l.{1})", entry.raw(), line);
+            return;
+        }
+
+        var head = createCatalogHead(entry, line);
+        if (head != null) {
+            heads.add(head);
+        }
     }
 
     private void loadHeads() {
@@ -574,23 +607,7 @@ public class HeadService {
         }
 
         for (int i = 0; i < headsConfig.size(); i++) {
-            var entry = CatalogEntry.parse(headsConfig.get(i));
-            int line = i + 1;
-
-            if (entry == null) {
-                LogUtil.error("Invalid format for {0} in HBHeads configuration section (l.{1})", headsConfig.get(i), line);
-                continue;
-            }
-
-            if (entry.value().trim().isEmpty()) {
-                LogUtil.error("Value cannot be empty for {0} in HBHeads configuration section (l.{1})", entry.raw(), line);
-                continue;
-            }
-
-            var head = createCatalogHead(entry, line);
-            if (head != null) {
-                heads.add(head);
-            }
+            loadCatalogHead(headsConfig.get(i), i + 1);
         }
 
         long providerHeadCount = heads.size() - heads.stream()
@@ -609,7 +626,7 @@ public class HeadService {
         return switch (entry.type()) {
             case "default" -> HeadUtils.createHead(new HBHeadDefault(baseHeadItem()), entry.value());
             case "player" -> playerHead(entry);
-            case "block", "item", "mob", "entity", "text", "frame" -> contentHead(contentOf(entry, line));
+            case "block", "item", "mob", "entity", "text", FRAME_TYPE -> contentHead(contentOf(entry, line));
             default -> VisualProviders.isKnown(entry.type())
                     ? externalHead(entry, line)
                     : addProviderHead(baseHeadItem(), entry.type(), entry.value(), entry.raw(), line);
@@ -685,58 +702,62 @@ public class HeadService {
     private HeadContent contentOf(CatalogEntry entry, int line) {
         Map<String, Object> options = new LinkedHashMap<>(entry.options());
 
-        switch (entry.type()) {
-            case "block" -> {
-                var material = Material.matchMaterial(entry.value());
-                if (material == null || !material.isBlock() || !material.isItem()) {
-                    LogUtil.error("Invalid head {0} (l.{1}): {2} is not a placeable block.", entry.raw(), line, entry.value());
-                    return null;
-                }
-                if (isUnstableBlock(material)) {
-                    LogUtil.error("Invalid head {0} (l.{1}): {2} falls or spans two blocks, it cannot stay in place.", entry.raw(), line, entry.value());
-                    return null;
-                }
-                return HeadContent.of(ContentKind.BLOCK, material.name(), options);
-            }
-            case "item", "frame" -> {
-                var parts = entry.value().split(":");
-                var material = Material.matchMaterial(parts[0]);
-                if (material == null || !material.isItem()) {
-                    LogUtil.error("Invalid head {0} (l.{1}): {2} is not an item.", entry.raw(), line, parts[0]);
-                    return null;
-                }
-                if (parts.length > 1) {
-                    try {
-                        options.put("customModelData", Integer.parseInt(parts[1]));
-                    } catch (NumberFormatException e) {
-                        LogUtil.error("Invalid head {0} (l.{1}): custom model data {2} is not a number.", entry.raw(), line, parts[1]);
-                        return null;
-                    }
-                }
-                return HeadContent.of(entry.type().equals("frame") ? ContentKind.FRAME : ContentKind.ITEM, material.name(), options);
-            }
-            case "text" -> {
-                return HeadContent.of(ContentKind.TEXT, entry.value(), options);
-            }
-            default -> {
-                var content = HeadContent.of(ContentKind.MOB, entry.value().toUpperCase(), options);
-                try {
-                    MobRenderer.typeOf(content);
-                } catch (IllegalStateException e) {
-                    LogUtil.error("Invalid head {0} (l.{1}): {2}.", entry.raw(), line, e.getMessage());
-                    return null;
-                }
+        return switch (entry.type()) {
+            case "block" -> blockContentOf(entry, line, options);
+            case "item", FRAME_TYPE -> itemContentOf(entry, line, options);
+            case "text" -> HeadContent.of(ContentKind.TEXT, entry.value(), options);
+            default -> mobContentOf(entry, line, options);
+        };
+    }
 
-                var invalid = MobRenderer.EQUIPMENT.keySet().stream()
-                        .filter(slot -> content.option(slot) != null && ContentItems.equipmentOf(content.option(slot)) == null)
-                        .findFirst();
-                if (invalid.isPresent()) {
-                    LogUtil.error("Invalid head {0} (l.{1}): {2} is not an item.", entry.raw(), line, content.option(invalid.get()));
-                    return null;
-                }
-                return content;
+    private HeadContent blockContentOf(CatalogEntry entry, int line, Map<String, Object> options) {
+        var material = Material.matchMaterial(entry.value());
+        if (material == null || !material.isBlock() || !material.isItem()) {
+            LogUtil.error("Invalid head {0} (l.{1}): {2} is not a placeable block.", entry.raw(), line, entry.value());
+            return null;
+        }
+        if (isUnstableBlock(material)) {
+            LogUtil.error("Invalid head {0} (l.{1}): {2} falls or spans two blocks, it cannot stay in place.", entry.raw(), line, entry.value());
+            return null;
+        }
+        return HeadContent.of(ContentKind.BLOCK, material.name(), options);
+    }
+
+    private HeadContent itemContentOf(CatalogEntry entry, int line, Map<String, Object> options) {
+        var parts = entry.value().split(":");
+        var material = Material.matchMaterial(parts[0]);
+        if (material == null || !material.isItem()) {
+            LogUtil.error("Invalid head {0} (l.{1}): {2} is not an item.", entry.raw(), line, parts[0]);
+            return null;
+        }
+        if (parts.length > 1) {
+            try {
+                options.put("customModelData", Integer.parseInt(parts[1]));
+            } catch (NumberFormatException e) {
+                LogUtil.error("Invalid head {0} (l.{1}): custom model data {2} is not a number.", entry.raw(), line, parts[1]);
+                return null;
             }
         }
+        return HeadContent.of(entry.type().equals(FRAME_TYPE) ? ContentKind.FRAME : ContentKind.ITEM, material.name(), options);
+    }
+
+    private HeadContent mobContentOf(CatalogEntry entry, int line, Map<String, Object> options) {
+        var content = HeadContent.of(ContentKind.MOB, entry.value().toUpperCase(), options);
+        try {
+            MobRenderer.typeOf(content);
+        } catch (IllegalStateException e) {
+            LogUtil.error("Invalid head {0} (l.{1}): {2}.", entry.raw(), line, e.getMessage());
+            return null;
+        }
+
+        var invalid = MobRenderer.EQUIPMENT.keySet().stream()
+                .filter(slot -> content.option(slot) != null && ContentItems.equipmentOf(content.option(slot)) == null)
+                .findFirst();
+        if (invalid.isPresent()) {
+            LogUtil.error("Invalid head {0} (l.{1}): {2} is not an item.", entry.raw(), line, content.option(invalid.get()));
+            return null;
+        }
+        return content;
     }
 
     private static boolean isUnstableBlock(Material material) {
@@ -768,11 +789,11 @@ public class HeadService {
         return null;
     }
 
-    public ArrayList<HBHead> getHeads() {
+    public List<HBHead> getHeads() {
         return heads;
     }
 
-    public ArrayList<HeadLocation> getChargedHeadLocations() {
+    public List<HeadLocation> getChargedHeadLocations() {
         return headLocations.stream().filter(HeadLocation::isCharged).collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -780,13 +801,13 @@ public class HeadService {
         return headLocations;
     }
 
-    public ArrayList<HeadLocation> getHeadLocationsForHunt(HBHunt hunt) {
+    public List<HeadLocation> getHeadLocationsForHunt(HBHunt hunt) {
         return headLocations.stream()
                 .filter(h -> hunt.getId().equals(h.getHuntId()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public ArrayList<String> getHeadRawNameOrUuid() {
+    public List<String> getHeadRawNameOrUuid() {
         return headLocations.stream().map(HeadLocation::getRawNameOrUuid).collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -812,6 +833,11 @@ public class HeadService {
     }
 
     public void changeHeadLocation(UUID hUuid, @NotNull Block oldBlock, Block newBlock) {
+        var headLocation = getHeadByUUID(hUuid);
+        if (headLocation == null) {
+            return;
+        }
+
         if (oldBlock.getState() instanceof Skull oldSkull) {
             var rotation = oldSkull.getBlockData() instanceof Rotatable skullRotation
                     ? skullRotation.getRotation()
@@ -840,8 +866,6 @@ public class HeadService {
         }
 
         oldBlock.setType(Material.AIR);
-
-        var headLocation = getHeadByUUID(hUuid);
 
         var centeredLoc = newBlock.getLocation().clone().add(0.5, 0, 0.5);
 

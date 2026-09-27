@@ -68,9 +68,8 @@ class ResetAllCommandTest {
         void noData_sendsNoDataMessage() throws InternalException {
             when(storageService.getAllPlayers()).thenReturn(new ArrayList<>());
 
-            boolean result = command.perform(playerSender, new String[]{"resetall", "--confirm"});
+            command.perform(playerSender, new String[]{"resetall", "--confirm"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.ResetAllNoData");
         }
 
@@ -79,9 +78,8 @@ class ResetAllCommandTest {
             java.util.List<UUID> players = java.util.List.of(UUID.randomUUID(), UUID.randomUUID());
             when(storageService.getAllPlayers()).thenReturn(players);
 
-            boolean result = command.perform(playerSender, new String[]{"resetall"});
+            command.perform(playerSender, new String[]{"resetall"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.ResetAllConfirm");
         }
 
@@ -96,9 +94,8 @@ class ResetAllCommandTest {
                  MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
                 bukkit.when(() -> Bukkit.getPlayer(any(UUID.class))).thenReturn(null);
 
-                boolean result = command.perform(playerSender, new String[]{"resetall", "--confirm"});
+                command.perform(playerSender, new String[]{"resetall", "--confirm"});
 
-                assertThat(result).isTrue();
                 verify(storageService).resetPlayer(p1);
                 verify(storageService).resetPlayer(p2);
                 verify(languageService).message("Messages.ResetAllSuccess");
@@ -109,9 +106,8 @@ class ResetAllCommandTest {
         void storageErrorOnGetPlayers_sendsError() throws InternalException {
             when(storageService.getAllPlayers()).thenThrow(new InternalException("db error"));
 
-            boolean result = command.perform(playerSender, new String[]{"resetall", "--confirm"});
+            command.perform(playerSender, new String[]{"resetall", "--confirm"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.StorageError");
         }
 
@@ -124,9 +120,8 @@ class ResetAllCommandTest {
 
             try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
 
-                boolean result = command.perform(playerSender, new String[]{"resetall", "--confirm"});
+                command.perform(playerSender, new String[]{"resetall", "--confirm"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Messages.StorageError");
             }
         }
@@ -143,9 +138,8 @@ class ResetAllCommandTest {
             when(headService.resolveHeadIdentifier(headUuid.toString())).thenReturn(headLocation);
             when(storageService.getPlayers(headUuid)).thenReturn(new ArrayList<UUID>());
 
-            boolean result = command.perform(playerSender, new String[]{"resetall", "--head", headUuid.toString(), "--confirm"});
+            command.perform(playerSender, new String[]{"resetall", "--head", headUuid.toString(), "--confirm"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.ResetAllNoData");
         }
 
@@ -160,9 +154,8 @@ class ResetAllCommandTest {
             ArrayList<UUID> players = new ArrayList<>(java.util.List.of(UUID.randomUUID()));
             when(storageService.getPlayers(headUuid)).thenReturn(players);
 
-            boolean result = command.perform(playerSender, new String[]{"resetall", "--head", headUuid.toString()});
+            command.perform(playerSender, new String[]{"resetall", "--head", headUuid.toString()});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.ResetAllHeadConfirm");
         }
 
@@ -182,9 +175,8 @@ class ResetAllCommandTest {
                  MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
                 bukkit.when(() -> Bukkit.getPlayer(p1)).thenReturn(null);
 
-                boolean result = command.perform(playerSender, new String[]{"resetall", "--head", headUuid.toString(), "--confirm"});
+                command.perform(playerSender, new String[]{"resetall", "--head", headUuid.toString(), "--confirm"});
 
-                assertThat(result).isTrue();
                 verify(storageService).resetPlayerHead(p1, headUuid);
                 verify(languageService).message("Messages.ResetAllHeadSuccess");
             }
@@ -194,9 +186,8 @@ class ResetAllCommandTest {
         void headNotFound_sendsError() {
             when(headService.resolveHeadIdentifier("unknown")).thenReturn(null);
 
-            boolean result = command.perform(playerSender, new String[]{"resetall", "--head", "unknown"});
+            command.perform(playerSender, new String[]{"resetall", "--head", "unknown"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.HeadNameNotFound");
         }
     }
@@ -214,9 +205,8 @@ class ResetAllCommandTest {
                  MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
                 bukkit.when(() -> Bukkit.getPlayer(any(UUID.class))).thenReturn(null);
 
-                boolean result = command.perform(consoleSender, new String[]{"resetall", "--confirm"});
+                command.perform(consoleSender, new String[]{"resetall", "--confirm"});
 
-                assertThat(result).isTrue();
                 verify(storageService).resetPlayer(p1);
                 verify(languageService).message("Messages.ResetAllSuccess");
             }
@@ -224,9 +214,8 @@ class ResetAllCommandTest {
 
         @Test
         void targetedHeadWithoutValue_rejectedFromConsole() throws InternalException {
-            boolean result = command.perform(consoleSender, new String[]{"resetall", "--head", "--confirm"});
+            command.perform(consoleSender, new String[]{"resetall", "--head", "--confirm"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.TargetHeadPlayerOnly");
             verify(storageService, never()).resetPlayer(any());
             verify(storageService, never()).getAllPlayers();

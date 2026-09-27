@@ -17,7 +17,6 @@ import org.holoeasy.pool.IHologramPool;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class HologramService {
     private final ConfigService configService;
@@ -133,22 +132,21 @@ public class HologramService {
         }
 
         for (HeadLocation loc : headService.getHeadLocations()) {
-            if (!loc.isCharged()) {
-                continue;
-            }
-
-            var headLoc = loc.getLocation();
-            if (headLoc.getWorld() == null) {
-                continue;
-            }
-
-            // Skip heads in unloaded chunks — they will be created lazily by GlobalTask
-            if (!headLoc.getWorld().isChunkLoaded(headLoc.getBlockX() >> 4, headLoc.getBlockZ() >> 4)) {
-                continue;
-            }
-
-            createHolograms(headLoc, huntService.configOf(loc.getHuntId()));
+            createHologramsIfLoaded(loc);
         }
+    }
+
+    private void createHologramsIfLoaded(HeadLocation loc) {
+        if (!loc.isCharged()) {
+            return;
+        }
+
+        var headLoc = loc.getLocation();
+        if (headLoc.getWorld() == null || !headLoc.getWorld().isChunkLoaded(headLoc.getBlockX() >> 4, headLoc.getBlockZ() >> 4)) {
+            return;
+        }
+
+        createHolograms(headLoc, huntService.configOf(loc.getHuntId()));
     }
 
     public boolean isEnabled() {
@@ -177,12 +175,12 @@ public class HologramService {
 
         if (enumTypeHologram == EnumTypeHologram.DEFAULT) {
             if (huntConfig.isHologramsFoundEnabled()) {
-                var holoFound = internalCreateHologram(location, huntConfig.getHologramsFoundLines().stream().map(MessageUtils::colorize).collect(Collectors.toList()));
+                var holoFound = internalCreateHologram(location, huntConfig.getHologramsFoundLines().stream().map(MessageUtils::colorize).toList());
                 foundHolograms.put(holoFound, location);
             }
 
             if (huntConfig.isHologramsNotFoundEnabled()) {
-                var holoNotFound = internalCreateHologram(location, huntConfig.getHologramsNotFoundLines().stream().map(MessageUtils::colorize).collect(Collectors.toList()));
+                var holoNotFound = internalCreateHologram(location, huntConfig.getHologramsNotFoundLines().stream().map(MessageUtils::colorize).toList());
                 notFoundHolograms.put(holoNotFound, location);
             }
             return;
@@ -200,35 +198,47 @@ public class HologramService {
         }
 
         if (enumTypeHologram == EnumTypeHologram.DEFAULT) {
-            var existingFound = foundHolograms.getByLocation(location);
-            var existingNotFound = notFoundHolograms.getByLocation(location);
-
-            boolean hasAlive = (existingFound != null && existingFound.isAlive())
-                    || (existingNotFound != null && existingNotFound.isAlive());
-
-            if (hasAlive) {
+            if (hasAliveDefaultHologram(location)) {
                 return;
             }
-
-            // Clean up dead entries before recreating
-            if (existingFound != null) {
-                foundHolograms.remove(existingFound, location);
-            }
-            if (existingNotFound != null) {
-                notFoundHolograms.remove(existingNotFound, location);
-            }
-        } else if (enumTypeHologram == EnumTypeHologram.ADVANCED) {
-            var existing = holograms.getByLocation(location);
-            if (existing != null && existing.isAlive()) {
-                return;
-            }
-
-            if (existing != null) {
-                holograms.remove(existing, location);
-            }
+        } else if (enumTypeHologram == EnumTypeHologram.ADVANCED && hasAliveAdvancedHologram(location)) {
+            return;
         }
 
         createHolograms(location, huntConfig);
+    }
+
+    private boolean hasAliveDefaultHologram(Location location) {
+        var existingFound = foundHolograms.getByLocation(location);
+        var existingNotFound = notFoundHolograms.getByLocation(location);
+
+        boolean hasAlive = (existingFound != null && existingFound.isAlive())
+                || (existingNotFound != null && existingNotFound.isAlive());
+
+        if (hasAlive) {
+            return true;
+        }
+
+        // Clean up dead entries before recreating
+        if (existingFound != null) {
+            foundHolograms.remove(existingFound, location);
+        }
+        if (existingNotFound != null) {
+            notFoundHolograms.remove(existingNotFound, location);
+        }
+        return false;
+    }
+
+    private boolean hasAliveAdvancedHologram(Location location) {
+        var existing = holograms.getByLocation(location);
+        if (existing != null && existing.isAlive()) {
+            return true;
+        }
+
+        if (existing != null) {
+            holograms.remove(existing, location);
+        }
+        return false;
     }
 
     private InternalHologram internalCreateHologram(Location location, List<String> lines) {
@@ -263,17 +273,13 @@ public class HologramService {
         }
 
         var holoFound = foundHolograms.getByLocation(location);
-        if (holoFound != null) {
-            if (!holoFound.isHologramVisible(player) && !configService.isHideFoundHeads()) {
-                holoFound.show(player);
-            }
+        if (holoFound != null && !holoFound.isHologramVisible(player) && !configService.isHideFoundHeads()) {
+            holoFound.show(player);
         }
 
         var holoNotFound = notFoundHolograms.getByLocation(location);
-        if (holoNotFound != null) {
-            if (holoNotFound.isHologramVisible(player)) {
-                holoNotFound.hide(player);
-            }
+        if (holoNotFound != null && holoNotFound.isHologramVisible(player)) {
+            holoNotFound.hide(player);
         }
     }
 
@@ -288,17 +294,13 @@ public class HologramService {
         }
 
         var holoFound = foundHolograms.getByLocation(location);
-        if (holoFound != null) {
-            if (holoFound.isHologramVisible(player)) {
-                holoFound.hide(player);
-            }
+        if (holoFound != null && holoFound.isHologramVisible(player)) {
+            holoFound.hide(player);
         }
 
         var holoNotFound = notFoundHolograms.getByLocation(location);
-        if (holoNotFound != null) {
-            if (!holoNotFound.isHologramVisible(player)) {
-                holoNotFound.show(player);
-            }
+        if (holoNotFound != null && !holoNotFound.isHologramVisible(player)) {
+            holoNotFound.show(player);
         }
     }
 

@@ -11,6 +11,7 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnOptions;
 import fr.aerwyn81.headblocks.events.*;
 import fr.aerwyn81.headblocks.holograms.EnumTypeHologram;
 import fr.aerwyn81.headblocks.hooks.*;
+import fr.aerwyn81.headblocks.hooks.visual.VisualProviderHook;
 import fr.aerwyn81.headblocks.hooks.visual.VisualProviders;
 import fr.aerwyn81.headblocks.platform.Platform;
 import fr.aerwyn81.headblocks.platform.Platforms;
@@ -37,6 +38,7 @@ import java.util.*;
 
 @SuppressWarnings("ConstantConditions")
 public final class HeadBlocks extends JavaPlugin {
+    private static final String CONFIG_YML = "config.yml";
 
     private static HeadBlocks instance;
     public static boolean isPlaceholderApiActive;
@@ -66,10 +68,10 @@ public final class HeadBlocks extends JavaPlugin {
         packetEventsHook = new PacketEventsHook();
         var isPacketEventsLoaded = packetEventsHook.load(this);
 
-        File configFile = new File(getDataFolder(), "config.yml");
+        File configFile = new File(getDataFolder(), CONFIG_YML);
         saveDefaultConfig();
         try {
-            ConfigUpdater.update(this, "config.yml", configFile, Arrays.asList("tieredRewards", "heads", "headsTheme"));
+            ConfigUpdater.update(this, CONFIG_YML, configFile, Arrays.asList("tieredRewards", "heads", "headsTheme"));
         } catch (IOException e) {
             LogUtil.error("Error while loading config file: {0}", e.getMessage());
             getPluginLoader().disablePlugin(this);
@@ -89,18 +91,41 @@ public final class HeadBlocks extends JavaPlugin {
         }
     }
 
+    private static void setInstance(HeadBlocks plugin) {
+        instance = plugin;
+    }
+
+    private static void detectPluginIntegrations() {
+        isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
+        isHeadDBActive = Bukkit.getPluginManager().isPluginEnabled("HeadDB");
+        isPlaceholderApiActive = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
+        isPacketEventsActive = Bukkit.getPluginManager().isPluginEnabled("packetevents");
+    }
+
+    private static void disableHeadDatabase() {
+        isHeadDatabaseActive = false;
+    }
+
+    private static void disableHeadDB() {
+        isHeadDBActive = false;
+    }
+
+    public static void setReloadInProgress(boolean reloadInProgress) {
+        isReloadInProgress = reloadInProgress;
+    }
+
     @Override
     public void onEnable() {
-        instance = this;
+        setInstance(this);
 
         initializeExternals();
 
         LogUtil.info("HeadBlocks initializing...");
 
-        File configFile = new File(getDataFolder(), "config.yml");
+        File configFile = new File(getDataFolder(), CONFIG_YML);
         File locationFile = new File(getDataFolder(), "locations.yml");
 
-        if (!VersionUtils.isAtLeastVersion(VersionUtils.v1_20_R1)) {
+        if (!VersionUtils.isAtLeastVersion(VersionUtils.V1_20_R1)) {
             LogUtil.error("***** --------------------------------------- *****");
             LogUtil.error("HeadBlocks does not support your Minecraft Server version: {0}", VersionUtils.getVersion());
             LogUtil.error("***** --------------------------------------- *****");
@@ -108,13 +133,7 @@ public final class HeadBlocks extends JavaPlugin {
             return;
         }
 
-        isHeadDatabaseActive = Bukkit.getPluginManager().isPluginEnabled("HeadDatabase");
-
-        isHeadDBActive = Bukkit.getPluginManager().isPluginEnabled("HeadDB");
-
-        isPlaceholderApiActive = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
-
-        isPacketEventsActive = Bukkit.getPluginManager().isPluginEnabled("packetevents");
+        detectPluginIntegrations();
 
         // --- Create ServiceRegistry (DI wiring) ---
         this.platform = Platforms.load();
@@ -124,15 +143,7 @@ public final class HeadBlocks extends JavaPlugin {
         CommandDispatcher commandDispatcher = new BukkitCommandDispatcher();
         this.scheduler = platform.createScheduler(this);
 
-        Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
-        if (isHeadDatabaseActive) {
-            this.headDatabaseHook = new HeadDatabaseHook(pluginProvider);
-            providers.put(headDatabaseHook.prefix(), headDatabaseHook);
-        }
-        if (isHeadDBActive) {
-            this.headDBHook = new HeadDBHook(pluginProvider, scheduler);
-            providers.put(headDBHook.prefix(), headDBHook);
-        }
+        Map<String, HeadProviderHook> providers = createHeadProviders(pluginProvider);
 
         var visualProviders = VisualProviders.detect(Bukkit.getPluginManager()::isPluginEnabled);
 
@@ -156,10 +167,10 @@ public final class HeadBlocks extends JavaPlugin {
         startInternalTaskTimer();
 
         if (isHeadDatabaseActive && !this.headDatabaseHook.init(serviceRegistry)) {
-            isHeadDatabaseActive = false;
+            disableHeadDatabase();
         }
         if (isHeadDBActive && !this.headDBHook.init(serviceRegistry)) {
-            isHeadDBActive = false;
+            disableHeadDB();
         }
 
         if (!platform.registerCommand(this, "headblocks", List.of("hb"),
@@ -169,6 +180,36 @@ public final class HeadBlocks extends JavaPlugin {
             return;
         }
 
+        registerListeners(visualProviders);
+
+        timedRunTask = scheduler.runTaskTimer(new TimedRunTask(serviceRegistry), 0, 2);
+        areaOutlineTask = scheduler.runTaskTimer(new AreaOutlineTask(serviceRegistry), 20, 10);
+        serviceRegistry.getSpawnService().start();
+        serviceRegistry.getVisualService().spawnLoaded();
+        serviceRegistry.getVisibilityService().loadOnlinePlayers();
+        visualTask = scheduler.runTaskTimer(() -> serviceRegistry.getVisualService().tick(), 20, 20);
+
+        if (serviceRegistry.getConfigService().metricsEnabled()) {
+            startMetrics();
+        }
+
+        LogUtil.success("HeadBlocks successfully loaded!");
+    }
+
+    private Map<String, HeadProviderHook> createHeadProviders(PluginProvider pluginProvider) {
+        Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
+        if (isHeadDatabaseActive) {
+            this.headDatabaseHook = new HeadDatabaseHook(pluginProvider);
+            providers.put(headDatabaseHook.prefix(), headDatabaseHook);
+        }
+        if (isHeadDBActive) {
+            this.headDBHook = new HeadDBHook(pluginProvider, scheduler);
+            providers.put(headDBHook.prefix(), headDBHook);
+        }
+        return providers;
+    }
+
+    private void registerListeners(Map<String, VisualProviderHook> visualProviders) {
         Bukkit.getPluginManager().registerEvents(new OnPlayerInteractEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerBreakBlockEvent(serviceRegistry), this);
         Bukkit.getPluginManager().registerEvents(new OnPlayerPlaceBlockEvent(serviceRegistry), this);
@@ -182,58 +223,54 @@ public final class HeadBlocks extends JavaPlugin {
         for (var visualProvider : visualProviders.values()) {
             visualProvider.listenInteractions(this, headEntityEvent);
         }
+    }
 
-        timedRunTask = scheduler.runTaskTimer(new TimedRunTask(serviceRegistry), 0, 2);
-        areaOutlineTask = scheduler.runTaskTimer(new AreaOutlineTask(serviceRegistry), 20, 10);
-        serviceRegistry.getSpawnService().start();
-        serviceRegistry.getVisualService().spawnLoaded();
-        serviceRegistry.getVisibilityService().loadOnlinePlayers();
-        visualTask = scheduler.runTaskTimer(() -> serviceRegistry.getVisualService().tick(), 20, 20);
+    private void startMetrics() {
+        var m = new Metrics(this, 15495);
+        m.addCustomChart(new SimplePie("database_type", () -> serviceRegistry.getStorageService().selectedStorageType()));
+        m.addCustomChart(new SimplePie("databaseType", () -> serviceRegistry.getStorageService().selectedStorageType()));
+        m.addCustomChart(new SingleLineChart("heads", () -> serviceRegistry.getHeadService().getChargedHeadLocations().size()));
+        m.addCustomChart(new SimplePie("lang", () -> serviceRegistry.getLanguageService().language()));
+        m.addCustomChart(new SingleLineChart("hunts", () -> (int) serviceRegistry.getHuntService().getAllHunts().stream().filter(hunt -> !hunt.isDefault()).count()));
+        m.addCustomChart(new AdvancedBarChart("huntBehaviors", this::huntBehaviorsChart));
+        m.addCustomChart(new AdvancedBarChart("visualTypes", this::visualTypesChart));
+        m.addCustomChart(new AdvancedBarChart("features", this::featuresChart));
+        m.addCustomChart(new AdvancedBarChart("spawnFeatures", () -> spawnFeatures(serviceRegistry.getHuntService().getAllHunts())));
+    }
 
-        if (serviceRegistry.getConfigService().metricsEnabled()) {
-            var m = new Metrics(this, 15495);
-            m.addCustomChart(new SimplePie("database_type", () -> serviceRegistry.getStorageService().selectedStorageType()));
-            m.addCustomChart(new SimplePie("databaseType", () -> serviceRegistry.getStorageService().selectedStorageType()));
-            m.addCustomChart(new SingleLineChart("heads", () -> serviceRegistry.getHeadService().getChargedHeadLocations().size()));
-            m.addCustomChart(new SimplePie("lang", () -> serviceRegistry.getLanguageService().language()));
-            m.addCustomChart(new SingleLineChart("hunts", () -> (int) serviceRegistry.getHuntService().getAllHunts().stream().filter(hunt -> !hunt.isDefault()).count()));
-            m.addCustomChart(new AdvancedBarChart("huntBehaviors", () -> {
-                Map<String, int[]> map = new HashMap<>();
-                for (var hunt : serviceRegistry.getHuntService().getAllHunts()) {
-                    for (var behavior : hunt.getBehaviors()) {
-                        String name = behavior.getClass().getSimpleName().replace("Behavior", "");
-                        map.merge(name, new int[]{1}, (a, b) -> new int[]{a[0] + b[0]});
-                    }
-                }
-                return map;
-            }));
-            m.addCustomChart(new AdvancedBarChart("visualTypes", () -> {
-                Map<String, int[]> map = new HashMap<>();
-                for (var type : serviceRegistry.getVisualService().visualTypesInUse()) {
-                    map.put(type, new int[]{1});
-                }
-                return map;
-            }));
-            m.addCustomChart(new AdvancedBarChart("features", () -> {
-                var heads = serviceRegistry.getHeadService().getChargedHeadLocations();
-                Map<String, int[]> map = new HashMap<>();
-
-                var enabled = new int[]{1, 0};
-                var disabled = new int[]{0, 1};
-
-                map.put("Order", heads.stream().anyMatch(h -> h.getOrderIndex() != -1) ? enabled : disabled);
-                map.put("Hint sound", heads.stream().anyMatch(HeadLocation::isHintSoundEnabled) ? enabled : disabled);
-                map.put("Hint action bar", heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled) ? enabled : disabled);
-                map.put("Hint rewards", heads.stream().anyMatch(h -> !h.getRewards().isEmpty()) ? enabled : disabled);
-                map.put("Hide heads", serviceRegistry.getConfigService().isHideFoundHeads() ? enabled : disabled);
-                map.put("Spin mode", serviceRegistry.getConfigService().spinEnabled() ? enabled : disabled);
-
-                return map;
-            }));
-            m.addCustomChart(new AdvancedBarChart("spawnFeatures", () -> spawnFeatures(serviceRegistry.getHuntService().getAllHunts())));
+    private Map<String, int[]> huntBehaviorsChart() {
+        Map<String, int[]> map = new HashMap<>();
+        for (var hunt : serviceRegistry.getHuntService().getAllHunts()) {
+            for (var behavior : hunt.getBehaviors()) {
+                String name = behavior.getClass().getSimpleName().replace("Behavior", "");
+                map.merge(name, new int[]{1}, (a, b) -> new int[]{a[0] + b[0]});
+            }
         }
+        return map;
+    }
 
-        LogUtil.success("HeadBlocks successfully loaded!");
+    private Map<String, int[]> visualTypesChart() {
+        Map<String, int[]> map = new HashMap<>();
+        for (var type : serviceRegistry.getVisualService().visualTypesInUse()) {
+            map.put(type, new int[]{1});
+        }
+        return map;
+    }
+
+    private Map<String, int[]> featuresChart() {
+        var heads = serviceRegistry.getHeadService().getChargedHeadLocations();
+        Map<String, int[]> map = new HashMap<>();
+        var enabled = new int[]{1, 0};
+        var disabled = new int[]{0, 1};
+
+        map.put("Order", heads.stream().anyMatch(h -> h.getOrderIndex() != -1) ? enabled : disabled);
+        map.put("Hint sound", heads.stream().anyMatch(HeadLocation::isHintSoundEnabled) ? enabled : disabled);
+        map.put("Hint action bar", heads.stream().anyMatch(HeadLocation::isHintActionBarEnabled) ? enabled : disabled);
+        map.put("Hint rewards", heads.stream().anyMatch(h -> !h.getRewards().isEmpty()) ? enabled : disabled);
+        map.put("Hide heads", serviceRegistry.getConfigService().isHideFoundHeads() ? enabled : disabled);
+        map.put("Spin mode", serviceRegistry.getConfigService().spinEnabled() ? enabled : disabled);
+
+        return map;
     }
 
     static Map<String, int[]> spawnFeatures(Collection<HBHunt> hunts) {

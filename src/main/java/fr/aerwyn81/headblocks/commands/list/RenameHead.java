@@ -20,19 +20,19 @@ public class RenameHead implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         var player = (Player) sender;
 
         var headLocation = HeadTargeting.lookedAt(player, registry, 100);
 
         if (headLocation == null) {
             player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
-            return true;
+            return;
         }
 
         if (registry.getHeadService().isSpawned(headLocation.getUuid())) {
             player.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
-            return true;
+            return;
         }
 
         args = Arrays.copyOfRange(args, 1, args.length);
@@ -40,7 +40,7 @@ public class RenameHead implements Cmd {
         var name = String.join(" ", args);
         if (name.isEmpty()) {
             player.sendMessage(registry.getLanguageService().message("Messages.NameCannotBeEmpty"));
-            return true;
+            return;
         }
 
         headLocation.setName(name);
@@ -48,7 +48,6 @@ public class RenameHead implements Cmd {
 
         player.sendMessage(registry.getLanguageService().message("Messages.HeadRenamed")
                 .replace("%name%", MessageUtils.colorize(name)));
-        return true;
     }
 
     @Override

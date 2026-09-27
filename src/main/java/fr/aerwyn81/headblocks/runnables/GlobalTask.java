@@ -168,69 +168,7 @@ public class GlobalTask implements Runnable {
 
             if (distanceSq <= rangeParticlesSq || distanceSq <= rangeHintSq) {
                 try {
-                    var hasHead = registry.getStorageService().hasHead(player.getUniqueId(), headLocation.getUuid());
-
-                    if (distanceSq <= rangeParticlesSq) {
-                        if (hasHead) {
-                            spawnParticles(location, true, player, huntConfig);
-                            registry.getHologramService().showFoundTo(player, location, huntConfig);
-                        } else {
-                            var templateParticle = registry.getSpawnService().particleOf(headLocation);
-                            if (templateParticle != null) {
-                                spawnTemplateParticle(location, templateParticle, player);
-                            } else {
-                                spawnParticles(location, false, player, huntConfig);
-                            }
-                            registry.getHologramService().showNotFoundTo(player, location, huntConfig);
-                        }
-
-                        registry.getHologramService().refresh(player, location);
-                    }
-
-                    if (distanceSq <= rangeHintSq && (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled())) {
-                        // Resolve per-player hint config using the head's hunt (1:1)
-                        HuntConfig hintConfig = null;
-                        if (!hasHead) {
-                            hintConfig = huntConfig;
-                        } else {
-                            // Check if player hasn't found it in the head's hunt
-                            try {
-                                if (!registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), headLocation.getHuntId())
-                                        .contains(headLocation.getUuid())) {
-                                    hintConfig = huntConfig;
-                                }
-                            } catch (InternalException ignored) {
-                            }
-                        }
-
-                        if (hintConfig != null && hintConfig.isHintsEnabled()) {
-                            var hintFrequency = Math.max(1, hintConfig.getHintFrequency());
-                            var shouldTriggerHintSound = ThreadLocalRandom.current().nextInt(hintFrequency) == 0;
-                            var shouldTriggerHintActionBar = ThreadLocalRandom.current().nextInt(hintFrequency) == 0;
-
-                            if (headLocation.isHintSoundEnabled() && shouldTriggerHintSound) {
-                                registry.getConfigService().hintSoundType()
-                                        .record()
-                                        .withVolume(registry.getConfigService().hintSoundVolume())
-                                        .withPitch(ThreadLocalRandom.current().nextInt(3))
-                                        .soundPlayer()
-                                        .forPlayers(player)
-                                        .atLocation(location)
-                                        .play();
-                            }
-
-                            if (headLocation.isHintActionBarEnabled() && shouldTriggerHintActionBar) {
-                                var distance = Math.sqrt(distanceSq);
-                                var message = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), headLocation, registry.getConfigService().hintActionBarMessage());
-                                message = message
-                                        .replace("%distance%", String.valueOf(distance))
-                                        .replace("%position%", String.valueOf(rangeHint - distance))
-                                        .replace("%arrow%", getHintDirectionArrow(player.getLocation(), location));
-
-                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
-                            }
-                        }
-                    }
+                    handleNearbyPlayer(player, headLocation, location, huntConfig, new Proximity(distanceSq, rangeParticlesSq, rangeHintSq), rangeHint);
                 } catch (InternalException ex) {
                     LogUtil.error("Error while trying to communicate with the storage : {0}", ex.getMessage());
                 }
@@ -239,6 +177,84 @@ public class GlobalTask implements Runnable {
         }
 
         registry.getHologramService().hideHolograms(headLocation, player);
+    }
+
+    private record Proximity(double distanceSq, double rangeParticlesSq, double rangeHintSq) {
+    }
+
+    private void handleNearbyPlayer(Player player, HeadLocation headLocation, Location location, HuntConfig huntConfig,
+                                    Proximity proximity, int rangeHint) throws InternalException {
+        var distanceSq = proximity.distanceSq();
+        var hasHead = registry.getStorageService().hasHead(player.getUniqueId(), headLocation.getUuid());
+
+        if (distanceSq <= proximity.rangeParticlesSq()) {
+            showHeadState(player, headLocation, location, huntConfig, hasHead);
+        }
+
+        if (distanceSq <= proximity.rangeHintSq() && (headLocation.isHintSoundEnabled() || headLocation.isHintActionBarEnabled())) {
+            // Resolve per-player hint config using the head's hunt (1:1)
+            HuntConfig hintConfig = hintConfigFor(player, headLocation, huntConfig, hasHead);
+
+            if (hintConfig != null && hintConfig.isHintsEnabled()) {
+                sendHints(player, headLocation, location, hintConfig, distanceSq, rangeHint);
+            }
+        }
+    }
+
+    private HuntConfig hintConfigFor(Player player, HeadLocation headLocation, HuntConfig huntConfig, boolean hasHead) {
+        if (!hasHead) {
+            return huntConfig;
+        }
+        if (isMissingFromItsHunt(player, headLocation)) {
+            return huntConfig;
+        }
+        return null;
+    }
+
+    private void showHeadState(Player player, HeadLocation headLocation, Location location, HuntConfig huntConfig, boolean hasHead) {
+        if (hasHead) {
+            spawnParticles(location, true, player, huntConfig);
+            registry.getHologramService().showFoundTo(player, location, huntConfig);
+        } else {
+            var templateParticle = registry.getSpawnService().particleOf(headLocation);
+            if (templateParticle != null) {
+                spawnTemplateParticle(location, templateParticle, player);
+            } else {
+                spawnParticles(location, false, player, huntConfig);
+            }
+            registry.getHologramService().showNotFoundTo(player, location, huntConfig);
+        }
+
+        registry.getHologramService().refresh(player, location);
+    }
+
+    private void sendHints(Player player, HeadLocation headLocation, Location location, HuntConfig hintConfig,
+                           double distanceSq, int rangeHint) {
+        var hintFrequency = Math.max(1, hintConfig.getHintFrequency());
+        var shouldTriggerHintSound = ThreadLocalRandom.current().nextInt(hintFrequency) == 0;
+        var shouldTriggerHintActionBar = ThreadLocalRandom.current().nextInt(hintFrequency) == 0;
+
+        if (headLocation.isHintSoundEnabled() && shouldTriggerHintSound) {
+            registry.getConfigService().hintSoundType()
+                    .record()
+                    .withVolume(registry.getConfigService().hintSoundVolume())
+                    .withPitch(ThreadLocalRandom.current().nextInt(3))
+                    .soundPlayer()
+                    .forPlayers(player)
+                    .atLocation(location)
+                    .play();
+        }
+
+        if (headLocation.isHintActionBarEnabled() && shouldTriggerHintActionBar) {
+            var distance = Math.sqrt(distanceSq);
+            var message = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), headLocation, registry.getConfigService().hintActionBarMessage());
+            message = message
+                    .replace("%distance%", String.valueOf(distance))
+                    .replace("%position%", String.valueOf(rangeHint - distance))
+                    .replace("%arrow%", getHintDirectionArrow(player.getLocation(), location));
+
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+        }
     }
 
     private String getHintDirectionArrow(Location playerLoc, Location targetLoc) {
@@ -259,42 +275,43 @@ public class GlobalTask implements Runnable {
         var down = dy < -2;
 
         if (angle >= -22.5 && angle < 22.5) {
-            if (up) {
-                return "⬆";
-            }
-            return down ? "⬇" : "⬆";
+            return arrowFor(up, down, "⬆", "⬇", "⬆");
         }
         if (angle >= 22.5 && angle < 67.5) {
-            if (up) {
-                return "⬉";
-            }
-            return down ? "⬋" : "⬉";
+            return arrowFor(up, down, "⬉", "⬋", "⬉");
         }
         if (angle >= 67.5 && angle < 112.5) {
-            if (up) {
-                return "⬉";
-            }
-            return down ? "⬋" : "⬅";
+            return arrowFor(up, down, "⬉", "⬋", "⬅");
         }
         if (angle >= 112.5 && angle < 157.5) {
             return "⬋";
         }
         if (angle >= -67.5 && angle < -22.5) {
-            if (up) {
-                return "⬈";
-            }
-            return down ? "⬊" : "⬈";
+            return arrowFor(up, down, "⬈", "⬊", "⬈");
         }
         if (angle >= -112.5 && angle < -67.5) {
-            if (up) {
-                return "⬈";
-            }
-            return down ? "⬊" : "➡";
+            return arrowFor(up, down, "⬈", "⬊", "➡");
         }
         if (angle >= -157.5 && angle < -112.5) {
             return "⬊";
         }
 
         return "⬇";
+    }
+
+    private static String arrowFor(boolean up, boolean down, String upArrow, String downArrow, String flatArrow) {
+        if (up) {
+            return upArrow;
+        }
+        return down ? downArrow : flatArrow;
+    }
+
+    private boolean isMissingFromItsHunt(Player player, HeadLocation headLocation) {
+        try {
+            return !registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), headLocation.getHuntId())
+                    .contains(headLocation.getUuid());
+        } catch (InternalException ignored) {
+            return false;
+        }
     }
 }

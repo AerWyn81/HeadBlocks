@@ -94,23 +94,23 @@ class MessageUtilsTest {
     @Test
     void centerMessage_withCenterTag_stripsTagAndPadsSpaces() {
         String result = MessageUtils.centerMessage("{center}Hi");
-        assertThat(result).doesNotContain("{center}");
-        assertThat(result).contains("Hi");
+        assertThat(result).doesNotContain("{center}")
+                .contains("Hi");
         assertThat(result.trim()).isEqualTo("Hi");
     }
 
     @Test
     void centerMessage_multipleCenterTags_allStripped() {
         String result = MessageUtils.centerMessage("{center}A{center}B");
-        assertThat(result).doesNotContain("{center}");
-        assertThat(result).contains("AB");
+        assertThat(result).doesNotContain("{center}")
+                .contains("AB");
     }
 
     @Test
     void sendCenteredString_shortMessage_paddedWithSpaces() {
         String result = MessageUtils.sendCenteredString("Hi");
-        assertThat(result).startsWith(" ");
-        assertThat(result).contains("Hi");
+        assertThat(result).startsWith(" ")
+                .contains("Hi");
     }
 
     @Test
@@ -270,8 +270,8 @@ class MessageUtilsTest {
     void sendCenteredString_singleCharacter_paddedAndEndedWithNewline() {
         String result = MessageUtils.sendCenteredString("A");
 
-        assertThat(result).endsWith("\n");
-        assertThat(result).contains("A");
+        assertThat(result).endsWith("\n")
+                .contains("A");
         assertThat(result.indexOf('A')).isGreaterThan(0);
     }
 }

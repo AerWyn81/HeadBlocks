@@ -21,12 +21,16 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class StorageService {
+    private static final String INSERT_INTO = "INSERT INTO ";
+    private static final String DROP_TABLE_IF_EXISTS = "DROP TABLE IF EXISTS ";
+
     private final ConfigService configService;
     private final File dataFolder;
 
@@ -172,7 +176,7 @@ public class StorageService {
 
         int dbVersion = database.checkVersion();
 
-        if (dbVersion == Database.version) {
+        if (dbVersion == Database.VERSION) {
             return;
         }
 
@@ -248,7 +252,7 @@ public class StorageService {
             return null;
         }
 
-        var backupFileName = "headblocks.db." + suffix + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"));
+        var backupFileName = "headblocks.db." + suffix + LocalDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"));
         var backupPath = dataFolder.toPath().resolve(backupFileName);
         try {
             Files.copy(databasePath, backupPath);
@@ -263,40 +267,44 @@ public class StorageService {
     public void loadPlayers(Player... players) {
         CompletableBukkitFuture.runAsync(HeadBlocks.getInstance(), () -> {
             for (var player : players) {
-                UUID pUuid = player.getUniqueId();
-                String playerName = player.getName();
-
-                try {
-                    boolean isExist = containsPlayer(pUuid);
-
-                    String playerDisplayName = getCustomDisplay(player);
-
-                    var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
-
-                    var playerHeads = new HashSet<UUID>();
-
-                    if (isExist) {
-                        boolean hasRenamed = hasPlayerRenamed(playerProfile);
-
-                        if (hasRenamed) {
-                            updatePlayerName(playerProfile);
-                        }
-
-                        for (UUID hUuid : database.getHeadsPlayer(pUuid)) {
-                            storage.addHead(pUuid, hUuid);
-                            playerHeads.add(hUuid);
-                        }
-                    } else {
-                        updatePlayerName(playerProfile);
-                    }
-
-                    storage.setCachedPlayerHeads(pUuid, playerHeads);
-                } catch (InternalException ex) {
-                    storageError = true;
-                    LogUtil.error("Error while trying to load player {0} from SQL database: {1}", playerName, ex.getMessage());
-                }
+                loadPlayer(player);
             }
         });
+    }
+
+    private void loadPlayer(Player player) {
+        UUID pUuid = player.getUniqueId();
+        String playerName = player.getName();
+
+        try {
+            boolean isExist = containsPlayer(pUuid);
+
+            String playerDisplayName = getCustomDisplay(player);
+
+            var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
+
+            var playerHeads = new HashSet<UUID>();
+
+            if (isExist) {
+                boolean hasRenamed = hasPlayerRenamed(playerProfile);
+
+                if (hasRenamed) {
+                    updatePlayerName(playerProfile);
+                }
+
+                for (UUID hUuid : database.getHeadsPlayer(pUuid)) {
+                    storage.addHead(pUuid, hUuid);
+                    playerHeads.add(hUuid);
+                }
+            } else {
+                updatePlayerName(playerProfile);
+            }
+
+            storage.setCachedPlayerHeads(pUuid, playerHeads);
+        } catch (InternalException ex) {
+            storageError = true;
+            LogUtil.error("Error while trying to load player {0} from SQL database: {1}", playerName, ex.getMessage());
+        }
     }
 
     private String getCustomDisplay(Player player) {
@@ -458,7 +466,7 @@ public class StorageService {
         return database.getAllPlayers();
     }
 
-    public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
+    public Map<PlayerProfileLight, Integer> getTopPlayers() throws InternalException {
         LinkedHashMap<PlayerProfileLight, Integer> cached = storage.getCachedTopPlayers();
 
         if (!cached.isEmpty()) {
@@ -517,10 +525,10 @@ public class StorageService {
         return database.isHeadExist(headUuid);
     }
 
-    public ArrayList<String> getInstructionsExport(EnumTypeDatabase type) throws InternalException {
+    public List<String> getInstructionsExport(EnumTypeDatabase type) throws InternalException {
         ArrayList<String> instructions = new ArrayList<>();
 
-        instructions.add("DROP TABLE IF EXISTS " + configService.databasePrefix() + "hb_heads;");
+        instructions.add(DROP_TABLE_IF_EXISTS + configService.databasePrefix() + "hb_heads;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTableHeadsMySQL() + ";");
@@ -530,13 +538,13 @@ public class StorageService {
 
         ArrayList<Database.HeadExportRow> heads = database.getTableHeads();
         for (Database.HeadExportRow head : heads) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId, hSpawn) VALUES ('" + escapeSql(head.uuid()) +
+            instructions.add(INSERT_INTO + configService.databasePrefix() + "hb_heads (hUUID, hExist, hTexture, serverId, hSpawn) VALUES ('" + escapeSql(head.uuid()) +
                     "', " + (head.exists() ? 1 : 0) + ", '', '" + escapeSql(serverIdentifier) + "', " + (head.spawn() ? 1 : 0) + ");");
         }
 
         instructions.add("");
 
-        instructions.add("DROP TABLE IF EXISTS " + configService.databasePrefix() + "hb_playerHeads;");
+        instructions.add(DROP_TABLE_IF_EXISTS + configService.databasePrefix() + "hb_playerHeads;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTablePlayerHeadsMySQL() + ";");
@@ -546,13 +554,13 @@ public class StorageService {
 
         ArrayList<Database.PlayerHeadExportRow> playerHeads = database.getTablePlayerHeads();
         for (Database.PlayerHeadExportRow pHead : playerHeads) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + escapeSql(pHead.playerUuid()) +
+            instructions.add(INSERT_INTO + configService.databasePrefix() + "hb_playerHeads (pUUID, hUUID) VALUES ('" + escapeSql(pHead.playerUuid()) +
                     "', '" + escapeSql(pHead.headUuid()) + "');");
         }
 
         instructions.add("");
 
-        instructions.add("DROP TABLE IF EXISTS " + configService.databasePrefix() + "hb_players;");
+        instructions.add(DROP_TABLE_IF_EXISTS + configService.databasePrefix() + "hb_players;");
 
         if (type == EnumTypeDatabase.MySQL) {
             instructions.add(Requests.createTablePlayersMySQL() + ";");
@@ -562,14 +570,14 @@ public class StorageService {
 
         ArrayList<Database.PlayerExportRow> players = database.getTablePlayers();
         for (Database.PlayerExportRow player : players) {
-            instructions.add("INSERT INTO " + configService.databasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + escapeSql(player.uuid()) + "', '" + escapeSql(player.name()) + "', '');");
+            instructions.add(INSERT_INTO + configService.databasePrefix() + "hb_players (pUUID, pName, pDisplayName) VALUES ('" + escapeSql(player.uuid()) + "', '" + escapeSql(player.name()) + "', '');");
         }
 
         instructions.add("");
 
-        instructions.add("DROP TABLE IF EXISTS " + configService.databasePrefix() + "hb_version;");
+        instructions.add(DROP_TABLE_IF_EXISTS + configService.databasePrefix() + "hb_version;");
         instructions.add(Requests.createTableVersion() + ";");
-        instructions.add(Requests.upsertVersion().replaceAll("\\?", String.valueOf(Database.version)) + ";");
+        instructions.add(Requests.upsertVersion().replace("?", String.valueOf(Database.VERSION)) + ";");
 
         return instructions;
     }
@@ -585,7 +593,7 @@ public class StorageService {
         return database.getHeadTexture(headUuid);
     }
 
-    public ArrayList<UUID> getPlayers(UUID headUuid) throws InternalException {
+    public List<UUID> getPlayers(UUID headUuid) throws InternalException {
         return database.getPlayers(headUuid);
     }
 
@@ -605,7 +613,7 @@ public class StorageService {
         }
     }
 
-    public ArrayList<UUID> getHeads() throws InternalException {
+    public List<UUID> getHeads() throws InternalException {
         Set<UUID> cachedHeads = storage.getCachedHeads();
         if (!cachedHeads.isEmpty()) {
             return new ArrayList<>(cachedHeads);
@@ -618,11 +626,11 @@ public class StorageService {
         return heads;
     }
 
-    public ArrayList<UUID> getHeadsByServerId() throws InternalException {
+    public List<UUID> getHeadsByServerId() throws InternalException {
         return database.getHeads(serverIdentifier);
     }
 
-    public ArrayList<String> getDistinctServerIds() throws InternalException {
+    public List<String> getDistinctServerIds() throws InternalException {
         return database.getDistinctServerIds();
     }
 
@@ -640,7 +648,7 @@ public class StorageService {
         scoreCache.remove(huntId);
     }
 
-    public ArrayList<UUID> getHeadsPlayerForHunt(UUID playerUuid, String huntId) throws InternalException {
+    public List<UUID> getHeadsPlayerForHunt(UUID playerUuid, String huntId) throws InternalException {
         Set<UUID> cached = storage.getCachedPlayerHeadsForHunt(playerUuid, huntId);
         if (cached != null) {
             return new ArrayList<>(cached);
@@ -651,7 +659,7 @@ public class StorageService {
         return fromDb;
     }
 
-    public LinkedHashMap<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException {
+    public Map<PlayerProfileLight, Integer> getTopPlayersForHunt(String huntId) throws InternalException {
         LinkedHashMap<PlayerProfileLight, Integer> cached = storage.getCachedTopPlayersForHunt(huntId);
         if (cached != null) {
             return cached.entrySet().stream()
@@ -679,7 +687,7 @@ public class StorageService {
 
     // --- Hunt DB access ---
 
-    public ArrayList<String[]> getHuntsFromDb() throws InternalException {
+    public List<String[]> getHuntsFromDb() throws InternalException {
         return database.getHunts();
     }
 
@@ -738,7 +746,7 @@ public class StorageService {
         storage.clearCachedTimedRunCount(playerUuid, huntId);
     }
 
-    public LinkedHashMap<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException {
+    public Map<PlayerProfileLight, Long> getTimedLeaderboard(String huntId, int limit) throws InternalException {
         LinkedHashMap<PlayerProfileLight, Long> cached = storage.getCachedTimedLeaderboard(huntId);
         if (cached != null) {
             return cached.entrySet().stream()

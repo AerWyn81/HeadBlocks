@@ -14,12 +14,13 @@ import org.bukkit.entity.Player;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * The menu listing the requirements of a hunt. Callback driven, so any caller can plug into it.
  */
 public class RequirementsGui {
+    private static final String GUI_REQUIREMENT = "Gui.Requirement";
+
     private static final int MAX_REQUIREMENTS = 18;
     private static final int FIRST_ENTRY_SLOT = 9;
     private static final int MODE_SLOT = 4;
@@ -110,7 +111,7 @@ public class RequirementsGui {
 
         List<String> lore = registry.getLanguageService().messageList("Gui.RequirementsModeLore").stream()
                 .map(line -> line.replace("%mode%", modeLabel))
-                .collect(Collectors.toList());
+                .toList();
 
         return new ItemGUI(new ItemBuilder(all ? Material.COMPARATOR : Material.REPEATER)
                 .setName(registry.getLanguageService().message("Gui.RequirementsMode"))
@@ -132,7 +133,7 @@ public class RequirementsGui {
         lore.addAll(registry.getLanguageService().messageList("Gui.RequirementEntryLore"));
 
         return new ItemGUI(new ItemBuilder(type.getIcon())
-                .setName(registry.getLanguageService().message("Gui.Requirement" + type.getLangKey() + "Name"))
+                .setName(registry.getLanguageService().message(GUI_REQUIREMENT + type.getLangKey() + "Name"))
                 .setLore(lore)
                 .toItemStack(), true)
                 .addOnClickEvent(event -> {
@@ -192,9 +193,9 @@ public class RequirementsGui {
     }
 
     private ItemGUI typeItem(RequirementType type, Session session) {
-        String name = registry.getLanguageService().message("Gui.Requirement" + type.getLangKey() + "Name");
+        String name = registry.getLanguageService().message(GUI_REQUIREMENT + type.getLangKey() + "Name");
         List<String> lore = new ArrayList<>(
-                registry.getLanguageService().messageList("Gui.Requirement" + type.getLangKey() + "Lore"));
+                registry.getLanguageService().messageList(GUI_REQUIREMENT + type.getLangKey() + "Lore"));
 
         if (!type.isAvailable(registry.getPluginProvider())) {
             lore.addAll(registry.getLanguageService().messageList("Gui.RequirementUnavailableLore"));

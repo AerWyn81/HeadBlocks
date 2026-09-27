@@ -10,15 +10,17 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class IridiumColorAPI {
+
+    private IridiumColorAPI() {
+    }
 
     /**
      * Cached result if the server version is after the v1.16 RGB update.
      * HeadBlocks requires MC 1.20+ (see VersionUtils), so RGB is always supported.
      */
-    private static final boolean SUPPORTS_RGB = VersionUtils.isAtLeastVersion(VersionUtils.v1_20_R1);
+    private static final boolean SUPPORTS_RGB = VersionUtils.isAtLeastVersion(VersionUtils.V1_20_R1);
 
     private static final List<String> SPECIAL_COLORS = Arrays.asList("&l", "&n", "&o", "&k", "&m", "§l", "§n", "§o", "§k", "§m");
 
@@ -78,7 +80,7 @@ public class IridiumColorAPI {
     public static List<String> process(Collection<String> strings) {
         return strings.stream()
                 .map(IridiumColorAPI::process)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -137,7 +139,7 @@ public class IridiumColorAPI {
      * @since 1.0.5
      */
     public static String stripColorFormatting(String string) {
-        return string.replaceAll("<#[0-9A-F]{6}>|[&§][a-f0-9lnokm]|</?[A-Z]{5,8}(:[0-9A-F]{6})?[0-9]*>", "");
+        return string.replaceAll("<#[0-9A-F]{6}>|[&§][a-f0-9lnokm]|</?[A-Z]{5,8}(:[0-9A-F]{6})?\\d*>", "");
     }
 
     private static String apply(String source, ChatColor[] colors) {
@@ -145,7 +147,8 @@ public class IridiumColorAPI {
         StringBuilder stringBuilder = new StringBuilder();
         String[] characters = source.split("");
         int outIndex = 0;
-        for (int i = 0; i < characters.length; i++) {
+        int i = 0;
+        while (i < characters.length) {
             if (characters[i].equals("&") || characters[i].equals("§")) {
                 if (i + 1 < characters.length) {
                     if (characters[i + 1].equals("r")) {
@@ -159,6 +162,7 @@ public class IridiumColorAPI {
                     stringBuilder.append(colors[outIndex++]).append(specialColors).append(characters[i]);
             } else
                 stringBuilder.append(colors[outIndex++]).append(specialColors).append(characters[i]);
+            i++;
         }
         return stringBuilder.toString();
     }

@@ -569,7 +569,7 @@ class RedisStorageTest {
 
         long result = storage.getHuntVersion();
 
-        assertThat(result).isEqualTo(0L);
+        assertThat(result).isZero();
     }
 
     @Test

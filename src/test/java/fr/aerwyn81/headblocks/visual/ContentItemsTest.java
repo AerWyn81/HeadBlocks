@@ -131,7 +131,8 @@ class ContentItemsTest {
     @Test
     void blockDisplay_spawnsACenteredBlock() {
         var bukkit = mockStatic(org.bukkit.Bukkit.class);
-        bukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.LANTERN)).thenReturn(mock(BlockData.class));
+        var blockDataMock = mock(BlockData.class);
+        bukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.LANTERN)).thenReturn(blockDataMock);
         World world = mock(World.class);
         Location anchor = mock(Location.class);
         when(anchor.getWorld()).thenReturn(world);
@@ -155,8 +156,10 @@ class ContentItemsTest {
         Location anchor = mock(Location.class);
         when(anchor.getWorld()).thenReturn(world);
 
-        assertThatThrownBy(() -> new BlockDisplayRenderer().spawn(anchor, HeadContent.of(ContentKind.BLOCK, "DIAMOND", null),
-                new RenderSettings(1, false, 0))).isInstanceOf(IllegalStateException.class);
+        var renderer = new BlockDisplayRenderer();
+        var content = HeadContent.of(ContentKind.BLOCK, "DIAMOND", null);
+        var settings = new RenderSettings(1, false, 0);
+        assertThatThrownBy(() -> renderer.spawn(anchor, content, settings)).isInstanceOf(IllegalStateException.class);
         verify(world, never()).spawn(any(), any());
     }
 

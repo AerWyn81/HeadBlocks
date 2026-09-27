@@ -32,17 +32,17 @@ class VersionUtilsTest {
 
     @Test
     void getVersionId_v1_20_R1_returns1201() {
-        assertThat(VersionUtils.v1_20_R1.getVersionId()).isEqualTo(1201);
+        assertThat(VersionUtils.V1_20_R1.getVersionId()).isEqualTo(1201);
     }
 
     @Test
     void getVersionId_v1_21_R11_returns12111() {
-        assertThat(VersionUtils.v1_21_R11.getVersionId()).isEqualTo(12111);
+        assertThat(VersionUtils.V1_21_R11.getVersionId()).isEqualTo(12111);
     }
 
     @Test
     void getVersionId_v1_21_R1_returns1211() {
-        assertThat(VersionUtils.v1_21_R1.getVersionId()).isEqualTo(1211);
+        assertThat(VersionUtils.V1_21_R1.getVersionId()).isEqualTo(1211);
     }
 
     // --- getVersion with valid Bukkit version ---
@@ -54,7 +54,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v1_20_R1);
+            assertThat(result).isEqualTo(VersionUtils.V1_20_R1);
         }
     }
 
@@ -65,7 +65,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v1_21_R1);
+            assertThat(result).isEqualTo(VersionUtils.V1_21_R1);
         }
     }
 
@@ -76,7 +76,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v1_20_R6);
+            assertThat(result).isEqualTo(VersionUtils.V1_20_R6);
         }
     }
 
@@ -105,7 +105,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_3);
+            assertThat(result).isEqualTo(VersionUtils.V26_3);
         }
     }
 
@@ -118,7 +118,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_3);
+            assertThat(result).isEqualTo(VersionUtils.V26_3);
         }
     }
 
@@ -131,7 +131,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_1_2);
+            assertThat(result).isEqualTo(VersionUtils.V26_1_2);
         }
     }
 
@@ -142,7 +142,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_2);
+            assertThat(result).isEqualTo(VersionUtils.V26_2);
         }
     }
 
@@ -153,7 +153,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_3);
+            assertThat(result).isEqualTo(VersionUtils.V26_3);
         }
     }
 
@@ -164,7 +164,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_1);
+            assertThat(result).isEqualTo(VersionUtils.V26_1);
         }
     }
 
@@ -173,8 +173,8 @@ class VersionUtilsTest {
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getBukkitVersion).thenReturn("26.1.2-61-8dea6f1");
 
-            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.v1_20_R1)).isTrue();
-            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.v1_21_R11)).isTrue();
+            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.V1_20_R1)).isTrue();
+            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.V1_21_R11)).isTrue();
         }
     }
 
@@ -187,7 +187,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v26_1_2);
+            assertThat(result).isEqualTo(VersionUtils.V26_1_2);
         }
     }
 
@@ -198,7 +198,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v1_21_R5);
+            assertThat(result).isEqualTo(VersionUtils.V1_21_R5);
         }
     }
 
@@ -209,7 +209,7 @@ class VersionUtilsTest {
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getBukkitVersion).thenReturn("1.21.1-R0.1-SNAPSHOT");
 
-            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.v1_21_R1)).isTrue();
+            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.V1_21_R1)).isTrue();
         }
     }
 
@@ -218,7 +218,7 @@ class VersionUtilsTest {
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getBukkitVersion).thenReturn("1.21.1-R0.1-SNAPSHOT");
 
-            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.v1_20_R1)).isTrue();
+            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.V1_20_R1)).isTrue();
         }
     }
 
@@ -227,7 +227,7 @@ class VersionUtilsTest {
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getBukkitVersion).thenReturn("1.20.1-R0.1-SNAPSHOT");
 
-            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.v1_21_R11)).isFalse();
+            assertThat(VersionUtils.isAtLeastVersion(VersionUtils.V1_21_R11)).isFalse();
         }
     }
 
@@ -238,7 +238,7 @@ class VersionUtilsTest {
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getBukkitVersion).thenReturn("1.20.1-R0.1-SNAPSHOT");
 
-            assertThat(VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R1)).isTrue();
+            assertThat(VersionUtils.isNewerOrEqualsTo(VersionUtils.V1_20_R1)).isTrue();
         }
     }
 
@@ -247,7 +247,7 @@ class VersionUtilsTest {
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getBukkitVersion).thenReturn("1.20.1-R0.1-SNAPSHOT");
 
-            assertThat(VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_21_R11)).isFalse();
+            assertThat(VersionUtils.isNewerOrEqualsTo(VersionUtils.V1_21_R11)).isFalse();
         }
     }
 
@@ -261,7 +261,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v1_20_R1);
+            assertThat(result).isEqualTo(VersionUtils.V1_20_R1);
         }
     }
 
@@ -272,7 +272,7 @@ class VersionUtilsTest {
 
             VersionUtils result = VersionUtils.getVersion();
 
-            assertThat(result).isEqualTo(VersionUtils.v1_21_R1);
+            assertThat(result).isEqualTo(VersionUtils.V1_21_R1);
         }
     }
 }

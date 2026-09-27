@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,9 +61,7 @@ class HelpCommandTest {
             when(hbCmd.getCommand()).thenReturn("help");
             when(languageService.containsMessage("Help.Help")).thenReturn(true);
 
-            boolean result = command.perform(consoleSender, new String[]{"help"});
-
-            assertThat(result).isTrue();
+            assertThatNoException().isThrownBy(() -> command.perform(consoleSender, new String[]{"help"}));
         }
     }
 
@@ -92,9 +91,8 @@ class HelpCommandTest {
             try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
                 pu.when(() -> PlayerUtils.hasPermission(eq(consoleSender), anyString())).thenReturn(true);
 
-                boolean result = command.perform(consoleSender, new String[]{"help"});
+                command.perform(consoleSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Chat.LineTitle");
                 verify(consoleSender).sendMessage("mock-message");
             }
@@ -108,9 +106,8 @@ class HelpCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"help"});
+                command.perform(playerSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Chat.LineTitle");
             }
         }
@@ -146,9 +143,8 @@ class HelpCommandTest {
             try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
                 pu.when(() -> PlayerUtils.hasPermission(eq(consoleSender), anyString())).thenReturn(true);
 
-                boolean result = command.perform(consoleSender, new String[]{"help"});
+                command.perform(consoleSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 // Title + 2 command help messages
                 verify(consoleSender, times(3)).sendMessage("mock-message");
             }
@@ -163,9 +159,8 @@ class HelpCommandTest {
                 pu.when(() -> PlayerUtils.hasPermission(consoleSender, "headblocks.admin")).thenReturn(false);
                 pu.when(() -> PlayerUtils.hasPermission(consoleSender, "headblocks.use")).thenReturn(true);
 
-                boolean result = command.perform(consoleSender, new String[]{"help"});
+                command.perform(consoleSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 // Title + 1 command help message
                 verify(consoleSender, times(2)).sendMessage("mock-message");
             }
@@ -181,9 +176,8 @@ class HelpCommandTest {
                 pu.when(() -> PlayerUtils.hasPermission(eq(consoleSender), anyString())).thenReturn(true);
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"help"});
+                command.perform(consoleSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 // "give" has no help message, so should get the "no help message found" text
                 verify(consoleSender).sendMessage(contains("No help message found"));
             }
@@ -200,9 +194,8 @@ class HelpCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"help"});
+                command.perform(playerSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Chat.LineTitle");
             }
         }
@@ -220,9 +213,8 @@ class HelpCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"help"});
+                command.perform(playerSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 // Even for Player sender, missing help message is sent via sendMessage, not spigot
                 verify(playerSender).sendMessage(contains("No help message found"));
             }
@@ -243,9 +235,8 @@ class HelpCommandTest {
             try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
                 pu.when(() -> PlayerUtils.hasPermission(eq(consoleSender), anyString())).thenReturn(true);
 
-                boolean result = command.perform(consoleSender, new String[]{"help"});
+                command.perform(consoleSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 verify(languageService).containsMessage("Help.RemoveAll");
                 verify(languageService).message("Help.RemoveAll");
             }
@@ -262,9 +253,7 @@ class HelpCommandTest {
             try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
                 pu.when(() -> PlayerUtils.hasPermission(eq(consoleSender), anyString())).thenReturn(true);
 
-                boolean result = command.perform(consoleSender, new String[]{"help", "2"});
-
-                assertThat(result).isTrue();
+                assertThatNoException().isThrownBy(() -> command.perform(consoleSender, new String[]{"help", "2"}));
             }
         }
 
@@ -276,9 +265,7 @@ class HelpCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"help", "1"});
-
-                assertThat(result).isTrue();
+                assertThatNoException().isThrownBy(() -> command.perform(playerSender, new String[]{"help", "1"}));
             }
         }
     }
@@ -297,9 +284,8 @@ class HelpCommandTest {
             try (MockedStatic<PlayerUtils> pu = mockStatic(PlayerUtils.class)) {
                 pu.when(() -> PlayerUtils.hasPermission(eq(consoleSender), anyString())).thenReturn(false);
 
-                boolean result = command.perform(consoleSender, new String[]{"help"});
+                command.perform(consoleSender, new String[]{"help"});
 
-                assertThat(result).isTrue();
                 // Title is sent, but no command help messages
                 verify(consoleSender).sendMessage("mock-message");
                 verify(languageService, never()).containsMessage(anyString());

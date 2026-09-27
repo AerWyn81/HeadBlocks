@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -184,8 +185,7 @@ class ScheduledBehaviorTest {
     void onHeadFound_doesNothing() {
         ScheduledBehavior behavior = new ScheduledBehavior(registry, (LocalDateTime) null, null);
 
-        behavior.onHeadFound(player, headLocation, hunt);
-        // No-op, no exception = pass
+        assertThatNoException().isThrownBy(() -> behavior.onHeadFound(player, headLocation, hunt));
     }
 
     @Test

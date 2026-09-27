@@ -75,7 +75,7 @@ class PlayerUtilsTest {
         }
         when(inventory.getStorageContents()).thenReturn(items);
 
-        assertThat(PlayerUtils.getEmptySlots(player)).isEqualTo(0);
+        assertThat(PlayerUtils.getEmptySlots(player)).isZero();
     }
 
     @Test

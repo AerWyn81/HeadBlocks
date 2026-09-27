@@ -121,7 +121,9 @@ class HBHuntTest {
         HBHunt hunt = new HBHunt(configService, "test", "Test", HuntState.ACTIVE, 1, "DIAMOND");
         hunt.addHead(UUID.randomUUID());
 
-        assertThatThrownBy(() -> hunt.getHeadUUIDs().add(UUID.randomUUID()))
+        var headUUIDs = hunt.getHeadUUIDs();
+        var newHead = UUID.randomUUID();
+        assertThatThrownBy(() -> headUUIDs.add(newHead))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
@@ -398,7 +400,7 @@ class HBHuntTest {
         HBHunt h1 = new HBHunt(configService, "abc", "A", HuntState.ACTIVE, 1, "D");
         HBHunt h2 = new HBHunt(configService, "abc", "B", HuntState.INACTIVE, 2, "G");
 
-        assertThat(h1.hashCode()).isEqualTo(h2.hashCode());
+        assertThat(h1).hasSameHashCodeAs(h2);
     }
 
     @Test

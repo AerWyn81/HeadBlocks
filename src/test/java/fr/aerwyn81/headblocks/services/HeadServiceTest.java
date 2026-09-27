@@ -33,7 +33,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -72,7 +72,7 @@ class HeadServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        headService = new HeadService(configService, storageService, languageService, scheduler, pluginProvider);
+        headService = new HeadService(configService, storageService, languageService, scheduler);
         assertThat(headService.getHeadProviders()).isEmpty();
         headService.setHologramService(hologramService);
         headService.setHuntService(huntService);
@@ -192,7 +192,7 @@ class HeadServiceTest {
 
         @Test
         void defaultConstructor_emptyProviders() {
-            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler);
 
             assertThat(svc.getHeadProviders()).isEmpty();
         }
@@ -203,14 +203,14 @@ class HeadServiceTest {
             Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
             providers.put("custom", hook);
 
-            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, providers);
 
             assertThat(svc.getHeadProviders()).containsEntry("custom", hook);
         }
 
         @Test
         void nullProviders_treatedAsEmpty() {
-            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, null);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, null);
 
             assertThat(svc.getHeadProviders()).isEmpty();
         }
@@ -274,7 +274,7 @@ class HeadServiceTest {
             when(hook.isAvailable()).thenReturn(false);
             Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
             providers.put("headdb", hook);
-            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, providers);
 
             try (MockedStatic<LogUtil> log = mockStatic(LogUtil.class)) {
                 svc.addProviderHead(mock(ItemStack.class), "headdb", "5", "headdb:5", 1);
@@ -295,7 +295,7 @@ class HeadServiceTest {
 
             Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
             providers.put("headdb", hook);
-            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, providers);
             initHeads(svc);
 
             assertThat(svc.addProviderHead(head, "headdb", "5", "headdb:5", 1)).isSameAs(created);
@@ -310,7 +310,7 @@ class HeadServiceTest {
 
             Map<String, HeadProviderHook> providers = new LinkedHashMap<>();
             providers.put("headdb", hook);
-            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, providers);
+            HeadService svc = new HeadService(configService, storageService, languageService, scheduler, providers);
             initHeads(svc);
 
             try (MockedStatic<LogUtil> log = mockStatic(LogUtil.class)) {
@@ -554,7 +554,7 @@ class HeadServiceTest {
             addHead(named);
             addHead(unnamed);
 
-            ArrayList<String> result = headService.getHeadRawNameOrUuid();
+            var result = headService.getHeadRawNameOrUuid();
 
             assertThat(result).containsExactly("Named", uuid2.toString());
         }
@@ -582,7 +582,7 @@ class HeadServiceTest {
             addHead(hl2);
             addHead(hl3);
 
-            ArrayList<String> result = headService.getHeadRawNameOrUuid();
+            var result = headService.getHeadRawNameOrUuid();
 
             assertThat(result).containsExactly("Zebra", "Apple", "Mango");
         }
@@ -605,7 +605,7 @@ class HeadServiceTest {
             addHead(uncharged);
             addHead(charged2);
 
-            ArrayList<HeadLocation> result = headService.getChargedHeadLocations();
+            var result = headService.getChargedHeadLocations();
 
             assertThat(result).containsExactly(charged1, charged2);
         }
@@ -668,7 +668,7 @@ class HeadServiceTest {
 
             HBHunt hunt = new HBHunt(configService, "hunt1", "Test Hunt", HuntState.ACTIVE, 1, "D");
 
-            ArrayList<HeadLocation> result = headService.getHeadLocationsForHunt(hunt);
+            var result = headService.getHeadLocationsForHunt(hunt);
 
             assertThat(result).containsExactly(hl1, hl3);
         }
@@ -692,7 +692,7 @@ class HeadServiceTest {
         }
 
         @Test
-        void returns_arraylist_type() throws Exception {
+        void returns_arraylist_type() {
             HBHunt hunt = new HBHunt(configService, "h1", "Test", HuntState.ACTIVE, 1, "D");
 
             assertThat(headService.getHeadLocationsForHunt(hunt)).isInstanceOf(ArrayList.class);
@@ -716,7 +716,7 @@ class HeadServiceTest {
             Map<UUID, HeadMove> result = headService.getHeadMoves();
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(uuid)).isEqualTo(move);
+            assertThat(result).containsEntry(uuid, move);
         }
 
         @Test
@@ -744,7 +744,7 @@ class HeadServiceTest {
         void clearHeadMoves_with_null_map_does_not_throw() throws Exception {
             setField("headMoves", null);
 
-            headService.clearHeadMoves(); // should not throw due to null guard
+            assertThatNoException().isThrownBy(() -> headService.clearHeadMoves());
         }
 
         @Test
@@ -765,9 +765,9 @@ class HeadServiceTest {
 
             Map<UUID, HeadMove> result = headService.getHeadMoves();
 
-            assertThat(result).hasSize(2);
-            assertThat(result).containsKey(uuid1);
-            assertThat(result).containsKey(uuid2);
+            assertThat(result).hasSize(2)
+                    .containsKey(uuid1)
+                    .containsKey(uuid2);
         }
 
         @Test
@@ -1115,9 +1115,8 @@ class HeadServiceTest {
             try (MockedStatic<InternalUtils> mocked = mockStatic(InternalUtils.class)) {
                 mocked.when(() -> InternalUtils.generateNewUUID(anyList())).thenReturn(UUID.randomUUID());
 
-                headService.saveHeadLocation(loc, "tex", "default");
+                assertThatNoException().isThrownBy(() -> headService.saveHeadLocation(loc, "tex", "default"));
 
-                // hologramService is null so createHolograms is never called (no NPE)
             }
         }
 
@@ -1304,11 +1303,11 @@ class HeadServiceTest {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "C", null, true);
             addHead(hl);
 
-            ArrayList<HeadLocation> result1 = headService.getChargedHeadLocations();
-            ArrayList<HeadLocation> result2 = headService.getChargedHeadLocations();
+            var result1 = headService.getChargedHeadLocations();
+            var result2 = headService.getChargedHeadLocations();
 
-            assertThat(result1).isNotSameAs(result2);
-            assertThat(result1).isEqualTo(result2);
+            assertThat(result1).isNotSameAs(result2)
+                    .isEqualTo(result2);
         }
 
         @Test
@@ -1316,8 +1315,8 @@ class HeadServiceTest {
             HeadLocation hl = createHeadLocation(UUID.randomUUID(), "Test", null, true);
             addHead(hl);
 
-            ArrayList<String> result1 = headService.getHeadRawNameOrUuid();
-            ArrayList<String> result2 = headService.getHeadRawNameOrUuid();
+            var result1 = headService.getHeadRawNameOrUuid();
+            var result2 = headService.getHeadRawNameOrUuid();
 
             assertThat(result1).isNotSameAs(result2);
         }
@@ -1784,7 +1783,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl1, hl2));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
@@ -1820,7 +1819,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>();
             headsToRemove.add(null);
@@ -1867,7 +1866,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl1, hl2));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
@@ -1902,7 +1901,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
@@ -1936,7 +1935,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
@@ -1972,7 +1971,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
@@ -2008,7 +2007,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
@@ -2046,7 +2045,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
@@ -2056,7 +2055,7 @@ class HeadServiceTest {
         }
 
         @Test
-        void empty_list_calls_onComplete_with_zero() throws Exception {
+        void empty_list_calls_onComplete_with_zero() {
             doAnswer(invocation -> {
                 Runnable asyncTask = invocation.getArgument(0);
                 asyncTask.run();
@@ -2070,7 +2069,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             headService.removeAllHeadLocationsAsync(new ArrayList<>(), true, onComplete);
 
@@ -2103,7 +2102,7 @@ class HeadServiceTest {
             }).when(scheduler).runTask(any(Runnable.class));
 
             @SuppressWarnings("unchecked")
-            Consumer<Integer> onComplete = mock(Consumer.class);
+            IntConsumer onComplete = mock(IntConsumer.class);
 
             ArrayList<HeadLocation> headsToRemove = new ArrayList<>(List.of(hl));
             headService.removeAllHeadLocationsAsync(headsToRemove, true, onComplete);
@@ -2412,7 +2411,7 @@ class HeadServiceTest {
 
             HBHunt hunt = new HBHunt(configService, "all", "All Heads", HuntState.ACTIVE, 1, "D");
 
-            ArrayList<HeadLocation> result = headService.getHeadLocationsForHunt(hunt);
+            var result = headService.getHeadLocationsForHunt(hunt);
 
             assertThat(result).containsExactly(hl1, hl2, hl3);
         }
@@ -2451,7 +2450,7 @@ class HeadServiceTest {
             addHead(u2);
             addHead(c3);
 
-            ArrayList<HeadLocation> result = headService.getChargedHeadLocations();
+            var result = headService.getChargedHeadLocations();
 
             assertThat(result).containsExactly(c1, c2, c3);
         }

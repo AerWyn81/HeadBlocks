@@ -10,10 +10,13 @@ import kr.toxicity.model.api.tracker.ModelScaler;
 import kr.toxicity.model.api.tracker.TrackerUpdateAction;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Interaction;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+
+import java.util.List;
 
 public class BetterModelHook extends HandleProviderHook<EntityTracker> {
 
@@ -67,6 +70,11 @@ public class BetterModelHook extends HandleProviderHook<EntityTracker> {
             tracker.update(TrackerUpdateAction.glow(true));
         }
         return tracker;
+    }
+
+    @Override
+    protected List<Entity> entitiesOf(EntityTracker handle) {
+        return List.of();
     }
 
     @Override

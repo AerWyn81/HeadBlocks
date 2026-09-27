@@ -19,12 +19,12 @@ public abstract class DisplayRenderer implements EntityRenderer {
 
     protected abstract double size(float scale);
 
-    protected double width(HeadContent content, float scale) {
-        return size(scale);
-    }
+    protected abstract double width(HeadContent content, float scale);
 
-    protected double height(HeadContent content, float scale) {
-        return size(scale);
+    protected abstract double height(HeadContent content, float scale);
+
+    protected boolean spins() {
+        return true;
     }
 
     @Override
@@ -48,6 +48,10 @@ public abstract class DisplayRenderer implements EntityRenderer {
 
     @Override
     public void spin(List<Entity> entities, float angle, RenderSettings settings, int periodTicks) {
+        if (!spins()) {
+            return;
+        }
+
         for (var entity : entities) {
             if (!(entity instanceof Display display) || !display.isValid()) {
                 continue;

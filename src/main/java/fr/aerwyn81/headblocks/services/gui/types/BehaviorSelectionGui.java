@@ -19,10 +19,13 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class BehaviorSelectionGui {
+    private static final String ORDERED = "ordered";
+    private static final String SCHEDULED = "scheduled";
+    private static final String TIMED = "timed";
+
     private final ServiceRegistry registry;
     private final ConcurrentHashMap<UUID, Set<String>> selectedBehaviors = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> pendingHuntNames = new ConcurrentHashMap<>();
@@ -58,22 +61,22 @@ public class BehaviorSelectionGui {
         menu.setItem(0, 10, createRequirementsItem(player));
 
         // Slot 11: Ordered
-        menu.setItem(0, 11, createBehaviorItem("ordered",
+        menu.setItem(0, 11, createBehaviorItem(ORDERED,
                 registry.getLanguageService().message("Gui.BehaviorOrderedName"),
                 registry.getLanguageService().messageList("Gui.BehaviorOrderedLore"),
-                selected.contains("ordered")));
+                selected.contains(ORDERED)));
 
         // Slot 12: Scheduled
-        menu.setItem(0, 12, createBehaviorItem("scheduled",
+        menu.setItem(0, 12, createBehaviorItem(SCHEDULED,
                 registry.getLanguageService().message("Gui.BehaviorScheduledName"),
                 registry.getLanguageService().messageList("Gui.BehaviorScheduledLore"),
-                selected.contains("scheduled")));
+                selected.contains(SCHEDULED)));
 
         // Slot 13: Timed
-        menu.setItem(0, 13, createBehaviorItem("timed",
+        menu.setItem(0, 13, createBehaviorItem(TIMED,
                 registry.getLanguageService().message("Gui.BehaviorTimedName"),
                 registry.getLanguageService().messageList("Gui.BehaviorTimedLore"),
-                selected.contains("timed")));
+                selected.contains(TIMED)));
 
         menu.setItem(0, 14, createBehaviorItem(SpawnBehavior.ID,
                 registry.getLanguageService().message("Gui.BehaviorSpawnName"),
@@ -96,7 +99,7 @@ public class BehaviorSelectionGui {
 
         List<String> lore = registry.getLanguageService().messageList("Gui.BehaviorRequirementsLore").stream()
                 .map(line -> line.replace("%count%", String.valueOf(count)))
-                .collect(Collectors.toList());
+                .toList();
 
         return new ItemGUI(new ItemBuilder(count > 0 ? Material.WRITTEN_BOOK : Material.BOOK)
                 .setName(registry.getLanguageService().message("Gui.BehaviorRequirementsName"))
@@ -122,9 +125,7 @@ public class BehaviorSelectionGui {
 
     private ItemGUI createBehaviorItem(String behaviorId, String name, List<String> lore, boolean isSelected) {
         Material material = isSelected ? Material.LIME_DYE : Material.GRAY_DYE;
-        String statusLine = isSelected
-                ? registry.getLanguageService().message("Gui.BehaviorEnabled")
-                : registry.getLanguageService().message("Gui.BehaviorDisabled");
+        String statusLine = registry.getLanguageService().message(isSelected ? "Gui.BehaviorEnabled" : "Gui.BehaviorDisabled");
 
         List<String> fullLore = new ArrayList<>(lore);
         fullLore.add("");
@@ -155,7 +156,7 @@ public class BehaviorSelectionGui {
         selected.add(behaviorId);
     }
 
-    private static final Set<String> EXCLUSIVE = Set.of("ordered", SpawnBehavior.ID);
+    private static final Set<String> EXCLUSIVE = Set.of(ORDERED, SpawnBehavior.ID);
 
     private boolean hasArea(Player player) {
         var requirements = pendingRequirements.get(player.getUniqueId());
@@ -184,17 +185,38 @@ public class BehaviorSelectionGui {
             return;
         }
 
-        if (selected != null && selected.contains("timed")) {
+        if (selected != null && selected.contains(TIMED)) {
             registry.getGuiService().getTimedConfigManager().open(player);
             return;
         }
 
-        if (selected != null && selected.contains("scheduled")) {
+        if (selected != null && selected.contains(SCHEDULED)) {
             registry.getGuiService().getScheduledConfigManager().open(player, null, true, 0, false);
             return;
         }
 
         createHunt(player, null, true, 0, false, null);
+    }
+
+    private List<Behavior> buildBehaviors(Set<String> selected, Location plateLocation, boolean repeatable, int limitSeconds,
+                                          boolean resetOnExpire, ScheduleMode scheduleMode, SpawnDraft spawnDraft) {
+        List<Behavior> behaviors = new ArrayList<>();
+        behaviors.add(new FreeBehavior());
+
+        if (selected != null) {
+            for (String behaviorId : selected) {
+                if (ORDERED.equals(behaviorId)) {
+                    behaviors.add(new OrderedBehavior(registry));
+                } else if (SCHEDULED.equals(behaviorId)) {
+                    behaviors.add(new ScheduledBehavior(registry, scheduleMode));
+                } else if (TIMED.equals(behaviorId)) {
+                    behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
+                } else if (SpawnBehavior.ID.equals(behaviorId) && spawnDraft != null) {
+                    behaviors.add(spawnDraft.build(registry));
+                }
+            }
+        }
+        return behaviors;
     }
 
     public void createHunt(Player player, Location plateLocation, boolean repeatable,
@@ -213,26 +235,7 @@ public class BehaviorSelectionGui {
         HBHunt hunt = new HBHunt(registry.getConfigService(), huntId, huntName, HuntState.ACTIVE, 1, "PLAYER_HEAD");
 
         // Build behaviors list
-        List<Behavior> behaviors = new ArrayList<>();
-        behaviors.add(new FreeBehavior());
-
-        if (selected != null) {
-            for (String behaviorId : selected) {
-                switch (behaviorId) {
-                    case "ordered" -> behaviors.add(new OrderedBehavior(registry));
-                    case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, scheduleMode));
-                    case "timed" ->
-                            behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
-                    case SpawnBehavior.ID -> {
-                        if (spawnDraft != null) {
-                            behaviors.add(spawnDraft.build(registry));
-                        }
-                    }
-                    default -> {
-                    }
-                }
-            }
-        }
+        List<Behavior> behaviors = buildBehaviors(selected, plateLocation, repeatable, limitSeconds, resetOnExpire, scheduleMode, spawnDraft);
 
         hunt.setBehaviors(behaviors);
         hunt.setRequirements(requirements);
@@ -269,7 +272,7 @@ public class BehaviorSelectionGui {
         player.sendMessage(registry.getLanguageService().message("Messages.HuntSelected")
                 .replace("%hunt%", hunt.getId()));
 
-        if (selected != null && selected.contains("ordered")) {
+        if (selected != null && selected.contains(ORDERED)) {
             player.sendMessage(registry.getLanguageService().message("Messages.HuntOrderedHint"));
         }
 

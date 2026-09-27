@@ -5,19 +5,27 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class DebugLog {
+
+    private DebugLog() {
+    }
+
     private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
     private static PrintStream ps;
     private static boolean canWrite;
 
-    public static void Init() {
+    public static void init() {
         File logFile = new File(HeadBlocks.getInstance().getDataFolder(), "debugLog.txt");
 
-        if (logFile.exists() && !logFile.delete()) {
+        try {
+            Files.deleteIfExists(logFile.toPath());
+        } catch (IOException e) {
             LogUtil.error("Cannot delete existing debug log file: {0}", logFile.getAbsolutePath());
         }
 
@@ -30,15 +38,15 @@ public class DebugLog {
         }
     }
 
-    public static void Write(String varName, String varValue) {
+    public static void write(String varName, String varValue) {
         if (!canWrite) {
             return;
         }
 
-        ps.println(dtf.format(LocalDateTime.now()) + " | " + varName + ": " + varValue);
+        ps.println(dtf.format(LocalDateTime.now(ZoneId.systemDefault())) + " | " + varName + ": " + varValue);
     }
 
-    public static void Close() {
+    public static void close() {
         if (!canWrite) {
             return;
         }

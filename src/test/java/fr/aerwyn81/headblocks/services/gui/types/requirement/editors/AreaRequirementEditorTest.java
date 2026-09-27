@@ -76,7 +76,8 @@ class AreaRequirementEditorTest {
         lenient().when(registry.getLanguageService()).thenReturn(language);
         lenient().when(registry.getConfigService()).thenReturn(config);
         lenient().when(registry.getPluginProvider()).thenReturn(pluginProvider);
-        lenient().when(registry.getGuiService()).thenReturn(mock(GuiService.class));
+        var guiServiceMock = mock(GuiService.class);
+        lenient().when(registry.getGuiService()).thenReturn(guiServiceMock);
         lenient().when(registry.getChatPromptService()).thenReturn(prompts);
 
         player = mock(Player.class);
@@ -153,7 +154,7 @@ class AreaRequirementEditorTest {
         assertThat(provider).isInstanceOf(CuboidAreaProvider.class);
         CuboidAreaProvider cuboid = (CuboidAreaProvider) provider;
         assertThat(cuboid.getWorldName()).isEqualTo(AREA_WORLD);
-        assertThat(cuboid.getMinX()).isEqualTo(0);
+        assertThat(cuboid.getMinX()).isZero();
         assertThat(cuboid.getMaxZ()).isEqualTo(10);
     }
 

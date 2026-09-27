@@ -4,8 +4,12 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -110,43 +114,30 @@ class KeyBuilderTest {
             KeyBuilder kb = new KeyBuilder(config, '.');
 
             kb.parseLine("key1: value");
-            assertThat(kb.toString()).isEqualTo("key1");
+            assertThat(kb).hasToString("key1");
 
             kb.parseLine("key2: value");
-            assertThat(kb.toString()).isEqualTo("key1.key2");
+            assertThat(kb).hasToString("key1.key2");
         }
 
-        @Test
-        void stripsQuotesFromKey() {
+        static Stream<Arguments> singleKeyLines() {
+            return Stream.of(
+                    Arguments.of("myKey", "'myKey': value"),
+                    Arguments.of("myKey", "\"myKey\": value"),
+                    Arguments.of("myKey", "  myKey: value  "),
+                    Arguments.of("section", "section:"));
+        }
+
+        @ParameterizedTest
+        @MethodSource("singleKeyLines")
+        void parsesSingleKey(String key, String line) {
             FileConfiguration config = mock(FileConfiguration.class);
-            when(config.contains("myKey")).thenReturn(true);
+            when(config.contains(key)).thenReturn(true);
 
             KeyBuilder kb = new KeyBuilder(config, '.');
 
-            kb.parseLine("'myKey': value");
-            assertThat(kb.toString()).isEqualTo("myKey");
-        }
-
-        @Test
-        void stripsDoubleQuotesFromKey() {
-            FileConfiguration config = mock(FileConfiguration.class);
-            when(config.contains("myKey")).thenReturn(true);
-
-            KeyBuilder kb = new KeyBuilder(config, '.');
-
-            kb.parseLine("\"myKey\": value");
-            assertThat(kb.toString()).isEqualTo("myKey");
-        }
-
-        @Test
-        void trimsWhitespace() {
-            FileConfiguration config = mock(FileConfiguration.class);
-            when(config.contains("myKey")).thenReturn(true);
-
-            KeyBuilder kb = new KeyBuilder(config, '.');
-
-            kb.parseLine("  myKey: value  ");
-            assertThat(kb.toString()).isEqualTo("myKey");
+            kb.parseLine(line);
+            assertThat(kb).hasToString(key);
         }
 
         @Test
@@ -162,21 +153,10 @@ class KeyBuilderTest {
 
             kb.parseLine("key1: value");
             kb.parseLine("key2: value");
-            assertThat(kb.toString()).isEqualTo("key1.key2");
+            assertThat(kb).hasToString("key1.key2");
 
             kb.parseLine("key3: value");
-            assertThat(kb.toString()).isEqualTo("key1.key3");
-        }
-
-        @Test
-        void keyOnlyLine_noValue() {
-            FileConfiguration config = mock(FileConfiguration.class);
-            when(config.contains("section")).thenReturn(true);
-
-            KeyBuilder kb = new KeyBuilder(config, '.');
-
-            kb.parseLine("section:");
-            assertThat(kb.toString()).isEqualTo("section");
+            assertThat(kb).hasToString("key1.key3");
         }
 
         @Test
@@ -191,7 +171,7 @@ class KeyBuilderTest {
             kb.parseLine("a:");
             kb.parseLine("b:");
             kb.parseLine("c: value");
-            assertThat(kb.toString()).isEqualTo("a.b.c");
+            assertThat(kb).hasToString("a.b.c");
         }
     }
 
@@ -209,10 +189,10 @@ class KeyBuilderTest {
             KeyBuilder kb = new KeyBuilder(config, '.');
             kb.parseLine("key1: value");
             kb.parseLine("key2: value");
-            assertThat(kb.toString()).isEqualTo("key1.key2");
+            assertThat(kb).hasToString("key1.key2");
 
             kb.removeLastKey();
-            assertThat(kb.toString()).isEqualTo("key1");
+            assertThat(kb).hasToString("key1");
         }
 
         @Test
@@ -222,7 +202,7 @@ class KeyBuilderTest {
 
             KeyBuilder kb = new KeyBuilder(config, '.');
             kb.parseLine("key1: value");
-            assertThat(kb.toString()).isEqualTo("key1");
+            assertThat(kb).hasToString("key1");
 
             kb.removeLastKey();
             assertThat(kb.toString()).isEmpty();
@@ -236,7 +216,7 @@ class KeyBuilderTest {
             kb.parseLine("...].'");
             kb.parseLine("next: value");
 
-            assertThat(kb.toString()).isEqualTo("next");
+            assertThat(kb).hasToString("next");
         }
 
         @Test
@@ -259,13 +239,13 @@ class KeyBuilderTest {
             kb.parseLine("a:");
             kb.parseLine("b:");
             kb.parseLine("c: value");
-            assertThat(kb.toString()).isEqualTo("a.b.c");
+            assertThat(kb).hasToString("a.b.c");
 
             kb.removeLastKey();
-            assertThat(kb.toString()).isEqualTo("a.b");
+            assertThat(kb).hasToString("a.b");
 
             kb.removeLastKey();
-            assertThat(kb.toString()).isEqualTo("a");
+            assertThat(kb).hasToString("a");
         }
     }
 

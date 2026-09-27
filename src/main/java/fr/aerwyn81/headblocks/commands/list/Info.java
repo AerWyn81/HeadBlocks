@@ -26,14 +26,14 @@ public class Info implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         var player = (Player) sender;
 
         HeadLocation headLocation = HeadTargeting.lookedAt(player, registry, 100);
 
         if (headLocation == null) {
             player.sendMessage(registry.getLanguageService().message("Messages.NoTargetHeadBlock"));
-            return true;
+            return;
         }
 
         player.sendMessage(MessageUtils.colorize("&7----------- [ &e&oTarget head information &7]-----------"));
@@ -101,8 +101,6 @@ public class Info implements Cmd {
 
         player.sendMessage("");
         player.sendMessage(MessageUtils.colorize("&7----------------------------------------------"));
-
-        return true;
     }
 
     @Override

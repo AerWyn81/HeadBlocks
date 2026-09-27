@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.Assertions.*;
 
 class TimedRunManagerTest {
 
@@ -57,7 +56,7 @@ class TimedRunManagerTest {
     @Test
     void leaveRun_onAbsentPlayer_doesNotThrow() {
         UUID player = UUID.randomUUID();
-        TimedRunManager.leaveRun(player); // should not throw
+        assertThatNoException().isThrownBy(() -> TimedRunManager.leaveRun(player));
     }
 
     @Test
@@ -93,7 +92,7 @@ class TimedRunManagerTest {
 
     @Test
     void getElapsedMillis_absentPlayer_returnsZero() {
-        assertThat(TimedRunManager.getElapsedMillis(UUID.randomUUID())).isEqualTo(0);
+        assertThat(TimedRunManager.getElapsedMillis(UUID.randomUUID())).isZero();
     }
 
     @Test

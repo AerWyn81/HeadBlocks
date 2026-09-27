@@ -13,7 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
-import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -51,9 +51,8 @@ class RemoveAllCommandTest {
     void emptyHeads_sendsListEmpty() {
         when(headService.getChargedHeadLocations()).thenReturn(new ArrayList<>());
 
-        boolean result = command.perform(sender, new String[]{"removeall"});
+        command.perform(sender, new String[]{"removeall"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.ListHeadEmpty");
     }
 
@@ -64,9 +63,8 @@ class RemoveAllCommandTest {
         heads.add(mock(HeadLocation.class));
         when(headService.getChargedHeadLocations()).thenReturn(heads);
 
-        boolean result = command.perform(sender, new String[]{"removeall"});
+        command.perform(sender, new String[]{"removeall"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.RemoveAllConfirm");
     }
 
@@ -77,11 +75,10 @@ class RemoveAllCommandTest {
         heads.add(mock(HeadLocation.class));
         when(headService.getChargedHeadLocations()).thenReturn(heads);
 
-        boolean result = command.perform(sender, new String[]{"removeall", "--confirm"});
+        command.perform(sender, new String[]{"removeall", "--confirm"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.RemoveAllInProgress");
-        verify(headService).removeAllHeadLocationsAsync(eq(heads), anyBoolean(), any(Consumer.class));
+        verify(headService).removeAllHeadLocationsAsync(eq(heads), anyBoolean(), any(IntConsumer.class));
     }
 
     @SuppressWarnings("unchecked")
@@ -92,10 +89,10 @@ class RemoveAllCommandTest {
         when(headService.getChargedHeadLocations()).thenReturn(heads);
 
         doAnswer(invocation -> {
-            Consumer<Integer> callback = invocation.getArgument(2);
+            IntConsumer callback = invocation.getArgument(2);
             callback.accept(0);
             return null;
-        }).when(headService).removeAllHeadLocationsAsync(any(ArrayList.class), anyBoolean(), any(Consumer.class));
+        }).when(headService).removeAllHeadLocationsAsync(any(ArrayList.class), anyBoolean(), any(IntConsumer.class));
 
         command.perform(sender, new String[]{"removeall", "--confirm"});
 
@@ -111,10 +108,10 @@ class RemoveAllCommandTest {
         when(headService.getChargedHeadLocations()).thenReturn(heads);
 
         doAnswer(invocation -> {
-            Consumer<Integer> callback = invocation.getArgument(2);
+            IntConsumer callback = invocation.getArgument(2);
             callback.accept(2);
             return null;
-        }).when(headService).removeAllHeadLocationsAsync(any(ArrayList.class), anyBoolean(), any(Consumer.class));
+        }).when(headService).removeAllHeadLocationsAsync(any(ArrayList.class), anyBoolean(), any(IntConsumer.class));
 
         command.perform(sender, new String[]{"removeall", "--confirm"});
 

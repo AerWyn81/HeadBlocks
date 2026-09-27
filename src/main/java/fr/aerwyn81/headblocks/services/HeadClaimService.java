@@ -16,7 +16,6 @@ import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -80,107 +79,128 @@ public class HeadClaimService {
                                  boolean wallHead, HBHunt hunt, int replays) {
         HuntConfig huntConfig = hunt.getConfig();
 
-        registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(player, allPlayerHeads -> {
-            var claimKey = player.getUniqueId() + ":" + hunt.getId();
-            if (!claiming.add(claimKey)) {
-                if (replays >= MAX_REPLAYS) {
-                    player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
-                    return;
-                }
+        registry.getStorageService().getHeadsPlayer(player.getUniqueId()).whenComplete(player, allPlayerHeads ->
+                processHuntClick(player, headLocation, clickedLocation, wallHead, hunt, replays, huntConfig));
+    }
 
-                registry.getScheduler().runTaskLater(player, () -> {
-                    if (player.isOnline() && hunt.isActive()) {
-                        handleHuntClick(player, headLocation, clickedLocation, wallHead, hunt, replays + 1);
-                    }
-                }, 1L);
+    private void processHuntClick(Player player, HeadLocation headLocation, Location clickedLocation,
+                                  boolean wallHead, HBHunt hunt, int replays, HuntConfig huntConfig) {
+        var claimKey = player.getUniqueId() + ":" + hunt.getId();
+        if (!claiming.add(claimKey)) {
+            replayLater(player, headLocation, clickedLocation, wallHead, hunt, replays);
+            return;
+        }
+
+        boolean writing = false;
+        try {
+            var huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
+                    player.getUniqueId(), hunt.getId());
+
+            if (!canClaim(player, headLocation, clickedLocation, hunt, huntConfig, huntPlayerHeads)) {
                 return;
             }
 
-            boolean writing = false;
-            try {
-                ArrayList<UUID> huntPlayerHeads = registry.getStorageService().getHeadsPlayerForHunt(
-                        player.getUniqueId(), hunt.getId());
-
-                var accessResult = hunt.evaluateAccessGates(player, headLocation);
-                if (!accessResult.allowed()) {
-                    if (accessResult.denyMessage() != null && !accessResult.denyMessage().isEmpty()) {
-                        player.sendMessage(accessResult.denyMessage());
-                    }
-                    return;
-                }
-
-                if (huntPlayerHeads.contains(headLocation.getUuid())) {
-                    showAlreadyClaimed(player, headLocation, clickedLocation, huntConfig, hunt.getId());
-
-                    Bukkit.getPluginManager().callEvent(
-                            new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, false, List.of(hunt.getId())));
-                    return;
-                }
-
-                var requirementResult = hunt.evaluateRequirements(player, headLocation);
-                if (!requirementResult.satisfied()) {
-                    if (requirementResult.reason() != null && !requirementResult.reason().isEmpty()) {
-                        player.sendMessage(requirementResult.reason());
-                    }
-                    return;
-                }
-
-                var behaviorResult = hunt.evaluateBehaviors(player, headLocation);
-                if (!behaviorResult.allowed()) {
-                    if (behaviorResult.denyMessage() != null && !behaviorResult.denyMessage().isEmpty()) {
-                        player.sendMessage(behaviorResult.denyMessage());
-                    }
-                    return;
-                }
-
-                huntPlayerHeads.add(headLocation.getUuid());
-
-                if (!registry.getRewardService().hasPlayerSlotsRequired(player, huntPlayerHeads, huntConfig)) {
-                    var message = registry.getLanguageService().message("Messages.InventoryFullReward");
-                    if (!message.trim().isEmpty()) {
-                        player.sendMessage(message);
-                    }
-                    return;
-                }
-
-                boolean spawned = registry.getHeadService().isSpawned(headLocation.getUuid());
-                var commitResult = hunt.commitBehaviors(player, headLocation);
-                if (!commitResult.allowed()) {
-                    if (commitResult.denyMessage() != null && !commitResult.denyMessage().isEmpty()) {
-                        player.sendMessage(commitResult.denyMessage());
-                    }
-                    return;
-                }
-
-                writing = true;
-                registry.getScheduler().runTaskAsync(() -> {
-                    try {
-                        if (spawned) {
-                            registry.getSpawnService().storeFound(headLocation);
-                        }
-                        registry.getStorageService().addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
-                    } catch (Exception ex) {
-                        LogUtil.error("Error saving head {0} found by {1} in hunt {2}: {3}",
-                                headLocation.getUuid(), player.getName(), hunt.getId(), ex.getMessage());
-                        registry.getScheduler().runTask(player,
-                                () -> player.sendMessage(registry.getLanguageService().message("Messages.StorageError")));
-                        return;
-                    } finally {
-                        claiming.remove(claimKey);
-                    }
-
-                    registry.getScheduler().runTask(player,
-                            () -> onHeadFound(player, headLocation, clickedLocation, wallHead, hunt, huntPlayerHeads));
-                });
-            } catch (InternalException ex) {
-                LogUtil.error("Error processing hunt {0} click for player {1}: {2}",
-                        hunt.getId(), player.getName(), ex.getMessage());
-            } finally {
-                if (!writing) {
-                    claiming.remove(claimKey);
-                }
+            boolean spawned = registry.getHeadService().isSpawned(headLocation.getUuid());
+            var commitResult = hunt.commitBehaviors(player, headLocation);
+            if (!commitResult.allowed()) {
+                sendIfPresent(player, commitResult.denyMessage());
+                return;
             }
-        });
+
+            writing = true;
+            registry.getScheduler().runTaskAsync(() ->
+                    saveFoundHead(player, headLocation, clickedLocation, wallHead, hunt, huntPlayerHeads, spawned));
+        } catch (InternalException ex) {
+            LogUtil.error("Error processing hunt {0} click for player {1}: {2}",
+                    hunt.getId(), player.getName(), ex.getMessage());
+        } finally {
+            if (!writing) {
+                claiming.remove(claimKey);
+            }
+        }
+    }
+
+    private void replayLater(Player player, HeadLocation headLocation, Location clickedLocation,
+                             boolean wallHead, HBHunt hunt, int replays) {
+        if (replays >= MAX_REPLAYS) {
+            player.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            return;
+        }
+
+        registry.getScheduler().runTaskLater(player, () -> {
+            if (player.isOnline() && hunt.isActive()) {
+                handleHuntClick(player, headLocation, clickedLocation, wallHead, hunt, replays + 1);
+            }
+        }, 1L);
+    }
+
+    private boolean canClaim(Player player, HeadLocation headLocation, Location clickedLocation, HBHunt hunt,
+                             HuntConfig huntConfig, List<UUID> huntPlayerHeads) {
+        var accessResult = hunt.evaluateAccessGates(player, headLocation);
+        if (!accessResult.allowed()) {
+            sendIfPresent(player, accessResult.denyMessage());
+            return false;
+        }
+
+        if (huntPlayerHeads.contains(headLocation.getUuid())) {
+            showAlreadyClaimed(player, headLocation, clickedLocation, huntConfig, hunt.getId());
+
+            Bukkit.getPluginManager().callEvent(
+                    new HeadClickEvent(headLocation.getUuid(), player, clickedLocation, false, List.of(hunt.getId())));
+            return false;
+        }
+
+        var requirementResult = hunt.evaluateRequirements(player, headLocation);
+        if (!requirementResult.satisfied()) {
+            sendIfPresent(player, requirementResult.reason());
+            return false;
+        }
+
+        var behaviorResult = hunt.evaluateBehaviors(player, headLocation);
+        if (!behaviorResult.allowed()) {
+            sendIfPresent(player, behaviorResult.denyMessage());
+            return false;
+        }
+
+        huntPlayerHeads.add(headLocation.getUuid());
+
+        if (!registry.getRewardService().hasPlayerSlotsRequired(player, huntPlayerHeads, huntConfig)) {
+            var message = registry.getLanguageService().message("Messages.InventoryFullReward");
+            if (!message.trim().isEmpty()) {
+                player.sendMessage(message);
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    private static void sendIfPresent(Player player, String message) {
+        if (message != null && !message.isEmpty()) {
+            player.sendMessage(message);
+        }
+    }
+
+    private void saveFoundHead(Player player, HeadLocation headLocation, Location clickedLocation, boolean wallHead,
+                               HBHunt hunt, List<UUID> huntPlayerHeads, boolean spawned) {
+        var claimKey = player.getUniqueId() + ":" + hunt.getId();
+        try {
+            if (spawned) {
+                registry.getSpawnService().storeFound(headLocation);
+            }
+            registry.getStorageService().addHeadForHunt(player.getUniqueId(), headLocation.getUuid(), hunt.getId());
+        } catch (Exception ex) {
+            LogUtil.error("Error saving head {0} found by {1} in hunt {2}: {3}",
+                    headLocation.getUuid(), player.getName(), hunt.getId(), ex.getMessage());
+            registry.getScheduler().runTask(player,
+                    () -> player.sendMessage(registry.getLanguageService().message("Messages.StorageError")));
+            return;
+        } finally {
+            claiming.remove(claimKey);
+        }
+
+        registry.getScheduler().runTask(player,
+                () -> onHeadFound(player, headLocation, clickedLocation, wallHead, hunt, huntPlayerHeads));
     }
 
     private void onHeadFound(Player player, HeadLocation headLocation, Location clickedLocation, boolean wallHead,
@@ -225,9 +245,7 @@ public class HeadClaimService {
             int power = registry.getConfigService().headClickFireworkPower();
 
             Location loc = power == 0 ? clickedLocation.clone() : clickedLocation.clone().add(0, 0.5, 0);
-            FireworkUtils.launchFirework(loc, isFlickering,
-                    colors.isEmpty(), colors, fadeColors.isEmpty(), fadeColors,
-                    power, wallHead);
+            FireworkUtils.launchFirework(loc, isFlickering, colors, fadeColors, power, wallHead);
         }
 
         Bukkit.getPluginManager().callEvent(
@@ -262,7 +280,7 @@ public class HeadClaimService {
         if (registry.getConfigService().headClickParticlesEnabled()) {
             String particleName = registry.getConfigService().headClickParticlesAlreadyOwnType();
             int amount = registry.getConfigService().headClickParticlesAmount();
-            ArrayList<String> colors = registry.getConfigService().headClickParticlesColors();
+            var colors = registry.getConfigService().headClickParticlesColors();
 
             try {
                 ParticlesUtils.spawn(clickedLocation, ParticlesUtils.resolve(particleName), amount, colors, player);

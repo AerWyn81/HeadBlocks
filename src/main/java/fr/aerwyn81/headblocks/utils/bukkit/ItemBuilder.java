@@ -121,9 +121,4 @@ public class ItemBuilder implements Cloneable {
     public ItemStack toItemStack() {
         return is;
     }
-
-    @Override
-    public ItemBuilder clone() throws CloneNotSupportedException {
-        return (ItemBuilder) super.clone();
-    }
 }

@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class PlaceholdersService {
+    private static final String LEFT_PLACEHOLDER = "%left%";
+    private static final String HEAD_NAME_PLACEHOLDER = "%headName%";
+    private static final String PROGRESS_PLACEHOLDER = "%progress%";
+
     private final StorageService storageService;
     private final ConfigService configService;
     private final LanguageService languageService;
@@ -46,7 +50,7 @@ public class PlaceholdersService {
         message = message.replace("%player%", pName)
                 .replace("%prefix%", languageService.prefix());
 
-        if (message.contains("%progress%") || message.contains("%current%") || message.contains("%max%") || message.contains("%left%") || message.contains("%headName%")) {
+        if (message.contains(PROGRESS_PLACEHOLDER) || message.contains("%current%") || message.contains("%max%") || message.contains(LEFT_PLACEHOLDER) || message.contains(HEAD_NAME_PLACEHOLDER)) {
             message = parseInternal(pUuid, message, headLocation, huntId);
         } else {
             message = MessageUtils.colorize(message);
@@ -92,24 +96,24 @@ public class PlaceholdersService {
             message = message.replace("%current%", String.valueOf(current))
                     .replace("%max%", String.valueOf(total));
 
-            if (message.contains("%progress%")) {
+            if (message.contains(PROGRESS_PLACEHOLDER)) {
                 progress = MessageUtils.createProgressBar(current, total,
                         configService.progressBarBars(),
                         configService.progressBarSymbol(),
                         configService.progressBarCompletedColor(),
                         configService.progressBarNotCompletedColor());
 
-                message = message.replace("%progress%", progress);
+                message = message.replace(PROGRESS_PLACEHOLDER, progress);
             }
 
-            if (message.contains("%left%")) {
-                message = message.replace("%left%", String.valueOf(Math.max(0, total - current)));
+            if (message.contains(LEFT_PLACEHOLDER)) {
+                message = message.replace(LEFT_PLACEHOLDER, String.valueOf(Math.max(0, total - current)));
             }
         } catch (Exception ignored) {
             LogUtil.error("Error retrieving heads from storage, cannot parse all HeadBlocks placeholders");
         }
 
-        if (message.contains("%headName%")) {
+        if (message.contains(HEAD_NAME_PLACEHOLDER)) {
             String headName;
             if (headLocation == null) {
                 headName = languageService.message("Other.NameNotSet");
@@ -117,7 +121,7 @@ public class PlaceholdersService {
                 headName = headLocation.getName().isEmpty() ? headLocation.getUuid().toString() : headLocation.getName();
             }
 
-            message = message.replace("%headName%", headName);
+            message = message.replace(HEAD_NAME_PLACEHOLDER, headName);
         }
 
         return MessageUtils.colorize(message);

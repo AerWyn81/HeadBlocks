@@ -15,10 +15,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-import java.util.ArrayList;
 import java.util.UUID;
 
 public class OnPressurePlateEvent implements Listener {
+    private static final String HUNT_PLACEHOLDER = "%hunt%";
 
     private final ServiceRegistry registry;
 
@@ -40,39 +40,28 @@ public class OnPressurePlateEvent implements Listener {
         Location blockLoc = event.getClickedBlock().getLocation();
 
         for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
-            if (!hunt.isActive()) {
-                continue;
-            }
-
-            for (Behavior behavior : hunt.getBehaviors()) {
-                if (!(behavior instanceof TimedBehavior tb)) {
-                    continue;
-                }
-
-                Location startPlate = tb.startPlateLocation();
-                if (startPlate == null) {
-                    continue;
-                }
-
-                if (startPlate.getWorld() == null || blockLoc.getWorld() == null) {
-                    continue;
-                }
-
-                if (!startPlate.getWorld().equals(blockLoc.getWorld())) {
-                    continue;
-                }
-
-                if (startPlate.getBlockX() != blockLoc.getBlockX()
-                        || startPlate.getBlockY() != blockLoc.getBlockY()
-                        || startPlate.getBlockZ() != blockLoc.getBlockZ()) {
-                    continue;
-                }
-
-                // Found matching start plate for this hunt
+            if (hunt.isActive() && hasStartPlateAt(hunt, blockLoc)) {
                 handleStartPlate(player, hunt);
                 return;
             }
         }
+    }
+
+    private static boolean hasStartPlateAt(HBHunt hunt, Location blockLoc) {
+        for (Behavior behavior : hunt.getBehaviors()) {
+            if (behavior instanceof TimedBehavior tb && isSameBlock(tb.startPlateLocation(), blockLoc)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isSameBlock(Location startPlate, Location blockLoc) {
+        return startPlate != null && startPlate.getWorld() != null && blockLoc.getWorld() != null
+                && startPlate.getWorld().equals(blockLoc.getWorld())
+                && startPlate.getBlockX() == blockLoc.getBlockX()
+                && startPlate.getBlockY() == blockLoc.getBlockY()
+                && startPlate.getBlockZ() == blockLoc.getBlockZ();
     }
 
     private void handleStartPlate(Player player, HBHunt hunt) {
@@ -80,13 +69,13 @@ public class OnPressurePlateEvent implements Listener {
 
         if (!hunt.isValid()) {
             player.sendMessage(registry.getLanguageService().message("Messages.TimedNoHeads")
-                    .replace("%hunt%", hunt.getDisplayName()));
+                    .replace(HUNT_PLACEHOLDER, hunt.getDisplayName()));
             return;
         }
 
         // Check if player already completed all heads for this hunt
         try {
-            ArrayList<UUID> foundHeads = registry.getStorageService().getHeadsPlayerForHunt(pUuid, hunt.getId());
+            var foundHeads = registry.getStorageService().getHeadsPlayerForHunt(pUuid, hunt.getId());
             if (foundHeads.size() >= hunt.getTargetCount() && hunt.getTargetCount() > 0) {
                 player.sendMessage(registry.getLanguageService().message("Messages.TimedAlreadyCompleted"));
                 return;
@@ -118,10 +107,10 @@ public class OnPressurePlateEvent implements Listener {
 
         if (isRestart) {
             player.sendMessage(registry.getLanguageService().message("Messages.TimedRestarted")
-                    .replace("%hunt%", hunt.getDisplayName()));
+                    .replace(HUNT_PLACEHOLDER, hunt.getDisplayName()));
         } else {
             player.sendMessage(registry.getLanguageService().message("Messages.TimedStarted")
-                    .replace("%hunt%", hunt.getDisplayName()));
+                    .replace(HUNT_PLACEHOLDER, hunt.getDisplayName()));
         }
     }
 }

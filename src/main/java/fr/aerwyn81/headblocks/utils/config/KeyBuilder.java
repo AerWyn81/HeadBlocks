@@ -53,7 +53,7 @@ public class KeyBuilder {
             return false;
 
         return subKey.startsWith(parentKey)
-                && subKey.substring(parentKey.length()).startsWith(String.valueOf(separator));
+                && subKey.startsWith(String.valueOf(separator), parentKey.length());
     }
 
     public static String getIndents(String key, char separator) {

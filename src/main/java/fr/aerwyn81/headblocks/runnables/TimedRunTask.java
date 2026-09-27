@@ -38,40 +38,46 @@ public class TimedRunTask implements Runnable {
             // Time limit reached: leave the run, optionally reset progression, teleport back
             if (limitSeconds > 0 && TimedRunManager.getRemainingMillis(elapsed, limitSeconds) <= 0) {
                 handleExpiration(playerUuid, data, hunt, behavior);
-                continue;
-            }
-
-            Player player = Bukkit.getPlayer(playerUuid);
-            if (player == null || !player.isOnline()) {
-                continue;
-            }
-
-            String huntName = hunt != null ? hunt.getDisplayName() : data.huntId();
-            int totalHeads = hunt != null ? hunt.getTargetCount() : 0;
-
-            int foundHeads = 0;
-            try {
-                foundHeads = registry.getStorageService().getHeadsPlayerForHunt(playerUuid, data.huntId()).size();
-            } catch (InternalException ignored) {
-            }
-
-            String message;
-            if (limitSeconds > 0) {
-                long remaining = TimedRunManager.getRemainingMillis(elapsed, limitSeconds);
-                message = registry.getLanguageService().message("Gui.TimedActionBarCountdown")
-                        .replace("%remaining%", TimedRunManager.formatTime(Math.max(0, remaining)));
             } else {
-                message = registry.getLanguageService().message("Gui.TimedActionBar")
-                        .replace("%time%", TimedRunManager.formatTime(elapsed));
+                showProgress(playerUuid, data, hunt, elapsed, limitSeconds);
             }
+        }
+    }
 
-            String actionBar = message
-                    .replace("%hunt%", huntName)
-                    .replace("%found%", String.valueOf(foundHeads))
-                    .replace("%total%", String.valueOf(totalHeads));
+    private void showProgress(UUID playerUuid, TimedRunData data, HBHunt hunt, long elapsed, int limitSeconds) {
+        Player player = Bukkit.getPlayer(playerUuid);
+        if (player == null || !player.isOnline()) {
+            return;
+        }
 
-            registry.getScheduler().runNow(player, () ->
-                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(actionBar)));
+        String huntName = hunt != null ? hunt.getDisplayName() : data.huntId();
+        int totalHeads = hunt != null ? hunt.getTargetCount() : 0;
+        int foundHeads = foundHeadsCount(playerUuid, data.huntId());
+
+        String message;
+        if (limitSeconds > 0) {
+            long remaining = TimedRunManager.getRemainingMillis(elapsed, limitSeconds);
+            message = registry.getLanguageService().message("Gui.TimedActionBarCountdown")
+                    .replace("%remaining%", TimedRunManager.formatTime(Math.max(0, remaining)));
+        } else {
+            message = registry.getLanguageService().message("Gui.TimedActionBar")
+                    .replace("%time%", TimedRunManager.formatTime(elapsed));
+        }
+
+        String actionBar = message
+                .replace("%hunt%", huntName)
+                .replace("%found%", String.valueOf(foundHeads))
+                .replace("%total%", String.valueOf(totalHeads));
+
+        registry.getScheduler().runNow(player, () ->
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(actionBar)));
+    }
+
+    private int foundHeadsCount(UUID playerUuid, String huntId) {
+        try {
+            return registry.getStorageService().getHeadsPlayerForHunt(playerUuid, huntId).size();
+        } catch (InternalException ignored) {
+            return 0;
         }
     }
 

@@ -5,10 +5,12 @@ import fr.aerwyn81.headblocks.visual.Hitbox;
 import fr.aerwyn81.headblocks.visual.RenderSettings;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Interaction;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -63,6 +65,11 @@ public abstract class NpcProviderHook<N> extends HandleProviderHook<NpcProviderH
     @Override
     protected Hitbox hitbox(Handle<N> handle, HeadContent content, RenderSettings settings) {
         return Hitbox.of(content, settings, WIDTH, HEIGHT);
+    }
+
+    @Override
+    protected List<Entity> entitiesOf(Handle<N> handle) {
+        return List.of();
     }
 
     @Override

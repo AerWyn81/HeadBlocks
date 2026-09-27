@@ -207,8 +207,8 @@ class SlotsScheduleModeTest {
 
         String detail = mode.getDenyDetail(DenyReason.OUTSIDE_SLOT);
 
-        assertThat(detail).contains("MON");
-        assertThat(detail).contains("14:00-18:00");
+        assertThat(detail).contains("MON")
+                .contains("14:00-18:00");
     }
 
     @Test
@@ -235,8 +235,8 @@ class SlotsScheduleModeTest {
 
         String info = mode.getDisplayInfo();
 
-        assertThat(info).doesNotContain("(");
-        assertThat(info).doesNotContain("→");
+        assertThat(info).doesNotContain("(")
+                .doesNotContain("→");
     }
 
     @Test
@@ -246,8 +246,8 @@ class SlotsScheduleModeTest {
 
         String info = mode.getDisplayInfo();
 
-        assertThat(info).contains("01/01/2026");
-        assertThat(info).contains("∞");
+        assertThat(info).contains("01/01/2026")
+                .contains("∞");
     }
 
     @Test
@@ -265,9 +265,9 @@ class SlotsScheduleModeTest {
 
         String info = mode.getDisplayInfo();
 
-        assertThat(info).contains("MON 14:00-18:00");
-        assertThat(info).contains("03/01/2025");
-        assertThat(info).contains("06/30/2025");
+        assertThat(info).contains("MON 14:00-18:00")
+                .contains("03/01/2025")
+                .contains("06/30/2025");
     }
 
     // --- saveTo / fromConfig round-trip ---

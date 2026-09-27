@@ -66,9 +66,8 @@ class ReloadCommandTest {
 
             bukkitStatic.when(Bukkit::getOnlinePlayers).thenReturn(Collections.emptyList());
 
-            boolean result = command.perform(sender, new String[]{"reload"});
+            command.perform(sender, new String[]{"reload"});
 
-            assertThat(result).isTrue();
             verify(plugin).reloadConfig();
             verify(registry).reload();
             verify(sender).sendMessage("Reload done");

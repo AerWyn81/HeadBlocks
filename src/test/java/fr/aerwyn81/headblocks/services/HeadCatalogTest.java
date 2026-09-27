@@ -7,7 +7,6 @@ import fr.aerwyn81.headblocks.data.head.types.HBHeadContent;
 import fr.aerwyn81.headblocks.data.head.visual.ContentKind;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.hooks.visual.VisualProviderHook;
-import fr.aerwyn81.headblocks.utils.bukkit.PluginProvider;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.scheduler.SchedulerAdapter;
 import org.bukkit.Material;
@@ -54,8 +53,7 @@ class HeadCatalogTest {
         when(visualService.iconOf(any())).thenAnswer(invocation -> new ItemStack(Material.PAPER));
         when(visualService.getProviders()).thenReturn(Map.of());
 
-        headService = new HeadService(configService, storageService, languageService, mock(SchedulerAdapter.class),
-                mock(PluginProvider.class));
+        headService = new HeadService(configService, storageService, languageService, mock(SchedulerAdapter.class));
         headService.setHuntService(huntService);
         headService.setHuntConfigService(mock(HuntConfigService.class));
         headService.setVisualService(visualService);
@@ -78,7 +76,7 @@ class HeadCatalogTest {
     void vanillaContents_becomeCatalogEntries() {
         var heads = load(List.of("block:lantern", "item:DIAMOND:1001", "mob:cat", "entity:PIG"));
 
-        assertThat(heads).hasSize(4).allMatch(h -> h instanceof HBHeadContent);
+        assertThat(heads).hasSize(4).allMatch(HBHeadContent.class::isInstance);
         assertThat(heads.get(0).getContent()).isEqualTo(HeadContent.of(ContentKind.BLOCK, "LANTERN", null));
         assertThat(heads.get(1).getContent()).isEqualTo(HeadContent.of(ContentKind.ITEM, "DIAMOND", Map.of("customModelData", 1001)));
         assertThat(heads.get(2).getContent()).isEqualTo(HeadContent.of(ContentKind.MOB, "CAT", null));
@@ -209,9 +207,12 @@ class HeadCatalogTest {
     @Test
     void unstableBlocks_areRefused() {
         try (var bukkit = mockStatic(org.bukkit.Bukkit.class, CALLS_REAL_METHODS)) {
-            bukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.OAK_DOOR)).thenReturn(mock(org.bukkit.block.data.type.Door.class));
-            bukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.RED_BED)).thenReturn(mock(org.bukkit.block.data.type.Bed.class));
-            bukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.LANTERN)).thenReturn(mock(org.bukkit.block.data.type.Lantern.class));
+            var doorMock = mock(org.bukkit.block.data.type.Door.class);
+            bukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.OAK_DOOR)).thenReturn(doorMock);
+            var bedMock = mock(org.bukkit.block.data.type.Bed.class);
+            bukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.RED_BED)).thenReturn(bedMock);
+            var lanternMock = mock(org.bukkit.block.data.type.Lantern.class);
+            bukkit.when(() -> org.bukkit.Bukkit.createBlockData(Material.LANTERN)).thenReturn(lanternMock);
 
             var heads = load(List.of("block:SAND", "block:GRAVEL", "block:OAK_DOOR", "block:RED_BED", "block:LANTERN"));
 

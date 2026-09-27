@@ -52,7 +52,8 @@ class InfoCommandTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
+        var headVisualServiceMock = mock(HeadVisualService.class);
+        lenient().when(registry.getVisualService()).thenReturn(headVisualServiceMock);
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
@@ -68,9 +69,8 @@ class InfoCommandTest {
         when(block.getLocation()).thenReturn(targetLoc);
         when(headService.getHeadAt(targetLoc)).thenReturn(null);
 
-        boolean result = command.perform(player, new String[]{"info"});
+        command.perform(player, new String[]{"info"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.NoTargetHeadBlock");
     }
 
@@ -108,9 +108,8 @@ class InfoCommandTest {
             mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
             lu.when(() -> LocationUtils.toFormattedString(any(Location.class))).thenReturn("world, 10, 20, 30");
 
-            boolean result = command.perform(player, new String[]{"info"});
+            command.perform(player, new String[]{"info"});
 
-            assertThat(result).isTrue();
             // Verify multiple spigot messages were sent
             verify(spigot, atLeast(5)).sendMessage(any(net.md_5.bungee.api.chat.TextComponent.class));
         }
@@ -153,9 +152,8 @@ class InfoCommandTest {
             mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
             lu.when(() -> LocationUtils.toFormattedString(any(Location.class))).thenReturn("world, 10, 20, 30");
 
-            boolean result = command.perform(player, new String[]{"info"});
+            command.perform(player, new String[]{"info"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Chat.Info.RewardsTitle");
         }
     }

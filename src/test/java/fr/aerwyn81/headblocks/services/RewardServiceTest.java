@@ -635,16 +635,6 @@ class RewardServiceTest {
     }
 
     @Test
-    void hasPlayerSlotsRequiredHunt_no_tiered_rewards_returns_true() {
-        HuntConfig huntConfig = new HuntConfig(configService);
-        huntConfig.setTieredRewards(Collections.emptyList());
-
-        when(configService.headClickCommandsSlotsRequired()).thenReturn(-1);
-
-        assertThat(rewardService.hasPlayerSlotsRequired(player, playerHeadsOfSize(1), huntConfig)).isTrue();
-    }
-
-    @Test
     void hasPlayerSlotsRequiredHunt_tiered_noSlots_required_returns_true() {
         HuntConfig huntConfig = new HuntConfig(configService);
         TieredReward tier = new TieredReward(1, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), -1, false);

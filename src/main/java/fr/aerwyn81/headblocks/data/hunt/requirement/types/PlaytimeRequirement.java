@@ -93,9 +93,10 @@ public class PlaytimeRequirement implements Requirement {
 
     private static Statistic resolvePlayTimeStatistic() {
         for (String name : new String[]{"PLAY_ONE_MINUTE", "PLAY_TIME", "PLAY_ONE_TICK"}) {
-            try {
-                return Statistic.valueOf(name);
-            } catch (Exception ignored) {
+            for (Statistic statistic : Statistic.values()) {
+                if (statistic.name().equals(name)) {
+                    return statistic;
+                }
             }
         }
 

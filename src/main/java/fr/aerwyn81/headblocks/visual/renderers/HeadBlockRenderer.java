@@ -40,6 +40,7 @@ public class HeadBlockRenderer implements BlockRenderer {
                 skull.setOwningPlayer(Bukkit.getOfflinePlayer(UUID.fromString(owner)));
                 skull.update(true, false);
             } catch (IllegalArgumentException ignored) {
+                // ignored: the owner is not a valid UUID, the head keeps its default skin
             }
         }
 

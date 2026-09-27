@@ -226,8 +226,10 @@ class HeadVisualServiceTest {
 
             mob = head(HeadContent.of(ContentKind.MOB, "CAT", null), location);
             lenient().when(headService.getHeadByUUID(mob.getUuid())).thenReturn(mob);
-            lenient().when(registry.getVisibilityService()).thenReturn(mock(HeadVisibilityService.class));
-            lenient().when(registry.getPlatform()).thenReturn(mock(Platform.class));
+            var headVisibilityServiceMock = mock(HeadVisibilityService.class);
+            lenient().when(registry.getVisibilityService()).thenReturn(headVisibilityServiceMock);
+            var platformMock = mock(Platform.class);
+            lenient().when(registry.getPlatform()).thenReturn(platformMock);
 
             lenient().doAnswer(invocation -> {
                 ((Runnable) invocation.getArgument(1)).run();
@@ -247,7 +249,8 @@ class HeadVisualServiceTest {
         private Cat spawnableCat() {
             Cat cat = mock(Cat.class);
             lenient().when(cat.isValid()).thenReturn(true);
-            lenient().when(cat.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+            var persistentDataContainerMock = mock(PersistentDataContainer.class);
+            lenient().when(cat.getPersistentDataContainer()).thenReturn(persistentDataContainerMock);
             lenient().when(cat.getWorld()).thenReturn(world);
             lenient().when(cat.getLocation()).thenReturn(location);
             return cat;
@@ -562,7 +565,8 @@ class HeadVisualServiceTest {
         void lookedAtHead_nothingHit_isNull() {
             Player player = mock(Player.class);
             when(player.getWorld()).thenReturn(world);
-            when(player.getEyeLocation()).thenReturn(mock(Location.class));
+            var locationMock = mock(Location.class);
+            when(player.getEyeLocation()).thenReturn(locationMock);
 
             assertThat(visualService.lookedAtHead(player, 10)).isNull();
         }
@@ -605,7 +609,8 @@ class HeadVisualServiceTest {
             org.bukkit.entity.Interaction interaction = mock(org.bukkit.entity.Interaction.class);
             for (Entity entity : List.of(display, interaction)) {
                 when(entity.isValid()).thenReturn(true);
-                when(entity.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+                var persistentDataContainerMock = mock(PersistentDataContainer.class);
+                when(entity.getPersistentDataContainer()).thenReturn(persistentDataContainerMock);
             }
             when(world.spawn(location, org.bukkit.entity.ItemDisplay.class)).thenReturn(display);
             when(world.spawn(location, org.bukkit.entity.Interaction.class)).thenReturn(interaction);
@@ -637,7 +642,8 @@ class HeadVisualServiceTest {
         private Entity liveEntity() {
             Entity entity = mock(Entity.class);
             lenient().when(entity.isValid()).thenReturn(true);
-            lenient().when(entity.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+            var persistentDataContainerMock = mock(PersistentDataContainer.class);
+            lenient().when(entity.getPersistentDataContainer()).thenReturn(persistentDataContainerMock);
             return entity;
         }
 
@@ -852,7 +858,8 @@ class HeadVisualServiceTest {
             AtomicReference<HeadVisualService.ConversionReport> report = new AtomicReference<>();
 
             try (var bukkit = mockStatic(org.bukkit.Bukkit.class)) {
-                bukkit.when(() -> org.bukkit.Bukkit.createBlockData("minecraft:lantern")).thenReturn(mock(org.bukkit.block.data.BlockData.class));
+                var blockDataMock = mock(org.bukkit.block.data.BlockData.class);
+                bukkit.when(() -> org.bukkit.Bukkit.createBlockData("minecraft:lantern")).thenReturn(blockDataMock);
 
                 visualService.convertHunt(hunt, RenderMode.BLOCK, report::set);
             }

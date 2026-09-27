@@ -69,7 +69,8 @@ class RequirementsGuiTest {
         lenient().when(registry.getLanguageService()).thenReturn(language);
         lenient().when(registry.getConfigService()).thenReturn(config);
         lenient().when(registry.getPluginProvider()).thenReturn(pluginProvider);
-        lenient().when(registry.getGuiService()).thenReturn(mock(GuiService.class));
+        var guiServiceMock = mock(GuiService.class);
+        lenient().when(registry.getGuiService()).thenReturn(guiServiceMock);
 
         player = mock(Player.class);
         lenient().when(player.getUniqueId()).thenReturn(UUID.randomUUID());

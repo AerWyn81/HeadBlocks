@@ -77,7 +77,8 @@ class HBHuntCommandTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
+        var headVisualServiceMock = mock(HeadVisualService.class);
+        lenient().when(registry.getVisualService()).thenReturn(headVisualServiceMock);
         lenient().when(registry.getSpawnService()).thenReturn(mock(SpawnService.class));
         lenient().when(registry.getHuntService()).thenReturn(huntService);
         lenient().when(registry.getStorageService()).thenReturn(storageService);
@@ -176,7 +177,7 @@ class HBHuntCommandTest {
                 huntCommand.perform(consoleSender, new String[]{"hunt", "create", "testHunt"});
 
                 verify(huntConfigService).saveHunt(any());
-                verify(storageService).createHuntInDb(eq("testhunt"), eq("testHunt"), eq("ACTIVE"));
+                verify(storageService).createHuntInDb("testhunt", "testHunt", "ACTIVE");
                 verify(huntService).registerHunt(any());
                 verify(storageService).incrementHuntVersion();
             }
@@ -248,7 +249,8 @@ class HBHuntCommandTest {
             when(huntService.getHuntById("myhunt")).thenReturn(hunt);
 
             try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-                bukkit.when(Bukkit::getPluginManager).thenReturn(mock(PluginManager.class));
+                var pluginManagerMock = mock(PluginManager.class);
+                bukkit.when(Bukkit::getPluginManager).thenReturn(pluginManagerMock);
 
                 huntCommand.perform(consoleSender, new String[]{"hunt", "delete", "myhunt", "--keepheads", "--confirm"});
             }
@@ -527,7 +529,8 @@ class HBHuntCommandTest {
         void success_setsSelection() {
             UUID playerUuid = UUID.randomUUID();
             when(playerSender.getUniqueId()).thenReturn(playerUuid);
-            when(huntService.getHuntById("myhunt")).thenReturn(mock(HBHunt.class));
+            var huntMock = mock(HBHunt.class);
+            when(huntService.getHuntById("myhunt")).thenReturn(huntMock);
 
             huntCommand.perform(playerSender, new String[]{"hunt", "select", "myhunt"});
 
@@ -599,7 +602,7 @@ class HBHuntCommandTest {
         }
 
         @Test
-        void success_transfersHead() throws Exception {
+        void success_transfersHead() {
             UUID headUuid = UUID.randomUUID();
             HeadLocation hl = mock(HeadLocation.class);
             when(hl.getNameOrUuid()).thenReturn("head1");
@@ -800,8 +803,8 @@ class HBHuntCommandTest {
 
             ArrayList<String> result = huntCommand.tabComplete(consoleSender, new String[]{"hunt", "delete", ""});
 
-            assertThat(result).contains("myhunt", "other");
-            assertThat(result).doesNotContain("default");
+            assertThat(result).contains("myhunt", "other")
+                    .doesNotContain("default");
         }
 
         @Test
@@ -858,8 +861,8 @@ class HBHuntCommandTest {
 
             ArrayList<String> result = huntCommand.tabComplete(consoleSender, new String[]{"hunt", "delete", "myhunt", "--keepheads", "--fallback", ""});
 
-            assertThat(result).contains("default", "other");
-            assertThat(result).doesNotContain("myhunt");
+            assertThat(result).contains("default", "other")
+                    .doesNotContain("myhunt");
         }
 
         @Test

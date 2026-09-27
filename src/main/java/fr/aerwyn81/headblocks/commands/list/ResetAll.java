@@ -15,19 +15,23 @@ import java.util.UUID;
 
 @HBAnnotations(command = "resetall", permission = "headblocks.admin")
 public class ResetAll extends ResetBase {
+    private static final String MESSAGES_STORAGE_ERROR = "Messages.StorageError";
+    private static final String CONFIRM = "--confirm";
+    private static final String PLAYER_COUNT_PLACEHOLDER = "%playerCount%";
+    private static final String HEAD_FLAG = "--head";
 
     public ResetAll(ServiceRegistry registry) {
         super(registry);
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         boolean hasConfirm = hasParameterConfirm(args);
 
         var headUuid = resolveHeadFromArgs(sender, args, 1);
 
         if (hasHeadParameter(args, 1) && headUuid == null) {
-            return true;
+            return;
         }
 
         if (headUuid != null) {
@@ -35,13 +39,11 @@ public class ResetAll extends ResetBase {
         } else {
             resetAllHeadsForAllPlayers(sender, hasConfirm);
         }
-
-        return true;
     }
 
     private boolean hasParameterConfirm(String[] args) {
         for (int i = 1; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase("--confirm")) {
+            if (args[i].equalsIgnoreCase(CONFIRM)) {
                 return true;
             }
         }
@@ -54,7 +56,7 @@ public class ResetAll extends ResetBase {
         try {
             playersWithHead = registry.getStorageService().getPlayers(headUuid);
         } catch (InternalException ex) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_STORAGE_ERROR));
             LogUtil.error("Error while retrieving players from the storage: {0}", ex.getMessage());
             return;
         }
@@ -76,18 +78,18 @@ public class ResetAll extends ResetBase {
                         registry.getVisibilityService().onHeadReset(onlinePlayer, headUuid);
                     }
                 } catch (InternalException ex) {
-                    sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+                    sender.sendMessage(registry.getLanguageService().message(MESSAGES_STORAGE_ERROR));
                     LogUtil.error("Error while resetting the player UUID \"{0}\" from the storage: {1}", playerUuid.toString(), ex.getMessage());
                     return;
                 }
             }
 
             sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadSuccess")
-                    .replace("%playerCount%", String.valueOf(playersWithHead.size()))
+                    .replace(PLAYER_COUNT_PLACEHOLDER, String.valueOf(playersWithHead.size()))
                     .replace("%headName%", headName));
         } else {
             sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllHeadConfirm")
-                    .replace("%playerCount%", String.valueOf(playersWithHead.size()))
+                    .replace(PLAYER_COUNT_PLACEHOLDER, String.valueOf(playersWithHead.size()))
                     .replace("%headName%", headName));
         }
 
@@ -99,7 +101,7 @@ public class ResetAll extends ResetBase {
         try {
             allPlayers = registry.getStorageService().getAllPlayers();
         } catch (InternalException ex) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_STORAGE_ERROR));
             LogUtil.error("Error while retrieving all players from the storage: {0}", ex.getMessage());
             return;
         }
@@ -119,17 +121,17 @@ public class ResetAll extends ResetBase {
                         registry.getVisibilityService().onProgressReset(onlinePlayer);
                     }
                 } catch (InternalException ex) {
-                    sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
+                    sender.sendMessage(registry.getLanguageService().message(MESSAGES_STORAGE_ERROR));
                     LogUtil.error("Error while resetting the player UUID \"{0}\" from the storage: {1}", uuid.toString(), ex.getMessage());
                     return;
                 }
             }
 
             sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllSuccess")
-                    .replace("%playerCount%", String.valueOf(allPlayers.size())));
+                    .replace(PLAYER_COUNT_PLACEHOLDER, String.valueOf(allPlayers.size())));
         } else {
             sender.sendMessage(registry.getLanguageService().message("Messages.ResetAllConfirm")
-                    .replace("%playerCount%", String.valueOf(allPlayers.size())));
+                    .replace(PLAYER_COUNT_PLACEHOLDER, String.valueOf(allPlayers.size())));
         }
 
     }
@@ -138,30 +140,30 @@ public class ResetAll extends ResetBase {
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 2) {
             ArrayList<String> options = new ArrayList<>();
-            options.add("--confirm");
-            options.add("--head");
+            options.add(CONFIRM);
+            options.add(HEAD_FLAG);
             return options;
         } else if (args.length == 3) {
-            if (args[1].equalsIgnoreCase("--head")) {
+            if (args[1].equalsIgnoreCase(HEAD_FLAG)) {
                 ArrayList<String> options = new ArrayList<>();
-                options.add("--confirm");
+                options.add(CONFIRM);
                 options.addAll(registry.getHeadService().getHeadRawNameOrUuid());
                 return new ArrayList<>(options.stream()
                         .filter(s -> s.startsWith(args[2])).toList());
-            } else if (args[1].equalsIgnoreCase("--confirm")) {
-                return new ArrayList<>(Collections.singletonList("--head"));
+            } else if (args[1].equalsIgnoreCase(CONFIRM)) {
+                return new ArrayList<>(Collections.singletonList(HEAD_FLAG));
             }
         } else if (args.length == 4) {
-            if (args[1].equalsIgnoreCase("--head") && args[3].equalsIgnoreCase("--confirm")) {
+            if (args[1].equalsIgnoreCase(HEAD_FLAG) && args[3].equalsIgnoreCase(CONFIRM)) {
                 return new ArrayList<>();
-            } else if (args[1].equalsIgnoreCase("--head") && !args[2].equalsIgnoreCase("--confirm")) {
-                return new ArrayList<>(Collections.singletonList("--confirm"));
-            } else if (args[2].equalsIgnoreCase("--head")) {
+            } else if (args[1].equalsIgnoreCase(HEAD_FLAG) && !args[2].equalsIgnoreCase(CONFIRM)) {
+                return new ArrayList<>(Collections.singletonList(CONFIRM));
+            } else if (args[2].equalsIgnoreCase(HEAD_FLAG)) {
                 return new ArrayList<>(registry.getHeadService().getHeadRawNameOrUuid()
                         .stream().filter(s -> s.startsWith(args[3])).toList());
             }
-        } else if (args.length == 5 && args[2].equalsIgnoreCase("--head")) {
-            return new ArrayList<>(Collections.singletonList("--confirm"));
+        } else if (args.length == 5 && args[2].equalsIgnoreCase(HEAD_FLAG)) {
+            return new ArrayList<>(Collections.singletonList(CONFIRM));
         }
 
         return new ArrayList<>();

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.*;
 
 class LogUtilTest {
@@ -20,25 +21,25 @@ class LogUtilTest {
     @Test
     void info_withoutInitialize_doesNotThrow() {
         LogUtil.initialize(null);
-        LogUtil.info("test");
+        assertThatNoException().isThrownBy(() -> LogUtil.info("test"));
     }
 
     @Test
     void success_withoutInitialize_doesNotThrow() {
         LogUtil.initialize(null);
-        LogUtil.success("test");
+        assertThatNoException().isThrownBy(() -> LogUtil.success("test"));
     }
 
     @Test
     void warning_withoutInitialize_doesNotThrow() {
         LogUtil.initialize(null);
-        LogUtil.warning("test");
+        assertThatNoException().isThrownBy(() -> LogUtil.warning("test"));
     }
 
     @Test
     void error_withoutInitialize_doesNotThrow() {
         LogUtil.initialize(null);
-        LogUtil.error("test");
+        assertThatNoException().isThrownBy(() -> LogUtil.error("test"));
     }
 
     // --- color wrapping per level ---
@@ -46,6 +47,7 @@ class LogUtilTest {
     @Test
     void info_wrapsMessageWithBrightBlue() {
         Logger logger = mock(Logger.class);
+        when(logger.isLoggable(any(Level.class))).thenReturn(true);
         LogUtil.initialize(logger);
 
         LogUtil.info("hello");
@@ -56,6 +58,7 @@ class LogUtilTest {
     @Test
     void success_wrapsMessageWithGreen() {
         Logger logger = mock(Logger.class);
+        when(logger.isLoggable(any(Level.class))).thenReturn(true);
         LogUtil.initialize(logger);
 
         LogUtil.success("done");
@@ -66,6 +69,7 @@ class LogUtilTest {
     @Test
     void warning_wrapsMessageWithYellow() {
         Logger logger = mock(Logger.class);
+        when(logger.isLoggable(any(Level.class))).thenReturn(true);
         LogUtil.initialize(logger);
 
         LogUtil.warning("careful");
@@ -76,6 +80,7 @@ class LogUtilTest {
     @Test
     void error_wrapsMessageWithRed() {
         Logger logger = mock(Logger.class);
+        when(logger.isLoggable(any(Level.class))).thenReturn(true);
         LogUtil.initialize(logger);
 
         LogUtil.error("boom");
@@ -88,6 +93,7 @@ class LogUtilTest {
     @Test
     void info_withArgs_substitutesPlaceholdersBeforeColoring() {
         Logger logger = mock(Logger.class);
+        when(logger.isLoggable(any(Level.class))).thenReturn(true);
         LogUtil.initialize(logger);
 
         LogUtil.info("count: {0}", 42);
@@ -98,6 +104,7 @@ class LogUtilTest {
     @Test
     void success_withMultipleArgs_substitutesAll() {
         Logger logger = mock(Logger.class);
+        when(logger.isLoggable(any(Level.class))).thenReturn(true);
         LogUtil.initialize(logger);
 
         LogUtil.success("loaded {0} of {1}", 10, 20);
@@ -113,6 +120,7 @@ class LogUtilTest {
         // ParameterizedMessage which strips ANSI escape codes — we always go
         // through the 2-arg form to keep colors intact.
         Logger logger = mock(Logger.class);
+        when(logger.isLoggable(any(Level.class))).thenReturn(true);
         LogUtil.initialize(logger);
 
         LogUtil.info("a {0}", 1);

@@ -51,9 +51,8 @@ class LeaveCommandTest {
         try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
             trm.when(() -> TimedRunManager.isInRun(playerUuid)).thenReturn(false);
 
-            boolean result = command.perform(player, new String[]{"leave"});
+            command.perform(player, new String[]{"leave"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.TimedNoActiveRun");
             verify(player).sendMessage("mock-message");
         }
@@ -67,9 +66,8 @@ class LeaveCommandTest {
         try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
             trm.when(() -> TimedRunManager.isInRun(playerUuid)).thenReturn(true);
 
-            boolean result = command.perform(player, new String[]{"leave"});
+            command.perform(player, new String[]{"leave"});
 
-            assertThat(result).isTrue();
             trm.verify(() -> TimedRunManager.leaveRun(playerUuid));
             verify(languageService).message("Messages.TimedLeft");
             verify(player).sendMessage("mock-message");
@@ -86,9 +84,8 @@ class LeaveCommandTest {
         try (MockedStatic<TimedRunManager> trm = mockStatic(TimedRunManager.class)) {
             trm.when(() -> TimedRunManager.isInRun(playerUuid)).thenReturn(false);
 
-            boolean result = command.perform(player, new String[]{"leave"});
+            command.perform(player, new String[]{"leave"});
 
-            assertThat(result).isTrue();
             verify(areaEnforcementService).leave(player);
             verify(languageService).message("Messages.AreaLeft");
             verify(player).sendMessage("mock-message");

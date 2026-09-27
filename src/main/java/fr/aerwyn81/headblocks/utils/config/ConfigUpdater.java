@@ -26,6 +26,9 @@ import java.util.function.Function;
 @SuppressWarnings("unused")
 public class ConfigUpdater {
 
+    private ConfigUpdater() {
+    }
+
     //Used for separating keys in the keyBuilder inside parseComments method
     private static final char SEPARATOR = '.';
 
@@ -69,24 +72,14 @@ public class ConfigUpdater {
         //Used for converting objects to yaml, then cleared
         FileConfiguration parserConfig = new YamlConfiguration();
 
-        keyLoop:
         for (String fullKey : defaultConfig.getKeys(true)) {
             String indents = KeyBuilder.getIndents(fullKey, SEPARATOR);
 
-            if (ignoredSectionsValues.isEmpty()) {
-                writeCommentIfExists(comments, writer, fullKey, indents);
-            } else {
-                for (Map.Entry<String, String> entry : ignoredSectionsValues.entrySet()) {
-                    if (entry.getKey().equals(fullKey)) {
-                        writer.write(ignoredSectionsValues.get(fullKey) + "\n");
-                        continue keyLoop;
-                    } else if (KeyBuilder.isSubKeyOf(entry.getKey(), fullKey, SEPARATOR)) {
-                        continue keyLoop;
-                    }
-                }
-
-                writeCommentIfExists(comments, writer, fullKey, indents);
+            if (writeIgnoredSectionIfMatches(writer, fullKey, ignoredSectionsValues)) {
+                continue;
             }
+
+            writeCommentIfExists(comments, writer, fullKey, indents);
 
             Object currentValue = currentConfig.get(fullKey);
 
@@ -96,10 +89,10 @@ public class ConfigUpdater {
             String[] splitFullKey = fullKey.split("[" + SEPARATOR + "]");
             String trailingKey = splitFullKey[splitFullKey.length - 1];
 
-            if (currentValue instanceof ConfigurationSection) {
+            if (currentValue instanceof ConfigurationSection section) {
                 writer.write(indents + trailingKey + ":");
 
-                if (!((ConfigurationSection) currentValue).getKeys(false).isEmpty())
+                if (!section.getKeys(false).isEmpty())
                     writer.write("\n");
                 else
                     writer.write(" {}\n");
@@ -121,6 +114,21 @@ public class ConfigUpdater {
             writer.write(danglingComments);
 
         writer.close();
+    }
+
+    private static boolean writeIgnoredSectionIfMatches(BufferedWriter writer, String fullKey, Map<String, String> ignoredSectionsValues) throws IOException {
+        for (Map.Entry<String, String> entry : ignoredSectionsValues.entrySet()) {
+            if (entry.getKey().equals(fullKey)) {
+                writer.write(ignoredSectionsValues.get(fullKey) + "\n");
+                return true;
+            }
+
+            if (KeyBuilder.isSubKeyOf(entry.getKey(), fullKey, SEPARATOR)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     //Returns a map of key comment pairs. If a key doesn't have any comments it won't be included in the map.
@@ -174,6 +182,57 @@ public class ConfigUpdater {
         return comments;
     }
 
+    private static boolean isInIgnoredSection(KeyBuilder keyBuilder, List<String> ignoredSections) {
+        for (String ignoredSection : ignoredSections) {
+            if (ignoredSection.equals(keyBuilder.toString()) || keyBuilder.isSubKeyOf(ignoredSection)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static String flushLeftSection(String currentIgnoredSection, String fullKey, StringBuilder valueBuilder,
+                                           Map<String, String> ignoredSectionsValues) {
+        if (currentIgnoredSection != null && !KeyBuilder.isSubKeyOf(currentIgnoredSection, fullKey, SEPARATOR)) {
+            ignoredSectionsValues.put(currentIgnoredSection, valueBuilder.toString());
+            valueBuilder.setLength(0);
+            return null;
+        }
+        return currentIgnoredSection;
+    }
+
+    private static String appendIgnoredLine(String line, String fullKey, KeyBuilder keyBuilder, List<String> ignoredSections,
+                                            Map<String, String> comments, StringBuilder valueBuilder, String currentIgnoredSection) {
+        for (String ignoredSection : ignoredSections) {
+            boolean isIgnoredParent = ignoredSection.equals(fullKey);
+
+            if (isIgnoredParent || keyBuilder.isSubKeyOf(ignoredSection)) {
+                appendWithComment(line, fullKey, comments, valueBuilder);
+
+                //Set the current ignored section for future iterations of while loop
+                //Don't set currentIgnoredSection to any ignoredSection sub-keys
+                return isIgnoredParent ? fullKey : currentIgnoredSection;
+            }
+        }
+        return currentIgnoredSection;
+    }
+
+    private static void appendWithComment(String line, String fullKey, Map<String, String> comments, StringBuilder valueBuilder) {
+        if (!valueBuilder.isEmpty())
+            valueBuilder.append("\n");
+
+        String comment = comments.get(fullKey);
+
+        if (comment != null) {
+            String indents = KeyBuilder.getIndents(fullKey, SEPARATOR);
+            valueBuilder.append(indents).append(comment.replace("\n", "\n" + indents));//Should end with new line (\n)
+            valueBuilder.setLength(valueBuilder.length() - indents.length());//Get rid of trailing \n and spaces
+        }
+
+        valueBuilder.append(line);
+    }
+
     private static Map<String, String> parseIgnoredSections(File toUpdate, FileConfiguration currentConfig, Map<String, String> comments, List<String> ignoredSections) throws IOException {
         Map<String, String> ignoredSectionsValues = new LinkedHashMap<>(ignoredSections.size());
         KeyBuilder keyBuilder = new KeyBuilder(currentConfig, SEPARATOR);
@@ -184,7 +243,6 @@ public class ConfigUpdater {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(toUpdate))) {
             String line;
-            lineLoop:
             while ((line = reader.readLine()) != null) {
                 String trimmedLine = line.trim();
 
@@ -201,16 +259,10 @@ public class ConfigUpdater {
                     ignoredListItemIndent = -1;
                 }
 
-                if (trimmedLine.startsWith("-")) {
-                    for (String ignoredSection : ignoredSections) {
-                        boolean isIgnoredParent = ignoredSection.equals(keyBuilder.toString());
-
-                        if (isIgnoredParent || keyBuilder.isSubKeyOf(ignoredSection)) {
-                            valueBuilder.append("\n").append(line);
-                            ignoredListItemIndent = indent;
-                            continue lineLoop;
-                        }
-                    }
+                if (trimmedLine.startsWith("-") && isInIgnoredSection(keyBuilder, ignoredSections)) {
+                    valueBuilder.append("\n").append(line);
+                    ignoredListItemIndent = indent;
+                    continue;
                 }
 
                 keyBuilder.parseLine(trimmedLine);
@@ -218,37 +270,9 @@ public class ConfigUpdater {
 
                 //If building the value for an ignored section and this line is no longer a part of the ignored section,
                 //  write the valueBuilder, reset it, and set the current ignored section to null
-                if (currentIgnoredSection != null && !KeyBuilder.isSubKeyOf(currentIgnoredSection, fullKey, SEPARATOR)) {
-                    ignoredSectionsValues.put(currentIgnoredSection, valueBuilder.toString());
-                    valueBuilder.setLength(0);
-                    currentIgnoredSection = null;
-                }
+                currentIgnoredSection = flushLeftSection(currentIgnoredSection, fullKey, valueBuilder, ignoredSectionsValues);
 
-                for (String ignoredSection : ignoredSections) {
-                    boolean isIgnoredParent = ignoredSection.equals(fullKey);
-
-                    if (isIgnoredParent || keyBuilder.isSubKeyOf(ignoredSection)) {
-                        if (!valueBuilder.isEmpty())
-                            valueBuilder.append("\n");
-
-                        String comment = comments.get(fullKey);
-
-                        if (comment != null) {
-                            String indents = KeyBuilder.getIndents(fullKey, SEPARATOR);
-                            valueBuilder.append(indents).append(comment.replace("\n", "\n" + indents));//Should end with new line (\n)
-                            valueBuilder.setLength(valueBuilder.length() - indents.length());//Get rid of trailing \n and spaces
-                        }
-
-                        valueBuilder.append(line);
-
-                        //Set the current ignored section for future iterations of while loop
-                        //Don't set currentIgnoredSection to any ignoredSection sub-keys
-                        if (isIgnoredParent)
-                            currentIgnoredSection = fullKey;
-
-                        break;
-                    }
-                }
+                currentIgnoredSection = appendIgnoredLine(line, fullKey, keyBuilder, ignoredSections, comments, valueBuilder, currentIgnoredSection);
             }
         }
 

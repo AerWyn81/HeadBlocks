@@ -20,6 +20,6 @@ class TimedRunDataTest {
         TimedRunData b = new TimedRunData("hunt-1", 100L);
 
         assertThat(a).isEqualTo(b);
-        assertThat(a.hashCode()).isEqualTo(b.hashCode());
+        assertThat(a).hasSameHashCodeAs(b);
     }
 }

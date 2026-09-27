@@ -15,6 +15,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class HBCommandExecutor implements CommandExecutor, TabCompleter {
+    private static final String MESSAGES_ERROR_COMMAND = "Messages.ErrorCommand";
+
     private final HashMap<String, HBCommand> registeredCommands;
     private final ServiceRegistry registry;
 
@@ -35,7 +37,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         this.register(new RemoveAll(registry));
         this.register(new Reset(registry));
         this.register(new ResetAll(registry));
-        this.register(new Version(registry));
+        this.register(new Version());
         this.register(new Stats(registry));
         this.register(new Top(registry));
         this.register(new Tp(registry));
@@ -63,7 +65,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command c, @NotNull String s, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_ERROR_COMMAND));
             return false;
         }
 
@@ -75,7 +77,7 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
             if (aliasCmd.isPresent()) {
                 command = aliasCmd.get().getValue();
             } else {
-                sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
+                sender.sendMessage(registry.getLanguageService().message(MESSAGES_ERROR_COMMAND));
                 return false;
             }
         }
@@ -93,11 +95,12 @@ public class HBCommandExecutor implements CommandExecutor, TabCompleter {
         int argsWithoutCmd = Arrays.copyOfRange(args, 1, args.length).length;
 
         if (argsWithoutCmd < command.getArgs().length) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_ERROR_COMMAND));
             return false;
         }
 
-        return command.getCmdClass().perform(sender, args);
+        command.getCmdClass().perform(sender, args);
+        return true;
     }
 
     @Override

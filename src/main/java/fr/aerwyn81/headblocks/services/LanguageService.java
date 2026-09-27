@@ -13,10 +13,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored", "ConstantConditions"})
 public class LanguageService {
+    private static final String LANGUAGE_MESSAGES = "/language/messages_";
+    private static final String TRANSLATION_FILE_ERROR = "Error loading translation file: {0}";
+
     private final PluginProvider pluginProvider;
     private String lang;
     private final HashMap<String, Object> messageMap;
@@ -84,11 +86,11 @@ public class LanguageService {
         if (!(raw instanceof List)) {
             return Collections.singletonList(MessageUtils.colorize(raw.toString()));
         }
-        return ((List<String>) raw).stream().map(MessageUtils::colorize).collect(Collectors.toList());
+        return ((List<String>) raw).stream().map(MessageUtils::colorize).toList();
     }
 
     public String checkLanguage(String lang) {
-        File f = new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml");
+        File f = new File(pluginProvider.getDataFolder() + LANGUAGE_MESSAGES + lang + ".yml");
         if (f.exists()) {
             return lang;
         }
@@ -96,7 +98,7 @@ public class LanguageService {
     }
 
     public void pushMessages() {
-        File f = new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml");
+        File f = new File(pluginProvider.getDataFolder() + LANGUAGE_MESSAGES + lang + ".yml");
         YamlConfiguration c = YamlConfiguration.loadConfiguration(f);
 
         c.getKeys(true).stream().filter(key -> !(c.get(key) instanceof MemorySection)).forEach(key -> {
@@ -108,16 +110,34 @@ public class LanguageService {
         });
     }
 
-    public void loadLanguage(String lang) {
-        File file = new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml");
-        if (!file.exists()) {
-            try {
-                if (!file.createNewFile()) {
-                    LogUtil.error("Cannot create translation file: {0}", file.getAbsolutePath());
-                }
-            } catch (IOException e) {
-                LogUtil.error("Error loading translation file: {0}", e.getMessage());
+    private static void createTranslationFile(File file) {
+        try {
+            if (!file.createNewFile()) {
+                LogUtil.error("Cannot create translation file: {0}", file.getAbsolutePath());
             }
+        } catch (IOException e) {
+            LogUtil.error(TRANSLATION_FILE_ERROR, e.getMessage());
+        }
+    }
+
+    private static Map<String, Object> defaultMessages(FileConfiguration data) {
+        Map<String, Object> msgDefaults = new LinkedHashMap<>();
+        for (String key : data.getKeys(true)) {
+            if (!(data.get(key) instanceof MemorySection)) {
+                if (data.get(key) instanceof List) {
+                    msgDefaults.put(key, data.getStringList(key));
+                } else {
+                    msgDefaults.put(key, data.getString(key));
+                }
+            }
+        }
+        return msgDefaults;
+    }
+
+    public void loadLanguage(String lang) {
+        File file = new File(pluginProvider.getDataFolder() + LANGUAGE_MESSAGES + lang + ".yml");
+        if (!file.exists()) {
+            createTranslationFile(file);
         }
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
 
@@ -131,8 +151,6 @@ public class LanguageService {
                 "\t"
         ));
 
-        Map<String, Object> msgDefaults = new LinkedHashMap<>();
-
         FileConfiguration data;
         try (InputStreamReader input = new InputStreamReader(pluginProvider.getResource("language/messages_" + lang + ".yml"), StandardCharsets.UTF_8)) {
             data = YamlConfiguration.loadConfiguration(input);
@@ -141,40 +159,30 @@ public class LanguageService {
             return;
         }
 
-        for (String key : data.getKeys(true)) {
-            if (!(data.get(key) instanceof MemorySection)) {
-                if (data.get(key) instanceof List) {
-                    msgDefaults.put(key, data.getStringList(key));
-                } else {
-                    msgDefaults.put(key, data.getString(key));
-                }
-            }
-        }
+        Map<String, Object> msgDefaults = defaultMessages(data);
 
-        for (String key : msgDefaults.keySet()) {
-            if (!cfg.isSet(key)) {
-                cfg.set(key, msgDefaults.get(key));
+        for (var entry : msgDefaults.entrySet()) {
+            if (!cfg.isSet(entry.getKey())) {
+                cfg.set(entry.getKey(), entry.getValue());
             }
         }
 
         for (String key : cfg.getKeys(true)) {
-            if (!(cfg.get(key) instanceof MemorySection)) {
-                if (!data.isSet(key)) {
-                    cfg.set(key, null);
-                }
+            if (!(cfg.get(key) instanceof MemorySection) && !data.isSet(key)) {
+                cfg.set(key, null);
             }
         }
 
         try {
             cfg.save(file);
         } catch (IOException e) {
-            LogUtil.error("Error loading translation file: {0}", e.getMessage());
+            LogUtil.error(TRANSLATION_FILE_ERROR, e.getMessage());
         }
 
         try {
-            ConfigUpdater.update(pluginProvider, "language/messages_" + lang + ".yml", new File(pluginProvider.getDataFolder() + "/language/messages_" + lang + ".yml"), Collections.emptyList());
+            ConfigUpdater.update(pluginProvider, "language/messages_" + lang + ".yml", new File(pluginProvider.getDataFolder() + LANGUAGE_MESSAGES + lang + ".yml"), Collections.emptyList());
         } catch (IOException e) {
-            LogUtil.error("Error loading translation file: {0}", e.getMessage());
+            LogUtil.error(TRANSLATION_FILE_ERROR, e.getMessage());
         }
     }
 }

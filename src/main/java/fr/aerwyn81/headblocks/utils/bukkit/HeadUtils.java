@@ -16,33 +16,34 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HeadUtils {
 
-    public static final HashMap<Integer, BlockFace> skullRotationList;
+    private HeadUtils() {
+    }
+
+    public static final Map<Integer, BlockFace> skullRotationList;
 
     static {
-        skullRotationList = new HashMap<>();
-        skullRotationList.put(0, BlockFace.NORTH);
-        skullRotationList.put(1, BlockFace.NORTH_NORTH_EAST);
-        skullRotationList.put(2, BlockFace.NORTH_EAST);
-        skullRotationList.put(3, BlockFace.EAST_NORTH_EAST);
-        skullRotationList.put(4, BlockFace.EAST);
-        skullRotationList.put(5, BlockFace.EAST_SOUTH_EAST);
-        skullRotationList.put(6, BlockFace.SOUTH_EAST);
-        skullRotationList.put(7, BlockFace.SOUTH_SOUTH_EAST);
-        skullRotationList.put(8, BlockFace.SOUTH);
-        skullRotationList.put(9, BlockFace.SOUTH_SOUTH_WEST);
-        skullRotationList.put(10, BlockFace.SOUTH_WEST);
-        skullRotationList.put(11, BlockFace.WEST_SOUTH_WEST);
-        skullRotationList.put(12, BlockFace.WEST);
-        skullRotationList.put(13, BlockFace.WEST_NORTH_WEST);
-        skullRotationList.put(14, BlockFace.NORTH_WEST);
-        skullRotationList.put(15, BlockFace.NORTH_NORTH_WEST);
+        var rotations = new HashMap<Integer, BlockFace>();
+        rotations.put(0, BlockFace.NORTH);
+        rotations.put(1, BlockFace.NORTH_NORTH_EAST);
+        rotations.put(2, BlockFace.NORTH_EAST);
+        rotations.put(3, BlockFace.EAST_NORTH_EAST);
+        rotations.put(4, BlockFace.EAST);
+        rotations.put(5, BlockFace.EAST_SOUTH_EAST);
+        rotations.put(6, BlockFace.SOUTH_EAST);
+        rotations.put(7, BlockFace.SOUTH_SOUTH_EAST);
+        rotations.put(8, BlockFace.SOUTH);
+        rotations.put(9, BlockFace.SOUTH_SOUTH_WEST);
+        rotations.put(10, BlockFace.SOUTH_WEST);
+        rotations.put(11, BlockFace.WEST_SOUTH_WEST);
+        rotations.put(12, BlockFace.WEST);
+        rotations.put(13, BlockFace.WEST_NORTH_WEST);
+        rotations.put(14, BlockFace.NORTH_WEST);
+        rotations.put(15, BlockFace.NORTH_NORTH_WEST);
+        skullRotationList = Collections.unmodifiableMap(rotations);
     }
 
     public static HBHead createHead(HBHead head, String texture) {

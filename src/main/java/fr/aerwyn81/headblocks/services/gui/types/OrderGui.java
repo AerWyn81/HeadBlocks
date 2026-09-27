@@ -15,7 +15,6 @@ import org.bukkit.event.inventory.ClickType;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class OrderGui extends GuiBase {
 
@@ -49,18 +48,14 @@ public class OrderGui extends GuiBase {
                                 .replace("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
                         .setLore(registry.getLanguageService().messageList("Gui.OrderItemLore").stream().map(s ->
                                         s.replace("%position%", headLocation.getDisplayedOrderIndex(registry.getLanguageService().message("Gui.NoOrder"))))
-                                .collect(Collectors.toList())).toItemStack(), true)
+                                .toList()).toItemStack(), true)
                         .addOnClickEvent(event -> {
-                            if (event.getClick() == ClickType.LEFT) {
-                                if (headLocation.getOrderIndex() != -1) {
-                                    headLocation.setOrderIndex(headLocation.getOrderIndex() - 1);
-                                    registry.getHeadService().saveHeadInConfig(headLocation);
-                                }
-                            } else if (event.getClick() == ClickType.RIGHT) {
-                                if (headLocation.getOrderIndex() != headLocations.size() + 1) {
-                                    headLocation.setOrderIndex(headLocation.getOrderIndex() + 1);
-                                    registry.getHeadService().saveHeadInConfig(headLocation);
-                                }
+                            if (event.getClick() == ClickType.LEFT && headLocation.getOrderIndex() != -1) {
+                                headLocation.setOrderIndex(headLocation.getOrderIndex() - 1);
+                                registry.getHeadService().saveHeadInConfig(headLocation);
+                            } else if (event.getClick() == ClickType.RIGHT && headLocation.getOrderIndex() != headLocations.size() + 1) {
+                                headLocation.setOrderIndex(headLocation.getOrderIndex() + 1);
+                                registry.getHeadService().saveHeadInConfig(headLocation);
                             }
 
                             openOrderGuiForHunt((Player) event.getWhoClicked(), hunt);

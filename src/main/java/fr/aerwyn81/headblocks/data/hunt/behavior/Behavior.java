@@ -36,7 +36,7 @@ public interface Behavior {
 
     static Behavior fromConfig(String type, ServiceRegistry registry, ConfigurationSection section) {
         return switch (type.toLowerCase()) {
-            case "ordered" -> OrderedBehavior.fromConfig(registry, section);
+            case "ordered" -> OrderedBehavior.fromConfig(registry);
             case "scheduled" -> ScheduledBehavior.fromConfig(registry, section);
             case "timed" -> TimedBehavior.fromConfig(registry, section);
             case SpawnBehavior.ID -> SpawnBehavior.fromConfig(registry, section);

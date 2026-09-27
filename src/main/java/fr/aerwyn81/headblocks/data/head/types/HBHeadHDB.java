@@ -38,6 +38,6 @@ public class HBHeadHDB extends HBHead implements LoadableHead {
 
     @Override
     public String getDisplayId() {
-        return id;
+        return getId();
     }
 }

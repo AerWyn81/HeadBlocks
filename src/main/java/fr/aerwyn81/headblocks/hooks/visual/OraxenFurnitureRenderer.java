@@ -90,7 +90,8 @@ class OraxenFurnitureRenderer extends DisplayRenderer {
         display.setDisplayHeight(properties.getDisplayHeight());
 
         var current = display.getTransformation();
-        var modelScale = properties.hasScale() ? new Vector3f(properties.getScale()) : new Vector3f(fixed ? 0.5f : 1f);
+        var defaultScale = fixed ? 0.5f : 1f;
+        var modelScale = properties.hasScale() ? new Vector3f(properties.getScale()) : new Vector3f(defaultScale);
         var translation = properties.hasTranslation() ? new Vector3f(properties.getTranslation()) : current.getTranslation();
         display.setTransformation(new Transformation(translation, current.getLeftRotation(), modelScale, current.getRightRotation()));
 
@@ -117,7 +118,8 @@ class OraxenFurnitureRenderer extends DisplayRenderer {
     }
 
     @Override
-    public void spin(List<Entity> entities, float angle, RenderSettings settings, int periodTicks) {
+    protected boolean spins() {
+        return false;
     }
 
     static float yawOf(FurnitureMechanic mechanic, float yaw) {

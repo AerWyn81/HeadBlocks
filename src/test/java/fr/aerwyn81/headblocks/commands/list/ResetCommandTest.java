@@ -66,9 +66,8 @@ class ResetCommandTest {
     void multiHuntMode_sendsRequireHuntMessage() {
         when(huntService.isMultiHunt()).thenReturn(true);
 
-        boolean result = command.perform(playerSender, new String[]{"reset", "player1"});
+        command.perform(playerSender, new String[]{"reset", "player1"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.HuntResetRequireHunt");
     }
 
@@ -77,9 +76,8 @@ class ResetCommandTest {
         when(huntService.isMultiHunt()).thenReturn(false);
         when(storageService.getPlayerByName("unknown")).thenReturn(null);
 
-        boolean result = command.perform(playerSender, new String[]{"reset", "unknown"});
+        command.perform(playerSender, new String[]{"reset", "unknown"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.PlayerNotFound", "unknown");
     }
 
@@ -88,9 +86,8 @@ class ResetCommandTest {
         when(huntService.isMultiHunt()).thenReturn(false);
         when(storageService.getPlayerByName("player1")).thenThrow(new RuntimeException("db error"));
 
-        boolean result = command.perform(playerSender, new String[]{"reset", "player1"});
+        command.perform(playerSender, new String[]{"reset", "player1"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.StorageError");
     }
 
@@ -108,9 +105,8 @@ class ResetCommandTest {
                  MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
                 bukkit.when(() -> Bukkit.getPlayer(playerUuid)).thenReturn(null);
 
-                boolean result = command.perform(playerSender, new String[]{"reset", "player1"});
+                command.perform(playerSender, new String[]{"reset", "player1"});
 
-                assertThat(result).isTrue();
                 verify(storageService).resetPlayer(playerUuid);
                 verify(languageService).message("Messages.PlayerReset", "player1");
             }
@@ -126,9 +122,8 @@ class ResetCommandTest {
 
             try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
 
-                boolean result = command.perform(playerSender, new String[]{"reset", "player1"});
+                command.perform(playerSender, new String[]{"reset", "player1"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Messages.StorageError");
             }
         }
@@ -155,9 +150,8 @@ class ResetCommandTest {
                  MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
                 bukkit.when(() -> Bukkit.getPlayer(playerUuid)).thenReturn(null);
 
-                boolean result = command.perform(playerSender, new String[]{"reset", "player1", "--head", headUuid.toString()});
+                command.perform(playerSender, new String[]{"reset", "player1", "--head", headUuid.toString()});
 
-                assertThat(result).isTrue();
                 verify(storageService).resetPlayerHead(playerUuid, headUuid);
             }
         }
@@ -171,9 +165,8 @@ class ResetCommandTest {
             when(storageService.getPlayerByName("player1")).thenReturn(profile);
             when(headService.resolveHeadIdentifier("unknownHead")).thenReturn(null);
 
-            boolean result = command.perform(playerSender, new String[]{"reset", "player1", "--head", "unknownHead"});
+            command.perform(playerSender, new String[]{"reset", "player1", "--head", "unknownHead"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.HeadNameNotFound");
         }
     }
@@ -192,9 +185,8 @@ class ResetCommandTest {
                  MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
                 bukkit.when(() -> Bukkit.getPlayer(playerUuid)).thenReturn(null);
 
-                boolean result = command.perform(consoleSender, new String[]{"reset", "player1"});
+                command.perform(consoleSender, new String[]{"reset", "player1"});
 
-                assertThat(result).isTrue();
                 verify(storageService).resetPlayer(playerUuid);
                 verify(languageService).message("Messages.PlayerReset", "player1");
             }
@@ -218,9 +210,8 @@ class ResetCommandTest {
                  MockedStatic<HeadBlocks> hb = mockStatic(HeadBlocks.class)) {
                 bukkit.when(() -> Bukkit.getPlayer(playerUuid)).thenReturn(null);
 
-                boolean result = command.perform(consoleSender, new String[]{"reset", "player1", "--head", headUuid.toString()});
+                command.perform(consoleSender, new String[]{"reset", "player1", "--head", headUuid.toString()});
 
-                assertThat(result).isTrue();
                 verify(storageService).resetPlayerHead(playerUuid, headUuid);
             }
         }
@@ -232,9 +223,8 @@ class ResetCommandTest {
             when(huntService.isMultiHunt()).thenReturn(false);
             when(storageService.getPlayerByName("player1")).thenReturn(profile);
 
-            boolean result = command.perform(consoleSender, new String[]{"reset", "player1", "--head"});
+            command.perform(consoleSender, new String[]{"reset", "player1", "--head"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.TargetHeadPlayerOnly");
             verify(storageService, never()).resetPlayer(any());
             verify(storageService, never()).resetPlayerHead(any(), any());

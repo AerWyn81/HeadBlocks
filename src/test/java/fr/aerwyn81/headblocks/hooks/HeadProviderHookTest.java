@@ -11,8 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -128,7 +127,7 @@ class HeadProviderHookTest {
     void headDBHook_loadTextures_isNoOpWhenNotInitialized() {
         HeadDBHook hook = new HeadDBHook(pluginProvider, scheduler);
 
-        hook.loadTextures();
+        assertThatNoException().isThrownBy(() -> hook.loadTextures());
     }
 
     @Test
@@ -138,14 +137,14 @@ class HeadProviderHookTest {
         String base64 = HeadDBHook.toBase64Texture(hash);
         String decoded = new String(java.util.Base64.getDecoder().decode(base64));
 
-        assertThat(decoded).contains("http://textures.minecraft.net/texture/" + hash);
-        assertThat(decoded).contains("\"SKIN\"");
+        assertThat(decoded).contains("http://textures.minecraft.net/texture/" + hash)
+                .contains("\"SKIN\"");
     }
 
     @Test
     void headDatabaseHook_loadTextures_isNoOpWhenNotInitialized() {
         HeadDatabaseHook hook = new HeadDatabaseHook(pluginProvider);
 
-        hook.loadTextures();
+        assertThatNoException().isThrownBy(() -> hook.loadTextures());
     }
 }

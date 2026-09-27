@@ -4,7 +4,6 @@ import fr.aerwyn81.headblocks.data.TieredReward;
 import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.services.ConfigService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,8 +32,8 @@ public class HuntConfig {
     private Boolean hologramsEnabled;
     private Boolean hologramsFoundEnabled;
     private Boolean hologramsNotFoundEnabled;
-    private ArrayList<String> hologramsFoundLines;
-    private ArrayList<String> hologramsNotFoundLines;
+    private List<String> hologramsFoundLines;
+    private List<String> hologramsNotFoundLines;
 
     // Hints
     private Boolean hintsEnabled;
@@ -199,19 +198,19 @@ public class HuntConfig {
         this.hologramsNotFoundEnabled = enabled;
     }
 
-    public ArrayList<String> getHologramsFoundLines() {
+    public List<String> getHologramsFoundLines() {
         return hologramsFoundLines != null ? hologramsFoundLines : configService.hologramsFoundLines();
     }
 
-    public void setHologramsFoundLines(ArrayList<String> lines) {
+    public void setHologramsFoundLines(List<String> lines) {
         this.hologramsFoundLines = lines;
     }
 
-    public ArrayList<String> getHologramsNotFoundLines() {
+    public List<String> getHologramsNotFoundLines() {
         return hologramsNotFoundLines != null ? hologramsNotFoundLines : configService.hologramsNotFoundLines();
     }
 
-    public void setHologramsNotFoundLines(ArrayList<String> lines) {
+    public void setHologramsNotFoundLines(List<String> lines) {
         this.hologramsNotFoundLines = lines;
     }
 

@@ -51,7 +51,8 @@ class RemoveCommandTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(registry.getVisualService()).thenReturn(mock(HeadVisualService.class));
+        var headVisualServiceMock = mock(HeadVisualService.class);
+        lenient().when(registry.getVisualService()).thenReturn(headVisualServiceMock);
         lenient().when(registry.getHeadService()).thenReturn(headService);
         lenient().when(registry.getStorageService()).thenReturn(storageService);
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
@@ -62,9 +63,8 @@ class RemoveCommandTest {
 
     @Test
     void tooManyArgs_sendsError() {
-        boolean result = command.perform(playerSender, new String[]{"remove", "arg1", "arg2"});
+        command.perform(playerSender, new String[]{"remove", "arg1", "arg2"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.ErrorCommand");
     }
 
@@ -73,9 +73,8 @@ class RemoveCommandTest {
 
         @Test
         void consoleWithNoArg_sendsPlayerOnly() {
-            boolean result = command.perform(consoleSender, new String[]{"remove"});
+            command.perform(consoleSender, new String[]{"remove"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.PlayerOnly");
         }
 
@@ -87,9 +86,8 @@ class RemoveCommandTest {
             when(block.getLocation()).thenReturn(blockLoc);
             when(headService.getHeadAt(blockLoc)).thenReturn(null);
 
-            boolean result = command.perform(playerSender, new String[]{"remove"});
+            command.perform(playerSender, new String[]{"remove"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.TargetBlockNotHead");
         }
 
@@ -107,9 +105,8 @@ class RemoveCommandTest {
                 lu.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
                         .thenReturn("parsed-message");
 
-                boolean result = command.perform(playerSender, new String[]{"remove"});
+                command.perform(playerSender, new String[]{"remove"});
 
-                assertThat(result).isTrue();
                 verify(headService).removeHeadLocation(headLocation, configService.resetPlayerData());
             }
         }
@@ -130,9 +127,8 @@ class RemoveCommandTest {
                 lu.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
                         .thenReturn("parsed-message");
 
-                boolean result = command.perform(playerSender, new String[]{"remove", headUuid.toString()});
+                command.perform(playerSender, new String[]{"remove", headUuid.toString()});
 
-                assertThat(result).isTrue();
                 verify(headService).removeHeadLocation(headLocation, configService.resetPlayerData());
             }
         }
@@ -148,9 +144,8 @@ class RemoveCommandTest {
                 lu.when(() -> LocationUtils.parseLocationPlaceholders(anyString(), any(Location.class)))
                         .thenReturn("parsed-message");
 
-                boolean result = command.perform(playerSender, new String[]{"remove", "myHead"});
+                command.perform(playerSender, new String[]{"remove", "myHead"});
 
-                assertThat(result).isTrue();
                 verify(headService).removeHeadLocation(headLocation, configService.resetPlayerData());
             }
         }
@@ -159,9 +154,8 @@ class RemoveCommandTest {
         void unknownIdentifier_sendsError() {
             when(headService.getHeadByName("unknown")).thenReturn(null);
 
-            boolean result = command.perform(playerSender, new String[]{"remove", "unknown"});
+            command.perform(playerSender, new String[]{"remove", "unknown"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.RemoveLocationError");
         }
 
@@ -175,9 +169,8 @@ class RemoveCommandTest {
             when(headLocation.getNameOrUuid()).thenReturn("test-head");
             doThrow(new InternalException("db error")).when(headService).removeHeadLocation(eq(headLocation), anyBoolean());
 
-            boolean result = command.perform(playerSender, new String[]{"remove", headUuid.toString()});
+            command.perform(playerSender, new String[]{"remove", headUuid.toString()});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.StorageError");
         }
     }

@@ -19,6 +19,8 @@ import org.bukkit.entity.Player;
  * Stand inside the area to claim a head. Also carries the confinement options enforced elsewhere.
  */
 public class AreaRequirement implements Requirement {
+    private static final String WORLD = "world";
+
     private final ServiceRegistry registry;
     private final AreaProvider area;
     private final Location returnPoint;
@@ -112,7 +114,7 @@ public class AreaRequirement implements Requirement {
 
         if (returnPoint != null && returnPoint.getWorld() != null) {
             ConfigurationSection point = section.createSection("returnPoint");
-            point.set("world", returnPoint.getWorld().getName());
+            point.set(WORLD, returnPoint.getWorld().getName());
             point.set("x", returnPoint.getX());
             point.set("y", returnPoint.getY());
             point.set("z", returnPoint.getZ());
@@ -141,11 +143,11 @@ public class AreaRequirement implements Requirement {
     }
 
     private static Location readReturnPoint(ConfigurationSection section) {
-        if (section == null || !section.contains("world")) {
+        if (section == null || !section.contains(WORLD)) {
             return null;
         }
 
-        World world = Bukkit.getWorld(section.getString("world", ""));
+        World world = Bukkit.getWorld(section.getString(WORLD, ""));
         if (world == null) {
             return null;
         }

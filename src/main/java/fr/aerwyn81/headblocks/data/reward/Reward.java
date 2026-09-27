@@ -10,7 +10,7 @@ import java.util.Map;
 
 public record Reward(RewardType type, String value) {
 
-    public HashMap<String, String> serialize() {
+    public Map<String, String> serialize() {
         var map = new HashMap<String, String>();
         map.put("type", type.name());
         map.put("value", value);
@@ -49,7 +49,7 @@ public record Reward(RewardType type, String value) {
             LogUtil.error("Error executing head reward \"{0}\": {1}", value, ex.getMessage());
         }
 
-        if (parsedValue.isEmpty()) {
+        if (parsedValue.isEmpty() || type == RewardType.UNKNOWN) {
             return;
         }
 
@@ -59,6 +59,7 @@ public record Reward(RewardType type, String value) {
             case COMMAND -> registry.getScheduler().runTaskLater(() ->
                     registry.getCommandDispatcher().dispatchConsoleCommand(val), 1L);
             case BROADCAST -> registry.getPluginProvider().getJavaPlugin().getServer().broadcastMessage(parsedValue);
+            case UNKNOWN -> throw new IllegalStateException("Unknown reward type");
         }
     }
 }

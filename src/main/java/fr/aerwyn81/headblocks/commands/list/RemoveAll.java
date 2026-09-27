@@ -11,6 +11,8 @@ import java.util.Collections;
 
 @HBAnnotations(command = "removeall", permission = "headblocks.admin")
 public class RemoveAll implements Cmd {
+    private static final String HEAD_COUNT_PLACEHOLDER = "%headCount%";
+
     private final ServiceRegistry registry;
 
     public RemoveAll(ServiceRegistry registry) {
@@ -18,38 +20,36 @@ public class RemoveAll implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         ArrayList<HeadLocation> headLocations = new ArrayList<>(registry.getHeadService().getChargedHeadLocations());
         int headCount = headLocations.size();
 
         if (headLocations.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
-            return true;
+            return;
         }
 
         boolean hasConfirmInCommand = args.length > 1 && args[1].equals("--confirm");
         if (hasConfirmInCommand) {
             sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllInProgress")
-                    .replace("%headCount%", String.valueOf(headCount)));
+                    .replace(HEAD_COUNT_PLACEHOLDER, String.valueOf(headCount)));
 
-            registry.getHeadService().removeAllHeadLocationsAsync(headLocations, registry.getConfigService().resetPlayerData(), (headRemoved) -> {
+            registry.getHeadService().removeAllHeadLocationsAsync(headLocations, registry.getConfigService().resetPlayerData(), headRemoved -> {
                 if (headRemoved == 0) {
                     sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllError")
-                            .replace("%headCount%", String.valueOf(headCount)));
+                            .replace(HEAD_COUNT_PLACEHOLDER, String.valueOf(headCount)));
                     return;
                 }
 
                 sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllSuccess")
-                        .replace("%headCount%", String.valueOf(headRemoved)));
+                        .replace(HEAD_COUNT_PLACEHOLDER, String.valueOf(headRemoved)));
             });
 
-            return true;
+            return;
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.RemoveAllConfirm")
-                .replace("%headCount%", String.valueOf(headCount)));
-
-        return true;
+                .replace(HEAD_COUNT_PLACEHOLDER, String.valueOf(headCount)));
     }
 
     @Override

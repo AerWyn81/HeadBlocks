@@ -109,7 +109,7 @@ public record RecurringScheduleMode(RecurrenceUnit every, String startRef, Durat
             DayOfWeek targetDay = DayOfWeek.valueOf(startRef.toUpperCase());
             LocalDate date = referenceDate;
             // Go back to the most recent target day (including today)
-            while (date.getDayOfWeek() != targetDay) {
+            while (!targetDay.equals(date.getDayOfWeek())) {
                 date = date.minusDays(1);
             }
             return date.atStartOfDay();

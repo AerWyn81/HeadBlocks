@@ -8,6 +8,9 @@ import org.bukkit.command.ConsoleCommandSender;
 
 public class CommandsUtils {
 
+    private CommandsUtils() {
+    }
+
     public static PlayerProfileLight extractAndGetPlayerUuidByName(ServiceRegistry registry, CommandSender sender, String[] args, boolean canSeeOther) {
         var pName = "";
 

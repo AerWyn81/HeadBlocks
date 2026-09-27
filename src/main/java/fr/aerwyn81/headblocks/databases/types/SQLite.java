@@ -172,40 +172,37 @@ public class SQLite extends AbstractDatabase {
     public void migrateToV5() throws InternalException {
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
-            try {
-                try (var ps = conn.prepareStatement(Requests.createTableHunts())) {
-                    ps.execute();
-                }
-                try (var ps = conn.prepareStatement(Requests.migV5InsertDefaultHunt())) {
-                    ps.executeUpdate();
-                }
-
-                // SQLite doesn't support ALTER TABLE to change PK,
-                // so we create temp → copy → drop → rename
-                try (var ps = conn.prepareStatement(Requests.migV5CreateTempPlayerHeadsSQLite())) {
-                    ps.execute();
-                }
-                try (var ps = conn.prepareStatement(Requests.migV5CopyPlayerHeadsToTempSQLite())) {
-                    ps.executeUpdate();
-                }
-                try (var ps = conn.prepareStatement(Requests.migV5DropOldPlayerHeadsSQLite())) {
-                    ps.executeUpdate();
-                }
-                try (var ps = conn.prepareStatement(Requests.migV5RenameTempPlayerHeadsSQLite())) {
-                    ps.executeUpdate();
-                }
-
-                try (var ps = conn.prepareStatement(Requests.createTableTimedRuns())) {
-                    ps.execute();
-                }
-
-                conn.commit();
-            } catch (Exception ex) {
-                conn.rollback();
-                throw ex;
-            }
+            runInTransaction(conn, () -> migrateTablesToV5(conn), false);
         } catch (Exception ex) {
             throw new InternalException(ex);
+        }
+    }
+
+    private void migrateTablesToV5(Connection conn) throws SQLException {
+        try (var ps = conn.prepareStatement(Requests.createTableHunts())) {
+            ps.execute();
+        }
+        try (var ps = conn.prepareStatement(Requests.migV5InsertDefaultHunt())) {
+            ps.executeUpdate();
+        }
+
+        // SQLite doesn't support ALTER TABLE to change PK,
+        // so we create temp → copy → drop → rename
+        try (var ps = conn.prepareStatement(Requests.migV5CreateTempPlayerHeadsSQLite())) {
+            ps.execute();
+        }
+        try (var ps = conn.prepareStatement(Requests.migV5CopyPlayerHeadsToTempSQLite())) {
+            ps.executeUpdate();
+        }
+        try (var ps = conn.prepareStatement(Requests.migV5DropOldPlayerHeadsSQLite())) {
+            ps.executeUpdate();
+        }
+        try (var ps = conn.prepareStatement(Requests.migV5RenameTempPlayerHeadsSQLite())) {
+            ps.executeUpdate();
+        }
+
+        try (var ps = conn.prepareStatement(Requests.createTableTimedRuns())) {
+            ps.execute();
         }
     }
 

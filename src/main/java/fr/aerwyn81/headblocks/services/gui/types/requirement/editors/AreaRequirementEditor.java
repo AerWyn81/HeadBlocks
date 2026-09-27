@@ -26,6 +26,8 @@ import java.util.function.DoubleFunction;
  * Editor of the area: its shape, and what happens to a player once they are inside.
  */
 public class AreaRequirementEditor extends AbstractRequirementEditor {
+    private static final String LOCATION_PLACEHOLDER = "%location%";
+
     private static final int ROWS = 4;
 
     private enum Capture {
@@ -132,7 +134,7 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
 
         if (draft.blockExit) {
             menu.setItem(0, 13, fieldItem(Material.ENDER_PEARL,
-                    "Gui.AreaConfigReturnPoint", "Gui.AreaConfigReturnPointLore", "%location%",
+                    "Gui.AreaConfigReturnPoint", "Gui.AreaConfigReturnPointLore", LOCATION_PLACEHOLDER,
                     describe(draft.returnPoint, true))
                     .addOnClickEvent(event -> beginCapture((Player) event.getWhoClicked(), Capture.RETURN)));
         }
@@ -171,11 +173,11 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
 
     private void buildCuboidItems(HBMenu menu, Draft draft) {
         menu.setItem(0, 12, fieldItem(Material.LIME_CONCRETE,
-                "Gui.AreaConfigCorner1", "Gui.AreaConfigCornerLore", "%location%", describe(draft.corner1, false))
+                "Gui.AreaConfigCorner1", "Gui.AreaConfigCornerLore", LOCATION_PLACEHOLDER, describe(draft.corner1, false))
                 .addOnClickEvent(event -> beginCapture((Player) event.getWhoClicked(), Capture.CORNER1)));
 
         menu.setItem(0, 21, fieldItem(Material.RED_CONCRETE,
-                "Gui.AreaConfigCorner2", "Gui.AreaConfigCornerLore", "%location%", describe(draft.corner2, false))
+                "Gui.AreaConfigCorner2", "Gui.AreaConfigCornerLore", LOCATION_PLACEHOLDER, describe(draft.corner2, false))
                 .addOnClickEvent(event -> beginCapture((Player) event.getWhoClicked(), Capture.CORNER2)));
     }
 
@@ -207,9 +209,7 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
     }
 
     private ItemGUI toggleItem(String nameKey, String loreKey, boolean enabled) {
-        String status = enabled
-                ? registry.getLanguageService().message("Gui.StatusEnabled")
-                : registry.getLanguageService().message("Gui.StatusDisabled");
+        String status = registry.getLanguageService().message(enabled ? "Gui.StatusEnabled" : "Gui.StatusDisabled");
 
         return fieldItem(enabled ? Material.LIME_DYE : Material.GRAY_DYE, nameKey, loreKey, "%status%", status);
     }
@@ -336,16 +336,10 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
     public void renderOutlines() {
         for (Map.Entry<UUID, Draft> entry : drafts.entrySet()) {
             Draft draft = entry.getValue();
-            if (!draft.outlining) {
-                continue;
+            Player player = draft.outlining ? Bukkit.getPlayer(entry.getKey()) : null;
+            if (player != null && player.isOnline()) {
+                registry.getScheduler().runNow(player, () -> renderOutline(player, draft));
             }
-
-            Player player = Bukkit.getPlayer(entry.getKey());
-            if (player == null || !player.isOnline()) {
-                continue;
-            }
-
-            registry.getScheduler().runNow(player, () -> renderOutline(player, draft));
         }
     }
 
@@ -361,7 +355,7 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
                 return;
             }
 
-            drawBox(player, b[0], b[1], b[2], b[3] + 1, b[4] + 1, b[5] + 1);
+            drawBox(player, b[0], b[1], b[2], b[3] + 1.0, b[4] + 1.0, b[5] + 1.0);
             return;
         }
 
@@ -374,9 +368,9 @@ public class AreaRequirementEditor extends AbstractRequirementEditor {
         double minX = Math.min(c1.getBlockX(), c2.getBlockX());
         double minY = Math.min(c1.getBlockY(), c2.getBlockY());
         double minZ = Math.min(c1.getBlockZ(), c2.getBlockZ());
-        double maxX = Math.max(c1.getBlockX(), c2.getBlockX()) + 1;
-        double maxY = Math.max(c1.getBlockY(), c2.getBlockY()) + 1;
-        double maxZ = Math.max(c1.getBlockZ(), c2.getBlockZ()) + 1;
+        double maxX = Math.max(c1.getBlockX(), c2.getBlockX()) + 1.0;
+        double maxY = Math.max(c1.getBlockY(), c2.getBlockY()) + 1.0;
+        double maxZ = Math.max(c1.getBlockZ(), c2.getBlockZ()) + 1.0;
         drawBox(player, minX, minY, minZ, maxX, maxY, maxZ);
     }
 

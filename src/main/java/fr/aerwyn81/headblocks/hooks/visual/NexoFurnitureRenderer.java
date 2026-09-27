@@ -75,6 +75,7 @@ class NexoFurnitureRenderer extends HandleProviderHook<NexoFurnitureRenderer.Fur
     }
 
     @Override
-    protected void rotate(Furniture handle, Entity base, float yaw) {
+    protected boolean rotatesBase() {
+        return false;
     }
 }

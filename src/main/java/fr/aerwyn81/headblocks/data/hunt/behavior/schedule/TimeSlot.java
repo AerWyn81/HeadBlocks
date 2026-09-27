@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public record TimeSlot(List<DayOfWeek> days, LocalTime from, LocalTime to) {
+    private static final String SLOTS = "slots";
 
     public boolean matches(LocalDateTime now) {
         if (!days.contains(now.getDayOfWeek())) {
@@ -79,11 +80,11 @@ public record TimeSlot(List<DayOfWeek> days, LocalTime from, LocalTime to) {
 
     public static List<TimeSlot> loadSlots(ConfigurationSection parent) {
         List<TimeSlot> slots = new ArrayList<>();
-        if (parent == null || !parent.isList("slots")) {
+        if (parent == null || !parent.isList(SLOTS)) {
             return slots;
         }
 
-        var slotsList = parent.getMapList("slots");
+        var slotsList = parent.getMapList(SLOTS);
         for (int i = 0; i < slotsList.size(); i++) {
             var map = slotsList.get(i);
             // Create a temporary section from the map
@@ -111,6 +112,6 @@ public record TimeSlot(List<DayOfWeek> days, LocalTime from, LocalTime to) {
             map.put("to", slot.to().format(ScheduleDateTimeParser.TIME_FORMAT));
             slotMaps.add(map);
         }
-        parent.set("slots", slotMaps);
+        parent.set(SLOTS, slotMaps);
     }
 }

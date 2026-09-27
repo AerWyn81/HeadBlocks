@@ -149,11 +149,7 @@ public class HeadVisualService {
         }
 
         var renderer = renderers.entity(formOf(head), head.getContent());
-        var current = spawned.get(head.getUuid());
-        if (current != null && current.stream().allMatch(Entity::isValid)) {
-            if (renderer != null && renderer.anchored()) {
-                keepInPlace(head, current);
-            }
+        if (isStillSpawned(head, renderer)) {
             return;
         }
 
@@ -175,6 +171,22 @@ public class HeadVisualService {
             return;
         }
 
+        spawnVisual(head, renderer, content);
+    }
+
+    private boolean isStillSpawned(HeadLocation head, EntityRenderer renderer) {
+        var current = spawned.get(head.getUuid());
+        if (current == null || !current.stream().allMatch(Entity::isValid)) {
+            return false;
+        }
+
+        if (renderer != null && renderer.anchored()) {
+            keepInPlace(head, current);
+        }
+        return true;
+    }
+
+    private void spawnVisual(HeadLocation head, EntityRenderer renderer, HeadContent content) {
         List<Entity> created;
         try {
             created = new ArrayList<>(renderer.spawn(anchorOf(head), content, settingsOf(head)));
@@ -310,6 +322,7 @@ public class HeadVisualService {
             try {
                 rendererOf(entry.getKey()).despawn(entry.getValue());
             } catch (Exception ignored) {
+                // ignored: a failing renderer must not prevent the other visuals from being removed on shutdown
             }
         }
 

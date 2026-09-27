@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Asks which hunt has to be progressed, and by how many heads.
@@ -87,7 +86,7 @@ public class PreviousHuntRequirementEditor extends AbstractRequirementEditor {
                 .map(line -> line
                         .replace("%hunt%", hunt.getDisplayName())
                         .replace("%headCount%", String.valueOf(hunt.getTargetCount())))
-                .collect(Collectors.toList());
+                .toList();
 
         return new ItemGUI(new ItemBuilder(hunt.getIconMaterial())
                 .setName(MessageUtils.colorize("&e" + hunt.getDisplayName()))

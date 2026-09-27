@@ -16,6 +16,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ScheduleCommandHandler {
+    private static final String MESSAGES_HUNT_USAGE = "Messages.HuntUsage";
+    private static final String HUNT_PLACEHOLDER = "%hunt%";
+    private static final String CLEAR = "clear";
+    private static final String START = "start";
+    private static final String EVERY = "every";
+    private static final String ACTIVE_FROM = "activeFrom";
+    private static final String ACTIVE_UNTIL = "activeUntil";
+    private static final String MESSAGES_HUNT_SCHEDULE_NO_SCHEDULED = "Messages.HuntScheduleNoScheduled";
+    private static final String MESSAGES_HUNT_SCHEDULE_INVALID_DATE = "Messages.HuntScheduleInvalidDate";
+    private static final String MESSAGES_HUNT_SCHEDULE_INVALID_MODE = "Messages.HuntScheduleInvalidMode";
+    private static final String MESSAGES_HUNT_SCHEDULE_RECURRENCE_SET = "Messages.HuntScheduleRecurrenceSet";
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MM/dd/yyyy");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
@@ -28,7 +39,7 @@ public class ScheduleCommandHandler {
 
     public void handle(CommandSender sender, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
             return;
         }
 
@@ -36,32 +47,32 @@ public class ScheduleCommandHandler {
         HBHunt hunt = registry.getHuntService().getHuntById(huntId);
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                    .replace("%hunt%", huntId));
+                    .replace(HUNT_PLACEHOLDER, huntId));
             return;
         }
 
         String action = args[3].toLowerCase();
 
         switch (action) {
-            case "clear" -> handleClear(sender, hunt, args);
-            case "start", "end" -> handleStartEnd(sender, hunt, args, action);
+            case CLEAR -> handleClear(sender, hunt, args);
+            case START, "end" -> handleStartEnd(sender, hunt, args, action);
             case "mode" -> handleMode(sender, hunt, args);
             case "addslot" -> handleAddSlot(sender, hunt, args);
             case "removeslot" -> handleRemoveSlot(sender, hunt, args);
-            case "every" -> handleEvery(sender, hunt, args);
+            case EVERY -> handleEvery(sender, hunt, args);
             case "startref" -> handleStartRef(sender, hunt, args);
             case "duration" -> handleDuration(sender, hunt, args);
-            case "activefrom" -> handleActiveDate(sender, hunt, args, "activeFrom");
-            case "activeuntil" -> handleActiveDate(sender, hunt, args, "activeUntil");
+            case "activefrom" -> handleActiveDate(sender, hunt, args, ACTIVE_FROM);
+            case "activeuntil" -> handleActiveDate(sender, hunt, args, ACTIVE_UNTIL);
             case "info" -> handleInfo(sender, hunt);
-            default -> sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            default -> sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
         }
     }
 
     private ScheduledBehavior findScheduledBehavior(HBHunt hunt) {
         return hunt.getBehaviors().stream()
-                .filter(b -> b instanceof ScheduledBehavior)
-                .map(b -> (ScheduledBehavior) b)
+                .filter(ScheduledBehavior.class::isInstance)
+                .map(ScheduledBehavior.class::cast)
                 .findFirst().orElse(null);
     }
 
@@ -75,7 +86,7 @@ public class ScheduleCommandHandler {
 
     private void replaceScheduledBehavior(HBHunt hunt, ScheduleMode newMode) {
         ArrayList<Behavior> behaviors = new ArrayList<>(hunt.getBehaviors());
-        behaviors.removeIf(b -> b instanceof ScheduledBehavior);
+        behaviors.removeIf(ScheduledBehavior.class::isInstance);
         behaviors.add(new ScheduledBehavior(registry, newMode));
         hunt.setBehaviors(behaviors);
         registry.getHuntConfigService().saveHunt(hunt);
@@ -86,8 +97,8 @@ public class ScheduleCommandHandler {
     private void handleClear(CommandSender sender, HBHunt hunt, String[] args) {
         ScheduledBehavior existing = findScheduledBehavior(hunt);
         if (existing == null) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleNoScheduled")
-                    .replace("%hunt%", hunt.getId()));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_NO_SCHEDULED)
+                    .replace(HUNT_PLACEHOLDER, hunt.getId()));
             return;
         }
 
@@ -97,7 +108,7 @@ public class ScheduleCommandHandler {
 
         ScheduleMode mode = existing.getScheduleMode();
         if (mode instanceof RangeScheduleMode rsm) {
-            if ("start".equals(which) && rsm.end() != null) {
+            if (START.equals(which) && rsm.end() != null) {
                 behaviors.add(new ScheduledBehavior(registry, new RangeScheduleMode(null, rsm.end(), rsm.slots())));
             } else if ("end".equals(which) && rsm.start() != null) {
                 behaviors.add(new ScheduledBehavior(registry, new RangeScheduleMode(rsm.start(), null, rsm.slots())));
@@ -107,35 +118,20 @@ public class ScheduleCommandHandler {
         hunt.setBehaviors(behaviors);
         registry.getHuntConfigService().saveHunt(hunt);
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleCleared")
-                .replace("%hunt%", hunt.getId()));
+                .replace(HUNT_PLACEHOLDER, hunt.getId()));
     }
 
     // --- start / end (range mode) ---
 
     private void handleStartEnd(CommandSender sender, HBHunt hunt, String[] args, String action) {
         if (args.length < 5) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
             return;
         }
 
-        LocalDate date;
-        try {
-            date = LocalDate.parse(args[4], DATE_FMT);
-        } catch (DateTimeParseException e) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInvalidDate"));
+        LocalDateTime datetime = parseDateTimeArgs(sender, args);
+        if (datetime == null) {
             return;
-        }
-
-        LocalDateTime datetime;
-        if (args.length >= 6) {
-            try {
-                datetime = date.atTime(LocalTime.parse(args[5], TIME_FMT));
-            } catch (DateTimeParseException e) {
-                sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInvalidDate"));
-                return;
-            }
-        } else {
-            datetime = date.atStartOfDay();
         }
 
         ScheduledBehavior existing = findScheduledBehavior(hunt);
@@ -148,25 +144,46 @@ public class ScheduleCommandHandler {
         LocalDateTime newEnd;
         List<TimeSlot> existingSlots;
         if (currentRange != null) {
-            newStart = "start".equals(action) ? datetime : currentRange.start();
+            newStart = START.equals(action) ? datetime : currentRange.start();
             newEnd = "end".equals(action) ? datetime : currentRange.end();
             existingSlots = currentRange.slots();
         } else {
-            newStart = "start".equals(action) ? datetime : null;
+            newStart = START.equals(action) ? datetime : null;
             newEnd = "end".equals(action) ? datetime : null;
             existingSlots = List.of();
         }
 
         replaceScheduledBehavior(hunt, new RangeScheduleMode(newStart, newEnd, existingSlots));
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleUpdated")
-                .replace("%hunt%", hunt.getId()));
+                .replace(HUNT_PLACEHOLDER, hunt.getId()));
+    }
+
+    private LocalDateTime parseDateTimeArgs(CommandSender sender, String[] args) {
+        LocalDate date;
+        try {
+            date = LocalDate.parse(args[4], DATE_FMT);
+        } catch (DateTimeParseException e) {
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_INVALID_DATE));
+            return null;
+        }
+
+        if (args.length < 6) {
+            return date.atStartOfDay();
+        }
+
+        try {
+            return date.atTime(LocalTime.parse(args[5], TIME_FMT));
+        } catch (DateTimeParseException e) {
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_INVALID_DATE));
+            return null;
+        }
     }
 
     // --- mode ---
 
     private void handleMode(CommandSender sender, HBHunt hunt, String[] args) {
         if (args.length < 5) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInvalidMode"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_INVALID_MODE));
             return;
         }
 
@@ -179,13 +196,13 @@ public class ScheduleCommandHandler {
         };
 
         if (newMode == null) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInvalidMode"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_INVALID_MODE));
             return;
         }
 
         replaceScheduledBehavior(hunt, newMode);
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleModeChanged")
-                .replace("%hunt%", hunt.getId())
+                .replace(HUNT_PLACEHOLDER, hunt.getId())
                 .replace("%mode%", modeName));
     }
 
@@ -226,7 +243,7 @@ public class ScheduleCommandHandler {
         ScheduleMode updated = addSlotToMode(mode, newSlot);
         replaceScheduledBehavior(hunt, updated);
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleSlotAdded")
-                .replace("%hunt%", hunt.getId()));
+                .replace(HUNT_PLACEHOLDER, hunt.getId()));
     }
 
     private ScheduleMode addSlotToMode(ScheduleMode mode, TimeSlot slot) {
@@ -252,7 +269,7 @@ public class ScheduleCommandHandler {
 
     private void handleRemoveSlot(CommandSender sender, HBHunt hunt, String[] args) {
         if (args.length < 5) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
             return;
         }
 
@@ -260,14 +277,14 @@ public class ScheduleCommandHandler {
         try {
             index = Integer.parseInt(args[4]) - 1;
         } catch (NumberFormatException e) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
             return;
         }
 
         ScheduledBehavior existing = findScheduledBehavior(hunt);
         if (existing == null) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleNoScheduled")
-                    .replace("%hunt%", hunt.getId()));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_NO_SCHEDULED)
+                    .replace(HUNT_PLACEHOLDER, hunt.getId()));
             return;
         }
 
@@ -275,13 +292,13 @@ public class ScheduleCommandHandler {
         ScheduleMode updated = removeSlotFromMode(mode, index);
         if (updated == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleNoSlots")
-                    .replace("%hunt%", hunt.getId()));
+                    .replace(HUNT_PLACEHOLDER, hunt.getId()));
             return;
         }
 
         replaceScheduledBehavior(hunt, updated);
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleSlotRemoved")
-                .replace("%hunt%", hunt.getId()));
+                .replace(HUNT_PLACEHOLDER, hunt.getId()));
     }
 
     private ScheduleMode removeSlotFromMode(ScheduleMode mode, int index) {
@@ -316,7 +333,7 @@ public class ScheduleCommandHandler {
 
     private void handleEvery(CommandSender sender, HBHunt hunt, String[] args) {
         if (args.length < 5) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
             return;
         }
 
@@ -324,7 +341,7 @@ public class ScheduleCommandHandler {
         try {
             unit = RecurrenceUnit.valueOf(args[4].toUpperCase());
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInvalidMode"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_INVALID_MODE));
             return;
         }
 
@@ -339,15 +356,15 @@ public class ScheduleCommandHandler {
         }
 
         replaceScheduledBehavior(hunt, rsm);
-        sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleRecurrenceSet")
-                .replace("%hunt%", hunt.getId()));
+        sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_RECURRENCE_SET)
+                .replace(HUNT_PLACEHOLDER, hunt.getId()));
     }
 
     // --- startref (recurring) ---
 
     private void handleStartRef(CommandSender sender, HBHunt hunt, String[] args) {
         if (args.length < 5) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
             return;
         }
 
@@ -363,15 +380,15 @@ public class ScheduleCommandHandler {
         }
 
         replaceScheduledBehavior(hunt, rsm);
-        sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleRecurrenceSet")
-                .replace("%hunt%", hunt.getId()));
+        sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_RECURRENCE_SET)
+                .replace(HUNT_PLACEHOLDER, hunt.getId()));
     }
 
     // --- duration (recurring) ---
 
     private void handleDuration(CommandSender sender, HBHunt hunt, String[] args) {
         if (args.length < 5) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
             return;
         }
 
@@ -392,15 +409,15 @@ public class ScheduleCommandHandler {
         }
 
         replaceScheduledBehavior(hunt, rsm);
-        sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleRecurrenceSet")
-                .replace("%hunt%", hunt.getId()));
+        sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_RECURRENCE_SET)
+                .replace(HUNT_PLACEHOLDER, hunt.getId()));
     }
 
     // --- activefrom / activeuntil (slots mode) ---
 
     private void handleActiveDate(CommandSender sender, HBHunt hunt, String[] args, String field) {
         if (args.length < 5) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntUsage"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_USAGE));
             return;
         }
 
@@ -408,7 +425,7 @@ public class ScheduleCommandHandler {
         try {
             date = LocalDate.parse(args[4], DATE_FMT);
         } catch (DateTimeParseException e) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInvalidDate"));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_INVALID_DATE));
             return;
         }
 
@@ -417,18 +434,18 @@ public class ScheduleCommandHandler {
 
         SlotsScheduleMode ssm;
         if (mode instanceof SlotsScheduleMode s) {
-            LocalDate from = "activeFrom".equals(field) ? date : s.activeFrom();
-            LocalDate until = "activeUntil".equals(field) ? date : s.activeUntil();
+            LocalDate from = ACTIVE_FROM.equals(field) ? date : s.activeFrom();
+            LocalDate until = ACTIVE_UNTIL.equals(field) ? date : s.activeUntil();
             ssm = new SlotsScheduleMode(s.slots(), from, until);
         } else {
-            LocalDate from = "activeFrom".equals(field) ? date : null;
-            LocalDate until = "activeUntil".equals(field) ? date : null;
+            LocalDate from = ACTIVE_FROM.equals(field) ? date : null;
+            LocalDate until = ACTIVE_UNTIL.equals(field) ? date : null;
             ssm = new SlotsScheduleMode(List.of(), from, until);
         }
 
         replaceScheduledBehavior(hunt, ssm);
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleUpdated")
-                .replace("%hunt%", hunt.getId()));
+                .replace(HUNT_PLACEHOLDER, hunt.getId()));
     }
 
     // --- info ---
@@ -436,8 +453,8 @@ public class ScheduleCommandHandler {
     private void handleInfo(CommandSender sender, HBHunt hunt) {
         ScheduledBehavior existing = findScheduledBehavior(hunt);
         if (existing == null) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleNoScheduled")
-                    .replace("%hunt%", hunt.getId()));
+            sender.sendMessage(registry.getLanguageService().message(MESSAGES_HUNT_SCHEDULE_NO_SCHEDULED)
+                    .replace(HUNT_PLACEHOLDER, hunt.getId()));
             return;
         }
 
@@ -455,7 +472,7 @@ public class ScheduleCommandHandler {
         }
 
         sender.sendMessage(registry.getLanguageService().message("Messages.HuntScheduleInfo")
-                .replace("%hunt%", hunt.getId())
+                .replace(HUNT_PLACEHOLDER, hunt.getId())
                 .replace("%info%", info.toString()));
     }
 
@@ -474,10 +491,10 @@ public class ScheduleCommandHandler {
 
     // --- Tab completion ---
 
-    public ArrayList<String> tabComplete(String[] args) {
+    public List<String> tabComplete(String[] args) {
         if (args.length == 4) {
-            return Stream.of("start", "end", "clear", "mode", "addslot", "removeslot",
-                            "every", "startref", "duration", "activefrom", "activeuntil", "info")
+            return Stream.of(START, "end", CLEAR, "mode", "addslot", "removeslot",
+                            EVERY, "startref", "duration", "activefrom", "activeuntil", "info")
                     .filter(s -> s.startsWith(args[3].toLowerCase()))
                     .collect(Collectors.toCollection(ArrayList::new));
         }
@@ -488,10 +505,10 @@ public class ScheduleCommandHandler {
                 case "mode" -> Stream.of("range", "slots", "recurring")
                         .filter(s -> s.startsWith(args[4].toLowerCase()))
                         .collect(Collectors.toCollection(ArrayList::new));
-                case "every" -> Stream.of("year", "month", "week")
+                case EVERY -> Stream.of("year", "month", "week")
                         .filter(s -> s.startsWith(args[4].toLowerCase()))
                         .collect(Collectors.toCollection(ArrayList::new));
-                case "clear" -> Stream.of("start", "end")
+                case CLEAR -> Stream.of(START, "end")
                         .filter(s -> s.startsWith(args[4].toLowerCase()))
                         .collect(Collectors.toCollection(ArrayList::new));
                 default -> new ArrayList<>();

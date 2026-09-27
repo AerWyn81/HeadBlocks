@@ -20,11 +20,11 @@ public class Reset extends ResetBase {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         // In multi-hunt mode, require /hb hunt <name> reset <player> instead
         if (registry.getHuntService().isMultiHunt()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntResetRequireHunt"));
-            return true;
+            return;
         }
 
         PlayerProfileLight profile;
@@ -34,18 +34,18 @@ public class Reset extends ResetBase {
         } catch (Exception ex) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while retrieving player {0} from the storage: {1}", args[1], ex.getMessage());
-            return true;
+            return;
         }
 
         if (profile == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.PlayerNotFound", args[1]));
-            return true;
+            return;
         }
 
         var headUuid = resolveHeadFromArgs(sender, args, 2);
 
         if (hasHeadParameter(args, 2) && headUuid == null) {
-            return true;
+            return;
         }
 
         var targetPlayer = Bukkit.getPlayer(profile.uuid());
@@ -71,10 +71,7 @@ public class Reset extends ResetBase {
         } catch (InternalException ex) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while resetting the player {0} from the storage: {1}", args[1], ex.getMessage());
-            return true;
         }
-
-        return true;
     }
 
     @Override

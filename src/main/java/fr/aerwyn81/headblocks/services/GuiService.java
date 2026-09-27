@@ -15,7 +15,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class GuiService {
@@ -130,7 +129,7 @@ public class GuiService {
                                     .replace("%huntName%", hunt.getDisplayName())
                                     .replace("%headCount%", String.valueOf(headCount))
                                     .replace("%state%", hunt.getState().getLocalizedName(languageService)))
-                            .collect(Collectors.toList()))
+                            .toList())
                     .toItemStack(), true)
                     .addOnClickEvent(event -> callback.accept((Player) event.getWhoClicked(), hunt));
 
@@ -187,7 +186,7 @@ public class GuiService {
                     return new ItemGUI(configService.guiPreviousIcon()
                             .setName(languageService.message("Gui.Previous"))
                             .setLore(languageService.messageList("Gui.PreviousLore")
-                                    .stream().map(s -> s.replace("%page%", String.valueOf(inventory.getCurrentPage()))).collect(Collectors.toList()))
+                                    .stream().map(s -> s.replace("%page%", String.valueOf(inventory.getCurrentPage()))).toList())
                             .toItemStack()
                     ).addOnClickEvent(event -> inventory.previousPage(event.getWhoClicked()));
                 } else {
@@ -198,7 +197,7 @@ public class GuiService {
                     return new ItemGUI(configService.guiNextIcon()
                             .setName(languageService.message("Gui.Next"))
                             .setLore(languageService.messageList("Gui.NextLore")
-                                    .stream().map(s -> s.replace("%page%", String.valueOf((inventory.getCurrentPage() + 2)))).collect(Collectors.toList()))
+                                    .stream().map(s -> s.replace("%page%", String.valueOf((inventory.getCurrentPage() + 2)))).toList())
                             .toItemStack()
                     ).addOnClickEvent(event -> inventory.nextPage(event.getWhoClicked()));
                 } else {

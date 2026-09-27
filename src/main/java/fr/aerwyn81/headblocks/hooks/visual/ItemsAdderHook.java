@@ -27,7 +27,7 @@ public class ItemsAdderHook extends ItemProviderHook {
 
     @Override
     public String prefix() {
-        return "itemsadder";
+        return DATA_KEY;
     }
 
     @Override

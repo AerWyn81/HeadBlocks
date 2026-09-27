@@ -90,14 +90,11 @@ public class RequirementSet {
                 continue;
             }
 
-            if (result.satisfied()) {
-                if (mode == RequirementMode.ANY) {
-                    return RequirementResult.ok();
-                }
-                continue;
+            if (!result.satisfied()) {
+                blocking.add(result.reason());
+            } else if (mode == RequirementMode.ANY) {
+                return RequirementResult.ok();
             }
-
-            blocking.add(result.reason());
         }
 
         if (blocking.isEmpty()) {

@@ -31,9 +31,9 @@ public class ChatPageUtils {
         this.components = new ArrayList<>();
         this.languageService = languageService;
 
-        if (sender instanceof Player) {
+        if (sender instanceof Player p) {
             isConsoleSender = false;
-            this.player = (Player) sender;
+            this.player = p;
             pageHeight = 8;
         } else {
             pageHeight = Integer.MAX_VALUE;

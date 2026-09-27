@@ -72,7 +72,8 @@ class ItemProviderHookTest {
         ItemDisplay display = mock(ItemDisplay.class);
         when(anchor.getWorld()).thenReturn(world);
         when(world.spawn(anchor, ItemDisplay.class)).thenReturn(display);
-        when(world.spawn(anchor, Interaction.class)).thenReturn(mock(Interaction.class));
+        var interactionMock = mock(Interaction.class);
+        when(world.spawn(anchor, Interaction.class)).thenReturn(interactionMock);
 
         hook.spawn(anchor, HeadContent.external("fake", "chair", null), new RenderSettings(1, false, 0));
 

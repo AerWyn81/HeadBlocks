@@ -416,10 +416,10 @@ class SQLiteIntegrationTest {
     // ---- Version ----
 
     @Test
-    void checkVersion_returns_version_after_load() throws InternalException {
+    void checkVersion_returns_version_after_load() {
         int version = db.checkVersion();
 
-        assertThat(version).isEqualTo(Database.version);
+        assertThat(version).isEqualTo(Database.VERSION);
     }
 
     @Test
@@ -433,7 +433,7 @@ class SQLiteIntegrationTest {
 
         db.upsertTableVersion(currentVersion);
 
-        assertThat(db.checkVersion()).isEqualTo(Database.version);
+        assertThat(db.checkVersion()).isEqualTo(Database.VERSION);
     }
 
     // ---- Additional AbstractDatabase coverage ----
@@ -631,7 +631,7 @@ class SQLiteIntegrationTest {
 
         int count = db.getTimedRunCount(player, "huntZero");
 
-        assertThat(count).isEqualTo(0);
+        assertThat(count).isZero();
     }
 
     @Test

@@ -139,24 +139,32 @@ public final class MySQL extends AbstractDatabase {
                     colCount = rs.getInt("count");
                 }
 
-                try {
-                    if (colCount == 3) {
-                        try (var ps1 = conn.prepareStatement(Requests.addColumnHeadTextureMariaDb())) {
-                            ps1.executeUpdate();
-                        }
-                    }
-                } catch (Exception ex) {
-                    if (isColumnExist(conn, Requests.getTableHeads(), "hTexture")) {
-                        return;
-                    }
-
-                    try (var alterStmt = conn.createStatement()) {
-                        alterStmt.executeUpdate(Requests.addColumnHeadTextureMySQL());
-                    }
-                }
+                addHeadTextureColumn(conn, colCount);
             }
         } catch (Exception ex) {
             throw new InternalException(ex);
+        }
+    }
+
+    private void addHeadTextureColumn(Connection conn, int colCount) throws SQLException {
+        try {
+            addColumnHeadTextureMariaDb(conn, colCount);
+        } catch (Exception ex) {
+            if (isColumnExist(conn, Requests.getTableHeads(), "hTexture")) {
+                return;
+            }
+
+            try (var alterStmt = conn.createStatement()) {
+                alterStmt.executeUpdate(Requests.addColumnHeadTextureMySQL());
+            }
+        }
+    }
+
+    private static void addColumnHeadTextureMariaDb(Connection conn, int colCount) throws SQLException {
+        if (colCount == 3) {
+            try (var ps1 = conn.prepareStatement(Requests.addColumnHeadTextureMariaDb())) {
+                ps1.executeUpdate();
+            }
         }
     }
 
@@ -226,27 +234,24 @@ public final class MySQL extends AbstractDatabase {
     public void migrateToV5() throws InternalException {
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
-            try {
-                try (var ps = conn.prepareStatement(Requests.createTableHunts())) {
-                    ps.execute();
-                }
-                try (var ps = conn.prepareStatement(Requests.migV5InsertDefaultHunt())) {
-                    ps.executeUpdate();
-                }
-
-                addColumnHuntId();
-
-                try (var ps = conn.prepareStatement(Requests.createTableTimedRunsMySQL())) {
-                    ps.execute();
-                }
-
-                conn.commit();
-            } catch (Exception ex) {
-                conn.rollback();
-                throw ex;
-            }
+            runInTransaction(conn, () -> migrateTablesToV5(conn), false);
         } catch (Exception ex) {
             throw new InternalException(ex);
+        }
+    }
+
+    private void migrateTablesToV5(Connection conn) throws SQLException, InternalException {
+        try (var ps = conn.prepareStatement(Requests.createTableHunts())) {
+            ps.execute();
+        }
+        try (var ps = conn.prepareStatement(Requests.migV5InsertDefaultHunt())) {
+            ps.executeUpdate();
+        }
+
+        addColumnHuntId();
+
+        try (var ps = conn.prepareStatement(Requests.createTableTimedRunsMySQL())) {
+            ps.execute();
         }
     }
 
@@ -279,7 +284,7 @@ public final class MySQL extends AbstractDatabase {
         }
     }
 
-    private boolean isColumnExist(Connection conn, String tableName, String columnName) throws Exception {
+    private boolean isColumnExist(Connection conn, String tableName, String columnName) throws SQLException {
         try (var ps = conn.prepareStatement(Requests.isColumnExist())) {
             ps.setString(1, tableName);
             ps.setString(2, columnName);

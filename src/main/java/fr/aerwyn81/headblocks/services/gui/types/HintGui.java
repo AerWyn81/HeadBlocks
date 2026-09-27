@@ -13,11 +13,12 @@ import fr.aerwyn81.headblocks.utils.gui.pagination.HBPaginationButtonType;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.function.BiConsumer;
 
 public class HintGui extends GuiBase {
 
@@ -60,89 +61,16 @@ public class HintGui extends GuiBase {
             for (int i = 0; i < headLocations.size(); i++) {
                 var headLocation = headLocations.get(i);
 
-                boolean isHintEnabled;
-
-                if (playerSelectedMode == HintMode.SOUND) {
-                    isHintEnabled = headLocation.isHintSoundEnabled();
-                } else if (playerSelectedMode == HintMode.ACTIONBAR) {
-                    isHintEnabled = headLocation.isHintActionBarEnabled();
-                } else {
-                    throw new IllegalStateException("Internal, invalid hint mode: " + playerSelectedMode);
-                }
+                boolean isHintEnabled = isHintEnabled(playerSelectedMode, headLocation);
 
                 var orderItemGui = new ItemGUI(new ItemBuilder(getHeadItemStackFromCache(headLocation))
                         .setName(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Gui.HintItemName")
                                 .replace("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
                         .setLore(registry.getLanguageService().messageList("Gui.HintItemLore").stream().map(s -> s
                                         .replace("%mode%", currentModeFormatted)
-                                        .replace("%state%", isHintEnabled
-                                                ? registry.getLanguageService().message("Gui.Enabled")
-                                                : registry.getLanguageService().message("Gui.Disabled")))
-                                .collect(Collectors.toList())).toItemStack(), true)
-                        .addOnClickEvent(event -> {
-                            if (event.getClick() == ClickType.DROP) {
-                                guiViewHint.put(player.getUniqueId(), playerSelectedMode.next());
-                            } else {
-                                switch (playerSelectedMode) {
-                                    case SOUND -> {
-                                        var hintBefore = headLocation.isHintSoundEnabled();
-
-                                        if (event.isLeftClick() && !hintBefore) {
-                                            if (event.getClick() == ClickType.LEFT) {
-                                                headLocation.setHintSound(true);
-                                                registry.getHeadService().saveHeadInConfig(headLocation);
-                                            } else {
-                                                for (HeadLocation head : headLocations) {
-                                                    head.setHintSound(true);
-                                                }
-
-                                                registry.getHeadService().saveAllHeadsInConfig();
-                                            }
-                                        } else if (event.isRightClick() && hintBefore) {
-                                            if (event.getClick() == ClickType.RIGHT) {
-                                                headLocation.setHintSound(false);
-                                                registry.getHeadService().saveHeadInConfig(headLocation);
-                                            } else {
-                                                for (HeadLocation head : headLocations) {
-                                                    head.setHintSound(false);
-                                                }
-
-                                                registry.getHeadService().saveAllHeadsInConfig();
-                                            }
-                                        }
-                                    }
-                                    case ACTIONBAR -> {
-                                        var hintBefore = headLocation.isHintActionBarEnabled();
-
-                                        if (event.isLeftClick() && !hintBefore) {
-                                            if (event.getClick() == ClickType.LEFT) {
-                                                headLocation.setHintActionBar(true);
-                                                registry.getHeadService().saveHeadInConfig(headLocation);
-                                            } else {
-                                                for (HeadLocation head : headLocations) {
-                                                    head.setHintActionBar(true);
-                                                }
-
-                                                registry.getHeadService().saveAllHeadsInConfig();
-                                            }
-                                        } else if (event.isRightClick() && hintBefore) {
-                                            if (event.getClick() == ClickType.RIGHT) {
-                                                headLocation.setHintActionBar(false);
-                                                registry.getHeadService().saveHeadInConfig(headLocation);
-                                            } else {
-                                                for (HeadLocation head : headLocations) {
-                                                    head.setHintActionBar(false);
-                                                }
-
-                                                registry.getHeadService().saveAllHeadsInConfig();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            openHintGuiForHunt((Player) event.getWhoClicked(), hunt);
-                        });
+                                        .replace("%state%", registry.getLanguageService().message(isHintEnabled ? "Gui.Enabled" : "Gui.Disabled")))
+                                .toList()).toItemStack(), true)
+                        .addOnClickEvent(event -> onHintItemClick(event, player, hunt, playerSelectedMode, headLocation, headLocations));
 
                 hintMenu.addItem(i, orderItemGui);
             }
@@ -163,5 +91,63 @@ public class HintGui extends GuiBase {
         }
 
         player.openInventory(hintMenu.getInventory());
+    }
+
+    private static boolean isHintEnabled(HintMode mode, HeadLocation headLocation) {
+        if (mode == HintMode.SOUND) {
+            return headLocation.isHintSoundEnabled();
+        } else if (mode == HintMode.ACTIONBAR) {
+            return headLocation.isHintActionBarEnabled();
+        } else {
+            throw new IllegalStateException("Internal, invalid hint mode: " + mode);
+        }
+    }
+
+    private void onHintItemClick(InventoryClickEvent event, Player player, HBHunt hunt, HintMode playerSelectedMode,
+                                 HeadLocation headLocation, List<HeadLocation> headLocations) {
+        if (event.getClick() == ClickType.DROP) {
+            guiViewHint.put(player.getUniqueId(), playerSelectedMode.next());
+        } else {
+            switch (playerSelectedMode) {
+                case SOUND -> toggleSoundHint(event, headLocation, headLocations);
+                case ACTIONBAR -> toggleActionBarHint(event, headLocation, headLocations);
+            }
+        }
+
+        openHintGuiForHunt((Player) event.getWhoClicked(), hunt);
+    }
+
+    private void toggleSoundHint(InventoryClickEvent event, HeadLocation headLocation, List<HeadLocation> headLocations) {
+        var hintBefore = headLocation.isHintSoundEnabled();
+
+        if (event.isLeftClick() && !hintBefore) {
+            applyHint(event, ClickType.LEFT, true, headLocation, headLocations, HeadLocation::setHintSound);
+        } else if (event.isRightClick() && hintBefore) {
+            applyHint(event, ClickType.RIGHT, false, headLocation, headLocations, HeadLocation::setHintSound);
+        }
+    }
+
+    private void toggleActionBarHint(InventoryClickEvent event, HeadLocation headLocation, List<HeadLocation> headLocations) {
+        var hintBefore = headLocation.isHintActionBarEnabled();
+
+        if (event.isLeftClick() && !hintBefore) {
+            applyHint(event, ClickType.LEFT, true, headLocation, headLocations, HeadLocation::setHintActionBar);
+        } else if (event.isRightClick() && hintBefore) {
+            applyHint(event, ClickType.RIGHT, false, headLocation, headLocations, HeadLocation::setHintActionBar);
+        }
+    }
+
+    private void applyHint(InventoryClickEvent event, ClickType singleHeadClick, boolean enabled, HeadLocation headLocation,
+                           List<HeadLocation> headLocations, BiConsumer<HeadLocation, Boolean> setter) {
+        if (event.getClick() == singleHeadClick) {
+            setter.accept(headLocation, enabled);
+            registry.getHeadService().saveHeadInConfig(headLocation);
+        } else {
+            for (HeadLocation head : headLocations) {
+                setter.accept(head, enabled);
+            }
+
+            registry.getHeadService().saveAllHeadsInConfig();
+        }
     }
 }

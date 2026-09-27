@@ -32,6 +32,6 @@ class TieredRewardTest {
         TieredReward b = new TieredReward(1, msgs, cmds, bcast, 0, false);
 
         assertThat(a).isEqualTo(b);
-        assertThat(a.hashCode()).isEqualTo(b.hashCode());
+        assertThat(a).hasSameHashCodeAs(b);
     }
 }

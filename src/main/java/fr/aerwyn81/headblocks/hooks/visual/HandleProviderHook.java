@@ -23,15 +23,17 @@ public abstract class HandleProviderHook<H> implements VisualProviderHook {
 
     protected abstract Hitbox hitbox(H handle, HeadContent content, RenderSettings settings);
 
-    protected List<Entity> entitiesOf(H handle) {
-        return List.of();
-    }
+    protected abstract List<Entity> entitiesOf(H handle);
 
     protected boolean usesBase() {
         return true;
     }
 
     protected void setVisible(H handle, Player player, boolean visible) {
+    }
+
+    protected boolean rotatesBase() {
+        return true;
     }
 
     protected void rotate(H handle, Entity base, float yaw) {
@@ -108,7 +110,7 @@ public abstract class HandleProviderHook<H> implements VisualProviderHook {
     @Override
     public void spin(List<Entity> entities, float angle, RenderSettings settings, int periodTicks) {
         var handle = handleOf(entities);
-        if (handle != null && entities.get(0).isValid()) {
+        if (handle != null && rotatesBase() && entities.get(0).isValid()) {
             rotate(handle, entities.get(0), HeadUtils.normalizeYaw(settings.yaw() + angle));
         }
     }

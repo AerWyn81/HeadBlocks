@@ -18,6 +18,22 @@ plugins {
 
 version = "3.6.0"
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+tasks.register("resolveAndLockAll") {
+    group = "help"
+    description = "Resolves every configuration to write the dependency lock files."
+    notCompatibleWithConfigurationCache("Resolves every configuration to write the dependency locks")
+    doFirst {
+        require(gradle.startParameter.isWriteDependencyLocks) { "Run this task with --write-locks" }
+    }
+    doLast {
+        configurations.filter { it.isCanBeResolved }.forEach { it.resolve() }
+    }
+}
+
 val coverageExclusions = listOf(
     // Third-party shaded libraries
     "**/utils/message/color/IridiumColorAPI.java",
@@ -296,6 +312,8 @@ val paperPluginDescription = PaperPluginDescription(project).apply {
 }
 
 val generatePaperPluginDescription = tasks.register<GeneratePluginDescription>("generatePaperPluginDescription") {
+    group = "build"
+    description = "Generates the paper-plugin.yml description of the Paper flavoured jar."
     fileName.set("paper-plugin.yml")
     librariesJsonFileName.set("paper-libraries.json")
     pluginDescription.set(paperPluginDescription)

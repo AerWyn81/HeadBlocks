@@ -11,6 +11,8 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public class RewardService {
 
@@ -32,50 +34,15 @@ public class RewardService {
     // --- Instance methods ---
 
     public void giveReward(Player p, List<UUID> playerHeads, HeadLocation headLocation) {
-        TieredReward tieredReward;
-        if (!configService.tieredRewards().isEmpty()) {
-            tieredReward = configService.tieredRewards().stream()
-                    .filter(t -> t.level() == playerHeads.size())
-                    .findFirst()
-                    .orElse(null);
-
-            if (tieredReward != null) {
-                List<String> messages = tieredReward.messages();
-                if (!messages.isEmpty()) {
-                    p.sendMessage(placeholdersService.parse(p, headLocation, messages));
-                }
-
-                scheduler.runTaskLater(() -> {
-                    List<String> tieredCommands = tieredReward.commands();
-                    if (!tieredCommands.isEmpty()) {
-                        if (tieredReward.isRandom()) {
-                            String randomCommand = tieredCommands.get(ThreadLocalRandom.current().nextInt(tieredCommands.size()));
-                            scheduler.runTaskLater(() -> {
-                                String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
-                                if (!parsedCommand.isBlank()) {
-                                    cmdDispatcher.dispatchConsoleCommand(parsedCommand);
-                                }
-                            }, 1L);
-                        } else {
-                            tieredCommands.forEach(command -> {
-                                String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, command);
-                                if (!parsedCommand.isBlank()) {
-                                    cmdDispatcher.dispatchConsoleCommand(parsedCommand);
-                                }
-                            });
-                        }
-                    }
-
-                    List<String> broadcastMessages = tieredReward.broadcastMessages();
-                    if (!broadcastMessages.isEmpty()) {
-                        for (String message : broadcastMessages) {
-                            p.getServer().broadcastMessage(placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, message));
-                        }
-                    }
-                }, 1L);
+        UnaryOperator<String> parser = text -> placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, text);
+        TieredReward tieredReward = findTieredReward(configService::tieredRewards, playerHeads);
+        if (tieredReward != null) {
+            List<String> messages = tieredReward.messages();
+            if (!messages.isEmpty()) {
+                p.sendMessage(placeholdersService.parse(p, headLocation, messages));
             }
-        } else {
-            tieredReward = null;
+
+            scheduler.runTaskLater(() -> runTieredReward(p, tieredReward, parser), 1L);
         }
 
         if (!configService.preventMessagesOnTieredRewardsLevel() || tieredReward == null) {
@@ -96,22 +63,7 @@ public class RewardService {
             return;
         }
 
-        if (isRandomCommand) {
-            String randomCommand = headClickCommands.get(ThreadLocalRandom.current().nextInt(headClickCommands.size()));
-            scheduler.runTaskLater(() -> {
-                String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand);
-                if (!parsedCommand.isBlank()) {
-                    cmdDispatcher.dispatchConsoleCommand(parsedCommand);
-                }
-            }, 1L);
-        } else {
-            scheduler.runTaskLater(() -> headClickCommands.forEach(reward -> {
-                String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward);
-                if (!parsedCommand.isBlank()) {
-                    cmdDispatcher.dispatchConsoleCommand(parsedCommand);
-                }
-            }), 1L);
-        }
+        runHeadClickCommands(headClickCommands, isRandomCommand, parser);
     }
 
     public boolean hasPlayerSlotsRequired(Player player, List<UUID> playerHeads) {
@@ -141,50 +93,15 @@ public class RewardService {
     }
 
     public void giveReward(Player p, List<UUID> playerHeads, HeadLocation headLocation, HuntConfig huntConfig, String huntId) {
-        TieredReward tieredReward;
-        if (!huntConfig.getTieredRewards().isEmpty()) {
-            tieredReward = huntConfig.getTieredRewards().stream()
-                    .filter(t -> t.level() == playerHeads.size())
-                    .findFirst()
-                    .orElse(null);
-
-            if (tieredReward != null) {
-                List<String> messages = tieredReward.messages();
-                if (!messages.isEmpty()) {
-                    p.sendMessage(placeholdersService.parse(p, headLocation, messages, huntId));
-                }
-
-                scheduler.runTaskLater(() -> {
-                    List<String> tieredCommands = tieredReward.commands();
-                    if (!tieredCommands.isEmpty()) {
-                        if (tieredReward.isRandom()) {
-                            String randomCommand = tieredCommands.get(ThreadLocalRandom.current().nextInt(tieredCommands.size()));
-                            scheduler.runTaskLater(() -> {
-                                String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand, huntId);
-                                if (!parsedCommand.isBlank()) {
-                                    cmdDispatcher.dispatchConsoleCommand(parsedCommand);
-                                }
-                            }, 1L);
-                        } else {
-                            tieredCommands.forEach(command -> {
-                                String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, command, huntId);
-                                if (!parsedCommand.isBlank()) {
-                                    cmdDispatcher.dispatchConsoleCommand(parsedCommand);
-                                }
-                            });
-                        }
-                    }
-
-                    List<String> broadcastMessages = tieredReward.broadcastMessages();
-                    if (!broadcastMessages.isEmpty()) {
-                        for (String message : broadcastMessages) {
-                            p.getServer().broadcastMessage(placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, message, huntId));
-                        }
-                    }
-                }, 1L);
+        UnaryOperator<String> parser = text -> placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, text, huntId);
+        TieredReward tieredReward = findTieredReward(huntConfig::getTieredRewards, playerHeads);
+        if (tieredReward != null) {
+            List<String> messages = tieredReward.messages();
+            if (!messages.isEmpty()) {
+                p.sendMessage(placeholdersService.parse(p, headLocation, messages, huntId));
             }
-        } else {
-            tieredReward = null;
+
+            scheduler.runTaskLater(() -> runTieredReward(p, tieredReward, parser), 1L);
         }
 
         if (!configService.preventMessagesOnTieredRewardsLevel() || tieredReward == null) {
@@ -205,21 +122,52 @@ public class RewardService {
             return;
         }
 
+        runHeadClickCommands(headClickCommands, isRandomCommand, parser);
+    }
+
+    private static TieredReward findTieredReward(Supplier<List<TieredReward>> tieredRewards, List<UUID> playerHeads) {
+        if (tieredRewards.get().isEmpty()) {
+            return null;
+        }
+
+        return tieredRewards.get().stream()
+                .filter(t -> t.level() == playerHeads.size())
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void runTieredReward(Player p, TieredReward tieredReward, UnaryOperator<String> parser) {
+        List<String> tieredCommands = tieredReward.commands();
+        if (!tieredCommands.isEmpty()) {
+            if (tieredReward.isRandom()) {
+                String randomCommand = tieredCommands.get(ThreadLocalRandom.current().nextInt(tieredCommands.size()));
+                scheduler.runTaskLater(() -> dispatchParsed(randomCommand, parser), 1L);
+            } else {
+                tieredCommands.forEach(command -> dispatchParsed(command, parser));
+            }
+        }
+
+        List<String> broadcastMessages = tieredReward.broadcastMessages();
+        if (!broadcastMessages.isEmpty()) {
+            for (String message : broadcastMessages) {
+                p.getServer().broadcastMessage(parser.apply(message));
+            }
+        }
+    }
+
+    private void runHeadClickCommands(List<String> headClickCommands, boolean isRandomCommand, UnaryOperator<String> parser) {
         if (isRandomCommand) {
             String randomCommand = headClickCommands.get(ThreadLocalRandom.current().nextInt(headClickCommands.size()));
-            scheduler.runTaskLater(() -> {
-                String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, randomCommand, huntId);
-                if (!parsedCommand.isBlank()) {
-                    cmdDispatcher.dispatchConsoleCommand(parsedCommand);
-                }
-            }, 1L);
+            scheduler.runTaskLater(() -> dispatchParsed(randomCommand, parser), 1L);
         } else {
-            scheduler.runTaskLater(() -> headClickCommands.forEach(reward -> {
-                String parsedCommand = placeholdersService.parse(p.getName(), p.getUniqueId(), headLocation, reward, huntId);
-                if (!parsedCommand.isBlank()) {
-                    cmdDispatcher.dispatchConsoleCommand(parsedCommand);
-                }
-            }), 1L);
+            scheduler.runTaskLater(() -> headClickCommands.forEach(reward -> dispatchParsed(reward, parser)), 1L);
+        }
+    }
+
+    private void dispatchParsed(String command, UnaryOperator<String> parser) {
+        String parsedCommand = parser.apply(command);
+        if (!parsedCommand.isBlank()) {
+            cmdDispatcher.dispatchConsoleCommand(parsedCommand);
         }
     }
 

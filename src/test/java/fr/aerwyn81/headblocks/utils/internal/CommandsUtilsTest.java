@@ -58,7 +58,7 @@ class CommandsUtilsTest {
         }
 
         @Test
-        void otherPlayerName_cannotSeeOther_sendsNoPermission() throws InternalException {
+        void otherPlayerName_cannotSeeOther_sendsNoPermission() {
             var result = CommandsUtils.extractAndGetPlayerUuidByName(
                     registry, sender, new String[]{"cmd", "otherPlayer"}, false);
 

@@ -19,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Redis implements Storage {
+    private static final String EMPTY_MARKER = "EMPTY";
+
     private final String hostname;
     private final String password;
     private final int port;
@@ -262,11 +264,11 @@ public class Redis implements Storage {
                 return null;
             }
             Set<String> members = pool.smembers(key);
-            if (members.size() == 1 && members.contains("EMPTY")) {
+            if (members.size() == 1 && members.contains(EMPTY_MARKER)) {
                 return ConcurrentHashMap.newKeySet();
             }
             return members.stream()
-                    .filter(s -> !"EMPTY".equals(s))
+                    .filter(s -> !EMPTY_MARKER.equals(s))
                     .map(UUID::fromString)
                     .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet));
         } catch (Exception ex) {
@@ -284,7 +286,7 @@ public class Redis implements Storage {
                 pool.sadd(key, headArray);
             } else {
                 // Store empty marker so we distinguish "cached empty" from "not cached"
-                pool.sadd(key, "EMPTY");
+                pool.sadd(key, EMPTY_MARKER);
             }
         } catch (Exception ex) {
             throw new InternalException(ex);
@@ -296,7 +298,7 @@ public class Redis implements Storage {
         try {
             String key = KEY_CACHE_HUNT_PLAYER_HEADS + huntId + ":" + playerUuid.toString();
             if (pool.exists(key)) {
-                pool.srem(key, "EMPTY");
+                pool.srem(key, EMPTY_MARKER);
                 pool.sadd(key, headUuid.toString());
             }
         } catch (Exception ex) {

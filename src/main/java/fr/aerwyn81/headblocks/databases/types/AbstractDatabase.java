@@ -15,6 +15,10 @@ import java.util.UUID;
 
 @SuppressWarnings({"SqlSourceToSinkFlow"})
 public abstract class AbstractDatabase implements Database {
+    private static final String H_UUID = "hUUID";
+    private static final String P_UUID = "pUUID";
+    private static final String P_DISPLAY_NAME = "pDisplayName";
+    private static final String P_NAME = "pName";
 
     protected HikariDataSource dataSource;
 
@@ -29,6 +33,26 @@ public abstract class AbstractDatabase implements Database {
     protected abstract String getTableExistSql();
 
     protected abstract void createTables(Connection conn) throws SQLException;
+
+    @FunctionalInterface
+    protected interface TransactionWork {
+        void run() throws SQLException, InternalException;
+    }
+
+    protected static void runInTransaction(Connection conn, TransactionWork work, boolean restoreAutoCommit)
+            throws SQLException, InternalException {
+        try {
+            work.run();
+            conn.commit();
+        } catch (Exception ex) {
+            conn.rollback();
+            throw ex;
+        } finally {
+            if (restoreAutoCommit) {
+                conn.setAutoCommit(true);
+            }
+        }
+    }
 
     @Override
     public void load() throws InternalException {
@@ -112,7 +136,7 @@ public abstract class AbstractDatabase implements Database {
 
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    heads.add(UUID.fromString(rs.getString("hUUID")));
+                    heads.add(UUID.fromString(rs.getString(H_UUID)));
                 }
             }
 
@@ -176,7 +200,7 @@ public abstract class AbstractDatabase implements Database {
              var ps = conn.prepareStatement(Requests.getAllPlayers())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    players.add(UUID.fromString(rs.getString("pUUID")));
+                    players.add(UUID.fromString(rs.getString(P_UUID)));
                 }
             }
 
@@ -194,7 +218,7 @@ public abstract class AbstractDatabase implements Database {
              var ps = conn.prepareStatement(Requests.getTopPlayers())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    top.put(new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), rs.getString("pName"), rs.getString("pDisplayName")), rs.getInt("hCount"));
+                    top.put(new PlayerProfileLight(UUID.fromString(rs.getString(P_UUID)), rs.getString(P_NAME), rs.getString(P_DISPLAY_NAME)), rs.getInt("hCount"));
                 }
             }
 
@@ -211,7 +235,7 @@ public abstract class AbstractDatabase implements Database {
             ps.setString(1, profile.uuid().toString());
             try (var rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return !profile.name().equals(rs.getString("pName")) || !profile.customDisplay().equals(rs.getString("pDisplayName"));
+                    return !profile.name().equals(rs.getString(P_NAME)) || !profile.customDisplay().equals(rs.getString(P_DISPLAY_NAME));
                 }
             }
         } catch (Exception ex) {
@@ -244,8 +268,8 @@ public abstract class AbstractDatabase implements Database {
             ps.setString(1, huntId);
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    var profile = new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), rs.getString("pName"),
-                            rs.getString("pDisplayName"));
+                    var profile = new PlayerProfileLight(UUID.fromString(rs.getString(P_UUID)), rs.getString(P_NAME),
+                            rs.getString(P_DISPLAY_NAME));
                     scores.put(profile, rs.getDouble("score"));
                 }
             }
@@ -290,7 +314,7 @@ public abstract class AbstractDatabase implements Database {
              var ps = conn.prepareStatement(getHeadsSql())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    heads.add(UUID.fromString(rs.getString("hUUID")));
+                    heads.add(UUID.fromString(rs.getString(H_UUID)));
                 }
             }
         } catch (Exception ex) {
@@ -309,7 +333,7 @@ public abstract class AbstractDatabase implements Database {
             ps.setString(1, serverId);
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    heads.add(UUID.fromString(rs.getString("hUUID")));
+                    heads.add(UUID.fromString(rs.getString(H_UUID)));
                 }
             }
         } catch (Exception ex) {
@@ -345,7 +369,7 @@ public abstract class AbstractDatabase implements Database {
             ps.setString(1, headUuid.toString());
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    players.add(UUID.fromString(rs.getString("pUUID")));
+                    players.add(UUID.fromString(rs.getString(P_UUID)));
                 }
             }
         } catch (Exception ex) {
@@ -363,7 +387,7 @@ public abstract class AbstractDatabase implements Database {
 
             try (var rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), pName, rs.getString("pDisplayName"));
+                    return new PlayerProfileLight(UUID.fromString(rs.getString(P_UUID)), pName, rs.getString(P_DISPLAY_NAME));
                 }
 
                 return null;
@@ -394,7 +418,7 @@ public abstract class AbstractDatabase implements Database {
                 ps.execute();
             }
             try (var ps = conn.prepareStatement(Requests.upsertVersion())) {
-                ps.setInt(1, version);
+                ps.setInt(1, VERSION);
                 ps.setInt(2, oldVersion);
                 ps.executeUpdate();
             }
@@ -411,7 +435,7 @@ public abstract class AbstractDatabase implements Database {
              var ps = conn.prepareStatement(Requests.getTableHeadsData())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    heads.add(new Database.HeadExportRow(rs.getString("hUUID"), rs.getBoolean("hExist"), rs.getBoolean("hSpawn")));
+                    heads.add(new Database.HeadExportRow(rs.getString(H_UUID), rs.getBoolean("hExist"), rs.getBoolean("hSpawn")));
                 }
             }
         } catch (Exception ex) {
@@ -429,7 +453,7 @@ public abstract class AbstractDatabase implements Database {
              var ps = conn.prepareStatement(Requests.getTablePlayerHeadsData())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    playerHeads.add(new Database.PlayerHeadExportRow(rs.getString("pUUID"), rs.getString("hUUID")));
+                    playerHeads.add(new Database.PlayerHeadExportRow(rs.getString(P_UUID), rs.getString(H_UUID)));
                 }
             }
         } catch (Exception ex) {
@@ -447,7 +471,7 @@ public abstract class AbstractDatabase implements Database {
              var ps = conn.prepareStatement(Requests.getTablePlayer())) {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    playerHeads.add(new Database.PlayerExportRow(rs.getString("pUUID"), rs.getString("pName")));
+                    playerHeads.add(new Database.PlayerExportRow(rs.getString(P_UUID), rs.getString(P_NAME)));
                 }
             }
         } catch (Exception ex) {
@@ -481,75 +505,68 @@ public abstract class AbstractDatabase implements Database {
     public void migrate() throws InternalException {
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
-
-            try {
-                try (var ps = conn.prepareStatement(Requests.migArchiveTable())) {
-                    ps.executeUpdate();
-                }
-
-                try (var ps = conn.prepareStatement(Requests.migCopyOldToArchive())) {
-                    ps.executeUpdate();
-                }
-
-                try (var ps = conn.prepareStatement(Requests.migDeleteOld())) {
-                    ps.executeUpdate();
-                }
-
-                createTables(conn);
-
-                if (checkVersion(conn) == 0) {
-                    insertVersion(conn);
-                }
-
-                try (var psSelect = conn.prepareStatement(Requests.migImportOldUsers());
-                     var rs = psSelect.executeQuery();
-                     var psInsert = conn.prepareStatement(Requests.migInsertPlayer())) {
-
-                    int batchSize = 0;
-
-                    while (rs.next()) {
-                        String pUUID = rs.getString("pUUID");
-                        String pName = PlayerUtils.getPseudoFromSession(pUUID);
-
-                        psInsert.setString(1, pUUID);
-                        psInsert.setString(2, pName);
-                        psInsert.addBatch();
-
-                        if (++batchSize % 500 == 0) {
-                            psInsert.executeBatch();
-                            batchSize = 0;
-                        }
-                    }
-
-                    if (batchSize > 0) {
-                        psInsert.executeBatch();
-                    }
-                } catch (SQLException e) {
-                    throw new InternalException(e);
-                }
-
-                try (var ps = conn.prepareStatement(Requests.migImportOldHeads())) {
-                    ps.executeUpdate();
-                }
-
-                try (var ps = conn.prepareStatement(Requests.migRemap())) {
-                    ps.executeUpdate();
-                }
-
-                try (var ps = conn.prepareStatement(Requests.migDelArchive())) {
-                    ps.executeUpdate();
-                }
-
-                conn.commit();
-            } catch (Exception ex) {
-                conn.rollback();
-                throw ex;
-            } finally {
-                conn.setAutoCommit(true);
-            }
-
+            runInTransaction(conn, () -> migrateFromV1(conn), true);
         } catch (Exception ex) {
             throw new InternalException(ex);
+        }
+    }
+
+    private void migrateFromV1(Connection conn) throws SQLException, InternalException {
+        try (var ps = conn.prepareStatement(Requests.migArchiveTable())) {
+            ps.executeUpdate();
+        }
+
+        try (var ps = conn.prepareStatement(Requests.migCopyOldToArchive())) {
+            ps.executeUpdate();
+        }
+
+        try (var ps = conn.prepareStatement(Requests.migDeleteOld())) {
+            ps.executeUpdate();
+        }
+
+        createTables(conn);
+
+        if (checkVersion(conn) == 0) {
+            insertVersion(conn);
+        }
+
+        try (var psSelect = conn.prepareStatement(Requests.migImportOldUsers());
+             var rs = psSelect.executeQuery();
+             var psInsert = conn.prepareStatement(Requests.migInsertPlayer())) {
+
+            int batchSize = 0;
+
+            while (rs.next()) {
+                String pUUID = rs.getString(P_UUID);
+                String pName = PlayerUtils.getPseudoFromSession(pUUID);
+
+                psInsert.setString(1, pUUID);
+                psInsert.setString(2, pName);
+                psInsert.addBatch();
+
+                if (++batchSize % 500 == 0) {
+                    psInsert.executeBatch();
+                    batchSize = 0;
+                }
+            }
+
+            if (batchSize > 0) {
+                psInsert.executeBatch();
+            }
+        } catch (SQLException e) {
+            throw new InternalException(e);
+        }
+
+        try (var ps = conn.prepareStatement(Requests.migImportOldHeads())) {
+            ps.executeUpdate();
+        }
+
+        try (var ps = conn.prepareStatement(Requests.migRemap())) {
+            ps.executeUpdate();
+        }
+
+        try (var ps = conn.prepareStatement(Requests.migDelArchive())) {
+            ps.executeUpdate();
         }
     }
 
@@ -663,7 +680,7 @@ public abstract class AbstractDatabase implements Database {
             ps.setString(2, huntId);
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    heads.add(UUID.fromString(rs.getString("hUUID")));
+                    heads.add(UUID.fromString(rs.getString(H_UUID)));
                 }
             }
         } catch (Exception ex) {
@@ -707,7 +724,7 @@ public abstract class AbstractDatabase implements Database {
             ps.setString(1, huntId);
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    top.put(new PlayerProfileLight(UUID.fromString(rs.getString("pUUID")), rs.getString("pName"), rs.getString("pDisplayName")), rs.getInt("hCount"));
+                    top.put(new PlayerProfileLight(UUID.fromString(rs.getString(P_UUID)), rs.getString(P_NAME), rs.getString(P_DISPLAY_NAME)), rs.getInt("hCount"));
                 }
             }
         } catch (Exception ex) {
@@ -721,23 +738,21 @@ public abstract class AbstractDatabase implements Database {
     public void transferPlayerProgress(String fromHuntId, String toHuntId) throws InternalException {
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
-            try {
-                try (var ps = conn.prepareStatement(getTransferProgressSql())) {
-                    ps.setString(1, toHuntId);
-                    ps.setString(2, fromHuntId);
-                    ps.executeUpdate();
-                }
-                try (var ps = conn.prepareStatement(Requests.deletePlayerProgressForHunt())) {
-                    ps.setString(1, fromHuntId);
-                    ps.executeUpdate();
-                }
-                conn.commit();
-            } catch (Exception ex) {
-                conn.rollback();
-                throw ex;
-            }
+            runInTransaction(conn, () -> transferProgress(conn, fromHuntId, toHuntId), false);
         } catch (Exception ex) {
             throw new InternalException(ex);
+        }
+    }
+
+    private void transferProgress(Connection conn, String fromHuntId, String toHuntId) throws SQLException {
+        try (var ps = conn.prepareStatement(getTransferProgressSql())) {
+            ps.setString(1, toHuntId);
+            ps.setString(2, fromHuntId);
+            ps.executeUpdate();
+        }
+        try (var ps = conn.prepareStatement(Requests.deletePlayerProgressForHunt())) {
+            ps.setString(1, fromHuntId);
+            ps.executeUpdate();
         }
     }
 
@@ -778,9 +793,9 @@ public abstract class AbstractDatabase implements Database {
             try (var rs = ps.executeQuery()) {
                 while (rs.next()) {
                     top.put(new PlayerProfileLight(
-                            UUID.fromString(rs.getString("pUUID")),
-                            rs.getString("pName"),
-                            rs.getString("pDisplayName")
+                            UUID.fromString(rs.getString(P_UUID)),
+                            rs.getString(P_NAME),
+                            rs.getString(P_DISPLAY_NAME)
                     ), rs.getLong("bestTime"));
                 }
             }
@@ -850,7 +865,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         try (var ps = conn.prepareStatement(Requests.insertVersion())) {
-            ps.setInt(1, version);
+            ps.setInt(1, VERSION);
             ps.executeUpdate();
         }
     }

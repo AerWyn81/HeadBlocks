@@ -13,11 +13,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import redis.clients.jedis.Protocol;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ConfigService {
+    private static final String TIERED_REWARDS = "tieredRewards.";
+
     private final File configFile;
     private FileConfiguration config;
 
@@ -52,12 +52,12 @@ public class ConfigService {
         return config.getStringList("heads");
     }
 
-    public List<?> headEntries() {
+    public List<Object> headEntries() {
         var entries = config.getList("heads");
-        return entries == null ? List.of() : entries;
+        return entries == null ? List.of() : Collections.unmodifiableList(entries);
     }
 
-    public HashMap<String, List<?>> headsThemeEntries() {
+    public Map<String, List<?>> headsThemeEntries() {
         var headsTheme = new HashMap<String, List<?>>();
 
         var headsThemeSection = config.getConfigurationSection("headsTheme.theme");
@@ -179,7 +179,7 @@ public class ConfigService {
         return config.getInt("headClick.particles.alreadyOwn.amount", 1);
     }
 
-    public ArrayList<String> headClickParticlesColors() {
+    public List<String> headClickParticlesColors() {
         return new ArrayList<>(config.getStringList("headClick.particles.alreadyOwn.colors"));
     }
 
@@ -328,7 +328,7 @@ public class ConfigService {
         return config.getString("floatingParticles.notFound.type", "REDSTONE");
     }
 
-    public ArrayList<String> particlesNotFoundColors() {
+    public List<String> particlesNotFoundColors() {
         return new ArrayList<>(config.getStringList("floatingParticles.notFound.colors"));
     }
 
@@ -340,7 +340,7 @@ public class ConfigService {
         return config.getString("floatingParticles.found.type", "REDSTONE");
     }
 
-    public ArrayList<String> particlesFoundColors() {
+    public List<String> particlesFoundColors() {
         return new ArrayList<>(config.getStringList("floatingParticles.found.colors"));
     }
 
@@ -362,33 +362,9 @@ public class ConfigService {
 
         for (String level : tieredSection.getKeys(false)) {
             try {
-                List<String> messages = new ArrayList<>();
-                if (config.contains("tieredRewards." + level + ".messages")) {
-                    messages = config.getStringList("tieredRewards." + level + ".messages");
-                }
-
-                List<String> commands = new ArrayList<>();
-                if (config.contains("tieredRewards." + level + ".commands")) {
-                    commands = config.getStringList("tieredRewards." + level + ".commands");
-                }
-
-                List<String> broadcastMessages = new ArrayList<>();
-                if (config.contains("tieredRewards." + level + ".broadcast")) {
-                    broadcastMessages = config.getStringList("tieredRewards." + level + ".broadcast");
-                }
-
-                int slotsRequired = -1;
-                if (config.contains("tieredRewards." + level + ".slotsRequired")) {
-                    slotsRequired = config.getInt("tieredRewards." + level + ".slotsRequired", -1);
-                }
-
-                boolean isRandom = false;
-                if (config.contains("tieredRewards." + level + ".randomizeCommands")) {
-                    isRandom = config.getBoolean("tieredRewards." + level + ".randomizeCommands", false);
-                }
-
-                if (!messages.isEmpty() || !commands.isEmpty() || !broadcastMessages.isEmpty() || slotsRequired != -1) {
-                    tieredRewards.add(new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages, slotsRequired, isRandom));
+                var tieredReward = readTieredReward(level);
+                if (tieredReward != null) {
+                    tieredRewards.add(tieredReward);
                 }
             } catch (Exception ex) {
                 LogUtil.error("Cannot read tiered rewards of \"{0}\". Error message :{1}", level, ex.getMessage());
@@ -396,6 +372,38 @@ public class ConfigService {
         }
 
         return tieredRewards;
+    }
+
+    private TieredReward readTieredReward(String level) {
+        List<String> messages = new ArrayList<>();
+        if (config.contains(TIERED_REWARDS + level + ".messages")) {
+            messages = config.getStringList(TIERED_REWARDS + level + ".messages");
+        }
+
+        List<String> commands = new ArrayList<>();
+        if (config.contains(TIERED_REWARDS + level + ".commands")) {
+            commands = config.getStringList(TIERED_REWARDS + level + ".commands");
+        }
+
+        List<String> broadcastMessages = new ArrayList<>();
+        if (config.contains(TIERED_REWARDS + level + ".broadcast")) {
+            broadcastMessages = config.getStringList(TIERED_REWARDS + level + ".broadcast");
+        }
+
+        int slotsRequired = -1;
+        if (config.contains(TIERED_REWARDS + level + ".slotsRequired")) {
+            slotsRequired = config.getInt(TIERED_REWARDS + level + ".slotsRequired", -1);
+        }
+
+        boolean isRandom = false;
+        if (config.contains(TIERED_REWARDS + level + ".randomizeCommands")) {
+            isRandom = config.getBoolean(TIERED_REWARDS + level + ".randomizeCommands", false);
+        }
+
+        if (!messages.isEmpty() || !commands.isEmpty() || !broadcastMessages.isEmpty() || slotsRequired != -1) {
+            return new TieredReward(Integer.parseInt(level), messages, commands, broadcastMessages, slotsRequired, isRandom);
+        }
+        return null;
     }
 
     public int hologramParticlePlayerViewDistance() {
@@ -426,11 +434,11 @@ public class ConfigService {
         return config.getBoolean("holograms.notFound.enabled", true);
     }
 
-    public ArrayList<String> hologramsFoundLines() {
+    public List<String> hologramsFoundLines() {
         return new ArrayList<>(config.getStringList("holograms.found.lines"));
     }
 
-    public ArrayList<String> hologramsNotFoundLines() {
+    public List<String> hologramsNotFoundLines() {
         return new ArrayList<>(config.getStringList("holograms.notFound.lines"));
     }
 
@@ -442,7 +450,7 @@ public class ConfigService {
         return config.getString("holograms.advanced.notFoundPlaceholder", "&c&lNot found");
     }
 
-    public ArrayList<String> hologramsAdvancedLines() {
+    public List<String> hologramsAdvancedLines() {
         return new ArrayList<>(config.getStringList("holograms.advanced.lines"));
     }
 

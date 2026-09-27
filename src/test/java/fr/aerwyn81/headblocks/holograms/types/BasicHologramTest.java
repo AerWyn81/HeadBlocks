@@ -27,7 +27,8 @@ class BasicHologramTest {
     @BeforeEach
     void setUp() {
         headBlocks = mockStatic(HeadBlocks.class);
-        headBlocks.when(HeadBlocks::getInstance).thenReturn(mock(HeadBlocks.class));
+        var headBlocksMock = mock(HeadBlocks.class);
+        headBlocks.when(HeadBlocks::getInstance).thenReturn(headBlocksMock);
 
         world = mock(World.class);
         location = mock(Location.class);

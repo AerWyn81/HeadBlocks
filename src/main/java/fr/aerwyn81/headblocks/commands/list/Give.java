@@ -19,24 +19,23 @@ public class Give implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         Player target;
 
         if (args.length > 1) {
             target = Bukkit.getPlayer(args[1]);
             if (target == null) {
                 sender.sendMessage(registry.getLanguageService().message("Messages.PlayerNotConnected", args[1]));
-                return true;
+                return;
             }
         } else if (sender instanceof Player player) {
             target = player;
         } else {
             sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
-            return true;
+            return;
         }
 
         registry.getGuiService().getCatalogGui().open(target);
-        return true;
     }
 
     @Override

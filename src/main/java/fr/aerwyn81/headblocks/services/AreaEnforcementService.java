@@ -24,6 +24,8 @@ import java.util.UUID;
  * Runtime side of the area: confinement, entry and exit messages, progress reset for whoever leaves.
  */
 public class AreaEnforcementService {
+    private static final String HUNT_PLACEHOLDER = "%hunt%";
+
     public enum Decision {
         NONE,
         CONFINE
@@ -40,46 +42,14 @@ public class AreaEnforcementService {
         String engagedId = AreaRunManager.getEngaged(uuid);
 
         if (engagedId != null) {
-            AreaRequirement area = findArea(engagedId);
-            if (!isEnforceable(area)) {
-                AreaRunManager.disengage(uuid);
-                return Decision.NONE;
-            }
-
-            if (area.area().contains(to)) {
-                return Decision.NONE;
-            }
-
-            if (area.blockExit()) {
-                return Decision.CONFINE;
-            }
-
-            AreaRunManager.disengage(uuid);
-            HBHunt engagedHunt = registry.getHuntService().getHuntById(engagedId);
-            boolean reset = area.resetOnLeave();
-            if (reset) {
-                resetProgress(uuid, engagedId);
-            }
-            if (engagedHunt != null) {
-                sendExited(player, engagedHunt, reset);
-                teleportBackTimed(player, engagedHunt);
-            }
-            return Decision.NONE;
+            return evaluateEngaged(player, uuid, engagedId, to);
         }
 
         HBHunt best = null;
         AreaRequirement bestArea = null;
         for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
-            if (!hunt.isActive()) {
-                continue;
-            }
-
-            AreaRequirement area = findArea(hunt);
-            if (!isEnforceable(area) || !worldMatches(area, to)) {
-                continue;
-            }
-
-            if (!area.area().contains(to)) {
+            AreaRequirement area = enforcedAreaContaining(hunt, to);
+            if (area == null) {
                 continue;
             }
 
@@ -107,6 +77,34 @@ public class AreaEnforcementService {
 
         AreaRunManager.engage(uuid, best.getId());
         sendEntered(player, best);
+        return Decision.NONE;
+    }
+
+    private Decision evaluateEngaged(Player player, UUID uuid, String engagedId, Location to) {
+        AreaRequirement area = findArea(engagedId);
+        if (!isEnforceable(area)) {
+            AreaRunManager.disengage(uuid);
+            return Decision.NONE;
+        }
+
+        if (area.area().contains(to)) {
+            return Decision.NONE;
+        }
+
+        if (area.blockExit()) {
+            return Decision.CONFINE;
+        }
+
+        AreaRunManager.disengage(uuid);
+        HBHunt engagedHunt = registry.getHuntService().getHuntById(engagedId);
+        boolean reset = area.resetOnLeave();
+        if (reset) {
+            resetProgress(uuid, engagedId);
+        }
+        if (engagedHunt != null) {
+            sendExited(player, engagedHunt, reset);
+            teleportBackTimed(player, engagedHunt);
+        }
         return Decision.NONE;
     }
 
@@ -258,6 +256,18 @@ public class AreaEnforcementService {
         return null;
     }
 
+    private AreaRequirement enforcedAreaContaining(HBHunt hunt, Location to) {
+        if (!hunt.isActive()) {
+            return null;
+        }
+
+        AreaRequirement area = findArea(hunt);
+        if (!isEnforceable(area) || !worldMatches(area, to) || !area.area().contains(to)) {
+            return null;
+        }
+        return area;
+    }
+
     private boolean isEnforceable(AreaRequirement area) {
         return area != null && area.area() != null && area.area().isAvailable()
                 && (area.returnPoint() != null || !area.blockExit());
@@ -335,7 +345,7 @@ public class AreaEnforcementService {
 
     private void sendEntered(Player player, HBHunt hunt) {
         String message = registry.getLanguageService().message("Messages.AreaEntered")
-                .replace("%hunt%", hunt.getDisplayName());
+                .replace(HUNT_PLACEHOLDER, hunt.getDisplayName());
         if (message.trim().isEmpty()) {
             return;
         }
@@ -359,7 +369,7 @@ public class AreaEnforcementService {
 
     private void sendExited(Player player, HBHunt hunt, boolean reset) {
         String message = registry.getLanguageService().message("Messages.AreaExited")
-                .replace("%hunt%", hunt.getDisplayName());
+                .replace(HUNT_PLACEHOLDER, hunt.getDisplayName());
         if (!message.trim().isEmpty()) {
             player.sendMessage(message);
         }
@@ -371,7 +381,7 @@ public class AreaEnforcementService {
 
     private void sendResetMessage(Player player, String huntName) {
         String message = registry.getLanguageService().message("Messages.AreaProgressReset")
-                .replace("%hunt%", huntName);
+                .replace(HUNT_PLACEHOLDER, huntName);
         if (!message.trim().isEmpty()) {
             player.sendMessage(message);
         }

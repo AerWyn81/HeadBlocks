@@ -48,21 +48,8 @@ public class ServiceRegistry {
     public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
                            CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
                            HoloEasy holoEasyLib) {
-        this(pluginProvider, scheduler, commandDispatcher, platform, configFile, locationFile, holoEasyLib, null, Collections.emptyMap());
-    }
-
-    public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
-                           CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
-                           HoloEasy holoEasyLib, ConfigService existingConfigService) {
-        this(pluginProvider, scheduler, commandDispatcher, platform, configFile, locationFile, holoEasyLib, existingConfigService, Collections.emptyMap());
-    }
-
-    public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
-                           CommandDispatcher commandDispatcher, Platform platform, File configFile, File locationFile,
-                           HoloEasy holoEasyLib, ConfigService existingConfigService,
-                           Map<String, HeadProviderHook> headProviders) {
-        this(pluginProvider, scheduler, commandDispatcher, platform, configFile, locationFile, holoEasyLib,
-                existingConfigService, headProviders, Collections.emptyMap());
+        this(pluginProvider, scheduler, commandDispatcher, platform, configFile, locationFile, holoEasyLib, null,
+                Collections.emptyMap(), Collections.emptyMap());
     }
 
     public ServiceRegistry(PluginProvider pluginProvider, SchedulerAdapter scheduler,
@@ -104,7 +91,7 @@ public class ServiceRegistry {
 
         this.placeholdersService = new PlaceholdersService(storageService, configService, languageService, pluginProvider, huntService);
 
-        this.headService = new HeadService(configService, storageService, languageService, scheduler, pluginProvider, headProviders);
+        this.headService = new HeadService(configService, storageService, languageService, scheduler, headProviders);
         headService.setHuntService(huntService);
         headService.setHuntConfigService(huntConfigService);
         this.visualService = new HeadVisualService(this, visualProviders);

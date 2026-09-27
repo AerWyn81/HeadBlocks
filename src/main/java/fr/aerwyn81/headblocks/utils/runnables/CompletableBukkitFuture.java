@@ -7,6 +7,10 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 public class CompletableBukkitFuture {
+
+    private CompletableBukkitFuture() {
+    }
+
     public static <T> BukkitFutureResult<T> supplyAsync(Plugin plugin, Supplier<T> supplier) {
         return BukkitFutureResult.of(plugin, CompletableFuture.supplyAsync(supplier));
     }

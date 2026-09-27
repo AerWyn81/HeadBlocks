@@ -25,7 +25,7 @@ class MemoryStorageTest {
     // ---- Lifecycle ----
 
     @Test
-    void init_initializesAllMaps() throws InternalException {
+    void init_initializesAllMaps() {
         assertThat(storage.containsPlayer(UUID.randomUUID())).isFalse();
         assertThat(storage.getCachedPlayerHeads(UUID.randomUUID())).isNull();
         assertThat(storage.getCachedTopPlayers()).isEmpty();
@@ -49,7 +49,7 @@ class MemoryStorageTest {
     // ---- Player-head core ----
 
     @Test
-    void addHead_newPlayer_createsEntryAndStoresHead() throws InternalException {
+    void addHead_newPlayer_createsEntryAndStoresHead() {
         UUID player = UUID.randomUUID();
         UUID head = UUID.randomUUID();
 
@@ -72,7 +72,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void hasHead_playerWithoutHead_returnsFalse() throws InternalException {
+    void hasHead_playerWithoutHead_returnsFalse() {
         UUID player = UUID.randomUUID();
         UUID head1 = UUID.randomUUID();
         UUID head2 = UUID.randomUUID();
@@ -83,17 +83,17 @@ class MemoryStorageTest {
     }
 
     @Test
-    void hasHead_unknownPlayer_returnsFalse() throws InternalException {
+    void hasHead_unknownPlayer_returnsFalse() {
         assertThat(storage.hasHead(UUID.randomUUID(), UUID.randomUUID())).isFalse();
     }
 
     @Test
-    void containsPlayer_unknownPlayer_returnsFalse() throws InternalException {
+    void containsPlayer_unknownPlayer_returnsFalse() {
         assertThat(storage.containsPlayer(UUID.randomUUID())).isFalse();
     }
 
     @Test
-    void resetPlayer_removesEntirePlayerEntry() throws InternalException {
+    void resetPlayer_removesEntirePlayerEntry() {
         UUID player = UUID.randomUUID();
         storage.addHead(player, UUID.randomUUID());
 
@@ -103,7 +103,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void resetPlayerHead_removesSpecificHead() throws InternalException {
+    void resetPlayerHead_removesSpecificHead() {
         UUID player = UUID.randomUUID();
         UUID head1 = UUID.randomUUID();
         UUID head2 = UUID.randomUUID();
@@ -117,7 +117,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeHead_removesFromAllPlayers() throws InternalException {
+    void removeHead_removesFromAllPlayers() {
         UUID p1 = UUID.randomUUID();
         UUID p2 = UUID.randomUUID();
         UUID head = UUID.randomUUID();
@@ -138,7 +138,7 @@ class MemoryStorageTest {
     // ---- Cache: playerHeads ----
 
     @Test
-    void cachedPlayerHeads_setAndGet() throws InternalException {
+    void cachedPlayerHeads_setAndGet() {
         UUID player = UUID.randomUUID();
         Set<UUID> heads = Set.of(UUID.randomUUID(), UUID.randomUUID());
 
@@ -148,7 +148,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void addCachedPlayerHead_createsSetIfAbsent() throws InternalException {
+    void addCachedPlayerHead_createsSetIfAbsent() {
         UUID player = UUID.randomUUID();
         UUID head = UUID.randomUUID();
 
@@ -158,7 +158,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeCachedPlayerHeads_removesEntry() throws InternalException {
+    void removeCachedPlayerHeads_removesEntry() {
         UUID player = UUID.randomUUID();
         storage.setCachedPlayerHeads(player, Set.of(UUID.randomUUID()));
 
@@ -170,7 +170,7 @@ class MemoryStorageTest {
     // ---- Cache: topPlayers ----
 
     @Test
-    void cachedTopPlayers_setAndGet() throws InternalException {
+    void cachedTopPlayers_setAndGet() {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
         top.put(new PlayerProfileLight(UUID.randomUUID(), "Steve", ""), 10);
 
@@ -180,7 +180,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearCachedTopPlayers_emptiesMap() throws InternalException {
+    void clearCachedTopPlayers_emptiesMap() {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
         top.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 5);
         storage.setCachedTopPlayers(top);
@@ -191,7 +191,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void setCachedTopPlayers_doesNotMutateAPreviouslyReturnedMap() throws InternalException {
+    void setCachedTopPlayers_doesNotMutateAPreviouslyReturnedMap() {
         LinkedHashMap<PlayerProfileLight, Integer> first = new LinkedHashMap<>();
         first.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 5);
         storage.setCachedTopPlayers(first);
@@ -208,7 +208,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void setCachedTopPlayers_preservesRankingOrderAndCopiesTheSource() throws InternalException {
+    void setCachedTopPlayers_preservesRankingOrderAndCopiesTheSource() {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
         var first = new PlayerProfileLight(UUID.randomUUID(), "First", "");
         var second = new PlayerProfileLight(UUID.randomUUID(), "Second", "");
@@ -224,7 +224,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearCachedTopPlayers_doesNotMutateAPreviouslyReturnedMap() throws InternalException {
+    void clearCachedTopPlayers_doesNotMutateAPreviouslyReturnedMap() {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
         top.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 5);
         storage.setCachedTopPlayers(top);
@@ -239,7 +239,7 @@ class MemoryStorageTest {
     // ---- Cache: heads ----
 
     @Test
-    void cachedHeads_addAndGet() throws InternalException {
+    void cachedHeads_addAndGet() {
         UUID head = UUID.randomUUID();
         storage.addCachedHead(head);
 
@@ -247,7 +247,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeCachedHead_removesAndClearsRelatedCaches() throws InternalException {
+    void removeCachedHead_removesAndClearsRelatedCaches() {
         UUID head = UUID.randomUUID();
         UUID player = UUID.randomUUID();
         storage.addCachedHead(head);
@@ -269,7 +269,7 @@ class MemoryStorageTest {
     // ---- Cache: hunt playerHeads ----
 
     @Test
-    void huntPlayerHeads_setAndGet() throws InternalException {
+    void huntPlayerHeads_setAndGet() {
         UUID player = UUID.randomUUID();
         Set<UUID> heads = Set.of(UUID.randomUUID());
 
@@ -279,12 +279,12 @@ class MemoryStorageTest {
     }
 
     @Test
-    void huntPlayerHeads_getForUnknownHunt_returnsNull() throws InternalException {
+    void huntPlayerHeads_getForUnknownHunt_returnsNull() {
         assertThat(storage.getCachedPlayerHeadsForHunt(UUID.randomUUID(), "unknown")).isNull();
     }
 
     @Test
-    void addCachedPlayerHeadForHunt_withoutCachedProgress_doesNotCreateAPartialCache() throws InternalException {
+    void addCachedPlayerHeadForHunt_withoutCachedProgress_doesNotCreateAPartialCache() {
         UUID player = UUID.randomUUID();
         UUID head = UUID.randomUUID();
 
@@ -294,7 +294,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void addCachedPlayerHeadForHunt_withCachedProgress_addsTheHead() throws InternalException {
+    void addCachedPlayerHeadForHunt_withCachedProgress_addsTheHead() {
         UUID player = UUID.randomUUID();
         UUID known = UUID.randomUUID();
         UUID head = UUID.randomUUID();
@@ -306,7 +306,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeCachedPlayerHeadsForHunt_removesPlayerEntry() throws InternalException {
+    void removeCachedPlayerHeadsForHunt_removesPlayerEntry() {
         UUID player = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(player, "hunt1", Set.of(UUID.randomUUID()));
 
@@ -316,7 +316,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearCachedPlayerHeadsForHunt_removesEntireHunt() throws InternalException {
+    void clearCachedPlayerHeadsForHunt_removesEntireHunt() {
         UUID p1 = UUID.randomUUID();
         UUID p2 = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(p1, "hunt1", Set.of(UUID.randomUUID()));
@@ -329,7 +329,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearAllCachedHuntDataForPlayer_removesPlayerFromAllHunts() throws InternalException {
+    void clearAllCachedHuntDataForPlayer_removesPlayerFromAllHunts() {
         UUID player = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(player, "hunt1", Set.of(UUID.randomUUID()));
         storage.setCachedPlayerHeadsForHunt(player, "hunt2", Set.of(UUID.randomUUID()));
@@ -347,7 +347,7 @@ class MemoryStorageTest {
     // ---- Cache: hunt topPlayers ----
 
     @Test
-    void huntTopPlayers_setAndGet() throws InternalException {
+    void huntTopPlayers_setAndGet() {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
         top.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 10);
 
@@ -357,12 +357,12 @@ class MemoryStorageTest {
     }
 
     @Test
-    void huntTopPlayers_getForUnknown_returnsNull() throws InternalException {
+    void huntTopPlayers_getForUnknown_returnsNull() {
         assertThat(storage.getCachedTopPlayersForHunt("unknown")).isNull();
     }
 
     @Test
-    void clearCachedTopPlayersForHunt_removesSpecificHunt() throws InternalException {
+    void clearCachedTopPlayersForHunt_removesSpecificHunt() {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
         top.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 5);
         storage.setCachedTopPlayersForHunt("hunt1", top);
@@ -375,7 +375,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearAllCachedTopPlayersForHunt_removesAll() throws InternalException {
+    void clearAllCachedTopPlayersForHunt_removesAll() {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
         top.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 1);
         storage.setCachedTopPlayersForHunt("h1", top);
@@ -390,7 +390,7 @@ class MemoryStorageTest {
     // ---- Cache: timed leaderboard ----
 
     @Test
-    void timedLeaderboard_setAndGet() throws InternalException {
+    void timedLeaderboard_setAndGet() {
         LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
         lb.put(new PlayerProfileLight(UUID.randomUUID(), "Fast", ""), 1234L);
 
@@ -400,7 +400,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearCachedTimedLeaderboard_removesEntry() throws InternalException {
+    void clearCachedTimedLeaderboard_removesEntry() {
         LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
         lb.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 100L);
         storage.setCachedTimedLeaderboard("hunt1", lb);
@@ -413,7 +413,7 @@ class MemoryStorageTest {
     // ---- Cache: bestTime (composite key huntId:uuid) ----
 
     @Test
-    void bestTime_setAndGet() throws InternalException {
+    void bestTime_setAndGet() {
         UUID player = UUID.randomUUID();
         storage.setCachedBestTime(player, "hunt1", 5000L);
 
@@ -421,12 +421,12 @@ class MemoryStorageTest {
     }
 
     @Test
-    void bestTime_getForUnknown_returnsNull() throws InternalException {
+    void bestTime_getForUnknown_returnsNull() {
         assertThat(storage.getCachedBestTime(UUID.randomUUID(), "hunt1")).isNull();
     }
 
     @Test
-    void clearCachedBestTime_removesEntry() throws InternalException {
+    void clearCachedBestTime_removesEntry() {
         UUID player = UUID.randomUUID();
         storage.setCachedBestTime(player, "hunt1", 1000L);
 
@@ -438,7 +438,7 @@ class MemoryStorageTest {
     // ---- Cache: runCount ----
 
     @Test
-    void runCount_setAndGet() throws InternalException {
+    void runCount_setAndGet() {
         UUID player = UUID.randomUUID();
         storage.setCachedTimedRunCount(player, "hunt1", 7);
 
@@ -446,12 +446,12 @@ class MemoryStorageTest {
     }
 
     @Test
-    void runCount_getForUnknown_returnsNull() throws InternalException {
+    void runCount_getForUnknown_returnsNull() {
         assertThat(storage.getCachedTimedRunCount(UUID.randomUUID(), "hunt1")).isNull();
     }
 
     @Test
-    void clearCachedTimedRunCount_removesEntry() throws InternalException {
+    void clearCachedTimedRunCount_removesEntry() {
         UUID player = UUID.randomUUID();
         storage.setCachedTimedRunCount(player, "hunt1", 5);
 
@@ -463,7 +463,7 @@ class MemoryStorageTest {
     // ---- Edge cases ----
 
     @Test
-    void resetPlayerHead_unknownPlayer_doesNotThrow() throws InternalException {
+    void resetPlayerHead_unknownPlayer_doesNotThrow() {
         UUID unknownPlayer = UUID.randomUUID();
         UUID someHead = UUID.randomUUID();
 
@@ -505,28 +505,27 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeCachedPlayerHeadsForHunt_unknownHunt_doesNotThrow() throws InternalException {
-        // Hunt never cached → should be a no-op
-        storage.removeCachedPlayerHeadsForHunt(UUID.randomUUID(), "nonexistent");
+    void removeCachedPlayerHeadsForHunt_unknownHunt_doesNotThrow() {
+        assertThatNoException().isThrownBy(() -> storage.removeCachedPlayerHeadsForHunt(UUID.randomUUID(), "nonexistent"));
     }
 
     // ---- Hunt version ----
 
     @Test
-    void getHuntVersion_alwaysReturnsZero() throws InternalException {
-        assertThat(storage.getHuntVersion()).isEqualTo(0);
+    void getHuntVersion_alwaysReturnsZero() {
+        assertThat(storage.getHuntVersion()).isZero();
     }
 
     @Test
-    void incrementHuntVersion_isNoOp() throws InternalException {
+    void incrementHuntVersion_isNoOp() {
         assertThatNoException().isThrownBy(() -> storage.incrementHuntVersion());
-        assertThat(storage.getHuntVersion()).isEqualTo(0);
+        assertThat(storage.getHuntVersion()).isZero();
     }
 
     // ---- Additional hunt player heads tests ----
 
     @Test
-    void addCachedPlayerHeadForHunt_multipleHeads_accumulatesInSet() throws InternalException {
+    void addCachedPlayerHeadForHunt_multipleHeads_accumulatesInSet() {
         UUID player = UUID.randomUUID();
         UUID head1 = UUID.randomUUID();
         UUID head2 = UUID.randomUUID();
@@ -540,7 +539,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void addCachedPlayerHeadForHunt_duplicateHead_doesNotDuplicate() throws InternalException {
+    void addCachedPlayerHeadForHunt_duplicateHead_doesNotDuplicate() {
         UUID player = UUID.randomUUID();
         UUID head = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(player, "hunt1", new java.util.HashSet<>());
@@ -552,7 +551,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void setCachedPlayerHeadsForHunt_overwritesExistingEntry() throws InternalException {
+    void setCachedPlayerHeadsForHunt_overwritesExistingEntry() {
         UUID player = UUID.randomUUID();
         UUID head1 = UUID.randomUUID();
         UUID head2 = UUID.randomUUID();
@@ -565,7 +564,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void getCachedPlayerHeadsForHunt_differentHunts_areIndependent() throws InternalException {
+    void getCachedPlayerHeadsForHunt_differentHunts_areIndependent() {
         UUID player = UUID.randomUUID();
         Set<UUID> heads1 = Set.of(UUID.randomUUID());
         Set<UUID> heads2 = Set.of(UUID.randomUUID());
@@ -578,7 +577,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearCachedPlayerHeadsForHunt_doesNotAffectOtherHunts() throws InternalException {
+    void clearCachedPlayerHeadsForHunt_doesNotAffectOtherHunts() {
         UUID player = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(player, "hunt1", Set.of(UUID.randomUUID()));
         storage.setCachedPlayerHeadsForHunt(player, "hunt2", Set.of(UUID.randomUUID()));
@@ -590,7 +589,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeCachedPlayerHeadsForHunt_doesNotAffectOtherPlayers() throws InternalException {
+    void removeCachedPlayerHeadsForHunt_doesNotAffectOtherPlayers() {
         UUID p1 = UUID.randomUUID();
         UUID p2 = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(p1, "hunt1", Set.of(UUID.randomUUID()));
@@ -605,7 +604,7 @@ class MemoryStorageTest {
     // ---- clearAllCachedHuntDataForPlayer: isolation and composite key matching ----
 
     @Test
-    void clearAllCachedHuntDataForPlayer_doesNotAffectOtherPlayers() throws InternalException {
+    void clearAllCachedHuntDataForPlayer_doesNotAffectOtherPlayers() {
         UUID player1 = UUID.randomUUID();
         UUID player2 = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(player1, "hunt1", Set.of(UUID.randomUUID()));
@@ -628,7 +627,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearAllCachedHuntDataForPlayer_multipleHunts_clearsAll() throws InternalException {
+    void clearAllCachedHuntDataForPlayer_multipleHunts_clearsAll() {
         UUID player = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(player, "hunt1", Set.of(UUID.randomUUID()));
         storage.setCachedPlayerHeadsForHunt(player, "hunt2", Set.of(UUID.randomUUID()));
@@ -648,7 +647,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearAllCachedHuntDataForPlayer_withNoData_doesNotThrow() throws InternalException {
+    void clearAllCachedHuntDataForPlayer_withNoData_doesNotThrow() {
         UUID player = UUID.randomUUID();
         assertThatNoException().isThrownBy(() -> storage.clearAllCachedHuntDataForPlayer(player));
     }
@@ -656,7 +655,7 @@ class MemoryStorageTest {
     // ---- removeCachedHead cascade behavior ----
 
     @Test
-    void removeCachedHead_cascadeClearsFromMultiplePlayers() throws InternalException {
+    void removeCachedHead_cascadeClearsFromMultiplePlayers() {
         UUID head = UUID.randomUUID();
         UUID otherHead = UUID.randomUUID();
         UUID p1 = UUID.randomUUID();
@@ -675,8 +674,8 @@ class MemoryStorageTest {
 
         // head removed from both players
         Set<UUID> p1Heads = storage.getCachedPlayerHeads(p1);
-        assertThat(p1Heads).doesNotContain(head);
-        assertThat(p1Heads).contains(otherHead);
+        assertThat(p1Heads).doesNotContain(head)
+                .contains(otherHead);
 
         Set<UUID> p2Heads = storage.getCachedPlayerHeads(p2);
         if (p2Heads != null) {
@@ -685,7 +684,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeCachedHead_clearsGlobalTopPlayersCache() throws InternalException {
+    void removeCachedHead_clearsGlobalTopPlayersCache() {
         UUID head = UUID.randomUUID();
         storage.addCachedHead(head);
 
@@ -700,7 +699,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeCachedHead_nonexistentHead_doesNotThrow() throws InternalException {
+    void removeCachedHead_nonexistentHead_doesNotThrow() {
         // Pre-populate some data to ensure it is not corrupted
         UUID player = UUID.randomUUID();
         UUID existingHead = UUID.randomUUID();
@@ -716,7 +715,7 @@ class MemoryStorageTest {
     // ---- Hunt top players: additional tests ----
 
     @Test
-    void setCachedTopPlayersForHunt_overwritesPreviousData() throws InternalException {
+    void setCachedTopPlayersForHunt_overwritesPreviousData() {
         LinkedHashMap<PlayerProfileLight, Integer> top1 = new LinkedHashMap<>();
         top1.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 10);
         storage.setCachedTopPlayersForHunt("hunt1", top1);
@@ -730,7 +729,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearAllCachedTopPlayersForHunt_afterClear_getReturnsNull() throws InternalException {
+    void clearAllCachedTopPlayersForHunt_afterClear_getReturnsNull() {
         LinkedHashMap<PlayerProfileLight, Integer> top = new LinkedHashMap<>();
         top.put(new PlayerProfileLight(UUID.randomUUID(), "X", ""), 1);
         storage.setCachedTopPlayersForHunt("h1", top);
@@ -743,12 +742,12 @@ class MemoryStorageTest {
     // ---- Timed leaderboard: additional tests ----
 
     @Test
-    void timedLeaderboard_getForUnknown_returnsNull() throws InternalException {
+    void timedLeaderboard_getForUnknown_returnsNull() {
         assertThat(storage.getCachedTimedLeaderboard("nonexistent")).isNull();
     }
 
     @Test
-    void timedLeaderboard_setOverwritesPrevious() throws InternalException {
+    void timedLeaderboard_setOverwritesPrevious() {
         LinkedHashMap<PlayerProfileLight, Long> lb1 = new LinkedHashMap<>();
         lb1.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 100L);
         storage.setCachedTimedLeaderboard("hunt1", lb1);
@@ -762,7 +761,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void timedLeaderboard_clearDoesNotAffectOtherHunts() throws InternalException {
+    void timedLeaderboard_clearDoesNotAffectOtherHunts() {
         LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
         lb.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 100L);
         storage.setCachedTimedLeaderboard("hunt1", lb);
@@ -775,7 +774,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void timedLeaderboard_preservesInsertionOrder() throws InternalException {
+    void timedLeaderboard_preservesInsertionOrder() {
         LinkedHashMap<PlayerProfileLight, Long> lb = new LinkedHashMap<>();
         PlayerProfileLight first = new PlayerProfileLight(UUID.randomUUID(), "First", "");
         PlayerProfileLight second = new PlayerProfileLight(UUID.randomUUID(), "Second", "");
@@ -793,7 +792,7 @@ class MemoryStorageTest {
     // ---- Best time: composite key isolation ----
 
     @Test
-    void bestTime_differentHuntsSamePlayer_areIndependent() throws InternalException {
+    void bestTime_differentHuntsSamePlayer_areIndependent() {
         UUID player = UUID.randomUUID();
         storage.setCachedBestTime(player, "hunt1", 1000L);
         storage.setCachedBestTime(player, "hunt2", 2000L);
@@ -803,7 +802,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void bestTime_sameHuntDifferentPlayers_areIndependent() throws InternalException {
+    void bestTime_sameHuntDifferentPlayers_areIndependent() {
         UUID p1 = UUID.randomUUID();
         UUID p2 = UUID.randomUUID();
         storage.setCachedBestTime(p1, "hunt1", 500L);
@@ -814,7 +813,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void bestTime_setOverwritesPrevious() throws InternalException {
+    void bestTime_setOverwritesPrevious() {
         UUID player = UUID.randomUUID();
         storage.setCachedBestTime(player, "hunt1", 5000L);
         storage.setCachedBestTime(player, "hunt1", 3000L);
@@ -823,7 +822,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearCachedBestTime_doesNotAffectOtherEntries() throws InternalException {
+    void clearCachedBestTime_doesNotAffectOtherEntries() {
         UUID player = UUID.randomUUID();
         storage.setCachedBestTime(player, "hunt1", 1000L);
         storage.setCachedBestTime(player, "hunt2", 2000L);
@@ -837,7 +836,7 @@ class MemoryStorageTest {
     // ---- Timed run count: composite key isolation ----
 
     @Test
-    void runCount_differentHuntsSamePlayer_areIndependent() throws InternalException {
+    void runCount_differentHuntsSamePlayer_areIndependent() {
         UUID player = UUID.randomUUID();
         storage.setCachedTimedRunCount(player, "hunt1", 3);
         storage.setCachedTimedRunCount(player, "hunt2", 7);
@@ -847,7 +846,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void runCount_sameHuntDifferentPlayers_areIndependent() throws InternalException {
+    void runCount_sameHuntDifferentPlayers_areIndependent() {
         UUID p1 = UUID.randomUUID();
         UUID p2 = UUID.randomUUID();
         storage.setCachedTimedRunCount(p1, "hunt1", 2);
@@ -858,7 +857,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void runCount_setOverwritesPrevious() throws InternalException {
+    void runCount_setOverwritesPrevious() {
         UUID player = UUID.randomUUID();
         storage.setCachedTimedRunCount(player, "hunt1", 5);
         storage.setCachedTimedRunCount(player, "hunt1", 10);
@@ -867,7 +866,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearCachedTimedRunCount_doesNotAffectOtherEntries() throws InternalException {
+    void clearCachedTimedRunCount_doesNotAffectOtherEntries() {
         UUID player = UUID.randomUUID();
         storage.setCachedTimedRunCount(player, "hunt1", 3);
         storage.setCachedTimedRunCount(player, "hunt2", 8);
@@ -881,12 +880,12 @@ class MemoryStorageTest {
     // ---- Hunt version: repeated increments ----
 
     @Test
-    void incrementHuntVersion_multipleIncrements_stillReturnsZero() throws InternalException {
+    void incrementHuntVersion_multipleIncrements_stillReturnsZero() {
         storage.incrementHuntVersion();
         storage.incrementHuntVersion();
         storage.incrementHuntVersion();
 
-        assertThat(storage.getHuntVersion()).isEqualTo(0);
+        assertThat(storage.getHuntVersion()).isZero();
     }
 
     // ---- close: verifies hunt caches are cleared ----
@@ -915,22 +914,22 @@ class MemoryStorageTest {
     // ---- Edge cases: operations on empty / null hunt maps ----
 
     @Test
-    void clearCachedPlayerHeadsForHunt_neverPopulatedHunt_doesNotThrow() throws InternalException {
+    void clearCachedPlayerHeadsForHunt_neverPopulatedHunt_doesNotThrow() {
         assertThatNoException().isThrownBy(() -> storage.clearCachedPlayerHeadsForHunt("ghost"));
     }
 
     @Test
-    void clearCachedTopPlayersForHunt_neverPopulatedHunt_doesNotThrow() throws InternalException {
+    void clearCachedTopPlayersForHunt_neverPopulatedHunt_doesNotThrow() {
         assertThatNoException().isThrownBy(() -> storage.clearCachedTopPlayersForHunt("ghost"));
     }
 
     @Test
-    void clearCachedTimedLeaderboard_neverPopulatedHunt_doesNotThrow() throws InternalException {
+    void clearCachedTimedLeaderboard_neverPopulatedHunt_doesNotThrow() {
         assertThatNoException().isThrownBy(() -> storage.clearCachedTimedLeaderboard("ghost"));
     }
 
     @Test
-    void addCachedPlayerHeadForHunt_thenGetForDifferentPlayer_returnsNull() throws InternalException {
+    void addCachedPlayerHeadForHunt_thenGetForDifferentPlayer_returnsNull() {
         UUID player = UUID.randomUUID();
         UUID otherPlayer = UUID.randomUUID();
         UUID head = UUID.randomUUID();
@@ -941,7 +940,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void removeCachedPlayerHeadsForHunt_playerNotInHunt_doesNotThrow() throws InternalException {
+    void removeCachedPlayerHeadsForHunt_playerNotInHunt_doesNotThrow() {
         UUID p1 = UUID.randomUUID();
         UUID p2 = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(p1, "hunt1", Set.of(UUID.randomUUID()));
@@ -953,7 +952,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void cachedPlayerHeads_addToExistingSet_accumulates() throws InternalException {
+    void cachedPlayerHeads_addToExistingSet_accumulates() {
         UUID player = UUID.randomUUID();
         UUID head1 = UUID.randomUUID();
         UUID head2 = UUID.randomUUID();
@@ -966,7 +965,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearAllCachedHuntDataForPlayer_doesNotAffectTimedLeaderboard() throws InternalException {
+    void clearAllCachedHuntDataForPlayer_doesNotAffectTimedLeaderboard() {
         UUID player = UUID.randomUUID();
         storage.setCachedBestTime(player, "hunt1", 1000L);
 
@@ -981,7 +980,7 @@ class MemoryStorageTest {
     }
 
     @Test
-    void clearAllCachedHuntDataForPlayer_doesNotAffectHuntTopPlayers() throws InternalException {
+    void clearAllCachedHuntDataForPlayer_doesNotAffectHuntTopPlayers() {
         UUID player = UUID.randomUUID();
         storage.setCachedPlayerHeadsForHunt(player, "hunt1", Set.of(UUID.randomUUID()));
 

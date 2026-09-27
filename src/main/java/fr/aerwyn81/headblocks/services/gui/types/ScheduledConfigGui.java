@@ -18,10 +18,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ScheduledConfigGui {
+    private static final String RANGE = "range";
+    private static final String SLOTS = "slots";
+    private static final String RECURRING = "recurring";
+    private static final String GUI_BACK = "Gui.Back";
+    private static final String GUI_BACK_LORE = "Gui.BackLore";
+    private static final String GUI_SCHEDULED_CONFIG_TITLE = "Gui.ScheduledConfigTitle";
+    private static final String GUI_SCHEDULED_CONFIG_NOT_DEFINED = "Gui.ScheduledConfigNotDefined";
+    private static final String RANGE_START = "range_start";
+    private static final String GUI_VALIDATE_CREATE = "Gui.ValidateCreate";
+    private static final String GUI_VALIDATE_CREATE_LORE = "Gui.ValidateCreateLore";
+    private static final String GUI_VALIDATE_BLOCKED = "Gui.ValidateBlocked";
+    private static final String GUI_SCHEDULED_CONFIG_VALIDATE_BLOCKED_LORE = "Gui.ScheduledConfigValidateBlockedLore";
+    private static final String SLOT_DAYS = "slot_days";
+    private static final String RECURRING_DURATION = "recurring_duration";
+    private static final String SLOT_FROM = "slot_from";
+    private static final String SLOT_TO = "slot_to";
+    private static final String GUI_SCHEDULED_CONFIG_INPUT_INVALID = "Gui.ScheduledConfigInputInvalid";
+    private static final String GUI_SCHEDULED_CONFIG_INPUT_SET = "Gui.ScheduledConfigInputSet";
 
     private final ServiceRegistry registry;
 
@@ -85,7 +104,7 @@ public class ScheduledConfigGui {
                 .toItemStack(), true)
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
-                    pendingModeType.put(p.getUniqueId(), "range");
+                    pendingModeType.put(p.getUniqueId(), RANGE);
                     buildRangeConfigGui(p);
                 }));
 
@@ -96,7 +115,7 @@ public class ScheduledConfigGui {
                 .toItemStack(), true)
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
-                    pendingModeType.put(p.getUniqueId(), "slots");
+                    pendingModeType.put(p.getUniqueId(), SLOTS);
                     buildSlotsConfigGui(p);
                 }));
 
@@ -107,15 +126,15 @@ public class ScheduledConfigGui {
                 .toItemStack(), true)
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
-                    pendingModeType.put(p.getUniqueId(), "recurring");
+                    pendingModeType.put(p.getUniqueId(), RECURRING);
                     buildRecurringConfigGui(p);
                 }));
 
         menu.setPaginationButtonBuilder((type, inv) -> {
             if (type == HBPaginationButtonType.CLOSE_BUTTON) {
                 return new ItemGUI(registry.getConfigService().guiBackIcon()
-                        .setName(registry.getLanguageService().message("Gui.Back"))
-                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
+                        .setName(registry.getLanguageService().message(GUI_BACK))
+                        .setLore(registry.getLanguageService().messageList(GUI_BACK_LORE))
                         .toItemStack())
                         .addOnClickEvent(event -> registry.getGuiService().getBehaviorSelectionManager()
                                 .buildAndOpenGui((Player) event.getWhoClicked()));
@@ -130,7 +149,7 @@ public class ScheduledConfigGui {
 
     private void buildRangeConfigGui(Player player) {
         var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
-                registry.getLanguageService().message("Gui.ScheduledConfigTitle"), false, 2);
+                registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_TITLE), false, 2);
 
         int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
@@ -145,12 +164,12 @@ public class ScheduledConfigGui {
         // Slot 11: Start
         String startValue = start != null
                 ? start.format(DATE_TIME)
-                : registry.getLanguageService().message("Gui.ScheduledConfigNotDefined");
+                : registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_NOT_DEFINED);
         Material startMat = start != null ? Material.LIME_DYE : Material.GRAY_DYE;
 
         List<String> startLore = registry.getLanguageService().messageList("Gui.ScheduledConfigStartLore").stream()
                 .map(s -> s.replace("%value%", startValue))
-                .collect(Collectors.toList());
+                .toList();
 
         menu.setItem(0, 11, new ItemGUI(new ItemBuilder(startMat)
                 .setName(registry.getLanguageService().message("Gui.ScheduledConfigStart"))
@@ -159,33 +178,33 @@ public class ScheduledConfigGui {
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
                     p.closeInventory();
-                    pendingChatFields.put(p.getUniqueId(), "range_start");
+                    pendingChatFields.put(p.getUniqueId(), RANGE_START);
                     p.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledConfigInputDate")));
                 }));
 
         // Slot 13: Validate
         if (start != null || end != null) {
             menu.setItem(0, 13, new ItemGUI(new ItemBuilder(Material.DIAMOND)
-                    .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
-                    .setLore(registry.getLanguageService().messageList("Gui.ValidateCreateLore"))
+                    .setName(registry.getLanguageService().message(GUI_VALIDATE_CREATE))
+                    .setLore(registry.getLanguageService().messageList(GUI_VALIDATE_CREATE_LORE))
                     .toItemStack(), true)
                     .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
         } else {
             menu.setItem(0, 13, new ItemGUI(new ItemBuilder(Material.BARRIER)
-                    .setName(registry.getLanguageService().message("Gui.ValidateBlocked"))
-                    .setLore(registry.getLanguageService().messageList("Gui.ScheduledConfigValidateBlockedLore"))
+                    .setName(registry.getLanguageService().message(GUI_VALIDATE_BLOCKED))
+                    .setLore(registry.getLanguageService().messageList(GUI_SCHEDULED_CONFIG_VALIDATE_BLOCKED_LORE))
                     .toItemStack()));
         }
 
         // Slot 15: End
         String endValue = end != null
                 ? end.format(DATE_TIME)
-                : registry.getLanguageService().message("Gui.ScheduledConfigNotDefined");
+                : registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_NOT_DEFINED);
         Material endMat = end != null ? Material.LIME_DYE : Material.GRAY_DYE;
 
         List<String> endLore = registry.getLanguageService().messageList("Gui.ScheduledConfigEndLore").stream()
                 .map(s -> s.replace("%value%", endValue))
-                .collect(Collectors.toList());
+                .toList();
 
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(endMat)
                 .setName(registry.getLanguageService().message("Gui.ScheduledConfigEnd"))
@@ -201,8 +220,8 @@ public class ScheduledConfigGui {
         menu.setPaginationButtonBuilder((type, inv) -> {
             if (type == HBPaginationButtonType.CLOSE_BUTTON) {
                 return new ItemGUI(registry.getConfigService().guiBackIcon()
-                        .setName(registry.getLanguageService().message("Gui.Back"))
-                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
+                        .setName(registry.getLanguageService().message(GUI_BACK))
+                        .setLore(registry.getLanguageService().messageList(GUI_BACK_LORE))
                         .toItemStack())
                         .addOnClickEvent(event -> buildModeSelectionGui((Player) event.getWhoClicked()));
             }
@@ -216,7 +235,7 @@ public class ScheduledConfigGui {
 
     private void buildSlotsConfigGui(Player player) {
         var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
-                registry.getLanguageService().message("Gui.ScheduledConfigTitle"), false, 2);
+                registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_TITLE), false, 2);
 
         int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
@@ -239,7 +258,7 @@ public class ScheduledConfigGui {
                         Player p = (Player) event.getWhoClicked();
                         List<TimeSlot> current = pendingSlots.getOrDefault(p.getUniqueId(), new ArrayList<>());
                         if (idx < current.size()) {
-                            current.remove(idx);
+                            current.subList(idx, idx + 1).clear();
                         }
                         buildSlotsConfigGui(p);
                     }));
@@ -253,29 +272,29 @@ public class ScheduledConfigGui {
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
                     p.closeInventory();
-                    pendingChatFields.put(p.getUniqueId(), "slot_days");
+                    pendingChatFields.put(p.getUniqueId(), SLOT_DAYS);
                     p.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledSlotsInputDays")));
                 }));
 
         // Validate button
         if (!slots.isEmpty()) {
             menu.setItem(0, 17, new ItemGUI(new ItemBuilder(Material.DIAMOND)
-                    .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
-                    .setLore(registry.getLanguageService().messageList("Gui.ValidateCreateLore"))
+                    .setName(registry.getLanguageService().message(GUI_VALIDATE_CREATE))
+                    .setLore(registry.getLanguageService().messageList(GUI_VALIDATE_CREATE_LORE))
                     .toItemStack(), true)
                     .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
         } else {
             menu.setItem(0, 17, new ItemGUI(new ItemBuilder(Material.BARRIER)
-                    .setName(registry.getLanguageService().message("Gui.ValidateBlocked"))
-                    .setLore(registry.getLanguageService().messageList("Gui.ScheduledConfigValidateBlockedLore"))
+                    .setName(registry.getLanguageService().message(GUI_VALIDATE_BLOCKED))
+                    .setLore(registry.getLanguageService().messageList(GUI_SCHEDULED_CONFIG_VALIDATE_BLOCKED_LORE))
                     .toItemStack()));
         }
 
         menu.setPaginationButtonBuilder((type, inv) -> {
             if (type == HBPaginationButtonType.CLOSE_BUTTON) {
                 return new ItemGUI(registry.getConfigService().guiBackIcon()
-                        .setName(registry.getLanguageService().message("Gui.Back"))
-                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
+                        .setName(registry.getLanguageService().message(GUI_BACK))
+                        .setLore(registry.getLanguageService().messageList(GUI_BACK_LORE))
                         .toItemStack())
                         .addOnClickEvent(event -> buildModeSelectionGui((Player) event.getWhoClicked()));
             }
@@ -289,7 +308,7 @@ public class ScheduledConfigGui {
 
     private void buildRecurringConfigGui(Player player) {
         var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
-                registry.getLanguageService().message("Gui.ScheduledConfigTitle"), false, 2);
+                registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_TITLE), false, 2);
 
         int[] borders = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 16, 17};
         IntStream.range(0, borders.length).map(i -> borders.length - i - 1).forEach(
@@ -303,7 +322,7 @@ public class ScheduledConfigGui {
         Duration duration = pendingDuration.get(uuid);
 
         // Slot 11: Every (click to cycle)
-        String everyValue = every != null ? every.name().toLowerCase() : registry.getLanguageService().message("Gui.ScheduledConfigNotDefined");
+        String everyValue = every != null ? every.name().toLowerCase() : registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_NOT_DEFINED);
         menu.setItem(0, 11, new ItemGUI(new ItemBuilder(Material.COMPASS)
                 .setName(registry.getLanguageService().message("Gui.ScheduledRecurringEvery"))
                 .setLore(List.of("", "§7" + everyValue, "", "§a§lCLICK§8: §7Cycle"))
@@ -326,7 +345,7 @@ public class ScheduledConfigGui {
                 }));
 
         // Slot 12: Start ref (chat input)
-        String refValue = startRef != null ? startRef : registry.getLanguageService().message("Gui.ScheduledConfigNotDefined");
+        String refValue = startRef != null ? startRef : registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_NOT_DEFINED);
         menu.setItem(0, 12, new ItemGUI(new ItemBuilder(Material.NAME_TAG)
                 .setName(registry.getLanguageService().message("Gui.ScheduledRecurringStartRef"))
                 .setLore(List.of("", "§7" + refValue, "", "§a§lCLICK§8: §7Set"))
@@ -339,7 +358,7 @@ public class ScheduledConfigGui {
                 }));
 
         // Slot 13: Duration (chat input)
-        String durValue = duration != null ? ScheduleDateTimeParser.formatDuration(duration) : registry.getLanguageService().message("Gui.ScheduledConfigNotDefined");
+        String durValue = duration != null ? ScheduleDateTimeParser.formatDuration(duration) : registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_NOT_DEFINED);
         menu.setItem(0, 13, new ItemGUI(new ItemBuilder(Material.CLOCK)
                 .setName(registry.getLanguageService().message("Gui.ScheduledRecurringDuration"))
                 .setLore(List.of("", "§7" + durValue, "", "§a§lCLICK§8: §7Set"))
@@ -347,29 +366,29 @@ public class ScheduledConfigGui {
                 .addOnClickEvent(event -> {
                     Player p = (Player) event.getWhoClicked();
                     p.closeInventory();
-                    pendingChatFields.put(p.getUniqueId(), "recurring_duration");
+                    pendingChatFields.put(p.getUniqueId(), RECURRING_DURATION);
                     p.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledRecurringInputDuration")));
                 }));
 
         // Slot 15: Validate
         if (every != null && startRef != null && duration != null) {
             menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
-                    .setName(registry.getLanguageService().message("Gui.ValidateCreate"))
-                    .setLore(registry.getLanguageService().messageList("Gui.ValidateCreateLore"))
+                    .setName(registry.getLanguageService().message(GUI_VALIDATE_CREATE))
+                    .setLore(registry.getLanguageService().messageList(GUI_VALIDATE_CREATE_LORE))
                     .toItemStack(), true)
                     .addOnClickEvent(event -> handleValidate((Player) event.getWhoClicked())));
         } else {
             menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.BARRIER)
-                    .setName(registry.getLanguageService().message("Gui.ValidateBlocked"))
-                    .setLore(registry.getLanguageService().messageList("Gui.ScheduledConfigValidateBlockedLore"))
+                    .setName(registry.getLanguageService().message(GUI_VALIDATE_BLOCKED))
+                    .setLore(registry.getLanguageService().messageList(GUI_SCHEDULED_CONFIG_VALIDATE_BLOCKED_LORE))
                     .toItemStack()));
         }
 
         menu.setPaginationButtonBuilder((type, inv) -> {
             if (type == HBPaginationButtonType.CLOSE_BUTTON) {
                 return new ItemGUI(registry.getConfigService().guiBackIcon()
-                        .setName(registry.getLanguageService().message("Gui.Back"))
-                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
+                        .setName(registry.getLanguageService().message(GUI_BACK))
+                        .setLore(registry.getLanguageService().messageList(GUI_BACK_LORE))
                         .toItemStack())
                         .addOnClickEvent(event -> buildModeSelectionGui((Player) event.getWhoClicked()));
             }
@@ -383,7 +402,7 @@ public class ScheduledConfigGui {
 
     private void handleValidate(Player player) {
         UUID uuid = player.getUniqueId();
-        String modeType = pendingModeType.getOrDefault(uuid, "range");
+        String modeType = pendingModeType.getOrDefault(uuid, RANGE);
         Location plateLoc = pendingPlateLocations.remove(uuid);
         boolean repeatable = pendingRepeatables.getOrDefault(uuid, true);
         pendingRepeatables.remove(uuid);
@@ -401,13 +420,13 @@ public class ScheduledConfigGui {
 
     private ScheduleMode buildScheduleMode(UUID uuid, String modeType) {
         return switch (modeType) {
-            case "slots" -> {
+            case SLOTS -> {
                 List<TimeSlot> slots = pendingSlots.getOrDefault(uuid, List.of());
                 LocalDate from = pendingActiveFrom.get(uuid);
                 LocalDate until = pendingActiveUntil.get(uuid);
                 yield new SlotsScheduleMode(slots, from, until);
             }
-            case "recurring" -> {
+            case RECURRING -> {
                 RecurrenceUnit every = pendingEvery.get(uuid);
                 String ref = pendingStartRef.get(uuid);
                 Duration dur = pendingDuration.get(uuid);
@@ -453,12 +472,12 @@ public class ScheduledConfigGui {
         }
 
         switch (field) {
-            case "range_start", "range_end" -> processRangeDateInput(player, field, message);
-            case "slot_days" -> processSlotDaysInput(player, message);
-            case "slot_from" -> processSlotTimeInput(player, "slot_from", message);
-            case "slot_to" -> processSlotTimeInput(player, "slot_to", message);
+            case RANGE_START, "range_end" -> processRangeDateInput(player, field, message);
+            case SLOT_DAYS -> processSlotDaysInput(player, message);
+            case SLOT_FROM -> processSlotTimeInput(player, SLOT_FROM, message);
+            case SLOT_TO -> processSlotTimeInput(player, SLOT_TO, message);
             case "recurring_startref" -> processRecurringStartRefInput(player, message);
-            case "recurring_duration" -> processRecurringDurationInput(player, message);
+            case RECURRING_DURATION -> processRecurringDurationInput(player, message);
             default -> reopenCurrentGui(player);
         }
     }
@@ -467,18 +486,18 @@ public class ScheduledConfigGui {
         UUID uuid = player.getUniqueId();
         LocalDateTime parsed = parseDateTimeInput(message);
         if (parsed == null) {
-            player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledConfigInputInvalid")));
+            player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_INPUT_INVALID)));
             pendingChatFields.put(uuid, field);
             return;
         }
 
-        if ("range_start".equals(field)) {
+        if (RANGE_START.equals(field)) {
             pendingStarts.put(uuid, parsed);
         } else {
             pendingEnds.put(uuid, parsed);
         }
 
-        player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledConfigInputSet")));
+        player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_INPUT_SET)));
         buildRangeConfigGui(player);
     }
 
@@ -491,7 +510,7 @@ public class ScheduledConfigGui {
             } catch (IllegalArgumentException e) {
                 player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledSlotsInvalidDay")
                         .replace("%day%", part.trim())));
-                pendingChatFields.put(uuid, "slot_days");
+                pendingChatFields.put(uuid, SLOT_DAYS);
                 return;
             }
         }
@@ -501,7 +520,7 @@ public class ScheduledConfigGui {
         // Store days in a simple format to carry through the multi-step flow
         String daysStr = days.stream().map(Enum::name).collect(Collectors.joining(","));
         pendingStartRef.put(uuid, daysStr); // reuse this map temporarily for multi-step
-        pendingChatFields.put(uuid, "slot_from");
+        pendingChatFields.put(uuid, SLOT_FROM);
         player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledSlotsInputFrom")));
     }
 
@@ -511,56 +530,67 @@ public class ScheduledConfigGui {
         try {
             time = LocalTime.parse(message.trim(), ScheduleDateTimeParser.TIME_FORMAT);
         } catch (DateTimeParseException e) {
-            player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledConfigInputInvalid")));
+            player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_INPUT_INVALID)));
             pendingChatFields.put(uuid, field);
             return;
         }
 
-        if ("slot_from".equals(field)) {
+        if (SLOT_FROM.equals(field)) {
             // Store "from" time appended to the days string
             String stored = pendingStartRef.getOrDefault(uuid, "");
             pendingStartRef.put(uuid, stored + "|" + time.format(ScheduleDateTimeParser.TIME_FORMAT));
-            pendingChatFields.put(uuid, "slot_to");
+            pendingChatFields.put(uuid, SLOT_TO);
             player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledSlotsInputTo")));
-        } else {
-            // "slot_to" - finalize the slot
-            String stored = pendingStartRef.remove(uuid);
-            if (stored != null) {
-                String[] parts = stored.split("\\|");
-                if (parts.length >= 2) {
-                    String daysStr = parts[0];
-                    LocalTime from;
-                    try {
-                        from = LocalTime.parse(parts[1], ScheduleDateTimeParser.TIME_FORMAT);
-                    } catch (DateTimeParseException e) {
-                        buildSlotsConfigGui(player);
-                        return;
-                    }
-
-                    List<DayOfWeek> days = new ArrayList<>();
-                    for (String d : daysStr.split(",")) {
-                        try {
-                            days.add(DayOfWeek.valueOf(d));
-                        } catch (IllegalArgumentException ignored) {
-                        }
-                    }
-
-                    if (!days.isEmpty()) {
-                        TimeSlot slot = new TimeSlot(List.copyOf(days), from, time);
-                        pendingSlots.computeIfAbsent(uuid, k -> new ArrayList<>()).add(slot);
-                    }
-                }
-            }
-
-            player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledConfigInputSet")));
+        } else if (addPendingSlot(player, uuid, time)) {
+            player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_INPUT_SET)));
             buildSlotsConfigGui(player);
         }
+    }
+
+    private boolean addPendingSlot(Player player, UUID uuid, LocalTime time) {
+        String stored = pendingStartRef.remove(uuid);
+        if (stored == null) {
+            return true;
+        }
+
+        String[] parts = stored.split("\\|");
+        if (parts.length < 2) {
+            return true;
+        }
+
+        String daysStr = parts[0];
+        LocalTime from;
+        try {
+            from = LocalTime.parse(parts[1], ScheduleDateTimeParser.TIME_FORMAT);
+        } catch (DateTimeParseException e) {
+            buildSlotsConfigGui(player);
+            return false;
+        }
+
+        List<DayOfWeek> days = parseDays(daysStr);
+        if (!days.isEmpty()) {
+            TimeSlot slot = new TimeSlot(List.copyOf(days), from, time);
+            pendingSlots.computeIfAbsent(uuid, k -> new ArrayList<>()).add(slot);
+        }
+        return true;
+    }
+
+    private static List<DayOfWeek> parseDays(String daysStr) {
+        List<DayOfWeek> days = new ArrayList<>();
+        for (String d : daysStr.split(",")) {
+            for (DayOfWeek day : DayOfWeek.values()) {
+                if (day.name().equals(d)) {
+                    days.add(day);
+                }
+            }
+        }
+        return days;
     }
 
     private void processRecurringStartRefInput(Player player, String message) {
         UUID uuid = player.getUniqueId();
         pendingStartRef.put(uuid, message.trim());
-        player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledConfigInputSet")));
+        player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_INPUT_SET)));
         buildRecurringConfigGui(player);
     }
 
@@ -568,35 +598,39 @@ public class ScheduledConfigGui {
         UUID uuid = player.getUniqueId();
         Duration dur = ScheduleDateTimeParser.parseDuration(message.trim());
         if (dur == null) {
-            player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledConfigInputInvalid")));
-            pendingChatFields.put(uuid, "recurring_duration");
+            player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_INPUT_INVALID)));
+            pendingChatFields.put(uuid, RECURRING_DURATION);
             return;
         }
 
         pendingDuration.put(uuid, dur);
-        player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Gui.ScheduledConfigInputSet")));
+        player.sendMessage(MessageUtils.colorize(registry.getLanguageService().message(GUI_SCHEDULED_CONFIG_INPUT_SET)));
         buildRecurringConfigGui(player);
     }
 
     private void reopenCurrentGui(Player player) {
-        String mode = pendingModeType.getOrDefault(player.getUniqueId(), "range");
+        String mode = pendingModeType.getOrDefault(player.getUniqueId(), RANGE);
         switch (mode) {
-            case "slots" -> buildSlotsConfigGui(player);
-            case "recurring" -> buildRecurringConfigGui(player);
+            case SLOTS -> buildSlotsConfigGui(player);
+            case RECURRING -> buildRecurringConfigGui(player);
             default -> buildRangeConfigGui(player);
         }
     }
 
     private LocalDateTime parseDateTimeInput(String input) {
-        try {
-            return LocalDateTime.parse(input.trim(), DATE_TIME);
-        } catch (DateTimeParseException ignored) {
+        var dateTime = parseOrNull(() -> LocalDateTime.parse(input.trim(), DATE_TIME));
+        if (dateTime != null) {
+            return dateTime;
         }
+        return parseOrNull(() -> java.time.LocalDate.parse(input.trim(), DATE_ONLY).atStartOfDay());
+    }
+
+    private static LocalDateTime parseOrNull(Supplier<LocalDateTime> parser) {
         try {
-            return java.time.LocalDate.parse(input.trim(), DATE_ONLY).atStartOfDay();
-        } catch (DateTimeParseException ignored) {
+            return parser.get();
+        } catch (DateTimeParseException e) {
+            return null;
         }
-        return null;
     }
 
     private DayOfWeek parseDayOfWeek(String input) {

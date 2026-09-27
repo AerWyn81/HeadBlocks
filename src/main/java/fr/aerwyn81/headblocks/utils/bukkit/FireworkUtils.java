@@ -12,13 +12,19 @@ import java.util.List;
 
 public class FireworkUtils {
 
-    public static void launchFirework(Location loc, boolean isFlickering, boolean isColorsRandom, List<Color> colors, boolean isFadeColorsRandom, List<Color> fadeColors, int power, boolean isWalled) {
+    private FireworkUtils() {
+    }
+
+    public static void launchFirework(Location loc, boolean isFlickering, List<Color> colors, List<Color> fadeColors, int power, boolean isWalled) {
         if (loc.getWorld() == null) {
             return;
         }
 
+        boolean isColorsRandom = colors.isEmpty();
+        boolean isFadeColorsRandom = fadeColors.isEmpty();
+
         EntityType entityType;
-        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.v1_20_R5)) {
+        if (VersionUtils.isNewerOrEqualsTo(VersionUtils.V1_20_R5)) {
             entityType = EntityType.valueOf("FIREWORK_ROCKET");
         } else {
             entityType = EntityType.FIREWORK;

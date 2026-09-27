@@ -20,9 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class RewardsGui extends GuiBase {
+    private static final String GUI_BACK = "Gui.Back";
+    private static final String GUI_BACK_LORE = "Gui.BackLore";
 
     private static final ConcurrentHashMap<UUID, PendingRewardInput> pendingRewardInputs = new ConcurrentHashMap<>();
 
@@ -67,7 +68,7 @@ public class RewardsGui extends GuiBase {
                                 .replace("%headName%", headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed"))), headLocation.getLocation()))
                         .setLore(registry.getLanguageService().messageList("Gui.RewardsSelectionItemLore").stream().map(s ->
                                         s.replace("%count%", String.valueOf(rewardCount)))
-                                .collect(Collectors.toList())).toItemStack(), true)
+                                .toList()).toItemStack(), true)
                         .addOnClickEvent(event -> openRewardsGui((Player) event.getWhoClicked(), headLocation));
 
                 rewardsSelectionMenu.addItem(i, rewardsItemGui);
@@ -78,8 +79,8 @@ public class RewardsGui extends GuiBase {
             rewardsSelectionMenu.setPaginationButtonBuilder((type, inventory) -> {
                 if (type == HBPaginationButtonType.BACK_BUTTON) {
                     return new ItemGUI(registry.getConfigService().guiBackIcon()
-                            .setName(registry.getLanguageService().message("Gui.Back"))
-                            .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
+                            .setName(registry.getLanguageService().message(GUI_BACK))
+                            .setLore(registry.getLanguageService().messageList(GUI_BACK_LORE))
                             .toItemStack())
                             .addOnClickEvent(event -> openRewardsSelectionGui((Player) event.getWhoClicked(), null));
                 }
@@ -160,8 +161,8 @@ public class RewardsGui extends GuiBase {
         rewardsMenu.setPaginationButtonBuilder((type, inventory) -> {
             if (type == HBPaginationButtonType.BACK_BUTTON) {
                 return new ItemGUI(registry.getConfigService().guiBackIcon()
-                        .setName(registry.getLanguageService().message("Gui.Back"))
-                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
+                        .setName(registry.getLanguageService().message(GUI_BACK))
+                        .setLore(registry.getLanguageService().messageList(GUI_BACK_LORE))
                         .toItemStack())
                         .addOnClickEvent(event -> openRewardsSelectionGui((Player) event.getWhoClicked(), null));
             }
@@ -223,8 +224,8 @@ public class RewardsGui extends GuiBase {
         typeSelectionMenu.setPaginationButtonBuilder((type, inventory) -> {
             if (type == HBPaginationButtonType.BACK_BUTTON) {
                 return new ItemGUI(registry.getConfigService().guiBackIcon()
-                        .setName(registry.getLanguageService().message("Gui.Back"))
-                        .setLore(registry.getLanguageService().messageList("Gui.BackLore"))
+                        .setName(registry.getLanguageService().message(GUI_BACK))
+                        .setLore(registry.getLanguageService().messageList(GUI_BACK_LORE))
                         .toItemStack())
                         .addOnClickEvent(event -> openRewardsGui((Player) event.getWhoClicked(), headLocation));
             }
@@ -258,8 +259,8 @@ public class RewardsGui extends GuiBase {
             return;
         }
 
-        String CANCEL_CONST = "cancel";
-        if (value.contains(CANCEL_CONST)) {
+        String cancelKeyword = "cancel";
+        if (value.contains(cancelKeyword)) {
             openRewardsGui(player, pending.headLocation);
             return;
         }

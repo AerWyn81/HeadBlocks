@@ -47,34 +47,36 @@ public class AdvancedHologram implements IHologram {
 
         registry.getScheduler().runTaskAsync(() -> {
             registry.getConfigService().hologramsAdvancedLines().forEach(l -> hologram.getLines().add(
-                    new DisplayTextLine(hologram, player ->
-                    {
-                        if (!l.contains("%state%")) {
-                            return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), l);
-                        }
-
-                        try {
-                            var head = registry.getHeadService().getHeadAt(location);
-                            if (head == null) {
-                                return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), l);
-                            }
-
-                            var hasHeadFormatted = registry.getConfigService().hologramAdvancedNotFoundPlaceholder();
-                            var hasHead = registry.getStorageService().hasHead(player.getUniqueId(), head.getUuid());
-                            if (hasHead) {
-                                hasHeadFormatted = registry.getConfigService().hologramAdvancedFoundPlaceholder();
-                            }
-
-                            return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), head, l
-                                    .replace("%state%", hasHeadFormatted));
-                        } catch (InternalException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }).backgroundColor(0).billboard((byte) 3)));
+                    new DisplayTextLine(hologram, player -> lineText(player, l, location))
+                            .backgroundColor(0).billboard((byte) 3)));
             hologram.show(getPool());
         });
 
         return this;
+    }
+
+    private String lineText(Player player, String l, Location location) {
+        if (!l.contains("%state%")) {
+            return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), l);
+        }
+
+        try {
+            var head = registry.getHeadService().getHeadAt(location);
+            if (head == null) {
+                return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), l);
+            }
+
+            var hasHeadFormatted = registry.getConfigService().hologramAdvancedNotFoundPlaceholder();
+            var hasHead = registry.getStorageService().hasHead(player.getUniqueId(), head.getUuid());
+            if (hasHead) {
+                hasHeadFormatted = registry.getConfigService().hologramAdvancedFoundPlaceholder();
+            }
+
+            return registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), head, l
+                    .replace("%state%", hasHeadFormatted));
+        } catch (InternalException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

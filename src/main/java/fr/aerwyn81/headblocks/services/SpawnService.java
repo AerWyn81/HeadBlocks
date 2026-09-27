@@ -601,7 +601,8 @@ public class SpawnService {
     }
 
     private HeadLocation buildHead(String huntId, UUID uuid, SpawnTemplate template, Location location, float yaw) {
-        var head = new HeadLocation(template.name(), uuid, location, huntId);
+        var centered = new Location(location.getWorld(), location.getBlockX() + 0.5, location.getBlockY(), location.getBlockZ() + 0.5);
+        var head = new HeadLocation(template.name(), uuid, centered, huntId);
         head.setContent(template.content());
         head.setYaw(yaw);
         head.setRenderMode(registry.getHuntService().configOf(huntId).getRenderMode());

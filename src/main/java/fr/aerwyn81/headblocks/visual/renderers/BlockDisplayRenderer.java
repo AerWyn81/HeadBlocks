@@ -35,6 +35,16 @@ public class BlockDisplayRenderer extends DisplayRenderer {
     }
 
     @Override
+    protected double width(HeadContent content, float scale) {
+        return size(scale);
+    }
+
+    @Override
+    protected double height(HeadContent content, float scale) {
+        return size(scale);
+    }
+
+    @Override
     protected double size(float scale) {
         return scale;
     }

@@ -1,7 +1,6 @@
 package fr.aerwyn81.headblocks.commands.list;
 
 import fr.aerwyn81.headblocks.HeadBlocks;
-import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
@@ -14,14 +13,8 @@ import static org.bukkit.Bukkit.getServer;
 
 @HBAnnotations(command = "version", permission = "headblocks.admin", alias = "v")
 public class Version implements Cmd {
-    private final ServiceRegistry registry;
-
-    public Version(ServiceRegistry registry) {
-        this.registry = registry;
-    }
-
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         var versionBuilder =
                 "\n" +
                         "&7----------------------------------------------------" +
@@ -34,7 +27,6 @@ public class Version implements Cmd {
                         "\n&7";
 
         sender.sendMessage(MessageUtils.colorize(versionBuilder));
-        return true;
     }
 
     @Override

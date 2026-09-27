@@ -21,9 +21,9 @@ public class Reload implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         var plugin = HeadBlocks.getInstance();
-        HeadBlocks.isReloadInProgress = true;
+        HeadBlocks.setReloadInProgress(true);
 
         plugin.reloadConfig();
 
@@ -41,10 +41,9 @@ public class Reload implements Cmd {
 
         plugin.startInternalTaskTimer();
 
-        HeadBlocks.isReloadInProgress = false;
+        HeadBlocks.setReloadInProgress(false);
 
         sender.sendMessage(registry.getLanguageService().message("Messages.ReloadComplete"));
-        return true;
     }
 
     @Override

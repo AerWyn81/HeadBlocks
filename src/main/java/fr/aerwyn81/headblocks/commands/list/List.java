@@ -29,35 +29,24 @@ public class List implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         String huntFilter = null;
         if (args.length >= 2 && !NumberUtils.isDigits(args[1])) {
             huntFilter = args[1];
         }
 
-        if (huntFilter != null) {
-            HBHunt hunt = registry.getHuntService().getHuntById(huntFilter);
-            if (hunt == null) {
-                sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                        .replace("%hunt%", huntFilter));
-                return true;
-            }
+        if (huntFilter != null && registry.getHuntService().getHuntById(huntFilter) == null) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
+                    .replace("%hunt%", huntFilter));
+            return;
         }
-
-        ArrayList<HeadLocation> headLocations = new ArrayList<>(registry.getHeadService().getHeadLocations());
 
         final String filter = huntFilter;
-        if (filter != null) {
-            headLocations.removeIf(h -> !filter.equals(h.getHuntId()));
-        }
-
-        if (registry.getHuntService().isMultiHunt()) {
-            headLocations.sort(Comparator.comparing(HeadLocation::getHuntId));
-        }
+        ArrayList<HeadLocation> headLocations = listedHeads(filter);
 
         if (headLocations.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
-            return true;
+            return;
         }
 
         ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService())
@@ -80,58 +69,83 @@ public class List implements Cmd {
 
             if (showHuntSeparator && !headLocation.getHuntId().equals(lastHuntId)) {
                 lastHuntId = headLocation.getHuntId();
-                HBHunt hunt = registry.getHuntService().getHuntById(lastHuntId);
-                String huntName = hunt != null ? hunt.getDisplayName() : lastHuntId;
-                String separator = registry.getLanguageService().message("Chat.HuntSeparator")
-                        .replace("%hunt%", huntName);
-                if (sender instanceof Player) {
-                    cpu.addLine(new TextComponent(separator));
-                } else {
-                    sender.sendMessage(separator);
-                }
+                addHuntSeparator(sender, cpu, lastHuntId);
             }
 
-            TextComponent msg = new TextComponent(MessageUtils.colorize((headLocation.isCharged() ? "&6" : "&7| &c&o") + headLocation.getNameOrUuid()));
-            TextComponent space = new TextComponent(" ");
-
-            if (headLocation.isCharged()) {
-                if (sender instanceof Player) {
-                    String hover = LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Chat.LineCoordinate"), headLocation.getLocation());
-
-                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
-
-                    TextComponent del = new TextComponent(registry.getLanguageService().message("Chat.Box.Remove"));
-                    del.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks remove " + headLocation.getUuid()));
-                    del.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Remove"))));
-
-                    TextComponent tp = new TextComponent(registry.getLanguageService().message("Chat.Box.Teleport"));
-
-                    if (headLocation.getLocation().getWorld() != null) {
-                        tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + headLocation.getLocation().getWorld().getName() + " " + (headLocation.getLocation().getX() + 0.5) + " " + (headLocation.getLocation().getY() + 1) + " " + (headLocation.getLocation().getZ() + 0.5 + " 0.0 90.0")));
-                    }
-
-                    tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Teleport"))));
-
-                    cpu.addLine(del, space, tp, space, msg, space);
-                } else {
-                    sender.sendMessage(MessageUtils.colorize("&6" + headLocation.getNameOrUuid()));
-                }
-            } else {
-                if (sender instanceof Player) {
-                    String hover = MessageUtils.colorize(registry.getLanguageService().message("Chat.LineWorldNotFound")
-                            .replace("%world%", headLocation.getConfigWorldName()));
-
-                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
-                    cpu.addLine(msg, space);
-                } else {
-                    sender.sendMessage(MessageUtils.colorize("&c&o" + headLocation.getNameOrUuid()));
-                }
-            }
+            addHeadLine(sender, cpu, headLocation);
         }
 
         cpu.addPageLine("list" + (filter != null ? " " + filter : ""));
         cpu.build();
-        return true;
+    }
+
+    private ArrayList<HeadLocation> listedHeads(String filter) {
+        ArrayList<HeadLocation> headLocations = new ArrayList<>(registry.getHeadService().getHeadLocations());
+
+        if (filter != null) {
+            headLocations.removeIf(h -> !filter.equals(h.getHuntId()));
+        }
+
+        if (registry.getHuntService().isMultiHunt()) {
+            headLocations.sort(Comparator.comparing(HeadLocation::getHuntId));
+        }
+
+        return headLocations;
+    }
+
+    private void addHuntSeparator(CommandSender sender, ChatPageUtils cpu, String huntId) {
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
+        String huntName = hunt != null ? hunt.getDisplayName() : huntId;
+        String separator = registry.getLanguageService().message("Chat.HuntSeparator")
+                .replace("%hunt%", huntName);
+        if (sender instanceof Player) {
+            cpu.addLine(new TextComponent(separator));
+        } else {
+            sender.sendMessage(separator);
+        }
+    }
+
+    private void addHeadLine(CommandSender sender, ChatPageUtils cpu, HeadLocation headLocation) {
+        TextComponent msg = new TextComponent(MessageUtils.colorize((headLocation.isCharged() ? "&6" : "&7| &c&o") + headLocation.getNameOrUuid()));
+        TextComponent space = new TextComponent(" ");
+
+        if (headLocation.isCharged()) {
+            if (sender instanceof Player) {
+                addChargedHeadLine(cpu, headLocation, msg, space);
+            } else {
+                sender.sendMessage(MessageUtils.colorize("&6" + headLocation.getNameOrUuid()));
+            }
+        } else {
+            if (sender instanceof Player) {
+                String hover = MessageUtils.colorize(registry.getLanguageService().message("Chat.LineWorldNotFound")
+                        .replace("%world%", headLocation.getConfigWorldName()));
+
+                msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
+                cpu.addLine(msg, space);
+            } else {
+                sender.sendMessage(MessageUtils.colorize("&c&o" + headLocation.getNameOrUuid()));
+            }
+        }
+    }
+
+    private void addChargedHeadLine(ChatPageUtils cpu, HeadLocation headLocation, TextComponent msg, TextComponent space) {
+        String hover = LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Chat.LineCoordinate"), headLocation.getLocation());
+
+        msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
+
+        TextComponent del = new TextComponent(registry.getLanguageService().message("Chat.Box.Remove"));
+        del.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks remove " + headLocation.getUuid()));
+        del.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Remove"))));
+
+        TextComponent tp = new TextComponent(registry.getLanguageService().message("Chat.Box.Teleport"));
+
+        if (headLocation.getLocation().getWorld() != null) {
+            tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + headLocation.getLocation().getWorld().getName() + " " + (headLocation.getLocation().getX() + 0.5) + " " + (headLocation.getLocation().getY() + 1) + " " + (headLocation.getLocation().getZ() + 0.5 + " 0.0 90.0")));
+        }
+
+        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Teleport"))));
+
+        cpu.addLine(del, space, tp, space, msg, space);
     }
 
     @Override

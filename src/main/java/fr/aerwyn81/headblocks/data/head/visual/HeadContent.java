@@ -10,6 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public record HeadContent(ContentKind kind, String value, String provider, Map<String, Object> options) {
+    private static final String VALUE = "value";
+    private static final String PROVIDER = "provider";
+    private static final String OPTIONS = "options";
 
     private static final Gson GSON = new Gson();
 
@@ -83,12 +86,12 @@ public record HeadContent(ContentKind kind, String value, String provider, Map<S
 
         var section = parent.createSection(key);
         section.set("kind", kind.name());
-        section.set("value", value);
+        section.set(VALUE, value);
         if (provider != null) {
-            section.set("provider", provider);
+            section.set(PROVIDER, provider);
         }
         if (!options.isEmpty()) {
-            section.createSection("options", options);
+            section.createSection(OPTIONS, options);
         }
     }
 
@@ -98,29 +101,29 @@ public record HeadContent(ContentKind kind, String value, String provider, Map<S
         }
 
         var kind = ContentKind.of(section.getString("kind"));
-        var value = section.getString("value");
+        var value = section.getString(VALUE);
         if (kind == null || value == null) {
             return null;
         }
 
         Map<String, Object> options = new LinkedHashMap<>();
-        var optionsSection = section.getConfigurationSection("options");
+        var optionsSection = section.getConfigurationSection(OPTIONS);
         if (optionsSection != null) {
             options.putAll(optionsSection.getValues(false));
         }
 
-        return new HeadContent(kind, value, section.getString("provider"), options);
+        return new HeadContent(kind, value, section.getString(PROVIDER), options);
     }
 
     public String toJson() {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("kind", kind.name());
-        map.put("value", value);
+        map.put(VALUE, value);
         if (provider != null) {
-            map.put("provider", provider);
+            map.put(PROVIDER, provider);
         }
         if (!options.isEmpty()) {
-            map.put("options", options);
+            map.put(OPTIONS, options);
         }
         return GSON.toJson(map);
     }
@@ -139,13 +142,13 @@ public record HeadContent(ContentKind kind, String value, String provider, Map<S
             }
 
             var kind = ContentKind.of((String) map.get("kind"));
-            var value = (String) map.get("value");
+            var value = (String) map.get(VALUE);
             if (kind == null || value == null) {
                 return null;
             }
 
-            var options = map.get("options") instanceof Map<?, ?> raw ? (Map<String, Object>) raw : null;
-            return new HeadContent(kind, value, (String) map.get("provider"), options);
+            var options = map.get(OPTIONS) instanceof Map<?, ?> raw ? (Map<String, Object>) raw : null;
+            return new HeadContent(kind, value, (String) map.get(PROVIDER), options);
         } catch (JsonSyntaxException | ClassCastException e) {
             return null;
         }

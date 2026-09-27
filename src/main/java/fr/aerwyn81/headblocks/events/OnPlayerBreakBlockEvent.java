@@ -38,19 +38,7 @@ public class OnPlayerBreakBlockEvent implements Listener {
     private boolean isTimedStartPlate(Location location) {
         for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
             for (Behavior behavior : hunt.getBehaviors()) {
-                if (!(behavior instanceof TimedBehavior tb)) {
-                    continue;
-                }
-
-                Location plate = tb.startPlateLocation();
-                if (plate == null || plate.getWorld() == null || location.getWorld() == null) {
-                    continue;
-                }
-
-                if (plate.getWorld().equals(location.getWorld())
-                        && plate.getBlockX() == location.getBlockX()
-                        && plate.getBlockY() == location.getBlockY()
-                        && plate.getBlockZ() == location.getBlockZ()) {
+                if (behavior instanceof TimedBehavior tb && isSameBlock(tb.startPlateLocation(), location)) {
                     return true;
                 }
             }
@@ -58,8 +46,16 @@ public class OnPlayerBreakBlockEvent implements Listener {
         return false;
     }
 
+    private static boolean isSameBlock(Location plate, Location location) {
+        return plate != null && plate.getWorld() != null && location.getWorld() != null
+                && plate.getWorld().equals(location.getWorld())
+                && plate.getBlockX() == location.getBlockX()
+                && plate.getBlockY() == location.getBlockY()
+                && plate.getBlockZ() == location.getBlockZ();
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
-    public void OnBlockBreakEvent(BlockBreakEvent e) {
+    public void onBlockBreakEvent(BlockBreakEvent e) {
         var player = e.getPlayer();
         var block = e.getBlock();
 

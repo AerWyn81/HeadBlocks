@@ -80,8 +80,9 @@ class WorldGuardAreaProviderTest {
         lenient().when(instance.getPlatform()).thenReturn(platform);
         statics.worldGuard.when(WorldGuard::getInstance).thenReturn(instance);
 
+        var worldMock = mock(com.sk89q.worldedit.world.World.class);
         statics.adapter.when(() -> BukkitAdapter.adapt(world))
-                .thenReturn(mock(com.sk89q.worldedit.world.World.class));
+                .thenReturn(worldMock);
     }
 
     private ProtectedRegion region(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
@@ -244,8 +245,9 @@ class WorldGuardAreaProviderTest {
         void isAvailable_worldGuardThrows_isFalse() {
             World world = loadedWorld(WORLD);
             statics.worldGuard.when(WorldGuard::getInstance).thenThrow(new IllegalStateException("not ready"));
+            var worldMock = mock(com.sk89q.worldedit.world.World.class);
             statics.adapter.when(() -> BukkitAdapter.adapt(world))
-                    .thenReturn(mock(com.sk89q.worldedit.world.World.class));
+                    .thenReturn(worldMock);
 
             assertThat(provider().isAvailable()).isFalse();
         }

@@ -8,8 +8,12 @@ import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ParticlesUtils {
+
+    private ParticlesUtils() {
+    }
 
     /**
      * Particle constants were renamed wholesale in 1.20.5 (REDSTONE became DUST, VILLAGER_HAPPY
@@ -26,7 +30,7 @@ public class ParticlesUtils {
                 .orElseThrow(() -> new IllegalArgumentException("Unknown particle type: " + name));
     }
 
-    public static void spawn(Location loc, Particle particle, int amount, ArrayList<String> colors, Player player) {
+    public static void spawn(Location loc, Particle particle, int amount, List<String> colors, Player player) {
         double size = amount == 1 ? 0 : .25f;
         Location location = loc.clone().add(0, .75f, 0);
 

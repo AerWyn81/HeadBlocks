@@ -66,6 +66,6 @@ public abstract class ResetBase implements Cmd {
 
     protected String getHeadDisplayName(UUID headUuid) {
         HeadLocation headLocation = registry.getHeadService().getHeadByUUID(headUuid);
-        return headLocation != null ? headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed")) : headUuid.toString();
+        return headLocation != null ? headLocation.getNameOrUnnamed(registry.getLanguageService().message("Gui.Unnamed")) : String.valueOf(headUuid);
     }
 }

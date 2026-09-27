@@ -6,6 +6,9 @@ import java.util.logging.Logger;
 
 public class LogUtil {
 
+    private LogUtil() {
+    }
+
     private static Logger logger;
 
     public static void initialize(Logger pluginLogger) {
@@ -29,7 +32,7 @@ public class LogUtil {
     }
 
     private static void log(Level level, ConsoleColor color, String message, Object[] args) {
-        if (logger == null) {
+        if (logger == null || !logger.isLoggable(level)) {
             return;
         }
 

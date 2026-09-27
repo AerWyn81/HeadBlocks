@@ -68,9 +68,8 @@ class TopCommandTest {
             when(storageService.getTopPlayers()).thenThrow(new InternalException("db error"));
 
             try (MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class)) {
-                boolean result = command.perform(playerSender, new String[]{"top"});
+                command.perform(playerSender, new String[]{"top"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Messages.StorageError");
                 verify(playerSender).sendMessage("mock-message");
             }
@@ -81,9 +80,8 @@ class TopCommandTest {
             when(storageService.getTopPlayers()).thenThrow(new InternalException("db error"));
 
             try (MockedStatic<LogUtil> logUtil = mockStatic(LogUtil.class)) {
-                boolean result = command.perform(consoleSender, new String[]{"top"});
+                command.perform(consoleSender, new String[]{"top"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Messages.StorageError");
                 verify(consoleSender).sendMessage("mock-message");
             }
@@ -97,9 +95,8 @@ class TopCommandTest {
         void noPlayers_sendsTopEmpty() throws InternalException {
             when(storageService.getTopPlayers()).thenReturn(new LinkedHashMap<>());
 
-            boolean result = command.perform(playerSender, new String[]{"top"});
+            command.perform(playerSender, new String[]{"top"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.TopEmpty");
             verify(playerSender).sendMessage("mock-message");
         }
@@ -108,9 +105,8 @@ class TopCommandTest {
         void consoleSender_noPlayers_sendsTopEmpty() throws InternalException {
             when(storageService.getTopPlayers()).thenReturn(new LinkedHashMap<>());
 
-            boolean result = command.perform(consoleSender, new String[]{"top"});
+            command.perform(consoleSender, new String[]{"top"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.TopEmpty");
             verify(consoleSender).sendMessage("mock-message");
         }
@@ -131,9 +127,8 @@ class TopCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"top"});
+                command.perform(consoleSender, new String[]{"top"});
 
-                assertThat(result).isTrue();
                 // Console sender gets title + line
                 verify(consoleSender).sendMessage("mock-message"); // title
                 verify(languageService).message("Chat.TopTitle");
@@ -157,9 +152,8 @@ class TopCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"top"});
+                command.perform(consoleSender, new String[]{"top"});
 
-                assertThat(result).isTrue();
                 // Title + 3 player lines (each colorized with &6)
                 verify(consoleSender, times(4)).sendMessage(anyString());
                 verify(languageService).message("Chat.LineTop", "Alice");
@@ -183,9 +177,8 @@ class TopCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"top"});
+                command.perform(playerSender, new String[]{"top"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Chat.TopTitle");
                 verify(languageService).message("Chat.LineTop", "Alice");
                 verify(languageService).message("Chat.Hover.LineTop");
@@ -209,9 +202,8 @@ class TopCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"top"});
+                command.perform(playerSender, new String[]{"top"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Chat.LineTop", "Alice");
                 // No hover for line top since no admin permission
                 verify(languageService, never()).message("Chat.Hover.LineTop");
@@ -238,9 +230,8 @@ class TopCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"top"});
+                command.perform(consoleSender, new String[]{"top"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Chat.LineTop", "Alice");
                 verify(languageService, never()).message("Chat.LineTop", "Bob");
             }
@@ -256,9 +247,8 @@ class TopCommandTest {
             when(storageService.getTopPlayers()).thenReturn(topMap);
             when(configService.hiddenTopPlayers()).thenReturn(new ArrayList<>(java.util.List.of("bOb")));
 
-            boolean result = command.perform(consoleSender, new String[]{"top"});
+            command.perform(consoleSender, new String[]{"top"});
 
-            assertThat(result).isTrue();
             // All players filtered out -> empty leaderboard
             verify(languageService).message("Messages.TopEmpty");
             verify(languageService, never()).message("Chat.LineTop", "Bob");
@@ -279,9 +269,8 @@ class TopCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"top", "1"});
+                command.perform(consoleSender, new String[]{"top", "1"});
 
-                assertThat(result).isTrue();
                 // Title + entry
                 verify(consoleSender, times(2)).sendMessage(anyString());
             }
@@ -298,9 +287,8 @@ class TopCommandTest {
             try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
                 mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-                boolean result = command.perform(consoleSender, new String[]{"top", "abc"});
+                command.perform(consoleSender, new String[]{"top", "abc"});
 
-                assertThat(result).isTrue();
                 // Still shows results (defaults to page 1)
                 verify(consoleSender, times(2)).sendMessage(anyString());
             }

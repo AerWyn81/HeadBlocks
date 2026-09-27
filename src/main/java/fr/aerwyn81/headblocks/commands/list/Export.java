@@ -9,10 +9,11 @@ import fr.aerwyn81.headblocks.utils.internal.ExportSQLHelper;
 import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.command.CommandSender;
 
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,20 +26,20 @@ public class Export implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         if (args.length != 3) {
             sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
-            return true;
+            return;
         }
 
         EnumTypeDatabase typeDatabase = EnumTypeDatabase.of(args[2]);
 
         if (typeDatabase == null) {
             sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().prefix() + " &cThe SQL type &e" + args[2] + " &cis not supported!"));
-            return true;
+            return;
         }
 
-        String fileName = "export-" + new SimpleDateFormat("yyyyMMdd").format(new Date()) + ".sql";
+        String fileName = "export-" + LocalDate.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".sql";
 
         sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportInProgress")));
 
@@ -53,8 +54,6 @@ public class Export implements Cmd {
             sender.sendMessage(MessageUtils.colorize(registry.getLanguageService().message("Messages.ExportSuccess"))
                     .replace("%fileName%", fileName));
         });
-
-        return true;
     }
 
     @Override

@@ -44,11 +44,10 @@ class TpCommandTest {
             World world = mock(World.class);
             bukkit.when(() -> Bukkit.getWorld("overworld")).thenReturn(world);
 
-            boolean result = command.perform(player, new String[]{
+            command.perform(player, new String[]{
                     "tp", "overworld", "10.5", "64.0", "20.5", "0.0", "0.0"
             });
 
-            assertThat(result).isTrue();
 
             ArgumentCaptor<Location> captor = ArgumentCaptor.forClass(Location.class);
             verify(platform).teleportAsync(eq(player), captor.capture());
@@ -64,9 +63,8 @@ class TpCommandTest {
 
     @Test
     void perform_invalidArgs_catchesException() {
-        boolean result = command.perform(player, new String[]{"tp", "bad"});
+        command.perform(player, new String[]{"tp", "bad"});
 
-        assertThat(result).isTrue();
         verify(platform, never()).teleportAsync(any(), any());
         verify(player, never()).teleport(any(Location.class));
     }

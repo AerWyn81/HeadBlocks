@@ -34,43 +34,53 @@ public class Stats implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         PlayerProfileLight playerProfileLight = CommandsUtils.extractAndGetPlayerUuidByName(registry, sender, args, true);
         if (playerProfileLight == null) {
-            return true;
+            return;
         }
 
         // Determine hunt filter: it's the first non-digit arg after the player name position
         String huntFilter = parseHuntFilter(args);
 
-        if (huntFilter != null) {
-            HBHunt hunt = registry.getHuntService().getHuntById(huntFilter);
-            if (hunt == null) {
-                sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
-                        .replace("%hunt%", huntFilter));
-                return true;
-            }
+        if (huntFilter != null && registry.getHuntService().getHuntById(huntFilter) == null) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
+                    .replace("%hunt%", huntFilter));
+            return;
         }
 
-        ArrayList<UUID> heads;
+        java.util.List<UUID> heads;
 
         try {
             heads = registry.getStorageService().getHeads();
         } catch (InternalException e) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
-            return true;
+            return;
         }
 
         if (heads.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
-            return true;
+            return;
         }
 
         final String filter = huntFilter;
 
         // Build a sorted list of head UUIDs, optionally filtered by hunt
         var chargedHeads = registry.getHeadService().getChargedHeadLocations();
+        filterAndSortHeads(heads, chargedHeads, filter);
 
+        if (heads.isEmpty()) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
+            return;
+        }
+
+        Player senderPlayer = sender instanceof Player p ? p : null;
+
+        registry.getStorageService().getHeadsPlayer(playerProfileLight.uuid()).whenComplete(senderPlayer, pHeads ->
+                showStats(sender, args, playerProfileLight, heads, chargedHeads, filter, new ArrayList<>(pHeads)));
+    }
+
+    private void filterAndSortHeads(java.util.List<UUID> heads, java.util.List<HeadLocation> chargedHeads, String filter) {
         if (filter != null) {
             heads.removeIf(uuid -> {
                 var loc = chargedHeads.stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
@@ -84,110 +94,106 @@ public class Stats implements Cmd {
                 return loc.map(HeadLocation::getHuntId).orElse("zzz");
             }));
         }
+    }
 
-        if (heads.isEmpty()) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.ListHeadEmpty"));
-            return true;
+    private void showStats(CommandSender sender, String[] args, PlayerProfileLight playerProfileLight, java.util.List<UUID> heads,
+                           java.util.List<HeadLocation> chargedHeads, String filter, ArrayList<UUID> playerHeads) {
+        ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService())
+                .entriesCount(heads.size())
+                .currentPage(args);
+
+        String message = registry.getLanguageService().message("Chat.LineTitle");
+        if (sender instanceof Player) {
+            TextComponent titleComponent = new TextComponent(registry.getPlaceholdersService().parse(playerProfileLight.name(), playerProfileLight.uuid(), registry.getLanguageService().message("Chat.StatsTitleLine")
+                    .replace("%headCount%", String.valueOf(playerHeads.size()))));
+            cpu.addTitleLine(titleComponent);
+        } else {
+            sender.sendMessage(message);
         }
 
-        Player senderPlayer = sender instanceof Player p ? p : null;
+        boolean showHuntSeparator = registry.getHuntService().isMultiHunt() && filter == null;
+        String lastHuntId = null;
 
-        registry.getStorageService().getHeadsPlayer(playerProfileLight.uuid()).whenComplete(senderPlayer, pHeads -> {
-            var playerHeads = new ArrayList<>(pHeads);
+        for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
+            UUID uuid = heads.get(i);
 
-            ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService())
-                    .entriesCount(heads.size())
-                    .currentPage(args);
+            HeadLocation headLocation = chargedHeads.stream().filter(h -> h.getUuid().equals(uuid)).findFirst().orElse(null);
 
-            String message = registry.getLanguageService().message("Chat.LineTitle");
-            if (sender instanceof Player) {
-                TextComponent titleComponent = new TextComponent(registry.getPlaceholdersService().parse(playerProfileLight.name(), playerProfileLight.uuid(), registry.getLanguageService().message("Chat.StatsTitleLine")
-                        .replace("%headCount%", String.valueOf(playerHeads.size()))));
-                cpu.addTitleLine(titleComponent);
-            } else {
-                sender.sendMessage(message);
+            String currentHuntId = headLocation != null ? headLocation.getHuntId() : null;
+            if (showHuntSeparator && currentHuntId != null && !currentHuntId.equals(lastHuntId)) {
+                lastHuntId = currentHuntId;
+                addHuntSeparator(sender, cpu, lastHuntId);
             }
 
-            boolean showHuntSeparator = registry.getHuntService().isMultiHunt() && filter == null;
-            String lastHuntId = null;
+            addStatsLine(sender, cpu, uuid, headLocation, playerHeads);
+        }
 
-            for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
-                UUID uuid = heads.get(i);
+        cpu.addPageLine("stats " + playerProfileLight.name() + (filter != null ? " " + filter : ""));
+        cpu.build();
+    }
 
-                HeadLocation headLocation = null;
+    private void addHuntSeparator(CommandSender sender, ChatPageUtils cpu, String huntId) {
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
+        String huntName = hunt != null ? hunt.getDisplayName() : huntId;
+        String separator = registry.getLanguageService().message("Chat.HuntSeparator")
+                .replace("%hunt%", huntName);
+        if (sender instanceof Player) {
+            cpu.addLine(new TextComponent(separator));
+        } else {
+            sender.sendMessage(separator);
+        }
+    }
 
-                var chargedHead = chargedHeads.stream().filter(h -> h.getUuid().equals(uuid)).findFirst();
-                if (chargedHead.isPresent()) {
-                    headLocation = chargedHead.get();
-                }
+    private void addStatsLine(CommandSender sender, ChatPageUtils cpu, UUID uuid, HeadLocation headLocation, ArrayList<UUID> playerHeads) {
+        var hover = registry.getLanguageService().message("Chat.Hover.HeadIsNotOnThisServer");
 
-                if (showHuntSeparator) {
-                    String currentHuntId = headLocation != null ? headLocation.getHuntId() : null;
-                    if (currentHuntId != null && !currentHuntId.equals(lastHuntId)) {
-                        lastHuntId = currentHuntId;
-                        HBHunt hunt = registry.getHuntService().getHuntById(lastHuntId);
-                        String huntName = hunt != null ? hunt.getDisplayName() : lastHuntId;
-                        String separator = registry.getLanguageService().message("Chat.HuntSeparator")
-                                .replace("%hunt%", huntName);
-                        if (sender instanceof Player) {
-                            cpu.addLine(new TextComponent(separator));
-                        } else {
-                            sender.sendMessage(separator);
-                        }
-                    }
-                }
+        if (headLocation != null) {
+            hover = LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Chat.LineCoordinate"), headLocation.getLocation());
+        }
 
-                var hover = registry.getLanguageService().message("Chat.Hover.HeadIsNotOnThisServer");
+        var headName = headLocation != null ? headLocation.getName() : uuid.toString();
+        if (headName.isEmpty()) {
+            headName = uuid.toString();
+        }
 
-                if (headLocation != null) {
-                    hover = LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Chat.LineCoordinate"), headLocation.getLocation());
-                }
+        if (sender instanceof Player) {
+            addPlayerStatsLine(cpu, uuid, headLocation, playerHeads, headName, hover);
+        } else {
+            sender.sendMessage(registry.getLanguageService().message(playerHeads.stream().anyMatch(s -> s.equals(uuid)) ?
+                    "Chat.Box.Own" : "Chat.Box.NotOwn") + " " +
+                    MessageUtils.colorize("&6" + headName));
+        }
+    }
 
-                var headName = headLocation != null ? headLocation.getName() : uuid.toString();
-                if (headName.isEmpty()) {
-                    headName = uuid.toString();
-                }
+    private void addPlayerStatsLine(ChatPageUtils cpu, UUID uuid, HeadLocation headLocation, ArrayList<UUID> playerHeads,
+                                    String headName, String hover) {
+        TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + headName));
+        msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
 
-                if (sender instanceof Player) {
-                    TextComponent msg = new TextComponent(MessageUtils.colorize("&6" + headName));
-                    msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
+        TextComponent own;
+        if (playerHeads.stream().anyMatch(s -> s.equals(uuid))) {
+            own = new TextComponent(registry.getLanguageService().message("Chat.Box.Own"));
+            own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Own"))));
+        } else {
+            own = new TextComponent(registry.getLanguageService().message("Chat.Box.NotOwn"));
+            own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.NotOwn"))));
+        }
 
-                    TextComponent own;
-                    if (playerHeads.stream().anyMatch(s -> s.equals(uuid))) {
-                        own = new TextComponent(registry.getLanguageService().message("Chat.Box.Own"));
-                        own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Own"))));
-                    } else {
-                        own = new TextComponent(registry.getLanguageService().message("Chat.Box.NotOwn"));
-                        own.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.NotOwn"))));
-                    }
+        TextComponent tp = new TextComponent(registry.getLanguageService().message("Chat.Box.Teleport"));
 
-                    TextComponent tp = new TextComponent(registry.getLanguageService().message("Chat.Box.Teleport"));
+        if (headLocation != null) {
+            var location = headLocation.getLocation();
 
-                    if (headLocation != null) {
-                        var location = headLocation.getLocation();
-
-                        if (location.getWorld() != null) {
-                            tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + location.getWorld().getName() + " " + location.getX() + " " + (location.getY() + 1) + " " + location.getZ() + " 0.0 90.0"));
-                        }
-                        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Teleport"))));
-                    } else {
-                        tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.BlockedTeleport"))));
-                    }
-
-                    TextComponent space = new TextComponent(" ");
-                    cpu.addLine(own, space, tp, space, msg, space);
-                } else {
-                    sender.sendMessage((playerHeads.stream().anyMatch(s -> s.equals(uuid)) ?
-                            registry.getLanguageService().message("Chat.Box.Own") : registry.getLanguageService().message("Chat.Box.NotOwn")) + " " +
-                            MessageUtils.colorize("&6" + headName));
-                }
+            if (location.getWorld() != null) {
+                tp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/headblocks tp " + location.getWorld().getName() + " " + location.getX() + " " + (location.getY() + 1) + " " + location.getZ() + " 0.0 90.0"));
             }
+            tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.Teleport"))));
+        } else {
+            tp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(registry.getLanguageService().message("Chat.Hover.BlockedTeleport"))));
+        }
 
-            cpu.addPageLine("stats " + playerProfileLight.name() + (filter != null ? " " + filter : ""));
-            cpu.build();
-        });
-
-        return true;
+        TextComponent space = new TextComponent(" ");
+        cpu.addLine(own, space, tp, space, msg, space);
     }
 
     private String parseHuntFilter(String[] args) {

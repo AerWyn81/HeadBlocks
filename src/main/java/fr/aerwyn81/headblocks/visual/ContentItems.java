@@ -46,15 +46,21 @@ public final class ContentItems {
 
     public static BlockData blockDataOf(HeadContent content) {
         var raw = content.option("data");
-        if (raw != null && !raw.isEmpty()) {
-            try {
-                return Bukkit.createBlockData(raw);
-            } catch (IllegalArgumentException ignored) {
-            }
+        var data = raw != null && !raw.isEmpty() ? parseBlockData(raw) : null;
+        if (data != null) {
+            return data;
         }
 
         var material = Material.matchMaterial(content.value());
         return material != null && material.isBlock() ? material.createBlockData() : null;
+    }
+
+    private static BlockData parseBlockData(String raw) {
+        try {
+            return Bukkit.createBlockData(raw);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public static Material materialOf(HeadContent content) {
@@ -73,6 +79,7 @@ public final class ContentItems {
                     item.setItemMeta(meta);
                 }
             } catch (IllegalArgumentException ignored) {
+                // ignored: the owner is not a valid UUID, the item keeps its default skin
             }
             return item;
         }

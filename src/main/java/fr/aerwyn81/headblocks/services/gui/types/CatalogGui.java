@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class CatalogGui {
+    private static final String HUNT_PLACEHOLDER = "%hunt%";
 
     public enum Category {
         ALL(Material.COMPASS),
@@ -176,7 +177,7 @@ public class CatalogGui {
         var render = renderName(head, state.huntId());
 
         for (var line : ls.messageList("Gui.CatalogItemLore")) {
-            lore.add(line.replace("%hunt%", huntName)
+            lore.add(line.replace(HUNT_PLACEHOLDER, huntName)
                     .replace("%render%", render));
         }
 
@@ -202,7 +203,7 @@ public class CatalogGui {
             var hunt = registry.getHuntService().getHuntById(state.huntId());
             if (hunt != null) {
                 item = HeadUtils.withHunt(item, hunt.getId(), ls.message("Head.HuntLore")
-                        .replace("%hunt%", hunt.getDisplayName()));
+                        .replace(HUNT_PLACEHOLDER, hunt.getDisplayName()));
             }
         }
 
@@ -238,8 +239,8 @@ public class CatalogGui {
         var huntName = huntName(state.huntId());
 
         return new ItemGUI(new ItemBuilder(Material.TARGET)
-                .setName(ls.message("Gui.CatalogHuntName").replace("%hunt%", huntName))
-                .setLore(ls.messageList("Gui.CatalogHuntLore").stream().map(l -> l.replace("%hunt%", huntName)).toList())
+                .setName(ls.message("Gui.CatalogHuntName").replace(HUNT_PLACEHOLDER, huntName))
+                .setLore(ls.messageList("Gui.CatalogHuntLore").stream().map(l -> l.replace(HUNT_PLACEHOLDER, huntName)).toList())
                 .toItemStack(), true)
                 .addOnClickEvent(event -> openHuntPicker((Player) event.getWhoClicked()));
     }

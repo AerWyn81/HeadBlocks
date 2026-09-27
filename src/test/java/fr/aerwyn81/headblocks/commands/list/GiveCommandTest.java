@@ -52,7 +52,7 @@ class GiveCommandTest {
 
     @Test
     void noArgument_opensTheCatalogForTheSender() {
-        assertThat(command.perform(player, new String[]{"give"})).isTrue();
+        command.perform(player, new String[]{"give"});
 
         verify(catalogGui).open(player);
     }

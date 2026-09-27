@@ -19,9 +19,12 @@ public class Tp implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         Player player = (Player) sender;
+        teleport(player, args);
+    }
 
+    private boolean teleport(Player player, String[] args) {
         try {
             Location loc = new Location(
                     Bukkit.getWorld(args[1]),
@@ -32,10 +35,10 @@ public class Tp implements Cmd {
                     Float.parseFloat(args[6]));
 
             registry.getPlatform().teleportAsync(player, loc);
-        } catch (Exception ignored) {
+            return true;
+        } catch (Exception e) {
+            return false;
         }
-
-        return true;
     }
 
     @Override

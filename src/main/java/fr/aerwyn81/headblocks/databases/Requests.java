@@ -3,6 +3,13 @@ package fr.aerwyn81.headblocks.databases;
 import fr.aerwyn81.headblocks.services.ConfigService;
 
 public class Requests {
+    private static final String HB_PLAYERS_OLD = "hb_players_old";
+    private static final String DROP_TABLE_FORMAT = "DROP TABLE %s";
+    private static final String V5_TEMP_SUFFIX = "_v5tmp";
+
+    private Requests() {
+    }
+
     private static String tablePrefix = "";
     private static String databaseName = "";
 
@@ -233,19 +240,19 @@ public class Requests {
 
     // Migrations
     public static String migArchiveTable() {
-        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` varchar(40) NOT NULL, `hUUID` varchar(40) NOT NULL, PRIMARY KEY (pUUID,`hUUID`))", "hb_players_old");
+        return String.format("CREATE TABLE IF NOT EXISTS %s (`pUUID` varchar(40) NOT NULL, `hUUID` varchar(40) NOT NULL, PRIMARY KEY (pUUID,`hUUID`))", HB_PLAYERS_OLD);
     }
 
     public static String migCopyOldToArchive() {
-        return String.format("INSERT INTO %s SELECT * FROM %s", "hb_players_old", getTablePlayers());
+        return String.format("INSERT INTO %s SELECT * FROM %s", HB_PLAYERS_OLD, getTablePlayers());
     }
 
     public static String migDeleteOld() {
-        return String.format("DROP TABLE %s", getTablePlayers());
+        return String.format(DROP_TABLE_FORMAT, getTablePlayers());
     }
 
     public static String migImportOldUsers() {
-        return String.format("SELECT DISTINCT pUUID FROM %s", "hb_players_old");
+        return String.format("SELECT DISTINCT pUUID FROM %s", HB_PLAYERS_OLD);
     }
 
     public static String migInsertPlayer() {
@@ -253,15 +260,15 @@ public class Requests {
     }
 
     public static String migImportOldHeads() {
-        return String.format("INSERT INTO %s(`hUUID`, `hExist`) SELECT DISTINCT hUUID, True FROM %s", getTableHeads(), "hb_players_old");
+        return String.format("INSERT INTO %s(`hUUID`, `hExist`) SELECT DISTINCT hUUID, True FROM %s", getTableHeads(), HB_PLAYERS_OLD);
     }
 
     public static String migRemap() {
-        return String.format("INSERT INTO %s (pUUID, hUUID) SELECT pUUID, hUUID FROM %s", getTablePlayerHeads(), "hb_players_old");
+        return String.format("INSERT INTO %s (pUUID, hUUID) SELECT pUUID, hUUID FROM %s", getTablePlayerHeads(), HB_PLAYERS_OLD);
     }
 
     public static String migDelArchive() {
-        return String.format("DROP TABLE %s", "hb_players_old");
+        return String.format(DROP_TABLE_FORMAT, HB_PLAYERS_OLD);
     }
 
     public static String addColumnHeadTextureMariaDb() {
@@ -405,19 +412,19 @@ public class Requests {
     }
 
     public static String migV5CreateTempPlayerHeadsSQLite() {
-        return String.format("CREATE TABLE %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES %s(hUUID) ON DELETE CASCADE, `huntId` VARCHAR(64) NOT NULL DEFAULT 'default', PRIMARY KEY(pUUID, hUUID, huntId))", getTablePlayerHeads() + "_v5tmp", getTableHeads());
+        return String.format("CREATE TABLE %s (`pUUID` VARCHAR(36), `hUUID` VARCHAR(36) REFERENCES %s(hUUID) ON DELETE CASCADE, `huntId` VARCHAR(64) NOT NULL DEFAULT 'default', PRIMARY KEY(pUUID, hUUID, huntId))", getTablePlayerHeads() + V5_TEMP_SUFFIX, getTableHeads());
     }
 
     public static String migV5CopyPlayerHeadsToTempSQLite() {
-        return String.format("INSERT INTO %s (pUUID, hUUID, huntId) SELECT pUUID, hUUID, 'default' FROM %s", getTablePlayerHeads() + "_v5tmp", getTablePlayerHeads());
+        return String.format("INSERT INTO %s (pUUID, hUUID, huntId) SELECT pUUID, hUUID, 'default' FROM %s", getTablePlayerHeads() + V5_TEMP_SUFFIX, getTablePlayerHeads());
     }
 
     public static String migV5DropOldPlayerHeadsSQLite() {
-        return String.format("DROP TABLE %s", getTablePlayerHeads());
+        return String.format(DROP_TABLE_FORMAT, getTablePlayerHeads());
     }
 
     public static String migV5RenameTempPlayerHeadsSQLite() {
-        return String.format("ALTER TABLE %s RENAME TO %s", getTablePlayerHeads() + "_v5tmp", getTablePlayerHeads());
+        return String.format("ALTER TABLE %s RENAME TO %s", getTablePlayerHeads() + V5_TEMP_SUFFIX, getTablePlayerHeads());
     }
 
     // --- Timed runs (v6) ---

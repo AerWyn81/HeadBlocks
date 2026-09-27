@@ -19,15 +19,15 @@ public class Options implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         if (args.length > 1) {
             switch (args[1]) {
                 case "order":
                     registry.getGuiService().getOrderManager().openOrderGui((Player) sender);
-                    return true;
+                    return;
                 case "hint":
                     registry.getGuiService().getHintManager().openHintGui((Player) sender);
-                    return true;
+                    return;
                 case "rewards":
                     var argHead = args.length > 2 ? args[2] : null;
 
@@ -37,22 +37,23 @@ public class Options implements Cmd {
                         if (head == null) {
                             sender.sendMessage(registry.getLanguageService().message("Messages.HeadNameNotFound")
                                     .replace("%headName%", argHead));
-                            return true;
+                            return;
                         }
 
                         if (registry.getHeadService().isSpawned(head.getUuid())) {
                             sender.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadNotEditable"));
-                            return true;
+                            return;
                         }
                     }
 
                     registry.getGuiService().getRewardsManager().openRewardsSelectionGui((Player) sender, head);
-                    return true;
+                    return;
+                default:
+                    break;
             }
         }
 
         registry.getGuiService().openOptionsGui((Player) sender);
-        return true;
     }
 
     @Override

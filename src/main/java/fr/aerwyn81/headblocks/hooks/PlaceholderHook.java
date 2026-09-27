@@ -2,6 +2,7 @@ package fr.aerwyn81.headblocks.hooks;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
+import fr.aerwyn81.headblocks.data.PlayerProfileLight;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.services.TimedRunManager;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -16,6 +17,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 public class PlaceholderHook extends PlaceholderExpansion {
+    private static final String CURRENT = "current";
 
     private final ServiceRegistry registry;
 
@@ -88,387 +90,444 @@ public class PlaceholderHook extends PlaceholderExpansion {
         }
 
         // %headblocks_current% | %headblocks_left%
-        if (identifier.equals("current") || identifier.equals("left")) {
-            if (registry.getHuntService().isMultiHunt()) {
-                return "Use %headblocks_hunt_<name>_found% or %headblocks_hunt_<name>_left%";
-            }
-
-            var future = registry.getStorageService().getHeadsPlayer(player.getUniqueId()).asFuture();
-
-            try {
-                var heads = new HashSet<>(registry.getStorageService().getHeads());
-                var current = future.get().stream().filter(heads::contains).count();
-
-                if (identifier.equals("current")) {
-                    return "" + current;
-                } else {
-                    return "" + (heads.size() - current);
-                }
-            } catch (Exception ex) {
-                return "Future error get heads";
-            }
+        if (identifier.equals(CURRENT) || identifier.equals("left")) {
+            return currentOrLeft(player, identifier);
         }
 
         // %headblocks_leaderboard_position%
         // %headblocks_leaderboard_<position>_<name|custom|value>%
         if (identifier.contains("leaderboard")) {
-            var str = identifier.split("_");
-            try {
-                var top = new ArrayList<>(registry.getStorageService().getTopPlayers().entrySet());
-
-                var positionParam = str[str.length - (str.length == 2 ? 1 : 2)];
-
-                if (positionParam.equals("position")) {
-                    var findPlayerPos = top.stream()
-                            .filter(p -> p.getKey().uuid().equals(player.getUniqueId()))
-                            .findFirst()
-                            .orElse(null);
-
-                    var playerPosition = top.indexOf(findPlayerPos);
-
-                    if (playerPosition == -1) {
-                        return "-";
-                    }
-
-                    return String.valueOf(playerPosition + 1);
-                }
-
-                var position = Integer.parseInt(positionParam);
-                if (position < 1) {
-                    position = 1;
-                }
-
-                if (position > top.size()) {
-                    return "-";
-                }
-
-                var p = top.get(position - 1);
-
-                var elt = str[str.length - 1];
-
-                switch (elt) {
-                    case "name" -> {
-                        return p.getKey().name();
-                    }
-                    case "custom" -> {
-                        var displayName = p.getKey().customDisplay();
-                        return displayName.isEmpty() ? p.getKey().name() : displayName;
-                    }
-                    case "value" -> {
-                        return String.valueOf(p.getValue());
-                    }
-                    default -> {
-                        return p.getKey().customDisplay() + " (" + p.getKey().name() + ") " + ": " + p.getValue();
-                    }
-                }
-            } catch (Exception ex) {
-                return "Cannot parse the leaderboard placeholder. Use %headblocks_leaderboard_<position>_<name|custom|value>%.";
-            }
+            return leaderboard(player, identifier);
         }
 
         // %headblocks_max%
         if (identifier.equals("max")) {
-            if (registry.getHuntService().isMultiHunt()) {
-                return "Use %headblocks_hunt_<name>_total%";
-            }
-
-            try {
-                return "" + registry.getStorageService().getHeads().size();
-            } catch (InternalException e) {
-                return "";
-            }
+            return maxHeads();
         }
 
         // %headblocks_hasHead_<uuid|name>%
         if (identifier.contains("hasHead")) {
-            var str = identifier.split("_");
-
-            try {
-                var hUUID = UUID.fromString(str[str.length - 1]);
-                return String.valueOf(registry.getStorageService().hasHead(player.getUniqueId(), hUUID));
-            } catch (IllegalArgumentException ignored) {
-                // Not a valid UUID, try name-based lookup below
-            } catch (Exception ex) {
-                return "Storage error retrieving heads";
-            }
-
-            try {
-                var name = identifier.replace("hasHead_", "");
-                name = name.replaceAll("_", " ").trim();
-
-                var head = registry.getHeadService().getHeadByName(name);
-
-                if (head == null) {
-                    return "Unknown head " + name;
-                }
-
-                return String.valueOf(registry.getStorageService().hasHead(player.getUniqueId(), head.getUuid()));
-            } catch (Exception ex) {
-                return "Storage error retrieving heads";
-            }
+            return hasHead(player, identifier);
         }
 
         // %headblocks_hunt_<huntId>_found% | %headblocks_hunt_<huntId>_total% | %headblocks_hunt_<huntId>_progress% | %headblocks_hunt_<huntId>_left%
         if (identifier.startsWith("hunt_")) {
-            var knownSuffixes = Set.of("found", "total", "left", "progress", "name", "state",
-                    "besttime", "timedcount", "timeposition", "timetop", "finishers", "spawned", "active", "score", "scoreposition", "scoretop");
-
-            // Strip leading "hunt_"
-            String remainder = identifier.substring("hunt_".length());
-
-            // Scan left-to-right for the first known suffix keyword
-            String huntId = null;
-            String subType = null;
-            int searchFrom = 0;
-            while (searchFrom < remainder.length()) {
-                int underscorePos = remainder.indexOf('_', searchFrom);
-                if (underscorePos < 0) {
-                    break;
-                }
-                String afterUnderscore = remainder.substring(underscorePos + 1);
-                int nextUnderscore = afterUnderscore.indexOf('_');
-                String firstWord = nextUnderscore >= 0 ? afterUnderscore.substring(0, nextUnderscore) : afterUnderscore;
-
-                if (knownSuffixes.contains(firstWord)) {
-                    huntId = remainder.substring(0, underscorePos).toLowerCase();
-                    subType = afterUnderscore;
-                    break;
-                }
-                searchFrom = underscorePos + 1;
-            }
-
-            // Fallback: if no known suffix found, use simple split (first segment = huntId)
-            if (huntId == null) {
-                int firstUnderscore = remainder.indexOf('_');
-                if (firstUnderscore > 0) {
-                    huntId = remainder.substring(0, firstUnderscore).toLowerCase();
-                    subType = remainder.substring(firstUnderscore + 1);
-                }
-            }
-
-            if (huntId == null || huntId.isEmpty()) {
-                return "";
-            }
-
-            HBHunt hunt = registry.getHuntService().getHuntById(huntId);
-            if (hunt == null) {
-                return "";
-            }
-
-            switch (subType) {
-                case "found" -> {
-                    try {
-                        return String.valueOf(registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size());
-                    } catch (InternalException e) {
-                        return "0";
-                    }
-                }
-                case "total" -> {
-                    return String.valueOf(hunt.getTargetCount());
-                }
-                case "spawned" -> {
-                    return String.valueOf(registry.getSpawnService().totalSpawned(huntId));
-                }
-                case "spawned_formatted" -> {
-                    return grouped(registry.getSpawnService().totalSpawned(huntId));
-                }
-                case "score", "score_formatted" -> {
-                    try {
-                        if (!hunt.scoresPoints()) {
-                            return String.valueOf(registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size());
-                        }
-
-                        double score = registry.getStorageService().getScoreForHunt(player.getUniqueId(), huntId);
-                        return subType.equals("score") ? MessageUtils.formatScore(score) : grouped((int) Math.round(score));
-                    } catch (InternalException e) {
-                        return "0";
-                    }
-                }
-                case "active" -> {
-                    return String.valueOf(registry.getSpawnService().getActiveHeads(huntId).size());
-                }
-                case "scoreposition" -> {
-                    if (!hunt.scoresPoints()) {
-                        return "-";
-                    }
-
-                    try {
-                        var scores = new ArrayList<>(registry.getStorageService().getTopScoresForHunt(huntId).keySet());
-                        for (int i = 0; i < scores.size(); i++) {
-                            if (scores.get(i).uuid().equals(player.getUniqueId())) {
-                                return String.valueOf(i + 1);
-                            }
-                        }
-                        return "-";
-                    } catch (InternalException e) {
-                        return "-";
-                    }
-                }
-                case "left" -> {
-                    try {
-                        int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
-                        return String.valueOf(Math.max(0, hunt.getTargetCount() - found));
-                    } catch (InternalException e) {
-                        return String.valueOf(hunt.getTargetCount());
-                    }
-                }
-                case "progress" -> {
-                    try {
-                        int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
-                        int total = hunt.getTargetCount();
-                        return MessageUtils.createProgressBar(found, total,
-                                registry.getConfigService().progressBarBars(),
-                                registry.getConfigService().progressBarSymbol(),
-                                registry.getConfigService().progressBarCompletedColor(),
-                                registry.getConfigService().progressBarNotCompletedColor());
-                    } catch (InternalException e) {
-                        return "";
-                    }
-                }
-                case "name" -> {
-                    return hunt.getDisplayName();
-                }
-                case "state" -> {
-                    return hunt.getState().getLocalizedName(registry.getLanguageService());
-                }
-                case "besttime" -> {
-                    try {
-                        Long best = registry.getStorageService().getBestTime(player.getUniqueId(), huntId);
-                        if (best == null) {
-                            return "-";
-                        }
-                        return TimedRunManager.formatTime(best);
-                    } catch (InternalException e) {
-                        return "-";
-                    }
-                }
-                case "timedcount" -> {
-                    try {
-                        return String.valueOf(registry.getStorageService().getTimedRunCount(player.getUniqueId(), huntId));
-                    } catch (InternalException e) {
-                        return "0";
-                    }
-                }
-                case "finishers" -> {
-                    try {
-                        int total = hunt.getTargetCount();
-                        if (total <= 0) {
-                            return "0";
-                        }
-                        return String.valueOf(registry.getStorageService().getTopPlayersForHunt(huntId).values().stream()
-                                .filter(found -> found >= total)
-                                .count());
-                    } catch (InternalException e) {
-                        return "0";
-                    }
-                }
-                case "timeposition" -> {
-                    try {
-                        var leaderboard = new ArrayList<>(registry.getStorageService().getTimedLeaderboard(huntId, 50).entrySet());
-                        for (int i = 0; i < leaderboard.size(); i++) {
-                            if (leaderboard.get(i).getKey().uuid().equals(player.getUniqueId())) {
-                                return String.valueOf(i + 1);
-                            }
-                        }
-                        return "-";
-                    } catch (InternalException e) {
-                        return "-";
-                    }
-                }
-                default -> {
-                    if (subType.startsWith("scoretop_")) {
-                        return scoreTop(hunt, subType);
-                    }
-
-                    // Handle timetop_<pos>_<name|time>
-                    if (subType.startsWith("timetop_")) {
-                        try {
-                            String[] ttParts = subType.split("_"); // timetop, <pos>, <name|time>
-                            if (ttParts.length < 3) {
-                                return "";
-                            }
-
-                            int pos = Integer.parseInt(ttParts[1]);
-                            String field = ttParts[2];
-
-                            var leaderboard = new ArrayList<>(registry.getStorageService().getTimedLeaderboard(huntId, pos).entrySet());
-                            if (pos < 1 || pos > leaderboard.size()) {
-                                return "-";
-                            }
-
-                            var entry = leaderboard.get(pos - 1);
-                            return switch (field) {
-                                case "name" -> entry.getKey().name();
-                                case "time" -> TimedRunManager.formatTime(entry.getValue());
-                                default -> "-";
-                            };
-                        } catch (Exception e) {
-                            return "-";
-                        }
-                    }
-                    return "";
-                }
-            }
+            return huntPlaceholder(player, identifier);
         }
 
         // %headblocks_order_<previous|current|next>%
         if (identifier.contains("order")) {
-            var str = identifier.split("_");
-
-            if (str.length != 2) {
-                return "Placeholder not found!";
-            }
-
-            var subIdentifier = str[1];
-
-            var heads = new ArrayList<>(registry.getHeadService().getChargedHeadLocations());
-            heads.sort(Comparator.comparingInt(HeadLocation::getOrderIndex));
-
-            if (heads.isEmpty()) {
-                return "No loaded heads";
-            }
-
-            var future = registry.getStorageService().getHeadsPlayer(player.getUniqueId()).asFuture();
-
-            try {
-                var playerHeadLocations = new ArrayList<HeadLocation>();
-                for (var headLocation : heads) {
-                    var optHead = future.get().stream().filter(uuid -> uuid.equals(headLocation.getUuid())).findFirst();
-                    if (optHead.isPresent()) {
-                        playerHeadLocations.add(headLocation);
-                    }
-                }
-
-                switch (subIdentifier) {
-                    case "current" -> {
-                        if (playerHeadLocations.size() - 1 < 0) {
-                            return "-";
-                        }
-
-                        return playerHeadLocations.get(playerHeadLocations.size() - 1).getNameOrUuid();
-                    }
-                    case "previous" -> {
-                        if (playerHeadLocations.isEmpty() || playerHeadLocations.size() - 2 < 0) {
-                            return "-";
-                        }
-
-                        return playerHeadLocations.get(playerHeadLocations.size() - 2).getNameOrUuid();
-                    }
-                    case "next" -> {
-                        if (playerHeadLocations.size() >= heads.size()) {
-                            return "-";
-                        }
-
-                        return heads.get(playerHeadLocations.size()).getNameOrUuid();
-                    }
-                }
-
-            } catch (Exception ex) {
-                return "Future error get heads";
-            }
+            return orderPlaceholder(player, identifier);
         }
 
         return null;
+    }
+
+    private String currentOrLeft(OfflinePlayer player, String identifier) {
+        if (registry.getHuntService().isMultiHunt()) {
+            return "Use %headblocks_hunt_<name>_found% or %headblocks_hunt_<name>_left%";
+        }
+
+        var future = registry.getStorageService().getHeadsPlayer(player.getUniqueId()).asFuture();
+
+        try {
+            var heads = new HashSet<>(registry.getStorageService().getHeads());
+            var current = future.get().stream().filter(heads::contains).count();
+
+            if (identifier.equals(CURRENT)) {
+                return "" + current;
+            } else {
+                return "" + (heads.size() - current);
+            }
+        } catch (Exception ex) {
+            return "Future error get heads";
+        }
+    }
+
+    private String leaderboard(OfflinePlayer player, String identifier) {
+        var str = identifier.split("_");
+        try {
+            var top = new ArrayList<>(registry.getStorageService().getTopPlayers().entrySet());
+
+            var positionParam = str[str.length - (str.length == 2 ? 1 : 2)];
+
+            if (positionParam.equals("position")) {
+                return leaderboardPosition(player, top);
+            }
+
+            var position = Integer.parseInt(positionParam);
+            if (position < 1) {
+                position = 1;
+            }
+
+            if (position > top.size()) {
+                return "-";
+            }
+
+            return leaderboardEntry(top.get(position - 1), str[str.length - 1]);
+        } catch (Exception ex) {
+            return "Cannot parse the leaderboard placeholder. Use %headblocks_leaderboard_<position>_<name|custom|value>%.";
+        }
+    }
+
+    private static String leaderboardPosition(OfflinePlayer player, ArrayList<Map.Entry<PlayerProfileLight, Integer>> top) {
+        var findPlayerPos = top.stream()
+                .filter(p -> p.getKey().uuid().equals(player.getUniqueId()))
+                .findFirst()
+                .orElse(null);
+
+        var playerPosition = top.indexOf(findPlayerPos);
+
+        if (playerPosition == -1) {
+            return "-";
+        }
+
+        return String.valueOf(playerPosition + 1);
+    }
+
+    private static String leaderboardEntry(Map.Entry<PlayerProfileLight, Integer> p, String elt) {
+        switch (elt) {
+            case "name" -> {
+                return p.getKey().name();
+            }
+            case "custom" -> {
+                var displayName = p.getKey().customDisplay();
+                return displayName.isEmpty() ? p.getKey().name() : displayName;
+            }
+            case "value" -> {
+                return String.valueOf(p.getValue());
+            }
+            default -> {
+                return p.getKey().customDisplay() + " (" + p.getKey().name() + ") " + ": " + p.getValue();
+            }
+        }
+    }
+
+    private String maxHeads() {
+        if (registry.getHuntService().isMultiHunt()) {
+            return "Use %headblocks_hunt_<name>_total%";
+        }
+
+        try {
+            return "" + registry.getStorageService().getHeads().size();
+        } catch (InternalException e) {
+            return "";
+        }
+    }
+
+    private String hasHead(OfflinePlayer player, String identifier) {
+        var str = identifier.split("_");
+
+        try {
+            var hUUID = UUID.fromString(str[str.length - 1]);
+            return String.valueOf(registry.getStorageService().hasHead(player.getUniqueId(), hUUID));
+        } catch (IllegalArgumentException ignored) {
+            // Not a valid UUID, try name-based lookup below
+        } catch (Exception ex) {
+            return "Storage error retrieving heads";
+        }
+
+        try {
+            var name = identifier.replace("hasHead_", "");
+            name = name.replace("_", " ").trim();
+
+            var head = registry.getHeadService().getHeadByName(name);
+
+            if (head == null) {
+                return "Unknown head " + name;
+            }
+
+            return String.valueOf(registry.getStorageService().hasHead(player.getUniqueId(), head.getUuid()));
+        } catch (Exception ex) {
+            return "Storage error retrieving heads";
+        }
+    }
+
+    private String huntPlaceholder(OfflinePlayer player, String identifier) {
+        var knownSuffixes = Set.of("found", "total", "left", "progress", "name", "state",
+                "besttime", "timedcount", "timeposition", "timetop", "finishers", "spawned", "active", "score", "scoreposition", "scoretop");
+
+        // Strip leading "hunt_"
+        String remainder = identifier.substring("hunt_".length());
+
+        // Scan left-to-right for the first known suffix keyword
+        String huntId = null;
+        String subType = null;
+        int suffixPos = findKnownSuffix(remainder, knownSuffixes);
+        if (suffixPos >= 0) {
+            huntId = remainder.substring(0, suffixPos).toLowerCase();
+            subType = remainder.substring(suffixPos + 1);
+        }
+
+        // Fallback: if no known suffix found, use simple split (first segment = huntId)
+        if (huntId == null) {
+            int firstUnderscore = remainder.indexOf('_');
+            if (firstUnderscore > 0) {
+                huntId = remainder.substring(0, firstUnderscore).toLowerCase();
+                subType = remainder.substring(firstUnderscore + 1);
+            }
+        }
+
+        if (huntId == null || huntId.isEmpty()) {
+            return "";
+        }
+
+        HBHunt hunt = registry.getHuntService().getHuntById(huntId);
+        if (hunt == null) {
+            return "";
+        }
+
+        return huntValue(player, hunt, huntId, subType);
+    }
+
+    private String huntValue(OfflinePlayer player, HBHunt hunt, String huntId, String subType) {
+        return switch (subType) {
+            case "found" -> foundCount(player, huntId);
+            case "total" -> String.valueOf(hunt.getTargetCount());
+            case "spawned" -> String.valueOf(registry.getSpawnService().totalSpawned(huntId));
+            case "spawned_formatted" -> grouped(registry.getSpawnService().totalSpawned(huntId));
+            case "score", "score_formatted" -> score(player, hunt, huntId, subType);
+            case "active" -> String.valueOf(registry.getSpawnService().getActiveHeads(huntId).size());
+            case "scoreposition" -> scorePosition(player, hunt, huntId);
+            case "left" -> leftCount(player, hunt, huntId);
+            case "progress" -> progress(player, hunt, huntId);
+            case "name" -> hunt.getDisplayName();
+            case "state" -> hunt.getState().getLocalizedName(registry.getLanguageService());
+            case "besttime" -> bestTime(player, huntId);
+            case "timedcount" -> timedCount(player, huntId);
+            case "finishers" -> finishers(hunt, huntId);
+            case "timeposition" -> timePosition(player, huntId);
+            default -> otherHuntValue(hunt, huntId, subType);
+        };
+    }
+
+    private String foundCount(OfflinePlayer player, String huntId) {
+        try {
+            return String.valueOf(registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size());
+        } catch (InternalException e) {
+            return "0";
+        }
+    }
+
+    private String score(OfflinePlayer player, HBHunt hunt, String huntId, String subType) {
+        try {
+            if (!hunt.scoresPoints()) {
+                return String.valueOf(registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size());
+            }
+
+            double score = registry.getStorageService().getScoreForHunt(player.getUniqueId(), huntId);
+            return subType.equals("score") ? MessageUtils.formatScore(score) : grouped((int) Math.round(score));
+        } catch (InternalException e) {
+            return "0";
+        }
+    }
+
+    private String scorePosition(OfflinePlayer player, HBHunt hunt, String huntId) {
+        if (!hunt.scoresPoints()) {
+            return "-";
+        }
+
+        try {
+            var scores = new ArrayList<>(registry.getStorageService().getTopScoresForHunt(huntId).keySet());
+            for (int i = 0; i < scores.size(); i++) {
+                if (scores.get(i).uuid().equals(player.getUniqueId())) {
+                    return String.valueOf(i + 1);
+                }
+            }
+            return "-";
+        } catch (InternalException e) {
+            return "-";
+        }
+    }
+
+    private String leftCount(OfflinePlayer player, HBHunt hunt, String huntId) {
+        try {
+            int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
+            return String.valueOf(Math.max(0, hunt.getTargetCount() - found));
+        } catch (InternalException e) {
+            return String.valueOf(hunt.getTargetCount());
+        }
+    }
+
+    private String progress(OfflinePlayer player, HBHunt hunt, String huntId) {
+        try {
+            int found = registry.getStorageService().getHeadsPlayerForHunt(player.getUniqueId(), huntId).size();
+            int total = hunt.getTargetCount();
+            return MessageUtils.createProgressBar(found, total,
+                    registry.getConfigService().progressBarBars(),
+                    registry.getConfigService().progressBarSymbol(),
+                    registry.getConfigService().progressBarCompletedColor(),
+                    registry.getConfigService().progressBarNotCompletedColor());
+        } catch (InternalException e) {
+            return "";
+        }
+    }
+
+    private String bestTime(OfflinePlayer player, String huntId) {
+        try {
+            Long best = registry.getStorageService().getBestTime(player.getUniqueId(), huntId);
+            if (best == null) {
+                return "-";
+            }
+            return TimedRunManager.formatTime(best);
+        } catch (InternalException e) {
+            return "-";
+        }
+    }
+
+    private String timedCount(OfflinePlayer player, String huntId) {
+        try {
+            return String.valueOf(registry.getStorageService().getTimedRunCount(player.getUniqueId(), huntId));
+        } catch (InternalException e) {
+            return "0";
+        }
+    }
+
+    private String finishers(HBHunt hunt, String huntId) {
+        try {
+            int total = hunt.getTargetCount();
+            if (total <= 0) {
+                return "0";
+            }
+            return String.valueOf(registry.getStorageService().getTopPlayersForHunt(huntId).values().stream()
+                    .filter(found -> found >= total)
+                    .count());
+        } catch (InternalException e) {
+            return "0";
+        }
+    }
+
+    private String timePosition(OfflinePlayer player, String huntId) {
+        try {
+            var leaderboard = new ArrayList<>(registry.getStorageService().getTimedLeaderboard(huntId, 50).entrySet());
+            for (int i = 0; i < leaderboard.size(); i++) {
+                if (leaderboard.get(i).getKey().uuid().equals(player.getUniqueId())) {
+                    return String.valueOf(i + 1);
+                }
+            }
+            return "-";
+        } catch (InternalException e) {
+            return "-";
+        }
+    }
+
+    private String otherHuntValue(HBHunt hunt, String huntId, String subType) {
+        if (subType.startsWith("scoretop_")) {
+            return scoreTop(hunt, subType);
+        }
+
+        // Handle timetop_<pos>_<name|time>
+        if (subType.startsWith("timetop_")) {
+            return timeTop(huntId, subType);
+        }
+        return "";
+    }
+
+    private String timeTop(String huntId, String subType) {
+        try {
+            String[] ttParts = subType.split("_"); // timetop, <pos>, <name|time>
+            if (ttParts.length < 3) {
+                return "";
+            }
+
+            int pos = Integer.parseInt(ttParts[1]);
+            String field = ttParts[2];
+
+            var leaderboard = new ArrayList<>(registry.getStorageService().getTimedLeaderboard(huntId, pos).entrySet());
+            if (pos < 1 || pos > leaderboard.size()) {
+                return "-";
+            }
+
+            var entry = leaderboard.get(pos - 1);
+            return switch (field) {
+                case "name" -> entry.getKey().name();
+                case "time" -> TimedRunManager.formatTime(entry.getValue());
+                default -> "-";
+            };
+        } catch (Exception e) {
+            return "-";
+        }
+    }
+
+    private String orderPlaceholder(OfflinePlayer player, String identifier) {
+        var str = identifier.split("_");
+
+        if (str.length != 2) {
+            return "Placeholder not found!";
+        }
+
+        var subIdentifier = str[1];
+
+        var heads = new ArrayList<>(registry.getHeadService().getChargedHeadLocations());
+        heads.sort(Comparator.comparingInt(HeadLocation::getOrderIndex));
+
+        if (heads.isEmpty()) {
+            return "No loaded heads";
+        }
+
+        var future = registry.getStorageService().getHeadsPlayer(player.getUniqueId()).asFuture();
+
+        try {
+            var playerHeadLocations = new ArrayList<HeadLocation>();
+            for (var headLocation : heads) {
+                var optHead = future.get().stream().filter(uuid -> uuid.equals(headLocation.getUuid())).findFirst();
+                if (optHead.isPresent()) {
+                    playerHeadLocations.add(headLocation);
+                }
+            }
+
+            return orderValue(subIdentifier, playerHeadLocations, heads);
+        } catch (Exception ex) {
+            return "Future error get heads";
+        }
+    }
+
+    private static String orderValue(String subIdentifier, ArrayList<HeadLocation> playerHeadLocations, ArrayList<HeadLocation> heads) {
+        switch (subIdentifier) {
+            case CURRENT -> {
+                if (playerHeadLocations.size() - 1 < 0) {
+                    return "-";
+                }
+
+                return playerHeadLocations.get(playerHeadLocations.size() - 1).getNameOrUuid();
+            }
+            case "previous" -> {
+                if (playerHeadLocations.isEmpty() || playerHeadLocations.size() - 2 < 0) {
+                    return "-";
+                }
+
+                return playerHeadLocations.get(playerHeadLocations.size() - 2).getNameOrUuid();
+            }
+            case "next" -> {
+                if (playerHeadLocations.size() >= heads.size()) {
+                    return "-";
+                }
+
+                return heads.get(playerHeadLocations.size()).getNameOrUuid();
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
+    private static int findKnownSuffix(String remainder, Set<String> knownSuffixes) {
+        int searchFrom = 0;
+        while (searchFrom < remainder.length()) {
+            int underscorePos = remainder.indexOf('_', searchFrom);
+            if (underscorePos < 0) {
+                return -1;
+            }
+            String afterUnderscore = remainder.substring(underscorePos + 1);
+            int nextUnderscore = afterUnderscore.indexOf('_');
+            String firstWord = nextUnderscore >= 0 ? afterUnderscore.substring(0, nextUnderscore) : afterUnderscore;
+
+            if (knownSuffixes.contains(firstWord)) {
+                return underscorePos;
+            }
+            searchFrom = underscorePos + 1;
+        }
+        return -1;
     }
 
     private static String grouped(int value) {

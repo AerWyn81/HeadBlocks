@@ -24,8 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -151,7 +150,7 @@ class StorageServiceTest {
         cached.put(new PlayerProfileLight(UUID.randomUUID(), "Steve", ""), 10);
         when(storage.getCachedTopPlayers()).thenReturn(cached);
 
-        LinkedHashMap<PlayerProfileLight, Integer> result = service.getTopPlayers();
+        var result = service.getTopPlayers();
 
         assertThat(result).hasSize(1);
         verifyNoInteractions(database);
@@ -163,7 +162,7 @@ class StorageServiceTest {
         cached.put(new PlayerProfileLight(UUID.randomUUID(), "Steve", ""), 10);
         when(storage.getCachedTopPlayers()).thenReturn(cached);
 
-        LinkedHashMap<PlayerProfileLight, Integer> result = service.getTopPlayers();
+        var result = service.getTopPlayers();
 
         assertThat(result).isNotSameAs(cached);
     }
@@ -175,7 +174,7 @@ class StorageServiceTest {
         fromDb.put(new PlayerProfileLight(UUID.randomUUID(), "Alex", ""), 5);
         when(database.getTopPlayers()).thenReturn(fromDb);
 
-        LinkedHashMap<PlayerProfileLight, Integer> result = service.getTopPlayers();
+        var result = service.getTopPlayers();
 
         assertThat(result).hasSize(1);
         verify(storage).setCachedTopPlayers(fromDb);
@@ -189,7 +188,7 @@ class StorageServiceTest {
         cached.put(new PlayerProfileLight(UUID.randomUUID(), "Steve", ""), 7);
         when(storage.getCachedTopPlayersForHunt("hunt1")).thenReturn(cached);
 
-        LinkedHashMap<PlayerProfileLight, Integer> result = service.getTopPlayersForHunt("hunt1");
+        var result = service.getTopPlayersForHunt("hunt1");
 
         assertThat(result).hasSize(1);
         verify(database, never()).getTopPlayersForHunt(anyString());
@@ -202,7 +201,7 @@ class StorageServiceTest {
         fromDb.put(new PlayerProfileLight(UUID.randomUUID(), "Alex", ""), 3);
         when(database.getTopPlayersForHunt("hunt1")).thenReturn(fromDb);
 
-        LinkedHashMap<PlayerProfileLight, Integer> result = service.getTopPlayersForHunt("hunt1");
+        var result = service.getTopPlayersForHunt("hunt1");
 
         assertThat(result).hasSize(1);
         verify(storage).setCachedTopPlayersForHunt("hunt1", fromDb);
@@ -215,7 +214,7 @@ class StorageServiceTest {
         UUID head = UUID.randomUUID();
         when(storage.getCachedHeads()).thenReturn(Set.of(head));
 
-        ArrayList<UUID> result = service.getHeads();
+        var result = service.getHeads();
 
         assertThat(result).containsExactly(head);
         verifyNoInteractions(database);
@@ -229,7 +228,7 @@ class StorageServiceTest {
         ArrayList<UUID> fromDb = new ArrayList<>(List.of(head1, head2));
         when(database.getHeads()).thenReturn(fromDb);
 
-        ArrayList<UUID> result = service.getHeads();
+        var result = service.getHeads();
 
         assertThat(result).containsExactly(head1, head2);
         verify(storage).addCachedHead(head1);
@@ -286,7 +285,7 @@ class StorageServiceTest {
         cached.put(new PlayerProfileLight(UUID.randomUUID(), "C", ""), 300L);
         when(storage.getCachedTimedLeaderboard("hunt1")).thenReturn(cached);
 
-        LinkedHashMap<PlayerProfileLight, Long> result = service.getTimedLeaderboard("hunt1", 2);
+        var result = service.getTimedLeaderboard("hunt1", 2);
 
         assertThat(result).hasSize(2);
         verifyNoInteractions(database);
@@ -299,7 +298,7 @@ class StorageServiceTest {
         fromDb.put(new PlayerProfileLight(UUID.randomUUID(), "Fast", ""), 1234L);
         when(database.getTimedLeaderboard("hunt1", 5)).thenReturn(fromDb);
 
-        LinkedHashMap<PlayerProfileLight, Long> result = service.getTimedLeaderboard("hunt1", 5);
+        var result = service.getTimedLeaderboard("hunt1", 5);
 
         assertThat(result).hasSize(1);
         verify(storage).setCachedTimedLeaderboard("hunt1", fromDb);
@@ -455,7 +454,7 @@ class StorageServiceTest {
     void getHuntVersion_onException_returnsZero() throws InternalException {
         when(storage.getHuntVersion()).thenThrow(new InternalException("fail"));
 
-        assertThat(service.getHuntVersion()).isEqualTo(0L);
+        assertThat(service.getHuntVersion()).isZero();
     }
 
     // --- incrementHuntVersion ---
@@ -471,7 +470,7 @@ class StorageServiceTest {
     void incrementHuntVersion_onException_doesNotPropagate() throws InternalException {
         doThrow(new InternalException("fail")).when(storage).incrementHuntVersion();
 
-        service.incrementHuntVersion(); // should not throw
+        assertThatNoException().isThrownBy(() -> service.incrementHuntVersion());
     }
 
     // --- close ---
@@ -492,7 +491,7 @@ class StorageServiceTest {
         UUID head = UUID.randomUUID();
         when(storage.getCachedPlayerHeadsForHunt(player, "hunt1")).thenReturn(Set.of(head));
 
-        ArrayList<UUID> result = service.getHeadsPlayerForHunt(player, "hunt1");
+        var result = service.getHeadsPlayerForHunt(player, "hunt1");
 
         assertThat(result).containsExactly(head);
         verify(database, never()).getHeadsPlayerForHunt(any(), anyString());
@@ -505,7 +504,7 @@ class StorageServiceTest {
         when(storage.getCachedPlayerHeadsForHunt(player, "hunt1")).thenReturn(null);
         when(database.getHeadsPlayerForHunt(player, "hunt1")).thenReturn(new ArrayList<>(List.of(head)));
 
-        ArrayList<UUID> result = service.getHeadsPlayerForHunt(player, "hunt1");
+        var result = service.getHeadsPlayerForHunt(player, "hunt1");
 
         assertThat(result).containsExactly(head);
         verify(storage).setCachedPlayerHeadsForHunt(eq(player), eq("hunt1"), anySet());
@@ -681,7 +680,7 @@ class StorageServiceTest {
             UUID player = UUID.randomUUID();
             when(database.getHeadsPlayer(player)).thenThrow(new InternalException("db error"));
 
-            service.invalidateCachePlayer(player); // should not throw
+            assertThatNoException().isThrownBy(() -> service.invalidateCachePlayer(player));
         }
     }
 
@@ -818,10 +817,10 @@ class StorageServiceTest {
             cached.put(new PlayerProfileLight(UUID.randomUUID(), "Steve", ""), 7);
             when(storage.getCachedTopPlayersForHunt("hunt1")).thenReturn(cached);
 
-            LinkedHashMap<PlayerProfileLight, Integer> result = service.getTopPlayersForHunt("hunt1");
+            var result = service.getTopPlayersForHunt("hunt1");
 
-            assertThat(result).isNotSameAs(cached);
-            assertThat(result).hasSize(1);
+            assertThat(result).isNotSameAs(cached)
+                    .hasSize(1);
         }
     }
 
@@ -929,7 +928,7 @@ class StorageServiceTest {
                 when(database.getTablePlayerHeads()).thenReturn(new ArrayList<>());
                 when(database.getTablePlayers()).thenReturn(new ArrayList<>());
 
-                ArrayList<String> result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
+                var result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
 
                 assertThat(result).isNotEmpty();
                 assertThat(result.get(0)).contains("DROP TABLE IF EXISTS");
@@ -952,7 +951,7 @@ class StorageServiceTest {
                 when(database.getTablePlayerHeads()).thenReturn(new ArrayList<>());
                 when(database.getTablePlayers()).thenReturn(new ArrayList<>());
 
-                ArrayList<String> result = service.getInstructionsExport(EnumTypeDatabase.SQLite);
+                var result = service.getInstructionsExport(EnumTypeDatabase.SQLite);
 
                 assertThat(result).isNotEmpty();
                 assertThat(result.get(1)).contains("CREATE TABLE hb_heads_sqlite");
@@ -983,7 +982,7 @@ class StorageServiceTest {
                 players.add(new Database.PlayerExportRow("player-uuid-1", "Steve"));
                 when(database.getTablePlayers()).thenReturn(players);
 
-                ArrayList<String> result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
+                var result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
 
                 // Check head inserts with boolean conversion
                 String headInsert1 = result.stream()
@@ -1026,7 +1025,7 @@ class StorageServiceTest {
                 when(database.getTablePlayerHeads()).thenReturn(new ArrayList<>());
                 when(database.getTablePlayers()).thenReturn(new ArrayList<>());
 
-                ArrayList<String> result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
+                var result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
 
                 assertThat(result.getFirst()).contains("myprefix_hb_heads");
             }
@@ -1046,13 +1045,13 @@ class StorageServiceTest {
                 when(database.getTablePlayerHeads()).thenReturn(new ArrayList<>());
                 when(database.getTablePlayers()).thenReturn(new ArrayList<>());
 
-                ArrayList<String> result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
+                var result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
 
                 // Last few instructions should contain version table
                 String allInstructions = String.join("\n", result);
                 assertThat(allInstructions).contains("hb_version");
                 assertThat(allInstructions).contains("CREATE TABLE hb_version");
-                assertThat(allInstructions).contains(String.valueOf(Database.version));
+                assertThat(allInstructions).contains(String.valueOf(Database.VERSION));
             }
         }
 
@@ -1070,7 +1069,7 @@ class StorageServiceTest {
                 when(database.getTablePlayerHeads()).thenReturn(new ArrayList<>());
                 when(database.getTablePlayers()).thenReturn(new ArrayList<>());
 
-                ArrayList<String> result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
+                var result = service.getInstructionsExport(EnumTypeDatabase.MySQL);
 
                 // Should have DROP + CREATE for heads, blank, DROP + CREATE for playerHeads, blank,
                 // DROP + CREATE for players, blank, DROP + CREATE + INSERT for version
@@ -1079,7 +1078,7 @@ class StorageServiceTest {
                         .filter(s -> s.startsWith("INSERT INTO"))
                         .count();
                 // No INSERT statements when all data tables are empty (version uses UPDATE)
-                assertThat(insertCount).isEqualTo(0);
+                assertThat(insertCount).isZero();
             }
         }
     }
@@ -1396,7 +1395,7 @@ class StorageServiceTest {
             doThrow(new InternalException("storage fail")).when(storage).close();
             doThrow(new InternalException("db fail")).when(database).close();
 
-            service.close(); // should not throw
+            assertThatNoException().isThrownBy(() -> service.close());
         }
     }
 
@@ -1411,10 +1410,10 @@ class StorageServiceTest {
             UUID head2 = UUID.randomUUID();
             when(storage.getCachedHeads()).thenReturn(new LinkedHashSet<>(List.of(head1, head2)));
 
-            ArrayList<UUID> result = service.getHeads();
+            var result = service.getHeads();
 
-            assertThat(result).isInstanceOf(ArrayList.class);
-            assertThat(result).containsExactly(head1, head2);
+            assertThat(result).isInstanceOf(ArrayList.class)
+                    .containsExactly(head1, head2);
         }
 
         @Test
@@ -1422,7 +1421,7 @@ class StorageServiceTest {
             when(storage.getCachedHeads()).thenReturn(Collections.emptySet());
             when(database.getHeads()).thenReturn(new ArrayList<>());
 
-            ArrayList<UUID> result = service.getHeads();
+            var result = service.getHeads();
 
             assertThat(result).isEmpty();
             verify(storage, never()).addCachedHead(any());
@@ -1440,7 +1439,7 @@ class StorageServiceTest {
             LinkedHashMap<PlayerProfileLight, Integer> emptyFromDb = new LinkedHashMap<>();
             when(database.getTopPlayers()).thenReturn(emptyFromDb);
 
-            LinkedHashMap<PlayerProfileLight, Integer> result = service.getTopPlayers();
+            var result = service.getTopPlayers();
 
             assertThat(result).isEmpty();
             verify(storage).setCachedTopPlayers(emptyFromDb);
@@ -1457,7 +1456,7 @@ class StorageServiceTest {
             cached.put(p3, 10);
             when(storage.getCachedTopPlayers()).thenReturn(cached);
 
-            LinkedHashMap<PlayerProfileLight, Integer> result = service.getTopPlayers();
+            var result = service.getTopPlayers();
 
             List<Integer> values = new ArrayList<>(result.values());
             assertThat(values).containsExactly(30, 20, 10);
@@ -1476,7 +1475,7 @@ class StorageServiceTest {
             cached.put(new PlayerProfileLight(UUID.randomUUID(), "B", ""), 200L);
             when(storage.getCachedTimedLeaderboard("hunt1")).thenReturn(cached);
 
-            LinkedHashMap<PlayerProfileLight, Long> result = service.getTimedLeaderboard("hunt1", 10);
+            var result = service.getTimedLeaderboard("hunt1", 10);
 
             assertThat(result).hasSize(2);
         }
@@ -1487,7 +1486,7 @@ class StorageServiceTest {
             cached.put(new PlayerProfileLight(UUID.randomUUID(), "A", ""), 100L);
             when(storage.getCachedTimedLeaderboard("hunt1")).thenReturn(cached);
 
-            LinkedHashMap<PlayerProfileLight, Long> result = service.getTimedLeaderboard("hunt1", 0);
+            var result = service.getTimedLeaderboard("hunt1", 0);
 
             assertThat(result).isEmpty();
         }
@@ -1503,7 +1502,7 @@ class StorageServiceTest {
             UUID player = UUID.randomUUID();
             when(storage.getCachedBestTime(player, "hunt1")).thenReturn(0L);
 
-            assertThat(service.getBestTime(player, "hunt1")).isEqualTo(0L);
+            assertThat(service.getBestTime(player, "hunt1")).isZero();
         }
 
         @Test
@@ -1512,7 +1511,7 @@ class StorageServiceTest {
             when(storage.getCachedBestTime(player, "hunt1")).thenReturn(null);
             when(database.getBestTime(player, "hunt1")).thenReturn(0L);
 
-            assertThat(service.getBestTime(player, "hunt1")).isEqualTo(0L);
+            assertThat(service.getBestTime(player, "hunt1")).isZero();
             verify(storage).setCachedBestTime(player, "hunt1", 0L);
         }
     }
@@ -1527,7 +1526,7 @@ class StorageServiceTest {
             UUID player = UUID.randomUUID();
             when(storage.getCachedTimedRunCount(player, "hunt1")).thenReturn(0);
 
-            assertThat(service.getTimedRunCount(player, "hunt1")).isEqualTo(0);
+            assertThat(service.getTimedRunCount(player, "hunt1")).isZero();
         }
 
         @Test
@@ -1536,7 +1535,7 @@ class StorageServiceTest {
             when(storage.getCachedTimedRunCount(player, "hunt1")).thenReturn(null);
             when(database.getTimedRunCount(player, "hunt1")).thenReturn(0);
 
-            assertThat(service.getTimedRunCount(player, "hunt1")).isEqualTo(0);
+            assertThat(service.getTimedRunCount(player, "hunt1")).isZero();
             verify(storage).setCachedTimedRunCount(player, "hunt1", 0);
         }
     }
@@ -1687,7 +1686,7 @@ class StorageServiceTest {
             UUID player = UUID.randomUUID();
             when(storage.getCachedPlayerHeadsForHunt(player, "hunt1")).thenReturn(Collections.emptySet());
 
-            ArrayList<UUID> result = service.getHeadsPlayerForHunt(player, "hunt1");
+            var result = service.getHeadsPlayerForHunt(player, "hunt1");
 
             assertThat(result).isEmpty();
             verify(database, never()).getHeadsPlayerForHunt(any(), anyString());
@@ -1699,7 +1698,7 @@ class StorageServiceTest {
             when(storage.getCachedPlayerHeadsForHunt(player, "hunt1")).thenReturn(null);
             when(database.getHeadsPlayerForHunt(player, "hunt1")).thenReturn(new ArrayList<>());
 
-            ArrayList<UUID> result = service.getHeadsPlayerForHunt(player, "hunt1");
+            var result = service.getHeadsPlayerForHunt(player, "hunt1");
 
             assertThat(result).isEmpty();
             verify(storage).setCachedPlayerHeadsForHunt(eq(player), eq("hunt1"), anySet());
@@ -1711,7 +1710,7 @@ class StorageServiceTest {
             UUID head = UUID.randomUUID();
             when(storage.getCachedPlayerHeadsForHunt(player, "hunt1")).thenReturn(Set.of(head));
 
-            ArrayList<UUID> result = service.getHeadsPlayerForHunt(player, "hunt1");
+            var result = service.getHeadsPlayerForHunt(player, "hunt1");
 
             assertThat(result).isInstanceOf(ArrayList.class);
         }
@@ -1783,7 +1782,7 @@ class StorageServiceTest {
         @Test
         void versionMatchesCurrent_returnsEarly() throws Throwable {
             when(database.isDefaultTablesExist()).thenReturn(true);
-            when(database.checkVersion()).thenReturn(Database.version);
+            when(database.checkVersion()).thenReturn(Database.VERSION);
 
             invokeVerifyDatabaseMigration();
 
@@ -1933,8 +1932,8 @@ class StorageServiceTest {
 
             String result = serviceWithDataFolder.backupDatabase("save-");
 
-            assertThat(result).isNotNull();
-            assertThat(result).startsWith("headblocks.db.save-");
+            assertThat(result).isNotNull()
+                    .startsWith("headblocks.db.save-");
             assertThat(Files.exists(tempDir.resolve(result))).isTrue();
         }
 

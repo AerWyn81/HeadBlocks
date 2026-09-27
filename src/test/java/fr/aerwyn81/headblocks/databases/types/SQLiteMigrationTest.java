@@ -79,7 +79,7 @@ class SQLiteMigrationTest {
 
         var db = openMigrated();
         try {
-            assertThat(db.checkVersion()).isEqualTo(Database.version);
+            assertThat(db.checkVersion()).isEqualTo(Database.VERSION);
             assertThat(db.getHeads()).containsExactly(head);
         } finally {
             db.close();
@@ -138,7 +138,7 @@ class SQLiteMigrationTest {
 
         var db = openMigrated();
         try {
-            assertThat(db.checkVersion()).isEqualTo(Database.version);
+            assertThat(db.checkVersion()).isEqualTo(Database.VERSION);
         } finally {
             db.close();
         }

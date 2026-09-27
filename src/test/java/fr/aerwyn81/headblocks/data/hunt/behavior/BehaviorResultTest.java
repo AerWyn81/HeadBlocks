@@ -36,7 +36,7 @@ class BehaviorResultTest {
         BehaviorResult b = BehaviorResult.allow();
 
         assertThat(a).isEqualTo(b);
-        assertThat(a.hashCode()).isEqualTo(b.hashCode());
+        assertThat(a).hasSameHashCodeAs(b);
     }
 
     @Test

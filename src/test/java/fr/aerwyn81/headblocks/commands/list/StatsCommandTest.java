@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -95,9 +96,7 @@ class StatsCommandTest {
                 cu.when(() -> CommandsUtils.extractAndGetPlayerUuidByName(registry, consoleSender, new String[]{"stats"}, true))
                         .thenReturn(null);
 
-                boolean result = command.perform(consoleSender, new String[]{"stats"});
-
-                assertThat(result).isTrue();
+                assertThatNoException().isThrownBy(() -> command.perform(consoleSender, new String[]{"stats"}));
             }
         }
 
@@ -107,9 +106,7 @@ class StatsCommandTest {
                 cu.when(() -> CommandsUtils.extractAndGetPlayerUuidByName(registry, playerSender, new String[]{"stats", "unknownPlayer"}, true))
                         .thenReturn(null);
 
-                boolean result = command.perform(playerSender, new String[]{"stats", "unknownPlayer"});
-
-                assertThat(result).isTrue();
+                assertThatNoException().isThrownBy(() -> command.perform(playerSender, new String[]{"stats", "unknownPlayer"}));
             }
         }
     }
@@ -127,9 +124,8 @@ class StatsCommandTest {
                         .thenReturn(profile);
                 when(storageService.getHeads()).thenThrow(new InternalException("db error"));
 
-                boolean result = command.perform(playerSender, new String[]{"stats", "TestPlayer"});
+                command.perform(playerSender, new String[]{"stats", "TestPlayer"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Messages.StorageError");
                 verify(playerSender).sendMessage("mock-message");
             }
@@ -149,9 +145,8 @@ class StatsCommandTest {
                         .thenReturn(profile);
                 when(storageService.getHeads()).thenReturn(new ArrayList<>());
 
-                boolean result = command.perform(playerSender, new String[]{"stats", "TestPlayer"});
+                command.perform(playerSender, new String[]{"stats", "TestPlayer"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Messages.ListHeadEmpty");
                 verify(playerSender).sendMessage("mock-message");
             }
@@ -201,9 +196,8 @@ class StatsCommandTest {
                     return null;
                 }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
-                boolean result = command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
+                command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
 
-                assertThat(result).isTrue();
                 // Console sends lineTitle + lines for each head
                 verify(consoleSender).sendMessage("mock-message"); // Chat.LineTitle
                 // Two head entries: one owned, one not owned
@@ -244,9 +238,8 @@ class StatsCommandTest {
                     return null;
                 }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
-                boolean result = command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
+                command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
 
-                assertThat(result).isTrue();
                 // The head name should fall back to UUID since no HeadLocation is found
                 verify(consoleSender, atLeast(1)).sendMessage(contains(headUuid1.toString()));
             }
@@ -288,9 +281,8 @@ class StatsCommandTest {
                     return null;
                 }).when(futureResult).whenComplete(nullable(Entity.class), any());
 
-                boolean result = command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
+                command.perform(consoleSender, new String[]{"stats", "TestPlayer"});
 
-                assertThat(result).isTrue();
                 // Empty name => should use UUID
                 verify(consoleSender, atLeast(1)).sendMessage(contains(headUuid1.toString()));
             }
@@ -338,9 +330,8 @@ class StatsCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"stats", "TestPlayer"});
+                command.perform(playerSender, new String[]{"stats", "TestPlayer"});
 
-                assertThat(result).isTrue();
                 // Player sender gets rich messages via spigot().sendMessage()
                 verify(spigot, atLeastOnce()).sendMessage(any(net.md_5.bungee.api.chat.BaseComponent.class));
             }
@@ -388,9 +379,8 @@ class StatsCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"stats", "TestPlayer"});
+                command.perform(playerSender, new String[]{"stats", "TestPlayer"});
 
-                assertThat(result).isTrue();
                 // Should have asked for NotOwn box message
                 verify(languageService).message("Chat.Box.NotOwn");
                 verify(languageService).message("Chat.Hover.NotOwn");
@@ -434,9 +424,8 @@ class StatsCommandTest {
                 Player.Spigot spigot = mock(Player.Spigot.class);
                 when(playerSender.spigot()).thenReturn(spigot);
 
-                boolean result = command.perform(playerSender, new String[]{"stats", "TestPlayer"});
+                command.perform(playerSender, new String[]{"stats", "TestPlayer"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Chat.Hover.HeadIsNotOnThisServer");
                 verify(languageService).message("Chat.Hover.BlockedTeleport");
             }

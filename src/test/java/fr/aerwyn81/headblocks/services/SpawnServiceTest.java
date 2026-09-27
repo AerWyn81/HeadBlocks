@@ -209,7 +209,8 @@ class SpawnServiceTest {
             assertThat(head.getHuntId()).isEqualTo("spawnhunt");
             assertThat(head.getContent()).isEqualTo(HeadContent.head("tex"));
             assertThat(head.getName()).isEqualTo("Basic");
-            assertThat(head.getLocation().getX() % 1).isZero();
+            assertThat(head.getLocation().getX() - head.getLocation().getBlockX()).isEqualTo(0.5);
+            assertThat(head.getLocation().getZ() - head.getLocation().getBlockZ()).isEqualTo(0.5);
         });
         verify(storageService, never()).createSpawnHead(any(), any(), anyDouble());
     }
@@ -562,7 +563,7 @@ class SpawnServiceTest {
     }
 
     @Test
-    void reroll_withReset_afterAReload_neverRegistersAGhostHead() throws Exception {
+    void reroll_withReset_afterAReload_neverRegistersAGhostHead() {
         useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
         List<Runnable> asyncTasks = new ArrayList<>();
@@ -1346,24 +1347,19 @@ class SpawnServiceTest {
     }
 
     @Test
-    void restart_headSavedOnABlockCenter_comesBackOnTheBlock() throws Exception {
+    void restart_centeredHead_comesBackCenteredOnTheSameBlock() throws Exception {
         useHunt(spawnPoints(5, 1, -1, onFind(0)), HuntState.ACTIVE);
         service.start();
+        var before = spawned().get(0).getLocation().clone();
         service.stop();
-
-        var yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(stateFile().toFile());
-        var active = yaml.getConfigurationSection("active");
-        for (String key : active.getKeys(false)) {
-            active.set(key + ".x", active.getDouble(key + ".x") + 0.5);
-            active.set(key + ".z", active.getDouble(key + ".z") + 0.5);
-        }
-        yaml.save(stateFile().toFile());
 
         restart();
 
         assertThat(spawned()).singleElement().satisfies(head -> {
-            assertThat(head.getLocation().getX() % 1).isZero();
-            assertThat(head.getLocation().getZ() % 1).isZero();
+            assertThat(head.getLocation().getBlockX()).isEqualTo(before.getBlockX());
+            assertThat(head.getLocation().getBlockZ()).isEqualTo(before.getBlockZ());
+            assertThat(head.getLocation().getX() - head.getLocation().getBlockX()).isEqualTo(0.5);
+            assertThat(head.getLocation().getZ() - head.getLocation().getBlockZ()).isEqualTo(0.5);
         });
     }
 }

@@ -252,7 +252,8 @@ class HeadUtilsTest {
     @Test
     void yawOf_block_withoutOrientation_isZero() {
         Block block = mock(Block.class);
-        when(block.getBlockData()).thenReturn(mock(org.bukkit.block.data.BlockData.class));
+        var blockDataMock = mock(org.bukkit.block.data.BlockData.class);
+        when(block.getBlockData()).thenReturn(blockDataMock);
 
         assertThat(HeadUtils.yawOf(block)).isZero();
     }
@@ -283,7 +284,8 @@ class HeadUtilsTest {
     @Test
     void getContent_texturedHead_isAHeadContent() {
         ItemMeta meta = mock(ItemMeta.class);
-        when(meta.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+        var persistentDataContainerMock = mock(PersistentDataContainer.class);
+        when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainerMock);
         ItemStack item = headItem(meta);
 
         try (MockedStatic<HeadBlocks> hbStatic = mockStatic(HeadBlocks.class);
@@ -300,7 +302,8 @@ class HeadUtilsTest {
     @Test
     void getContent_untexturedPlayerHead_keepsItsOwner() {
         SkullMeta meta = mock(SkullMeta.class);
-        when(meta.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+        var persistentDataContainerMock = mock(PersistentDataContainer.class);
+        when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainerMock);
         OfflinePlayer owner = mock(OfflinePlayer.class);
         UUID ownerUuid = UUID.randomUUID();
         when(owner.getUniqueId()).thenReturn(ownerUuid);
@@ -324,7 +327,8 @@ class HeadUtilsTest {
     @Test
     void getContent_headWithoutTextureOrOwner_isUnresolved() {
         ItemMeta meta = mock(ItemMeta.class);
-        when(meta.getPersistentDataContainer()).thenReturn(mock(PersistentDataContainer.class));
+        var persistentDataContainerMock = mock(PersistentDataContainer.class);
+        when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainerMock);
         ItemStack item = headItem(meta);
 
         try (MockedStatic<HeadBlocks> hbStatic = mockStatic(HeadBlocks.class);

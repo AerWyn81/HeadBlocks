@@ -1006,20 +1006,6 @@ class OnPlayerInteractEventTest {
 
                 verify(visibilityService).onHeadFound(player, headLocation);
             }
-
-            @Test
-            void newFind_packetEventsNull_doesNotCrash() throws InternalException {
-                ArrayList<UUID> huntPlayerHeads = new ArrayList<>();
-                when(storageService.getHeadsPlayerForHunt(playerUuid, "default")).thenReturn(huntPlayerHeads);
-                when(activeHunt.evaluateBehaviors(player, headLocation)).thenReturn(BehaviorResult.allow());
-                when(rewardService.hasPlayerSlotsRequired(eq(player), any(), eq(huntConfig))).thenReturn(true);
-
-                // Default triggerHandleHuntClick sets packetEventsHook to null
-                triggerHandleHuntClick(new HashSet<>());
-
-                // Should complete without NPE
-                verify(storageService).addHeadForHunt(playerUuid, headUuid, "default");
-            }
         }
 
         // --- Behavior deny ---

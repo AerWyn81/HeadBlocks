@@ -160,12 +160,12 @@ class OnHeadEntityEventTest {
         void otherEntity_withAnyOtherItem_isLeftAlone() {
             var event = event(EquipmentSlot.HAND);
             PlayerInventory inventory = mock(PlayerInventory.class);
-            ItemStack head = mock(ItemStack.class);
+            ItemStack otherItem = mock(ItemStack.class);
             when(player.getInventory()).thenReturn(inventory);
-            when(inventory.getItemInMainHand()).thenReturn(head);
+            when(inventory.getItemInMainHand()).thenReturn(otherItem);
 
             try (MockedStatic<HeadUtils> headUtils = mockStatic(HeadUtils.class)) {
-                headUtils.when(() -> HeadUtils.isHeadBlocksItem(head)).thenReturn(false);
+                headUtils.when(() -> HeadUtils.isHeadBlocksItem(otherItem)).thenReturn(false);
 
                 listener.onInteract(event);
             }
@@ -176,7 +176,8 @@ class OnHeadEntityEventTest {
         @Test
         void armorStandManipulation_ofAHeadEntity_isCancelled() {
             PlayerArmorStandManipulateEvent event = mock(PlayerArmorStandManipulateEvent.class);
-            when(event.getRightClicked()).thenReturn(mock(ArmorStand.class));
+            var armorStandMock = mock(ArmorStand.class);
+            when(event.getRightClicked()).thenReturn(armorStandMock);
             when(visualService.isHeadEntity(any(ArmorStand.class))).thenReturn(true);
 
             listener.onArmorStandManipulate(event);

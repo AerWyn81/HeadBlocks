@@ -38,24 +38,24 @@ public class Spawn implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         if (args.length < 3) {
             sender.sendMessage(registry.getLanguageService().message("Messages.SpawnUsage"));
-            return true;
+            return;
         }
 
         var hunt = registry.getHuntService().getHuntById(args[1].toLowerCase());
         if (hunt == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.HuntNotFound")
                     .replace("%hunt%", args[1]));
-            return true;
+            return;
         }
 
         var behavior = behaviorOf(hunt);
         if (behavior == null) {
             sender.sendMessage(registry.getLanguageService().message("Messages.SpawnWrongBehavior")
                     .replace("%hunt%", hunt.getId()));
-            return true;
+            return;
         }
 
         switch (args[2].toLowerCase()) {
@@ -83,7 +83,6 @@ public class Spawn implements Cmd {
             }
             default -> sender.sendMessage(registry.getLanguageService().message("Messages.SpawnUsage"));
         }
-        return true;
     }
 
     private void addHeads(CommandSender sender, HBHunt hunt, String[] args) {

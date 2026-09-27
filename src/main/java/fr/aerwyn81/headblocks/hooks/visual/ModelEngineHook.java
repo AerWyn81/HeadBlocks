@@ -11,11 +11,14 @@ import fr.aerwyn81.headblocks.visual.RenderSettings;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Interaction;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+
+import java.util.List;
 
 public class ModelEngineHook extends HandleProviderHook<ModelEngineHook.Model> {
 
@@ -79,6 +82,11 @@ public class ModelEngineHook extends HandleProviderHook<ModelEngineHook.Model> {
         modeled.addModel(active, true);
         modeled.setBaseEntityVisible(false);
         return new Model(modeled, blueprint);
+    }
+
+    @Override
+    protected List<Entity> entitiesOf(Model handle) {
+        return List.of();
     }
 
     @Override

@@ -45,17 +45,28 @@ class HBCommandExecutorTest {
         lenient().when(registry.getLanguageService()).thenReturn(languageService);
         lenient().when(languageService.message(anyString())).thenReturn("mock-message");
 
-        lenient().when(registry.getHeadService()).thenReturn(mock(HeadService.class));
-        lenient().when(registry.getStorageService()).thenReturn(mock(StorageService.class));
-        lenient().when(registry.getConfigService()).thenReturn(mock(ConfigService.class));
-        lenient().when(registry.getHuntService()).thenReturn(mock(HuntService.class));
-        lenient().when(registry.getPlaceholdersService()).thenReturn(mock(PlaceholdersService.class));
-        lenient().when(registry.getRewardService()).thenReturn(mock(RewardService.class));
-        lenient().when(registry.getGuiService()).thenReturn(mock(GuiService.class));
-        lenient().when(registry.getHologramService()).thenReturn(mock(HologramService.class));
-        lenient().when(registry.getHuntConfigService()).thenReturn(mock(HuntConfigService.class));
-        lenient().when(registry.getScheduler()).thenReturn(mock(SchedulerAdapter.class));
-        lenient().when(registry.getCommandDispatcher()).thenReturn(mock(CommandDispatcher.class));
+        var headServiceMock = mock(HeadService.class);
+        lenient().when(registry.getHeadService()).thenReturn(headServiceMock);
+        var storageServiceMock = mock(StorageService.class);
+        lenient().when(registry.getStorageService()).thenReturn(storageServiceMock);
+        var configServiceMock = mock(ConfigService.class);
+        lenient().when(registry.getConfigService()).thenReturn(configServiceMock);
+        var huntServiceMock = mock(HuntService.class);
+        lenient().when(registry.getHuntService()).thenReturn(huntServiceMock);
+        var placeholdersServiceMock = mock(PlaceholdersService.class);
+        lenient().when(registry.getPlaceholdersService()).thenReturn(placeholdersServiceMock);
+        var rewardServiceMock = mock(RewardService.class);
+        lenient().when(registry.getRewardService()).thenReturn(rewardServiceMock);
+        var guiServiceMock = mock(GuiService.class);
+        lenient().when(registry.getGuiService()).thenReturn(guiServiceMock);
+        var hologramServiceMock = mock(HologramService.class);
+        lenient().when(registry.getHologramService()).thenReturn(hologramServiceMock);
+        var huntConfigServiceMock = mock(HuntConfigService.class);
+        lenient().when(registry.getHuntConfigService()).thenReturn(huntConfigServiceMock);
+        var schedulerAdapterMock = mock(SchedulerAdapter.class);
+        lenient().when(registry.getScheduler()).thenReturn(schedulerAdapterMock);
+        var commandDispatcherMock = mock(CommandDispatcher.class);
+        lenient().when(registry.getCommandDispatcher()).thenReturn(commandDispatcherMock);
 
         executor = new HBCommandExecutor(registry);
     }

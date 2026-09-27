@@ -44,17 +44,15 @@ class ExportCommandTest {
 
     @Test
     void wrongArgCount_sendsError() {
-        boolean result = command.perform(sender, new String[]{"export", "database"});
+        command.perform(sender, new String[]{"export", "database"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.ErrorCommand");
     }
 
     @Test
     void tooManyArgs_sendsError() {
-        boolean result = command.perform(sender, new String[]{"export", "database", "sqlite", "extra"});
+        command.perform(sender, new String[]{"export", "database", "sqlite", "extra"});
 
-        assertThat(result).isTrue();
         verify(languageService).message("Messages.ErrorCommand");
     }
 
@@ -63,9 +61,8 @@ class ExportCommandTest {
         try (MockedStatic<MessageUtils> mu = mockStatic(MessageUtils.class)) {
             mu.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-            boolean result = command.perform(sender, new String[]{"export", "database", "invalid"});
+            command.perform(sender, new String[]{"export", "database", "invalid"});
 
-            assertThat(result).isTrue();
             verify(sender).sendMessage(contains("invalid"));
         }
     }
@@ -84,9 +81,8 @@ class ExportCommandTest {
             SchedulerAdapter scheduler = mock(SchedulerAdapter.class);
             hb.when(HeadBlocks::getScheduler).thenReturn(scheduler);
 
-            boolean result = command.perform(sender, new String[]{"export", "database", "SQLite"});
+            command.perform(sender, new String[]{"export", "database", "SQLite"});
 
-            assertThat(result).isTrue();
             verify(scheduler).runTaskAsync(any(Runnable.class));
             verify(languageService).message("Messages.ExportInProgress");
         }

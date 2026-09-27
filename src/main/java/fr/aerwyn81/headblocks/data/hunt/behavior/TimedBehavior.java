@@ -11,8 +11,6 @@ import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.UUID;
 
 public class TimedBehavior implements Behavior {
 
@@ -71,7 +69,7 @@ public class TimedBehavior implements Behavior {
         }
 
         try {
-            ArrayList<UUID> playerHuntHeads = registry.getStorageService().getHeadsPlayerForHunt(
+            var playerHuntHeads = registry.getStorageService().getHeadsPlayerForHunt(
                     player.getUniqueId(), hunt.getId());
 
             // +1 because the current head was just found but may not be persisted yet
@@ -83,40 +81,44 @@ public class TimedBehavior implements Behavior {
             int totalHeads = hunt.getTargetCount();
 
             if (foundCount >= totalHeads) {
-                long elapsed = TimedRunManager.getElapsedMillis(player.getUniqueId());
-                TimedRunManager.leaveRun(player.getUniqueId());
-
-                try {
-                    registry.getStorageService().saveTimedRun(player.getUniqueId(), hunt.getId(), elapsed);
-                } catch (InternalException e) {
-                    LogUtil.error("Error saving timed run for player {0} in hunt {1}: {2}",
-                            player.getName(), hunt.getId(), e.getMessage());
-                }
-
-                int completionCount = 0;
-                try {
-                    completionCount = registry.getStorageService().getTimedRunCount(player.getUniqueId(), hunt.getId());
-                } catch (InternalException e) {
-                    LogUtil.error("Error getting timed run count for player {0} in hunt {1}: {2}",
-                            player.getName(), hunt.getId(), e.getMessage());
-                }
-
-                player.sendMessage(registry.getLanguageService().message("Messages.TimedCompleted")
-                        .replace("%time%", TimedRunManager.formatTime(elapsed))
-                        .replace("%hunt%", hunt.getDisplayName())
-                        .replace("%count%", String.valueOf(completionCount)));
-
-                if (repeatable) {
-                    try {
-                        registry.getStorageService().resetPlayerHunt(player.getUniqueId(), hunt.getId());
-                    } catch (InternalException e) {
-                        LogUtil.error("Error resetting player hunt for repeatable timed run: {0}", e.getMessage());
-                    }
-                }
+                completeTimedRun(player, hunt);
             }
         } catch (InternalException e) {
             LogUtil.error("Error checking timed completion for player {0} in hunt {1}: {2}",
                     player.getName(), hunt.getId(), e.getMessage());
+        }
+    }
+
+    private void completeTimedRun(Player player, HBHunt hunt) {
+        long elapsed = TimedRunManager.getElapsedMillis(player.getUniqueId());
+        TimedRunManager.leaveRun(player.getUniqueId());
+
+        try {
+            registry.getStorageService().saveTimedRun(player.getUniqueId(), hunt.getId(), elapsed);
+        } catch (InternalException e) {
+            LogUtil.error("Error saving timed run for player {0} in hunt {1}: {2}",
+                    player.getName(), hunt.getId(), e.getMessage());
+        }
+
+        int completionCount = 0;
+        try {
+            completionCount = registry.getStorageService().getTimedRunCount(player.getUniqueId(), hunt.getId());
+        } catch (InternalException e) {
+            LogUtil.error("Error getting timed run count for player {0} in hunt {1}: {2}",
+                    player.getName(), hunt.getId(), e.getMessage());
+        }
+
+        player.sendMessage(registry.getLanguageService().message("Messages.TimedCompleted")
+                .replace("%time%", TimedRunManager.formatTime(elapsed))
+                .replace("%hunt%", hunt.getDisplayName())
+                .replace("%count%", String.valueOf(completionCount)));
+
+        if (repeatable) {
+            try {
+                registry.getStorageService().resetPlayerHunt(player.getUniqueId(), hunt.getId());
+            } catch (InternalException e) {
+                LogUtil.error("Error resetting player hunt for repeatable timed run: {0}", e.getMessage());
+            }
         }
     }
 

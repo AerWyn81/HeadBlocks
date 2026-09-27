@@ -31,14 +31,22 @@ public abstract class GuiBase {
                 return headItemCache.get(headUuid).clone();
             }
 
-            try {
-                var texture = registry.getStorageService().getHeadTexture(headUuid);
-                headItemCache.put(headUuid, HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), texture));
-            } catch (InternalException ignored) {
+            var texturedHead = texturedHead(headUuid);
+            if (texturedHead != null) {
+                headItemCache.put(headUuid, texturedHead);
             }
         }
 
         return headItemCache.get(headLocation.getUuid()).clone();
+    }
+
+    private ItemStack texturedHead(UUID headUuid) {
+        try {
+            var texture = registry.getStorageService().getHeadTexture(headUuid);
+            return HeadUtils.applyTextureToItemStack(new ItemStack(Material.PLAYER_HEAD), texture);
+        } catch (InternalException e) {
+            return null;
+        }
     }
 
     public static void clearSharedCache() {

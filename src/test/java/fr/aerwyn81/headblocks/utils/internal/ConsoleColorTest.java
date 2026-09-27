@@ -10,9 +10,9 @@ class ConsoleColorTest {
 
     @Test
     void toString_returnsRawAnsiCode() {
-        assertThat(ConsoleColor.GREEN.toString()).isEqualTo(ESC + "[32m");
-        assertThat(ConsoleColor.RED.toString()).isEqualTo(ESC + "[31m");
-        assertThat(ConsoleColor.RESET.toString()).isEqualTo(ESC + "[0m");
+        assertThat(ConsoleColor.GREEN).hasToString(ESC + "[32m");
+        assertThat(ConsoleColor.RED).hasToString(ESC + "[31m");
+        assertThat(ConsoleColor.RESET).hasToString(ESC + "[0m");
     }
 
     @Test

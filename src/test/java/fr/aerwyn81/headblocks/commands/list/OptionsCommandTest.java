@@ -64,25 +64,22 @@ class OptionsCommandTest {
 
     @Test
     void noSubcommand_opensOptionsGui() {
-        boolean result = command.perform(player, new String[]{"options"});
+        command.perform(player, new String[]{"options"});
 
-        assertThat(result).isTrue();
         verify(guiService).openOptionsGui(player);
     }
 
     @Test
     void orderSubcommand_opensOrderGui() {
-        boolean result = command.perform(player, new String[]{"options", "order"});
+        command.perform(player, new String[]{"options", "order"});
 
-        assertThat(result).isTrue();
         verify(orderManager).openOrderGui(player);
     }
 
     @Test
     void hintSubcommand_opensHintGui() {
-        boolean result = command.perform(player, new String[]{"options", "hint"});
+        command.perform(player, new String[]{"options", "hint"});
 
-        assertThat(result).isTrue();
         verify(hintManager).openHintGui(player);
     }
 
@@ -91,9 +88,8 @@ class OptionsCommandTest {
 
         @Test
         void noHeadArg_opensRewardsWithNull() {
-            boolean result = command.perform(player, new String[]{"options", "rewards"});
+            command.perform(player, new String[]{"options", "rewards"});
 
-            assertThat(result).isTrue();
             verify(rewardsManager).openRewardsSelectionGui(player, null);
         }
 
@@ -102,9 +98,8 @@ class OptionsCommandTest {
             HeadLocation head = mock(HeadLocation.class);
             when(headService.resolveHeadIdentifier("myHead")).thenReturn(head);
 
-            boolean result = command.perform(player, new String[]{"options", "rewards", "myHead"});
+            command.perform(player, new String[]{"options", "rewards", "myHead"});
 
-            assertThat(result).isTrue();
             verify(rewardsManager).openRewardsSelectionGui(player, head);
         }
 
@@ -112,9 +107,8 @@ class OptionsCommandTest {
         void unknownHeadArg_sendsError() {
             when(headService.resolveHeadIdentifier("unknown")).thenReturn(null);
 
-            boolean result = command.perform(player, new String[]{"options", "rewards", "unknown"});
+            command.perform(player, new String[]{"options", "rewards", "unknown"});
 
-            assertThat(result).isTrue();
             verify(languageService).message("Messages.HeadNameNotFound");
         }
     }

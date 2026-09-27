@@ -25,10 +25,10 @@ public class Remove implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         if (args.length > 2) {
             sender.sendMessage(registry.getLanguageService().message("Messages.ErrorCommand"));
-            return true;
+            return;
         }
 
         HeadLocation head;
@@ -36,7 +36,7 @@ public class Remove implements Cmd {
         if (args.length == 1) {
             if (sender instanceof ConsoleCommandSender) {
                 sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
-                return true;
+                return;
             }
 
             Player player = (Player) sender;
@@ -45,7 +45,7 @@ public class Remove implements Cmd {
 
             if (targetHead == null) {
                 player.sendMessage(registry.getLanguageService().message("Messages.TargetBlockNotHead"));
-                return true;
+                return;
             }
 
             head = targetHead;
@@ -58,7 +58,7 @@ public class Remove implements Cmd {
 
             if (head == null) {
                 sender.sendMessage(registry.getLanguageService().message("Messages.RemoveLocationError"));
-                return true;
+                return;
             }
         }
 
@@ -69,11 +69,10 @@ public class Remove implements Cmd {
         } catch (InternalException ex) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while removing the head \"{0}\" at {1} from storage: {2}", head.getNameOrUuid(), loc.toString(), ex.getMessage());
-            return true;
+            return;
         }
 
         sender.sendMessage(LocationUtils.parseLocationPlaceholders(registry.getLanguageService().message("Messages.HeadRemoved"), loc));
-        return true;
     }
 
     @Override

@@ -44,8 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,8 +110,8 @@ class HBHuntConfigServiceTest {
     void constructor_createsHuntsDirectory() {
         File huntsDir = new File(tempDir.toFile(), "hunts");
 
-        assertThat(huntsDir).exists();
-        assertThat(huntsDir).isDirectory();
+        assertThat(huntsDir).exists()
+                .isDirectory();
     }
 
     @Test
@@ -125,7 +124,7 @@ class HBHuntConfigServiceTest {
         assertThat(yaml.getString("id")).isEqualTo("default");
         assertThat(yaml.getString("displayName")).isEqualTo("Default");
         assertThat(yaml.getString("state")).isEqualTo("ACTIVE");
-        assertThat(yaml.getInt("priority")).isEqualTo(0);
+        assertThat(yaml.getInt("priority")).isZero();
         assertThat(yaml.getString("icon")).isEqualTo("CHEST_MINECART");
     }
 
@@ -846,7 +845,60 @@ class HBHuntConfigServiceTest {
     // --- generateDefaultFromConfig with non-empty values ---
 
     @Test
-    void generateDefaultFromConfig_populatesFieldsFromConfigService() {
+    void generateDefaultFromConfig_writesHeadClickSettings() {
+        YamlConfiguration yaml = generateDefaultFromRichConfig();
+
+        String p = "config.";
+        assertThat(yaml.getStringList(p + "headClick.messages")).containsExactly("Click message!");
+        assertThat(yaml.getBoolean(p + "headClick.title.enabled")).isTrue();
+        assertThat(yaml.getString(p + "headClick.title.firstLine")).isEqualTo("&eTitle");
+        assertThat(yaml.getString(p + "headClick.title.subTitle")).isEqualTo("&7Sub");
+        assertThat(yaml.getInt(p + "headClick.title.fadeIn")).isEqualTo(5);
+        assertThat(yaml.getInt(p + "headClick.title.stay")).isEqualTo(40);
+        assertThat(yaml.getInt(p + "headClick.title.fadeOut")).isEqualTo(10);
+        assertThat(yaml.getString(p + "headClick.sound.found")).isEqualTo("PLING");
+        assertThat(yaml.getString(p + "headClick.sound.alreadyOwn")).isEqualTo("ANVIL");
+        assertThat(yaml.getBoolean(p + "headClick.firework.enabled")).isTrue();
+        assertThat(yaml.getStringList(p + "headClick.commands")).containsExactly("cmd1", "cmd2");
+        assertThat(yaml.getBoolean(p + "headClick.eject.enabled")).isTrue();
+        assertThat(yaml.getDouble(p + "headClick.eject.power")).isEqualTo(3.0);
+    }
+
+    @Test
+    void generateDefaultFromConfig_writesDisplaySettings() {
+        YamlConfiguration yaml = generateDefaultFromRichConfig();
+
+        String p = "config.";
+        assertThat(yaml.getBoolean(p + "holograms.found.enabled")).isFalse();
+        assertThat(yaml.getBoolean(p + "holograms.notFound.enabled")).isTrue();
+        assertThat(yaml.getStringList(p + "holograms.found.lines")).containsExactly("Found line");
+        assertThat(yaml.getStringList(p + "holograms.notFound.lines")).containsExactly("NotFound line");
+        assertThat(yaml.getInt(p + "hints.distance")).isEqualTo(24);
+        assertThat(yaml.getInt(p + "hints.frequency")).isEqualTo(8);
+        assertThat(yaml.getBoolean(p + "spin.enabled")).isFalse();
+        assertThat(yaml.getInt(p + "spin.speed")).isEqualTo(2);
+        assertThat(yaml.getBoolean(p + "spin.linked")).isFalse();
+        assertThat(yaml.getBoolean(p + "particles.found.enabled")).isTrue();
+        assertThat(yaml.getString(p + "particles.found.type")).isEqualTo("FLAME");
+        assertThat(yaml.getInt(p + "particles.found.amount")).isEqualTo(10);
+        assertThat(yaml.getBoolean(p + "particles.notFound.enabled")).isTrue();
+        assertThat(yaml.getString(p + "particles.notFound.type")).isEqualTo("HEART");
+        assertThat(yaml.getInt(p + "particles.notFound.amount")).isEqualTo(7);
+    }
+
+    @Test
+    void generateDefaultFromConfig_writesTieredRewards() {
+        YamlConfiguration yaml = generateDefaultFromRichConfig();
+
+        String p = "config.";
+        assertThat(yaml.getStringList(p + "tieredRewards.1.messages")).containsExactly("Tier msg");
+        assertThat(yaml.getStringList(p + "tieredRewards.1.commands")).containsExactly("tier cmd");
+        assertThat(yaml.getStringList(p + "tieredRewards.1.broadcast")).containsExactly("tier bcast");
+        assertThat(yaml.getInt(p + "tieredRewards.1.slotsRequired")).isEqualTo(5);
+        assertThat(yaml.getBoolean(p + "tieredRewards.1.randomizeCommands")).isTrue();
+    }
+
+    private YamlConfiguration generateDefaultFromRichConfig() {
         // Delete existing default.yml, set up rich ConfigService stubs, then regenerate
         File defaultFile = new File(tempDir.toFile(), "hunts/default.yml");
         assertThat(defaultFile.delete()).isTrue();
@@ -887,42 +939,7 @@ class HBHuntConfigServiceTest {
 
         assertThat(defaultFile).exists();
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(defaultFile);
-
-        String p = "config.";
-        assertThat(yaml.getStringList(p + "headClick.messages")).containsExactly("Click message!");
-        assertThat(yaml.getBoolean(p + "headClick.title.enabled")).isTrue();
-        assertThat(yaml.getString(p + "headClick.title.firstLine")).isEqualTo("&eTitle");
-        assertThat(yaml.getString(p + "headClick.title.subTitle")).isEqualTo("&7Sub");
-        assertThat(yaml.getInt(p + "headClick.title.fadeIn")).isEqualTo(5);
-        assertThat(yaml.getInt(p + "headClick.title.stay")).isEqualTo(40);
-        assertThat(yaml.getInt(p + "headClick.title.fadeOut")).isEqualTo(10);
-        assertThat(yaml.getString(p + "headClick.sound.found")).isEqualTo("PLING");
-        assertThat(yaml.getString(p + "headClick.sound.alreadyOwn")).isEqualTo("ANVIL");
-        assertThat(yaml.getBoolean(p + "headClick.firework.enabled")).isTrue();
-        assertThat(yaml.getStringList(p + "headClick.commands")).containsExactly("cmd1", "cmd2");
-        assertThat(yaml.getBoolean(p + "headClick.eject.enabled")).isTrue();
-        assertThat(yaml.getDouble(p + "headClick.eject.power")).isEqualTo(3.0);
-        assertThat(yaml.getBoolean(p + "holograms.found.enabled")).isFalse();
-        assertThat(yaml.getBoolean(p + "holograms.notFound.enabled")).isTrue();
-        assertThat(yaml.getStringList(p + "holograms.found.lines")).containsExactly("Found line");
-        assertThat(yaml.getStringList(p + "holograms.notFound.lines")).containsExactly("NotFound line");
-        assertThat(yaml.getInt(p + "hints.distance")).isEqualTo(24);
-        assertThat(yaml.getInt(p + "hints.frequency")).isEqualTo(8);
-        assertThat(yaml.getBoolean(p + "spin.enabled")).isFalse();
-        assertThat(yaml.getInt(p + "spin.speed")).isEqualTo(2);
-        assertThat(yaml.getBoolean(p + "spin.linked")).isFalse();
-        assertThat(yaml.getBoolean(p + "particles.found.enabled")).isTrue();
-        assertThat(yaml.getString(p + "particles.found.type")).isEqualTo("FLAME");
-        assertThat(yaml.getInt(p + "particles.found.amount")).isEqualTo(10);
-        assertThat(yaml.getBoolean(p + "particles.notFound.enabled")).isTrue();
-        assertThat(yaml.getString(p + "particles.notFound.type")).isEqualTo("HEART");
-        assertThat(yaml.getInt(p + "particles.notFound.amount")).isEqualTo(7);
-
-        assertThat(yaml.getStringList(p + "tieredRewards.1.messages")).containsExactly("Tier msg");
-        assertThat(yaml.getStringList(p + "tieredRewards.1.commands")).containsExactly("tier cmd");
-        assertThat(yaml.getStringList(p + "tieredRewards.1.broadcast")).containsExactly("tier bcast");
-        assertThat(yaml.getInt(p + "tieredRewards.1.slotsRequired")).isEqualTo(5);
-        assertThat(yaml.getBoolean(p + "tieredRewards.1.randomizeCommands")).isTrue();
+        return yaml;
     }
 
     @Test
@@ -1221,7 +1238,7 @@ class HBHuntConfigServiceTest {
             File file = new File(tempDir.toFile(), "hunts/loc-save.yml");
             // Note: the actual save is debounced, so read back the hunt file
             // which was modified by saveHunt (the location is in the cached yaml)
-            assertThat(file.exists()).isTrue();
+            assertThat(file).exists();
         }
 
         @Test
@@ -1500,8 +1517,7 @@ class HBHuntConfigServiceTest {
             UUID headUuid = UUID.randomUUID();
             HeadLocation headLoc = new HeadLocation("myhead", headUuid, "nope", "world", 10.5, 64.0, 20.5, -1, false, false, new ArrayList<>());
 
-            // Should not throw even if hunt file doesn't exist
-            huntConfigService.saveLocationInHunt("nope", headLoc);
+            assertThatNoException().isThrownBy(() -> huntConfigService.saveLocationInHunt("nope", headLoc));
         }
     }
 
@@ -1511,15 +1527,13 @@ class HBHuntConfigServiceTest {
     class Migration {
         @Test
         void migrateLocationsFromLegacy_nullFile_noOp() {
-            huntConfigService.migrateLocationsFromLegacy(null);
-            // Should not throw
+            assertThatNoException().isThrownBy(() -> huntConfigService.migrateLocationsFromLegacy(null));
         }
 
         @Test
         void migrateLocationsFromLegacy_nonExistentFile_noOp() {
             File nonexistent = new File(tempDir.toFile(), "nope.yml");
-            huntConfigService.migrateLocationsFromLegacy(nonexistent);
-            // Should not throw
+            assertThatNoException().isThrownBy(() -> huntConfigService.migrateLocationsFromLegacy(nonexistent));
         }
 
         @Test
@@ -1530,8 +1544,8 @@ class HBHuntConfigServiceTest {
 
             huntConfigService.migrateLocationsFromLegacy(legacyFile);
 
-            assertThat(legacyFile.exists()).isFalse();
-            assertThat(new File(tempDir.toFile(), "locations.yml.migrated").exists()).isTrue();
+            assertThat(legacyFile).doesNotExist();
+            assertThat(new File(tempDir.toFile(), "locations.yml.migrated")).exists();
         }
 
         @Test
@@ -1549,8 +1563,8 @@ class HBHuntConfigServiceTest {
 
             huntConfigService.migrateLocationsFromLegacy(legacyFile);
 
-            assertThat(legacyFile.exists()).isFalse();
-            assertThat(new File(tempDir.toFile(), "locations.yml.migrated").exists()).isTrue();
+            assertThat(legacyFile).doesNotExist();
+            assertThat(new File(tempDir.toFile(), "locations.yml.migrated")).exists();
         }
     }
 
@@ -1769,7 +1783,7 @@ class HBHuntConfigServiceTest {
 
         @Test
         void removeLocationFromHunt_nonExistentHunt_doesNotThrow() {
-            huntConfigService.removeLocationFromHunt("does-not-exist", UUID.randomUUID());
+            assertThatNoException().isThrownBy(() -> huntConfigService.removeLocationFromHunt("does-not-exist", UUID.randomUUID()));
         }
 
         @Test

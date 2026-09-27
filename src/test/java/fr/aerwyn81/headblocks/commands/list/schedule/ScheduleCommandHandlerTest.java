@@ -117,7 +117,7 @@ class ScheduleCommandHandlerTest {
 
             ArgumentCaptor<List<Behavior>> captor = behaviorsCaptor();
             verify(hunt).setBehaviors(captor.capture());
-            assertThat(captor.getValue()).noneMatch(b -> b instanceof ScheduledBehavior);
+            assertThat(captor.getValue()).noneMatch(ScheduledBehavior.class::isInstance);
         }
 
         @Test
@@ -794,7 +794,7 @@ class ScheduleCommandHandlerTest {
     class TabCompletion {
         @Test
         void fourthArg_returnsAllActions() {
-            ArrayList<String> result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", ""});
+            var result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", ""});
 
             assertThat(result).contains("start", "end", "clear", "mode", "addslot", "removeslot",
                     "every", "startref", "duration", "activefrom", "activeuntil", "info");
@@ -802,49 +802,49 @@ class ScheduleCommandHandlerTest {
 
         @Test
         void fourthArg_filters() {
-            ArrayList<String> result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "st"});
+            var result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "st"});
 
             assertThat(result).containsExactlyInAnyOrder("start", "startref");
         }
 
         @Test
         void fifthArg_mode_returnsModes() {
-            ArrayList<String> result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "mode", ""});
+            var result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "mode", ""});
 
             assertThat(result).containsExactlyInAnyOrder("range", "slots", "recurring");
         }
 
         @Test
         void fifthArg_mode_filters() {
-            ArrayList<String> result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "mode", "r"});
+            var result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "mode", "r"});
 
             assertThat(result).containsExactlyInAnyOrder("range", "recurring");
         }
 
         @Test
         void fifthArg_every_returnsUnits() {
-            ArrayList<String> result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "every", ""});
+            var result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "every", ""});
 
             assertThat(result).containsExactlyInAnyOrder("year", "month", "week");
         }
 
         @Test
         void fifthArg_clear_returnsStartEnd() {
-            ArrayList<String> result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "clear", ""});
+            var result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "clear", ""});
 
             assertThat(result).containsExactlyInAnyOrder("start", "end");
         }
 
         @Test
         void fifthArg_otherAction_returnsEmpty() {
-            ArrayList<String> result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "addslot", ""});
+            var result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "addslot", ""});
 
             assertThat(result).isEmpty();
         }
 
         @Test
         void sixthArg_returnsEmpty() {
-            ArrayList<String> result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "mode", "range", ""});
+            var result = handler.tabComplete(new String[]{"hunt", "schedule", "myhunt", "mode", "range", ""});
 
             assertThat(result).isEmpty();
         }
@@ -872,7 +872,7 @@ class ScheduleCommandHandlerTest {
             ArgumentCaptor<List<Behavior>> captor = behaviorsCaptor();
             verify(hunt).setBehaviors(captor.capture());
             // Bug: entire schedule is removed, not just "start" — slot config lost
-            assertThat(captor.getValue()).noneMatch(b -> b instanceof ScheduledBehavior);
+            assertThat(captor.getValue()).noneMatch(ScheduledBehavior.class::isInstance);
         }
 
         /**
@@ -890,7 +890,7 @@ class ScheduleCommandHandlerTest {
             ArgumentCaptor<List<Behavior>> captor = behaviorsCaptor();
             verify(hunt).setBehaviors(captor.capture());
             // Bug: entire recurring schedule is removed
-            assertThat(captor.getValue()).noneMatch(b -> b instanceof ScheduledBehavior);
+            assertThat(captor.getValue()).noneMatch(ScheduledBehavior.class::isInstance);
         }
 
         /**
@@ -972,7 +972,7 @@ class ScheduleCommandHandlerTest {
 
             ArgumentCaptor<List<Behavior>> captor = behaviorsCaptor();
             verify(hunt).setBehaviors(captor.capture());
-            assertThat(captor.getValue()).noneMatch(b -> b instanceof ScheduledBehavior);
+            assertThat(captor.getValue()).noneMatch(ScheduledBehavior.class::isInstance);
             verify(languageService).message("Messages.HuntScheduleCleared");
         }
 
@@ -991,7 +991,7 @@ class ScheduleCommandHandlerTest {
             ArgumentCaptor<List<Behavior>> captor = behaviorsCaptor();
             verify(hunt).setBehaviors(captor.capture());
             // When end is null, "clear start" removes entire schedule (no replacement)
-            assertThat(captor.getValue()).noneMatch(b -> b instanceof ScheduledBehavior);
+            assertThat(captor.getValue()).noneMatch(ScheduledBehavior.class::isInstance);
         }
 
         /**
@@ -1030,14 +1030,13 @@ class ScheduleCommandHandlerTest {
 
     @SuppressWarnings("unchecked")
     private ArgumentCaptor<List<Behavior>> behaviorsCaptor() {
-        ArgumentCaptor<List<Behavior>> captor = ArgumentCaptor.forClass(List.class);
-        return captor;
+        return ArgumentCaptor.forClass(List.class);
     }
 
     private ScheduledBehavior findScheduled(List<Behavior> behaviors) {
         return behaviors.stream()
-                .filter(b -> b instanceof ScheduledBehavior)
-                .map(b -> (ScheduledBehavior) b)
+                .filter(ScheduledBehavior.class::isInstance)
+                .map(ScheduledBehavior.class::cast)
                 .findFirst().orElse(null);
     }
 

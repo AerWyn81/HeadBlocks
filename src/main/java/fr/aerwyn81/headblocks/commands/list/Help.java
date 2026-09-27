@@ -25,7 +25,7 @@ public class Help implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         var commands = new ArrayList<>(registeredCommands).stream().filter(c -> PlayerUtils.hasPermission(sender, c.getPermission())).toList();
 
         ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService())
@@ -42,7 +42,7 @@ public class Help implements Cmd {
 
         for (int i = cpu.getFirstPos(); i < cpu.getFirstPos() + cpu.getPageHeight() && i < cpu.getSize(); i++) {
             String command = StringUtils.capitalize(commands.get(i).getCommand())
-                    .replaceAll("all", "All");
+                    .replace("all", "All");
 
             if (!registry.getLanguageService().containsMessage("Help." + command)) {
                 sender.sendMessage(MessageUtils.colorize("&6/headblocks " + commands.get(i).getCommand() + " &8: &c&oNo help message found. Please report to developer!"));
@@ -58,7 +58,6 @@ public class Help implements Cmd {
 
         cpu.addPageLine("help");
         cpu.build();
-        return true;
     }
 
     @Override

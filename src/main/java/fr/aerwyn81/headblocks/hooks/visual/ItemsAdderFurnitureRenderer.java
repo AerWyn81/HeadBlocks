@@ -67,6 +67,7 @@ class ItemsAdderFurnitureRenderer extends HandleProviderHook<CustomFurniture> {
     }
 
     @Override
-    protected void rotate(CustomFurniture handle, Entity base, float yaw) {
+    protected boolean rotatesBase() {
+        return false;
     }
 }

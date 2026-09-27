@@ -101,7 +101,7 @@ public class HuntService {
     public List<HBHunt> getActiveHunts() {
         return huntsById.values().stream()
                 .filter(HBHunt::isActive)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public boolean isMultiHunt() {

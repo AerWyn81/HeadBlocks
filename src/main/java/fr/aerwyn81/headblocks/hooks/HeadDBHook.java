@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class HeadDBHook implements HeadProviderHook {
-    public static final String PREFIX = "headdb";
+    private static final String HOOK_PREFIX = "headdb";
 
     private static final String MINECRAFT_TEXTURE_URL = "http://textures.minecraft.net/texture/";
 
@@ -32,7 +32,7 @@ public class HeadDBHook implements HeadProviderHook {
 
     @Override
     public String prefix() {
-        return PREFIX;
+        return HOOK_PREFIX;
     }
 
     @Override

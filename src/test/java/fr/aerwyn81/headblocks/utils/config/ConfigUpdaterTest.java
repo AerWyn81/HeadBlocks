@@ -96,7 +96,7 @@ class ConfigUpdaterTest {
     void removeLastKey_removesLastDotSeparatedSegment() throws Exception {
         StringBuilder sb = new StringBuilder("key1.key2.key3");
         callRemoveLastKey(sb);
-        assertThat(sb.toString()).isEqualTo("key1.key2");
+        assertThat(sb).hasToString("key1.key2");
     }
 
     @Test
@@ -117,7 +117,7 @@ class ConfigUpdaterTest {
     void removeLastKey_twoKeys_leavesFirst() throws Exception {
         StringBuilder sb = new StringBuilder("parent.child");
         callRemoveLastKey(sb);
-        assertThat(sb.toString()).isEqualTo("parent");
+        assertThat(sb).hasToString("parent");
     }
 
     // ---- appendNewLine tests ----
@@ -133,7 +133,7 @@ class ConfigUpdaterTest {
     void appendNewLine_nonEmptyBuilder_appendsNewline() throws Exception {
         StringBuilder sb = new StringBuilder("content");
         callAppendNewLine(sb);
-        assertThat(sb.toString()).isEqualTo("content\n");
+        assertThat(sb).hasToString("content\n");
     }
 
     // ---- parseComments tests ----
@@ -250,9 +250,9 @@ class ConfigUpdaterTest {
 
         assertThat(result).containsKey("ignored");
         String value = result.get("ignored");
-        assertThat(value).contains("ignored:");
-        assertThat(value).contains("sub1: a");
-        assertThat(value).contains("sub2: b");
+        assertThat(value).contains("ignored:")
+                .contains("sub1: a")
+                .contains("sub2: b");
     }
 
     // ---- update (full integration) tests ----
@@ -261,7 +261,9 @@ class ConfigUpdaterTest {
     void update_throwsIfFileDoesNotExist() {
         File nonExistent = tempDir.resolve("nope.yml").toFile();
 
-        assertThatThrownBy(() -> callUpdate(resourceLoader("key: val"), "res.yml", nonExistent, Collections.emptyList()))
+        var loader = resourceLoader("key: val");
+        List<String> ignoredSections = Collections.emptyList();
+        assertThatThrownBy(() -> callUpdate(loader, "res.yml", nonExistent, ignoredSections))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("doesn't exist");
     }
@@ -292,8 +294,8 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, Collections.emptyList());
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("key1: custom1");
-        assertThat(result).contains("key2: default2");
+        assertThat(result).contains("key1: custom1")
+                .contains("key2: default2");
     }
 
     @Test
@@ -313,8 +315,8 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, Collections.emptyList());
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("key1: myValue");
-        assertThat(result).contains("key2: otherValue");
+        assertThat(result).contains("key1: myValue")
+                .contains("key2: otherValue");
     }
 
     @Test
@@ -336,10 +338,10 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, Collections.emptyList());
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("# Header comment");
-        assertThat(result).contains("# Comment for key2");
-        assertThat(result).contains("key1: custom1");
-        assertThat(result).contains("key2: custom2");
+        assertThat(result).contains("# Header comment")
+                .contains("# Comment for key2")
+                .contains("key1: custom1")
+                .contains("key2: custom2");
     }
 
     @Test
@@ -360,8 +362,8 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, Collections.emptyList());
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("child1: custom1");
-        assertThat(result).contains("child2: default2");
+        assertThat(result).contains("child1: custom1")
+                .contains("child2: default2");
     }
 
     @Test
@@ -399,9 +401,9 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, Collections.emptyList());
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("custom1");
-        assertThat(result).contains("custom2");
-        assertThat(result).contains("custom3");
+        assertThat(result).contains("custom1")
+                .contains("custom2")
+                .contains("custom3");
     }
 
     @Test
@@ -426,9 +428,9 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, List.of("ignored"));
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("key1: custom1");
-        assertThat(result).contains("key2: custom2");
-        assertThat(result).contains("userCustom");
+        assertThat(result).contains("key1: custom1")
+                .contains("key2: custom2")
+                .contains("userCustom");
     }
 
     @Test
@@ -541,8 +543,8 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, Collections.emptyList());
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("empty_section: {}");
-        assertThat(result).contains("key1: custom1");
+        assertThat(result).contains("empty_section: {}")
+                .contains("key1: custom1");
     }
 
     @Test
@@ -564,8 +566,8 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, Collections.emptyList());
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("key1: custom1");
-        assertThat(result).contains("key2: custom2");
+        assertThat(result).contains("key1: custom1")
+                .contains("key2: custom2");
         long blankLineCount = result.lines().filter(String::isEmpty).count();
         assertThat(blankLineCount).isGreaterThanOrEqualTo(2);
     }
@@ -586,8 +588,8 @@ class ConfigUpdaterTest {
         callUpdate(resourceLoader(resource), "res.yml", file, Collections.emptyList());
 
         String result = Files.readString(file.toPath());
-        assertThat(result).contains("key1: custom1");
-        assertThat(result).doesNotContain("obsolete");
+        assertThat(result).contains("key1: custom1")
+                .doesNotContain("obsolete");
     }
 
     @Test

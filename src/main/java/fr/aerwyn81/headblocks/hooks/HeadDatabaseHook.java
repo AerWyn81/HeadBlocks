@@ -17,7 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 public class HeadDatabaseHook implements HeadProviderHook {
-    public static final String PREFIX = "hdb";
+    private static final String HOOK_PREFIX = "hdb";
 
     private final PluginProvider pluginProvider;
     private ServiceRegistry registry;
@@ -29,7 +29,7 @@ public class HeadDatabaseHook implements HeadProviderHook {
 
     @Override
     public String prefix() {
-        return PREFIX;
+        return HOOK_PREFIX;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class HeadDatabaseHook implements HeadProviderHook {
         try {
             var fields = headDatabaseAPI.getClass().getDeclaredFields();
             if (fields.length == 0) {
-                throw new RuntimeException("Too old version, API not compatible.");
+                throw new IllegalStateException("Too old version, API not compatible.");
             }
         } catch (Exception ex) {
             LogUtil.error("Error loading HeadDatabaseAPI support: {0}. Please try to update HeadDatabase plugin or report the error on HeadBlocks discord.", ex.getMessage());
@@ -70,6 +70,7 @@ public class HeadDatabaseHook implements HeadProviderHook {
                 this.loadTextures();
             }
         } catch (Exception ignored) {
+            // ignored: the database is not loaded yet, textures are loaded by the HeadDatabase loaded event
         }
 
         LogUtil.success("HeadDatabase successfully hooked!");

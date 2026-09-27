@@ -9,12 +9,12 @@ import fr.aerwyn81.headblocks.utils.message.MessageUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class TimedConfigGui {
@@ -41,6 +41,28 @@ public class TimedConfigGui {
         buildAndOpenGui(player);
     }
 
+    private String plateLocationText(Location plateLoc) {
+        if (plateLoc == null) {
+            return registry.getLanguageService().message("Gui.TimedConfigPlateNotDefined");
+        }
+
+        return MessageUtils.colorize(registry.getLanguageService().message("Gui.TimedConfigPlateLocation")
+                .replace("%world%", plateLoc.getWorld() != null ? plateLoc.getWorld().getName() : "?")
+                .replace("%x%", String.valueOf(plateLoc.getBlockX()))
+                .replace("%y%", String.valueOf(plateLoc.getBlockY()))
+                .replace("%z%", String.valueOf(plateLoc.getBlockZ())));
+    }
+
+    private void adjustTimeLimit(InventoryClickEvent event) {
+        Player p = (Player) event.getWhoClicked();
+        int step = event.isShiftClick() ? STEP_LARGE : STEP_SMALL;
+        int sign = event.isRightClick() ? -1 : 1;
+        int current = limitSecondsStates.getOrDefault(p.getUniqueId(), 0);
+        int updated = Math.max(0, Math.min(LIMIT_MAX, current + sign * step));
+        limitSecondsStates.put(p.getUniqueId(), updated);
+        buildAndOpenGui(p);
+    }
+
     private void buildAndOpenGui(Player player) {
         var menu = new HBMenu(registry.getPluginProvider().getJavaPlugin(), registry.getGuiService(),
                 registry.getLanguageService().message("Gui.TimedConfigTitle"), false, 4);
@@ -54,20 +76,11 @@ public class TimedConfigGui {
 
         // Slot 11: Set start plate
         Location plateLoc = plateLocations.get(uuid);
-        String locationText;
-        if (plateLoc != null) {
-            locationText = MessageUtils.colorize(registry.getLanguageService().message("Gui.TimedConfigPlateLocation")
-                    .replace("%world%", plateLoc.getWorld() != null ? plateLoc.getWorld().getName() : "?")
-                    .replace("%x%", String.valueOf(plateLoc.getBlockX()))
-                    .replace("%y%", String.valueOf(plateLoc.getBlockY()))
-                    .replace("%z%", String.valueOf(plateLoc.getBlockZ())));
-        } else {
-            locationText = registry.getLanguageService().message("Gui.TimedConfigPlateNotDefined");
-        }
+        String locationText = plateLocationText(plateLoc);
 
         List<String> plateLore = registry.getLanguageService().messageList("Gui.TimedConfigPlateLore").stream()
                 .map(s -> s.replace("%location%", locationText))
-                .collect(Collectors.toList());
+                .toList();
 
         menu.setItem(0, 11, new ItemGUI(new ItemBuilder(Material.HEAVY_WEIGHTED_PRESSURE_PLATE)
                 .setName(registry.getLanguageService().message("Gui.TimedConfigPlate"))
@@ -88,34 +101,24 @@ public class TimedConfigGui {
 
         List<String> limitLore = registry.getLanguageService().messageList("Gui.TimedConfigTimeLimitLore").stream()
                 .map(s -> s.replace("%value%", limitValue))
-                .collect(Collectors.toList());
+                .toList();
 
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.CLOCK)
                 .setName(registry.getLanguageService().message("Gui.TimedConfigTimeLimit"))
                 .setLore(limitLore)
                 .toItemStack(), true)
-                .addOnClickEvent(event -> {
-                    Player p = (Player) event.getWhoClicked();
-                    int step = event.isShiftClick() ? STEP_LARGE : STEP_SMALL;
-                    int sign = event.isRightClick() ? -1 : 1;
-                    int current = limitSecondsStates.getOrDefault(p.getUniqueId(), 0);
-                    int updated = Math.max(0, Math.min(LIMIT_MAX, current + sign * step));
-                    limitSecondsStates.put(p.getUniqueId(), updated);
-                    buildAndOpenGui(p);
-                }));
+                .addOnClickEvent(this::adjustTimeLimit));
 
         // --- Options (row 2) ---
 
         // Slot 21: Repeatable toggle
         boolean repeatable = repeatableStates.getOrDefault(uuid, true);
         Material repeatableMat = repeatable ? Material.LIME_DYE : Material.GRAY_DYE;
-        String repeatableStatus = repeatable
-                ? registry.getLanguageService().message("Gui.BehaviorEnabled")
-                : registry.getLanguageService().message("Gui.BehaviorDisabled");
+        String repeatableStatus = registry.getLanguageService().message(repeatable ? "Gui.BehaviorEnabled" : "Gui.BehaviorDisabled");
 
         List<String> repeatableLore = registry.getLanguageService().messageList("Gui.TimedConfigRepeatableLore").stream()
                 .map(s -> s.replace("%status%", repeatableStatus))
-                .collect(Collectors.toList());
+                .toList();
 
         menu.setItem(0, 21, new ItemGUI(new ItemBuilder(repeatableMat)
                 .setName(registry.getLanguageService().message("Gui.TimedConfigRepeatable"))
@@ -131,13 +134,11 @@ public class TimedConfigGui {
         // Slot 23: Reset on expire toggle
         boolean resetOnExpire = resetOnExpireStates.getOrDefault(uuid, false);
         Material resetMat = resetOnExpire ? Material.LIME_DYE : Material.GRAY_DYE;
-        String resetStatus = resetOnExpire
-                ? registry.getLanguageService().message("Gui.BehaviorEnabled")
-                : registry.getLanguageService().message("Gui.BehaviorDisabled");
+        String resetStatus = registry.getLanguageService().message(resetOnExpire ? "Gui.BehaviorEnabled" : "Gui.BehaviorDisabled");
 
         List<String> resetLore = registry.getLanguageService().messageList("Gui.TimedConfigResetOnExpireLore").stream()
                 .map(s -> s.replace("%status%", resetStatus))
-                .collect(Collectors.toList());
+                .toList();
 
         menu.setItem(0, 23, new ItemGUI(new ItemBuilder(resetMat)
                 .setName(registry.getLanguageService().message("Gui.TimedConfigResetOnExpire"))

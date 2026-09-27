@@ -7,12 +7,13 @@ import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Memory implements Storage {
 
     private ConcurrentHashMap<UUID, java.util.List<UUID>> headsFound;
     private ConcurrentHashMap<UUID, Set<UUID>> cachePlayerHeads;
-    private volatile LinkedHashMap<PlayerProfileLight, Integer> cacheTopPlayers;
+    private final AtomicReference<LinkedHashMap<PlayerProfileLight, Integer>> cacheTopPlayers = new AtomicReference<>();
     private Set<UUID> cacheHeads;
 
     // Hunt-specific caches
@@ -22,14 +23,11 @@ public class Memory implements Storage {
     private ConcurrentHashMap<String, Long> cacheBestTime;
     private ConcurrentHashMap<String, Integer> cacheTimedRunCount;
 
-    public Memory() {
-    }
-
     @Override
     public void init() {
         headsFound = new ConcurrentHashMap<>();
         cachePlayerHeads = new ConcurrentHashMap<>();
-        cacheTopPlayers = new LinkedHashMap<>();
+        cacheTopPlayers.set(new LinkedHashMap<>());
         cacheHeads = ConcurrentHashMap.newKeySet();
 
         cacheHuntPlayerHeads = new ConcurrentHashMap<>();
@@ -43,7 +41,7 @@ public class Memory implements Storage {
     public void close() throws InternalException {
         headsFound.clear();
         cachePlayerHeads.clear();
-        cacheTopPlayers = new LinkedHashMap<>();
+        cacheTopPlayers.set(new LinkedHashMap<>());
         cacheHeads.clear();
 
         cacheHuntPlayerHeads.clear();
@@ -115,17 +113,17 @@ public class Memory implements Storage {
 
     @Override
     public LinkedHashMap<PlayerProfileLight, Integer> getCachedTopPlayers() {
-        return cacheTopPlayers;
+        return cacheTopPlayers.get();
     }
 
     @Override
     public void setCachedTopPlayers(LinkedHashMap<PlayerProfileLight, Integer> topPlayers) {
-        cacheTopPlayers = new LinkedHashMap<>(topPlayers);
+        cacheTopPlayers.set(new LinkedHashMap<>(topPlayers));
     }
 
     @Override
     public void clearCachedTopPlayers() {
-        cacheTopPlayers = new LinkedHashMap<>();
+        cacheTopPlayers.set(new LinkedHashMap<>());
     }
 
     @Override

@@ -5,9 +5,13 @@ import fr.aerwyn81.headblocks.utils.message.color.IridiumColorAPI;
 import org.bukkit.Color;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class MessageUtils {
+
+    private MessageUtils() {
+    }
 
     /**
      * Format a message with chat format and color (& or hexa)
@@ -36,7 +40,7 @@ public class MessageUtils {
      * @return clean message translated
      */
     public static String centerMessage(String message) {
-        return message.contains("{center}") ? sendCenteredString(message.replaceAll("\\{center}", "")) : message;
+        return message.contains("{center}") ? sendCenteredString(message.replace("{center}", "")) : message;
     }
 
     /**
@@ -67,7 +71,7 @@ public class MessageUtils {
      *
      * @return list of color
      */
-    public static ArrayList<Color> getRandomColors() {
+    public static List<Color> getRandomColors() {
         ArrayList<Color> colors = new ArrayList<>();
         for (int i = 0; i < ThreadLocalRandom.current().nextInt(1, 4); i++) {
             colors.add(Color.fromRGB(ThreadLocalRandom.current().nextInt(256), ThreadLocalRandom.current().nextInt(256), ThreadLocalRandom.current().nextInt(256)));
@@ -89,44 +93,45 @@ public class MessageUtils {
 
         for (String line : lines) {
             int toCompensate = 154 - calculatePxSize(line) / 2;
-            int spaceLength = DefaultFont.SPACE.getLength() + 1;
-            int compensated = 0;
-            StringBuilder sb = new StringBuilder();
 
             if (toCompensate < 0) {
-                String[] words = line.split(" ");
-
-                StringBuilder subLine = new StringBuilder();
-                StringBuilder subLineBelow = new StringBuilder();
-                for (String word : words) {
-                    if (calculatePxSize(word + subLine) <= 154) {
-                        if (subLine.length() != 0) {
-                            subLine.append(" ");
-                        }
-
-                        subLine.append(word);
-                    } else {
-                        if (subLineBelow.length() != 0) {
-                            subLineBelow.append(" ");
-                        }
-
-                        subLineBelow.append(word);
-                    }
-                }
-
-                returnMessage.append(sendCenteredString(subLine.toString())).append("\n").append(sendCenteredString(subLineBelow.toString()));
-                continue;
+                returnMessage.append(splitOverflowingLine(line));
             } else {
-                while (compensated < toCompensate) {
-                    sb.append(" ");
-                    compensated += spaceLength;
-                }
+                returnMessage.append(centerPadding(toCompensate)).append(line).append("\n");
             }
-
-            returnMessage.append(sb).append(line).append("\n");
         }
 
         return returnMessage.toString();
+    }
+
+    private static String splitOverflowingLine(String line) {
+        String[] words = line.split(" ");
+
+        StringBuilder subLine = new StringBuilder();
+        StringBuilder subLineBelow = new StringBuilder();
+        for (String word : words) {
+            StringBuilder target = calculatePxSize(word + subLine) <= 154 ? subLine : subLineBelow;
+            if (!target.isEmpty()) {
+                target.append(" ");
+            }
+
+            target.append(word);
+        }
+
+        return sendCenteredString(subLine.toString()) + "\n" + sendCenteredString(subLineBelow.toString());
+    }
+
+    private static String centerPadding(int toCompensate) {
+        int spaceLength = DefaultFont.SPACE.getLength() + 1;
+        int compensated = 0;
+        StringBuilder sb = new StringBuilder();
+
+        while (compensated < toCompensate) {
+            sb.append(" ");
+            compensated += spaceLength;
+        }
+
+        return sb.toString();
     }
 
     private static int calculatePxSize(String message) {

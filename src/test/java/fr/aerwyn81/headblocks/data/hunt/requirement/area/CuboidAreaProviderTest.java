@@ -26,7 +26,7 @@ class CuboidAreaProviderTest {
     void constructor_normalizesCorners() {
         CuboidAreaProvider provider = new CuboidAreaProvider("world", 10, 70, 30, 0, 60, 5);
 
-        assertThat(provider.getMinX()).isEqualTo(0);
+        assertThat(provider.getMinX()).isZero();
         assertThat(provider.getMinY()).isEqualTo(60);
         assertThat(provider.getMinZ()).isEqualTo(5);
         assertThat(provider.getMaxX()).isEqualTo(10);
@@ -76,7 +76,8 @@ class CuboidAreaProviderTest {
         CuboidAreaProvider provider = new CuboidAreaProvider("world", 0, 60, 0, 10, 70, 10);
 
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
+            var worldMock = mock(World.class);
+            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(worldMock);
             assertThat(provider.isAvailable()).isTrue();
         }
     }
@@ -103,7 +104,7 @@ class CuboidAreaProviderTest {
 
         CuboidAreaProvider loaded = CuboidAreaProvider.fromSection(section);
         assertThat(loaded.getWorldName()).isEqualTo("world");
-        assertThat(loaded.getMinX()).isEqualTo(0);
+        assertThat(loaded.getMinX()).isZero();
         assertThat(loaded.getMinY()).isEqualTo(60);
         assertThat(loaded.getMinZ()).isEqualTo(5);
         assertThat(loaded.getMaxX()).isEqualTo(10);

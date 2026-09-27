@@ -18,22 +18,21 @@ public class Leave implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         Player player = (Player) sender;
 
         if (TimedRunManager.isInRun(player.getUniqueId())) {
             TimedRunManager.leaveRun(player.getUniqueId());
             player.sendMessage(registry.getLanguageService().message("Messages.TimedLeft"));
-            return true;
+            return;
         }
 
         if (registry.getAreaEnforcementService().leave(player)) {
             player.sendMessage(registry.getLanguageService().message("Messages.AreaLeft"));
-            return true;
+            return;
         }
 
         player.sendMessage(registry.getLanguageService().message("Messages.TimedNoActiveRun"));
-        return true;
     }
 
     @Override

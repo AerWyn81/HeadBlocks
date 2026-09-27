@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.UUID;
 
 public interface Database {
-    int version = 7;
+    int VERSION = 7;
 
     record HeadExportRow(String uuid, boolean exists, boolean spawn) {
     }

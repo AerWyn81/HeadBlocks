@@ -29,7 +29,7 @@ public class Top implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         ChatPageUtils cpu = new ChatPageUtils(sender, registry.getLanguageService()).currentPage(args);
 
         ArrayList<Map.Entry<PlayerProfileLight, Integer>> top;
@@ -38,7 +38,7 @@ public class Top implements Cmd {
         } catch (InternalException ex) {
             sender.sendMessage(registry.getLanguageService().message("Messages.StorageError"));
             LogUtil.error("Error while retrieving top players from the storage: {0}", ex.getMessage());
-            return true;
+            return;
         }
 
         List<String> hiddenPlayers = registry.getConfigService().hiddenTopPlayers();
@@ -48,7 +48,7 @@ public class Top implements Cmd {
 
         if (top.isEmpty()) {
             sender.sendMessage(registry.getLanguageService().message("Messages.TopEmpty"));
-            return true;
+            return;
         }
 
         cpu.entriesCount(top.size());
@@ -85,7 +85,6 @@ public class Top implements Cmd {
 
         cpu.addPageLine("top");
         cpu.build();
-        return true;
     }
 
     @Override

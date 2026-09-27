@@ -5,6 +5,7 @@ public interface Task {
     Task NONE = new Task() {
         @Override
         public void cancel() {
+            // nothing to cancel: this task was never scheduled
         }
 
         @Override

@@ -27,10 +27,10 @@ public class Progress implements Cmd {
     }
 
     @Override
-    public boolean perform(CommandSender sender, String[] args) {
+    public void perform(CommandSender sender, String[] args) {
         PlayerProfileLight playerProfileLight = CommandsUtils.extractAndGetPlayerUuidByName(registry, sender, args, PlayerUtils.hasPermission(sender, "headblocks.commands.progress.other"));
         if (playerProfileLight == null) {
-            return true;
+            return;
         }
 
         if (registry.getHuntService().isMultiHunt()) {
@@ -38,8 +38,6 @@ public class Progress implements Cmd {
         } else {
             showLegacyProgress(sender, playerProfileLight);
         }
-
-        return true;
     }
 
     private void showLegacyProgress(CommandSender sender, PlayerProfileLight profile) {
@@ -73,7 +71,7 @@ public class Progress implements Cmd {
 
         for (HBHunt hunt : registry.getHuntService().getAllHunts()) {
             try {
-                ArrayList<java.util.UUID> huntHeads = registry.getStorageService().getHeadsPlayerForHunt(
+                var huntHeads = registry.getStorageService().getHeadsPlayerForHunt(
                         profile.uuid(), hunt.getId());
                 int current = huntHeads.size();
                 int total = hunt.getTargetCount();

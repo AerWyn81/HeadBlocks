@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,9 +73,8 @@ class ProgressCommandTest {
                 cu.when(() -> CommandsUtils.extractAndGetPlayerUuidByName(eq(registry), any(), any(), anyBoolean()))
                         .thenReturn(null);
 
-                boolean result = command.perform(player, new String[]{"progress"});
+                command.perform(player, new String[]{"progress"});
 
-                assertThat(result).isTrue();
                 verify(huntService, never()).isMultiHunt();
             }
         }
@@ -96,9 +96,8 @@ class ProgressCommandTest {
                 when(placeholdersService.parse(eq("testPlayer"), eq(playerUuid), anyString()))
                         .thenReturn("parsed-line");
 
-                boolean result = command.perform(player, new String[]{"progress"});
+                command.perform(player, new String[]{"progress"});
 
-                assertThat(result).isTrue();
                 verify(player, times(2)).sendMessage("parsed-line");
             }
         }
@@ -141,9 +140,8 @@ class ProgressCommandTest {
                 when(configService.progressBarCompletedColor()).thenReturn("&a");
                 when(configService.progressBarNotCompletedColor()).thenReturn("&7");
 
-                boolean result = command.perform(player, new String[]{"progress"});
+                command.perform(player, new String[]{"progress"});
 
-                assertThat(result).isTrue();
                 verify(languageService).message("Messages.HuntProgressHeader");
                 verify(languageService).message("Messages.HuntProgressEntry");
             }
@@ -232,9 +230,7 @@ class ProgressCommandTest {
                 when(storageService.getHeadsPlayerForHunt(playerUuid, "hunt1"))
                         .thenThrow(new InternalException("db error"));
 
-                boolean result = command.perform(player, new String[]{"progress"});
-
-                assertThat(result).isTrue();
+                assertThatNoException().isThrownBy(() -> command.perform(player, new String[]{"progress"}));
                 // Should not crash, just log and continue
             }
         }

@@ -15,6 +15,9 @@ import java.net.URLConnection;
 
 public class PlayerUtils {
 
+    private PlayerUtils() {
+    }
+
     public static boolean hasPermission(CommandSender sender, String permission) {
         if (!(sender instanceof Player)) {
             return true;

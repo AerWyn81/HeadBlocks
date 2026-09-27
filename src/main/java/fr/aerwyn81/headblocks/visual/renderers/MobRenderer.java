@@ -9,14 +9,11 @@ import org.bukkit.Location;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.EquipmentSlot;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class MobRenderer implements EntityRenderer {
 
-    public static final Map<String, EquipmentSlot> EQUIPMENT = equipmentSlots();
+    public static final Map<String, EquipmentSlot> EQUIPMENT = Collections.unmodifiableMap(equipmentSlots());
 
     @Override
     public List<Entity> spawn(Location anchor, HeadContent content, RenderSettings settings) {
@@ -64,20 +61,7 @@ public class MobRenderer implements EntityRenderer {
 
     static void dress(Entity entity, HeadContent content) {
         if (entity instanceof LivingEntity living) {
-            var equipment = living.getEquipment();
-            if (equipment != null) {
-                EQUIPMENT.forEach((key, slot) -> {
-                    var raw = content.option(key);
-                    var item = raw == null ? null : ContentItems.equipmentOf(raw);
-                    if (item != null) {
-                        equipment.setItem(slot, item);
-                    }
-                });
-            }
-
-            if (content.optionBoolean("invisible", false)) {
-                living.setInvisible(true);
-            }
+            dressLiving(living, content);
         }
 
         if (entity instanceof Ageable ageable && content.optionBoolean("baby", false)) {
@@ -88,6 +72,23 @@ public class MobRenderer implements EntityRenderer {
             stand.setSmall(content.optionBoolean("small", false));
             stand.setArms(content.optionBoolean("arms", false));
             stand.setBasePlate(content.optionBoolean("baseplate", true));
+        }
+    }
+
+    private static void dressLiving(LivingEntity living, HeadContent content) {
+        var equipment = living.getEquipment();
+        if (equipment != null) {
+            EQUIPMENT.forEach((key, slot) -> {
+                var raw = content.option(key);
+                var item = raw == null ? null : ContentItems.equipmentOf(raw);
+                if (item != null) {
+                    equipment.setItem(slot, item);
+                }
+            });
+        }
+
+        if (content.optionBoolean("invisible", false)) {
+            living.setInvisible(true);
         }
     }
 
