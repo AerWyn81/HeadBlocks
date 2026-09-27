@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.function.IntFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
@@ -63,7 +64,7 @@ class RandomSpawnBehaviorTest {
         lenient().when(world.getMinHeight()).thenReturn(-64);
         lenient().when(world.getMaxHeight()).thenReturn(320);
         lenient().when(world.isChunkLoaded(anyInt(), anyInt())).thenReturn(true);
-        lenient().when(world.getHighestBlockYAt(anyInt(), anyInt())).thenAnswer(invocation -> {
+        lenient().when(world.getHighestBlockYAt(anyInt(), anyInt(), any(org.bukkit.HeightMap.class))).thenAnswer(invocation -> {
             for (int y = 319; y > -64; y--) {
                 if (column.apply(y) != Material.AIR) {
                     return y;
@@ -90,6 +91,9 @@ class RandomSpawnBehaviorTest {
             lenient().when(block.getType()).thenReturn(type);
             lenient().when(block.isEmpty()).thenReturn(type == Material.AIR);
             lenient().when(block.isLiquid()).thenReturn(type == Material.WATER);
+            if (type == Material.TALL_GRASS) {
+                lenient().when(block.getBlockData()).thenReturn(mock(org.bukkit.block.data.Bisected.class));
+            }
             lenient().when(block.getLocation()).thenReturn(new Location(world, x, y, z));
             lenient().when(block.getRelative(0, -1, 0)).thenAnswer(invocation -> block(x, y - 1, z));
             return block;
@@ -288,5 +292,13 @@ class RandomSpawnBehaviorTest {
     void cuboidBounds_areOrdered() {
         assertThat(new CuboidAreaProvider("world", 10, 80, -5, 0, 60, 5).getBounds())
                 .containsExactly(0, 60, -5, 10, 80, 5);
+    }
+
+    @Test
+    void tallPlants_areNotReplaced() {
+        column = y -> y < 64 ? Material.GRASS_BLOCK : y == 64 ? Material.TALL_GRASS : Material.AIR;
+        when(world.getHighestBlockYAt(anyInt(), anyInt(), any(org.bukkit.HeightMap.class))).thenReturn(63);
+
+        assertThat(pick(behavior(true, BlockFilter.BLACKLIST, List.of()))).isNull();
     }
 }

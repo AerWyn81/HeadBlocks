@@ -6,11 +6,13 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
 import fr.aerwyn81.headblocks.data.hunt.requirement.area.AreaProvider;
 import fr.aerwyn81.headblocks.data.hunt.requirement.types.AreaRequirement;
 import org.bukkit.Bukkit;
+import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Bisected;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
@@ -116,7 +118,7 @@ public class RandomSpawnBehavior extends SpawnBehavior {
         for (int i = 0; i < maxTries; i++) {
             int x = random.nextInt(Math.max(bounds[0], chunkX), Math.min(bounds[3], chunkX + 15) + 1);
             int z = random.nextInt(Math.max(bounds[2], chunkZ), Math.min(bounds[5], chunkZ + 15) + 1);
-            int y = surface ? world.getHighestBlockYAt(x, z) + 1 : random.nextInt(minY, maxY + 1);
+            int y = surface ? world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1 : random.nextInt(minY, maxY + 1);
 
             var location = firstSpotFrom(world, x, z, Math.max(y, minY), surface ? y : maxY, maxY);
             if (location != null && area.contains(location) && isFree.test(location)) {
@@ -141,7 +143,8 @@ public class RandomSpawnBehavior extends SpawnBehavior {
             return true;
         }
         var type = block.getType();
-        return !block.isLiquid() && !type.isSolid() && Tag.REPLACEABLE.isTagged(type);
+        return !block.isLiquid() && !type.isSolid() && !(block.getBlockData() instanceof Bisected)
+                && Tag.REPLACEABLE.isTagged(type);
     }
 
     private boolean canStandOn(Block block) {

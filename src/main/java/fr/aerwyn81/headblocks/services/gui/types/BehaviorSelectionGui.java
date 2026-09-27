@@ -127,7 +127,13 @@ public class BehaviorSelectionGui {
                     }
                     buildAndOpenGui(player);
                 },
-                this::buildAndOpenGui);
+                p -> {
+                    var selected = selectedBehaviors.get(uuid);
+                    if (selected != null && !hasArea(p)) {
+                        selected.remove(RandomSpawnBehavior.ID);
+                    }
+                    buildAndOpenGui(p);
+                });
     }
 
     private ItemGUI createBehaviorItem(String behaviorId, String name, List<String> lore, boolean isSelected) {

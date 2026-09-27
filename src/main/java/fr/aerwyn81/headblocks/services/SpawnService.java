@@ -469,8 +469,13 @@ public class SpawnService {
 
         var placed = new AtomicBoolean();
         var deferred = new AtomicBoolean();
+        int generation = state.generation.get();
         state.pending.incrementAndGet();
         registry.getScheduler().runNow(column, () -> {
+            if (state.generation.get() != generation) {
+                return;
+            }
+
             state.pending.decrementAndGet();
             if (activeBehaviorOf(state) != behavior) {
                 return;
@@ -864,6 +869,7 @@ public class SpawnService {
         private final Map<UUID, SavedSpawn> dormant = new ConcurrentHashMap<>();
         private final List<Task> respawnTasks = new CopyOnWriteArrayList<>();
         private final AtomicInteger pending = new AtomicInteger();
+        private final AtomicInteger generation = new AtomicInteger();
         private final AtomicInteger totalSpawned = new AtomicInteger();
         private int waiting;
         private final AtomicLong nextIntervalAt = new AtomicLong();
@@ -874,6 +880,7 @@ public class SpawnService {
         }
 
         private void stopTasks() {
+            generation.incrementAndGet();
             respawnTasks.forEach(Task::cancel);
             respawnTasks.clear();
             if (intervalTask != null) {
@@ -883,6 +890,7 @@ public class SpawnService {
         }
 
         private void cancelRespawns() {
+            generation.incrementAndGet();
             respawnTasks.forEach(Task::cancel);
             respawnTasks.clear();
             pending.set(0);

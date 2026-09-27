@@ -1205,7 +1205,7 @@ class SpawnServiceTest {
         lenient().when(world.getMinHeight()).thenReturn(-64);
         lenient().when(world.getMaxHeight()).thenReturn(320);
         lenient().when(world.isChunkLoaded(anyInt(), anyInt())).thenReturn(true);
-        lenient().when(world.getHighestBlockYAt(anyInt(), anyInt())).thenReturn(63);
+        lenient().when(world.getHighestBlockYAt(anyInt(), anyInt(), any(org.bukkit.HeightMap.class))).thenReturn(63);
         lenient().when(world.getBlockAt(anyInt(), anyInt(), anyInt())).thenAnswer(invocation -> {
             int x = invocation.getArgument(0);
             int y = invocation.getArgument(1);
@@ -1297,5 +1297,20 @@ class SpawnServiceTest {
         deferred.forEach(Runnable::run);
 
         assertThat(spawned()).isEmpty();
+    }
+
+    @Test
+    void random_regionTaskOutdatedByAReroll_isDropped() {
+        useRandomHunt(1, SpawnOptions.DEFAULT);
+        var deferred = new ArrayList<Runnable>();
+        doAnswer(invocation -> deferred.add(invocation.getArgument(1)))
+                .when(scheduler).runNow(any(Location.class), any(Runnable.class));
+        service.start();
+
+        service.reroll(hunt, false);
+        List.copyOf(deferred).forEach(Runnable::run);
+
+        assertThat(spawned()).hasSize(1);
+        assertThat(service.getActiveHeads("spawnhunt")).hasSize(1);
     }
 }

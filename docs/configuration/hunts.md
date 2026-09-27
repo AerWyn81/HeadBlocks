@@ -387,12 +387,12 @@ behaviors:
     # ... every other option of spawn points, templates included
 ```
 
-- **surface**: `true` puts heads on top of the ground. `false` puts them anywhere with room, caves included
+- **surface**: `true` puts heads on the ground, under the trees rather than on their leaves. `false` puts them anywhere with room, caves included. Use `false` in the Nether, where the top of the world is the bedrock roof
 - **maxTries**: spots tested for one head. If none fits, it tries again 30 seconds later
 - **blocks.mode**: `BLACKLIST` (heads never stand on the listed blocks) or `WHITELIST` (heads only stand on the listed blocks)
 - **blocks.list**: block names
 
-A spot is valid when it is inside the area, is air (or grass, ferns, a snow layer, vines…), and stands on a solid block allowed by `blocks`. Heads only appear in loaded chunks, so no chunk is ever loaded or generated for them.
+A spot is valid when it is inside the area, is air (or short grass, a fern, a snow layer, vines…, never half of a tall plant), and stands on a solid block allowed by `blocks`. Heads only appear in loaded chunks, so no chunk is ever loaded or generated for them.
 
 {% hint style="warning" %} Random spawn cannot be combined with spawn points or the ordered behavior. Removing the area in the creation menu unselects it, and a hunt file with random spawn but no area logs a warning and shows no head. {% endhint %}
 
