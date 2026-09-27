@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.commands.Cmd;
 import fr.aerwyn81.headblocks.commands.HBAnnotations;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnDraft;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnPoint;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
@@ -47,9 +47,9 @@ public class Spawn implements Cmd {
             return true;
         }
 
-        var behavior = fixedOf(hunt);
+        var behavior = behaviorOf(hunt);
         if (behavior == null) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.SpawnNotFixedPosition")
+            sender.sendMessage(registry.getLanguageService().message("Messages.SpawnWrongBehavior")
                     .replace("%hunt%", hunt.getId()));
             return true;
         }
@@ -73,7 +73,7 @@ public class Spawn implements Cmd {
         return true;
     }
 
-    private void openConfig(CommandSender sender, HBHunt hunt, FixedPositionBehavior behavior) {
+    private void openConfig(CommandSender sender, HBHunt hunt, SpawnPointsBehavior behavior) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
             return;
@@ -88,7 +88,7 @@ public class Spawn implements Cmd {
     }
 
     void applyConfig(Player player, HBHunt hunt, SpawnDraft draft) {
-        var current = fixedOf(hunt);
+        var current = behaviorOf(hunt);
         if (current == null) {
             return;
         }
@@ -106,7 +106,7 @@ public class Spawn implements Cmd {
                 .replace("%hunt%", hunt.getId()));
     }
 
-    private void handlePoint(CommandSender sender, HBHunt hunt, FixedPositionBehavior behavior, String[] args) {
+    private void handlePoint(CommandSender sender, HBHunt hunt, SpawnPointsBehavior behavior, String[] args) {
         var action = args.length > 3 ? args[3].toLowerCase() : "";
         switch (action) {
             case "add" -> addPoint(sender, hunt, behavior);
@@ -117,7 +117,7 @@ public class Spawn implements Cmd {
         }
     }
 
-    private void addPoint(CommandSender sender, HBHunt hunt, FixedPositionBehavior behavior) {
+    private void addPoint(CommandSender sender, HBHunt hunt, SpawnPointsBehavior behavior) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
             return;
@@ -149,7 +149,7 @@ public class Spawn implements Cmd {
                 .replace("%hunt%", hunt.getId()));
     }
 
-    private void removePoint(CommandSender sender, HBHunt hunt, FixedPositionBehavior behavior, String[] args) {
+    private void removePoint(CommandSender sender, HBHunt hunt, SpawnPointsBehavior behavior, String[] args) {
         var points = new ArrayList<>(behavior.points());
         int index = -1;
 
@@ -178,7 +178,7 @@ public class Spawn implements Cmd {
                 .replace("%hunt%", hunt.getId()));
     }
 
-    private void listPoints(CommandSender sender, HBHunt hunt, FixedPositionBehavior behavior) {
+    private void listPoints(CommandSender sender, HBHunt hunt, SpawnPointsBehavior behavior) {
         sender.sendMessage(registry.getLanguageService().message("Messages.SpawnPointListHeader")
                 .replace("%hunt%", hunt.getId())
                 .replace("%count%", String.valueOf(behavior.points().size())));
@@ -195,7 +195,7 @@ public class Spawn implements Cmd {
         }
     }
 
-    private void showPoints(CommandSender sender, FixedPositionBehavior behavior) {
+    private void showPoints(CommandSender sender, SpawnPointsBehavior behavior) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(registry.getLanguageService().message("Messages.PlayerOnly"));
             return;
@@ -230,7 +230,7 @@ public class Spawn implements Cmd {
         return block.getRelative(BlockFace.UP).getLocation();
     }
 
-    private void replace(HBHunt hunt, FixedPositionBehavior behavior, List<SpawnPoint> points) {
+    private void replace(HBHunt hunt, SpawnPointsBehavior behavior, List<SpawnPoint> points) {
         var behaviors = new ArrayList<Behavior>(hunt.getBehaviors());
         behaviors.replaceAll(current -> current == behavior ? behavior.withPoints(points) : current);
         hunt.setBehaviors(behaviors);
@@ -241,9 +241,9 @@ public class Spawn implements Cmd {
         registry.getSpawnService().refresh(hunt);
     }
 
-    private static FixedPositionBehavior fixedOf(HBHunt hunt) {
+    private static SpawnPointsBehavior behaviorOf(HBHunt hunt) {
         for (Behavior behavior : hunt.getBehaviors()) {
-            if (behavior instanceof FixedPositionBehavior fixed) {
+            if (behavior instanceof SpawnPointsBehavior fixed) {
                 return fixed;
             }
         }
@@ -254,7 +254,7 @@ public class Spawn implements Cmd {
     public ArrayList<String> tabComplete(CommandSender sender, String[] args) {
         List<String> options = switch (args.length) {
             case 2 -> registry.getHuntService().getAllHunts().stream()
-                    .filter(hunt -> fixedOf(hunt) != null)
+                    .filter(hunt -> behaviorOf(hunt) != null)
                     .map(HBHunt::getId)
                     .toList();
             case 3 -> List.of("point", "config", "reroll", "clear");

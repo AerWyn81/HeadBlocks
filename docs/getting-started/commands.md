@@ -186,7 +186,7 @@ Show current plugin version.
 
 ## Spawn Commands
 
-For hunts using the [fixed position](../configuration/hunts.md#fixed-position) behavior. All spawn commands require `headblocks.admin`.
+For hunts using the [spawn points](../configuration/hunts.md#spawn-points) behavior. All spawn commands require `headblocks.admin`.
 
 ### /hb spawn
 
@@ -196,7 +196,7 @@ For hunts using the [fixed position](../configuration/hunts.md#fixed-position) b
 | `/hb spawn <hunt> point remove [index]`       | Remove the spot you look at, or the spot with this number                                                               |
 | `/hb spawn <hunt> point list`                 | List the spots with their number                                                                                        |
 | `/hb spawn <hunt> point show`                 | Highlight the spots with particles for 15 seconds                                                                       |
-| `/hb spawn <hunt> config`                     | Open the [configuration menu](../configuration/behaviors-gui.md#fixed-position-configuration) of the hunt               |
+| `/hb spawn <hunt> config`                     | Open the [configuration menu](../configuration/behaviors-gui.md#spawn-points-configuration) of the hunt               |
 | `/hb spawn <hunt> reroll [reset]`             | Draw all heads again, and reset the progress of every player with `reset`                                               |
 | `/hb spawn <hunt> clear`                      | Remove the heads currently present. They come back with the next draw                                                   |
 

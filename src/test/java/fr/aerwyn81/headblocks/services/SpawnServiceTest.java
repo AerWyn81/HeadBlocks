@@ -8,7 +8,7 @@ import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
@@ -141,16 +141,16 @@ class SpawnServiceTest {
         bukkit.close();
     }
 
-    private FixedPositionBehavior fixed(int points, int active, int max, RespawnPolicy respawn) {
+    private SpawnPointsBehavior fixed(int points, int active, int max, RespawnPolicy respawn) {
         var spawnPoints = new ArrayList<SpawnPoint>();
         for (int i = 0; i < points; i++) {
             spawnPoints.add(new SpawnPoint("world", i * 10, 64, 0, 0f));
         }
-        return new FixedPositionBehavior(registry, spawnPoints, active, 10, max, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
+        return new SpawnPointsBehavior(registry, spawnPoints, active, 10, max, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
                 respawn, List.of(new SpawnTemplate("basic", "Basic", 1, HeadContent.head("tex"), List.of())));
     }
 
-    private void useHunt(FixedPositionBehavior behavior, HuntState state) {
+    private void useHunt(SpawnPointsBehavior behavior, HuntState state) {
         hunt = new HBHunt(configService, "spawnhunt", "Spawn", state, 1, "D");
         hunt.setBehaviors(List.of(new FreeBehavior(), behavior));
         lenient().when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -386,7 +386,7 @@ class SpawnServiceTest {
         var head = spawned().get(0);
         service.stop();
 
-        var renamed = new FixedPositionBehavior(registry, fixed(5, 1, -1, onFind(0)).points(), 1, 10, -1,
+        var renamed = new SpawnPointsBehavior(registry, fixed(5, 1, -1, onFind(0)).points(), 1, 10, -1,
                 SpawnCompletion.PER_PLAYER, AfterGoal.DENY, new RespawnPolicy(true, 0, 0, false, 3600, false, false),
                 List.of(new SpawnTemplate("other", "", 1, HeadContent.head("x"), List.of())));
         useHunt(renamed, HuntState.ACTIVE);

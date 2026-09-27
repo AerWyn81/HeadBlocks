@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class FixedPositionBehaviorTest {
+class SpawnPointsBehaviorTest {
 
     @Mock
     ServiceRegistry registry;
@@ -69,12 +69,12 @@ class FixedPositionBehaviorTest {
         hunt = new HBHunt(configService, "spawnhunt", "Spawn Hunt", HuntState.ACTIVE, 1, "D");
     }
 
-    private FixedPositionBehavior behavior(int goal, SpawnCompletion completion, AfterGoal afterGoal, List<SpawnPoint> points) {
-        return new FixedPositionBehavior(registry, points, 2, goal, -1, completion, afterGoal, RespawnPolicy.DEFAULT,
+    private SpawnPointsBehavior behavior(int goal, SpawnCompletion completion, AfterGoal afterGoal, List<SpawnPoint> points) {
+        return new SpawnPointsBehavior(registry, points, 2, goal, -1, completion, afterGoal, RespawnPolicy.DEFAULT,
                 List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())));
     }
 
-    private FixedPositionBehavior behavior(int goal, AfterGoal afterGoal) {
+    private SpawnPointsBehavior behavior(int goal, AfterGoal afterGoal) {
         return behavior(goal, SpawnCompletion.PER_PLAYER, afterGoal, List.of());
     }
 
@@ -214,7 +214,7 @@ class FixedPositionBehaviorTest {
 
     @Test
     void pickTemplate_ignoresZeroWeights() {
-        var fixed = new FixedPositionBehavior(registry, List.of(), 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
+        var fixed = new SpawnPointsBehavior(registry, List.of(), 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
                 RespawnPolicy.DEFAULT, List.of(
                 new SpawnTemplate("never", "", 0, HeadContent.head("a"), List.of()),
                 new SpawnTemplate("always", "", 5, HeadContent.head("b"), List.of())));
@@ -226,7 +226,7 @@ class FixedPositionBehaviorTest {
 
     @Test
     void saveAndLoad_roundTripsTheWholeConfiguration() {
-        var original = new FixedPositionBehavior(registry,
+        var original = new SpawnPointsBehavior(registry,
                 List.of(new SpawnPoint("world", 1, 64, -3, 45f), new SpawnPoint("nether", -10, 30, 7, 0f)),
                 3, 12, 50, SpawnCompletion.FIRST_WINS, AfterGoal.CONTINUE,
                 new RespawnPolicy(true, 5, 20, true, 600, true, false),
@@ -235,9 +235,9 @@ class FixedPositionBehaviorTest {
                         new SpawnTemplate("basic", "", 10, HeadContent.head("basictex"), List.of())));
 
         var yaml = new YamlConfiguration();
-        original.saveTo(yaml.createSection("behaviors.fixed_position"));
-        var loaded = (FixedPositionBehavior) Behavior.fromConfig("fixed_position", registry,
-                yaml.getConfigurationSection("behaviors.fixed_position"));
+        original.saveTo(yaml.createSection("behaviors.spawn_points"));
+        var loaded = (SpawnPointsBehavior) Behavior.fromConfig("spawn_points", registry,
+                yaml.getConfigurationSection("behaviors.spawn_points"));
 
         assertThat(loaded.points()).isEqualTo(original.points());
         assertThat(loaded.active()).isEqualTo(3);
@@ -260,7 +260,7 @@ class FixedPositionBehaviorTest {
         yaml.set("templates.ok.weight", 1);
         HeadContent.head("tex").save(yaml.getConfigurationSection("templates.ok"), "content");
 
-        var loaded = FixedPositionBehavior.fromConfig(registry, yaml);
+        var loaded = SpawnPointsBehavior.fromConfig(registry, yaml);
 
         assertThat(loaded.templates()).extracting(SpawnTemplate::id).containsExactly("ok");
     }

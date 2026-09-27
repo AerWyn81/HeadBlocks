@@ -2,7 +2,7 @@ package fr.aerwyn81.headblocks.data.hunt.behavior.spawn;
 
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
-import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.reward.Reward;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ public class SpawnDraft {
     public boolean onStart = true;
     public final Map<String, SpawnTemplate> templates = new LinkedHashMap<>();
 
-    public static SpawnDraft of(FixedPositionBehavior behavior) {
+    public static SpawnDraft of(SpawnPointsBehavior behavior) {
         var draft = new SpawnDraft();
         draft.points = new ArrayList<>(behavior.points());
         draft.active = behavior.active();
@@ -76,8 +76,8 @@ public class SpawnDraft {
         return templates.values().stream().anyMatch(template -> template.weight() > 0);
     }
 
-    public FixedPositionBehavior build(ServiceRegistry registry) {
-        return new FixedPositionBehavior(registry, points, active, goal, maxTotalSpawns, completion, afterGoal,
+    public SpawnPointsBehavior build(ServiceRegistry registry) {
+        return new SpawnPointsBehavior(registry, points, active, goal, maxTotalSpawns, completion, afterGoal,
                 new RespawnPolicy(onFind, minDelay, maxDelay, interval, intervalSeconds, resetProgress, onStart),
                 templates.values());
     }

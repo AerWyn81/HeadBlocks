@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.*;
 import fr.aerwyn81.headblocks.services.*;
@@ -85,13 +85,13 @@ class SpawnCommandTest {
     }
 
     private void useFixed(SpawnPoint... points) {
-        hunt.setBehaviors(List.of(new FreeBehavior(), new FixedPositionBehavior(registry, List.of(points), 1, 1, -1,
+        hunt.setBehaviors(List.of(new FreeBehavior(), new SpawnPointsBehavior(registry, List.of(points), 1, 1, -1,
                 SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT,
                 List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())))));
     }
 
-    private FixedPositionBehavior fixed() {
-        return (FixedPositionBehavior) hunt.getBehaviors().get(1);
+    private SpawnPointsBehavior fixed() {
+        return (SpawnPointsBehavior) hunt.getBehaviors().get(1);
     }
 
     private void lookAt(int x, int y, int z) {
@@ -105,10 +105,10 @@ class SpawnCommandTest {
     }
 
     @Test
-    void notAFixedPositionHunt_isRefused() {
+    void notASpawnPointsHunt_isRefused() {
         command.perform(player, new String[]{"spawn", "spawnhunt", "reroll"});
 
-        verify(player).sendMessage("Messages.SpawnNotFixedPosition");
+        verify(player).sendMessage("Messages.SpawnWrongBehavior");
         verifyNoInteractions(spawnService);
     }
 
@@ -198,7 +198,7 @@ class SpawnCommandTest {
     }
 
     @Test
-    void tabComplete_listsOnlyFixedPositionHunts() {
+    void tabComplete_listsOnlySpawnPointsHunts() {
         useFixed();
         HBHunt other = new HBHunt(configService, "other", "Other", HuntState.ACTIVE, 1, "D");
         when(huntService.getAllHunts()).thenReturn(List.of(hunt, other));

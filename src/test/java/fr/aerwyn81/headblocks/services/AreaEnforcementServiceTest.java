@@ -4,7 +4,7 @@ import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
-import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AfterGoal;
@@ -612,9 +612,9 @@ class AreaEnforcementServiceTest {
     }
 
     @Test
-    void sanitize_fixedPositionWithoutPlacedHeads_pointsInside_keepsArea() {
+    void sanitize_spawnPointsWithoutPlacedHeads_pointsInside_keepsArea() {
         HBHunt hunt = hunt(HUNT_ID, 1, 0, area, returnPoint);
-        hunt.setBehaviors(List.of(fixedPosition(new SpawnPoint("world", 1, 64, 1, 0f))));
+        hunt.setBehaviors(List.of(spawnPoints(new SpawnPoint("world", 1, 64, 1, 0f))));
         World world = mock(World.class);
         when(area.contains(any(Location.class))).thenReturn(true);
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -629,9 +629,9 @@ class AreaEnforcementServiceTest {
     }
 
     @Test
-    void sanitize_fixedPositionPointOutside_disablesArea() {
+    void sanitize_spawnPointsPointOutside_disablesArea() {
         HBHunt hunt = hunt(HUNT_ID, 1, 0, area, returnPoint);
-        hunt.setBehaviors(List.of(fixedPosition(new SpawnPoint("world", 1, 64, 1, 0f))));
+        hunt.setBehaviors(List.of(spawnPoints(new SpawnPoint("world", 1, 64, 1, 0f))));
         World world = mock(World.class);
         when(area.contains(any(Location.class))).thenReturn(false);
         when(huntService.getAllHunts()).thenReturn(List.of(hunt));
@@ -645,8 +645,8 @@ class AreaEnforcementServiceTest {
         assertThat(service.hasArea(hunt)).isFalse();
     }
 
-    private FixedPositionBehavior fixedPosition(SpawnPoint... points) {
-        return new FixedPositionBehavior(registry, List.of(points), 1, 1, -1, SpawnCompletion.PER_PLAYER,
+    private SpawnPointsBehavior spawnPoints(SpawnPoint... points) {
+        return new SpawnPointsBehavior(registry, List.of(points), 1, 1, -1, SpawnCompletion.PER_PLAYER,
                 AfterGoal.DENY, RespawnPolicy.DEFAULT, List.of());
     }
 

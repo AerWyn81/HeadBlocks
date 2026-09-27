@@ -290,13 +290,13 @@ behaviors:
 - **repeatable**: if `true`, players can replay after completion (progress is reset)
 - Players can leave a run with `/hb leave`
 
-### Fixed position
+### Spawn points
 
 Heads appear on spots you define, a few at a time. When someone finds one, it disappears for everybody and a new one appears on another free spot. Every player collects heads until they reach the goal.
 
 ```yaml
 behaviors:
-  fixed_position:
+  spawn_points:
     points:
       - {world: world, x: 10, y: 64, z: 10}
       - {world: world, x: 20, y: 64, z: 15, yaw: 90}
@@ -340,7 +340,7 @@ behaviors:
 
 Heads that appeared are not placed heads: they are not saved in the hunt file, cannot be renamed, moved or given rewards per head, and are removed when the hunt is disabled or deleted. Their state is kept in `spawns/<hunt>.yml`, so a restart or a reload brings back the same heads.
 
-{% hint style="warning" %} The fixed position behavior cannot be combined with the ordered behavior. If the hunt has an area, every spot must be inside it. {% endhint %}
+{% hint style="warning" %} The spawn points behavior cannot be combined with the ordered behavior. If the hunt has an area, every spot must be inside it. {% endhint %}
 
 {% hint style="info" %} The **bounded zone** behavior of earlier versions is now the [area requirement](#requirements). Existing hunt files are converted automatically the first time they are loaded. {% endhint %}
 

@@ -5,7 +5,7 @@ import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.TimedRunData;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.TimedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnPoint;
 import fr.aerwyn81.headblocks.data.hunt.requirement.area.AreaMessageMode;
@@ -301,7 +301,7 @@ public class AreaEnforcementService {
 
     private List<SpawnPoint> spawnPointsOf(HBHunt hunt) {
         for (Behavior behavior : hunt.getBehaviors()) {
-            if (behavior instanceof FixedPositionBehavior fixed) {
+            if (behavior instanceof SpawnPointsBehavior fixed) {
                 return fixed.points();
             }
         }

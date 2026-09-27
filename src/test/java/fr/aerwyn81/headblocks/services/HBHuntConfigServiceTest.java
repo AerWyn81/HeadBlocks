@@ -9,7 +9,7 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
-import fr.aerwyn81.headblocks.data.hunt.behavior.FixedPositionBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.FreeBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.OrderedBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.ScheduledBehavior;
@@ -1140,9 +1140,9 @@ class HBHuntConfigServiceTest {
         }
 
         @Test
-        void saveAndLoad_fixedPositionBehavior_roundTrips() {
+        void saveAndLoad_spawnPointsBehavior_roundTrips() {
             HBHunt hunt = new HBHunt(configService, "fixed", "Fixed", HuntState.ACTIVE, 1, "CHEST");
-            hunt.setBehaviors(List.of(new FreeBehavior(), new FixedPositionBehavior(registry,
+            hunt.setBehaviors(List.of(new FreeBehavior(), new SpawnPointsBehavior(registry,
                     List.of(new SpawnPoint("world", 4, 70, -2, 180f)), 2, 5, -1, SpawnCompletion.PER_PLAYER,
                     AfterGoal.DENY, RespawnPolicy.DEFAULT,
                     List.of(new SpawnTemplate("basic", "", 1, HeadContent.head("tex"), List.of())))));
@@ -1151,23 +1151,23 @@ class HBHuntConfigServiceTest {
             HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/fixed.yml"));
 
             assertThat(loaded.getBehaviors()).hasSize(2);
-            var fixed = (FixedPositionBehavior) loaded.getBehaviors().get(1);
+            var fixed = (SpawnPointsBehavior) loaded.getBehaviors().get(1);
             assertThat(fixed.points()).containsExactly(new SpawnPoint("world", 4, 70, -2, 180f));
             assertThat(fixed.goal()).isEqualTo(5);
             assertThat(loaded.getTargetCount()).isEqualTo(5);
         }
 
         @Test
-        void load_orderedWithFixedPosition_dropsOrdered() {
+        void load_orderedWithSpawnPoints_dropsOrdered() {
             HBHunt hunt = new HBHunt(configService, "fixed-ordered", "Fixed", HuntState.ACTIVE, 1, "CHEST");
-            hunt.setBehaviors(List.of(new OrderedBehavior(registry), new FixedPositionBehavior(registry,
+            hunt.setBehaviors(List.of(new OrderedBehavior(registry), new SpawnPointsBehavior(registry,
                     List.of(), 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY, RespawnPolicy.DEFAULT, List.of())));
 
             huntConfigService.saveHunt(hunt);
             HBHunt loaded = huntConfigService.loadHunt(new File(tempDir.toFile(), "hunts/fixed-ordered.yml"));
 
             assertThat(loaded.getBehaviors()).hasSize(1);
-            assertThat(loaded.getBehaviors().get(0)).isInstanceOf(FixedPositionBehavior.class);
+            assertThat(loaded.getBehaviors().get(0)).isInstanceOf(SpawnPointsBehavior.class);
         }
     }
 

@@ -74,10 +74,10 @@ public class BehaviorSelectionGui {
                 registry.getLanguageService().messageList("Gui.BehaviorTimedLore"),
                 selected.contains("timed")));
 
-        menu.setItem(0, 14, createBehaviorItem(FixedPositionBehavior.ID,
-                registry.getLanguageService().message("Gui.BehaviorFixedPositionName"),
-                registry.getLanguageService().messageList("Gui.BehaviorFixedPositionLore"),
-                selected.contains(FixedPositionBehavior.ID)));
+        menu.setItem(0, 14, createBehaviorItem(SpawnPointsBehavior.ID,
+                registry.getLanguageService().message("Gui.BehaviorSpawnPointsName"),
+                registry.getLanguageService().messageList("Gui.BehaviorSpawnPointsLore"),
+                selected.contains(SpawnPointsBehavior.ID)));
 
         // Slot 15: Validate button
         menu.setItem(0, 15, new ItemGUI(new ItemBuilder(Material.DIAMOND)
@@ -148,17 +148,17 @@ public class BehaviorSelectionGui {
         }
 
         selected.add(behaviorId);
-        if (FixedPositionBehavior.ID.equals(behaviorId)) {
+        if (SpawnPointsBehavior.ID.equals(behaviorId)) {
             selected.remove("ordered");
         } else if ("ordered".equals(behaviorId)) {
-            selected.remove(FixedPositionBehavior.ID);
+            selected.remove(SpawnPointsBehavior.ID);
         }
     }
 
     private void handleValidate(Player player) {
         Set<String> selected = selectedBehaviors.get(player.getUniqueId());
 
-        if (selected != null && selected.contains(FixedPositionBehavior.ID) && !pendingSpawn.containsKey(player.getUniqueId())) {
+        if (selected != null && selected.contains(SpawnPointsBehavior.ID) && !pendingSpawn.containsKey(player.getUniqueId())) {
             registry.getGuiService().getSpawnConfigGui().open(player, new SpawnDraft(),
                     draft -> {
                         pendingSpawn.put(player.getUniqueId(), draft);
@@ -207,7 +207,7 @@ public class BehaviorSelectionGui {
                     case "scheduled" -> behaviors.add(new ScheduledBehavior(registry, scheduleMode));
                     case "timed" ->
                             behaviors.add(new TimedBehavior(registry, plateLocation, repeatable, limitSeconds, resetOnExpire));
-                    case FixedPositionBehavior.ID -> {
+                    case SpawnPointsBehavior.ID -> {
                         if (spawnDraft != null) {
                             behaviors.add(spawnDraft.build(registry));
                         }
@@ -255,7 +255,7 @@ public class BehaviorSelectionGui {
         }
 
         if (spawnDraft != null) {
-            player.sendMessage(registry.getLanguageService().message("Messages.HuntFixedPositionHint")
+            player.sendMessage(registry.getLanguageService().message("Messages.HuntSpawnPointsHint")
                     .replace("%hunt%", hunt.getId()));
         }
     }

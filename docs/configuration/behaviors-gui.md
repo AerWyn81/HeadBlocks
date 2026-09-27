@@ -1,6 +1,6 @@
 # Behavior GUI
 
-Creating a hunt with **`/hb hunt create <name>`** opens the **Behaviors** menu, which chains into the Fixed position, Timed and Scheduled configuration menus depending on what you select, and gives access to the **Requirements** menu. This page lists every clickable element and its exact click/drop action.
+Creating a hunt with **`/hb hunt create <name>`** opens the **Behaviors** menu, which chains into the Spawn points, Timed and Scheduled configuration menus depending on what you select, and gives access to the **Requirements** menu. This page lists every clickable element and its exact click/drop action.
 
 For the per-head menus opened by `/hb options` (Hint, Order, Rewards), see [Options GUI](options-gui.md). For what each behavior does at runtime, see [Hunt Files](hunts.md).
 
@@ -24,10 +24,10 @@ Toggle the behaviors you want, then validate.
 | **Ordered**      | Lime/Gray Dye | LEFT CLICK → toggle the Ordered behavior                          |
 | **Scheduled**    | Lime/Gray Dye | LEFT CLICK → toggle the Scheduled behavior                        |
 | **Timed**        | Lime/Gray Dye | LEFT CLICK → toggle the Timed behavior                            |
-| **Fixed position** | Lime/Gray Dye | LEFT CLICK → toggle the Fixed position behavior (unselects Ordered) |
+| **Spawn points** | Lime/Gray Dye | LEFT CLICK → toggle the Spawn points behavior (unselects Ordered) |
 | **Validate**     | Diamond       | LEFT CLICK → create the hunt (chains into the config menus below) |
 
-A green dye means selected, gray means not selected. If Timed or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created. Fixed position opens its own configuration first. Fixed position and Ordered cannot be selected together. Requirements are configured in their own menu and the item shows how many are set.
+A green dye means selected, gray means not selected. If Timed or Scheduled are selected, validating opens their configuration menus in turn before the hunt is created. Spawn points opens its own configuration first. Spawn points and Ordered cannot be selected together. Requirements are configured in their own menu and the item shows how many are set.
 
 ---
 
@@ -115,9 +115,9 @@ First pick the hunt in the paginated list, then set the threshold.
 
 ---
 
-## Fixed position configuration
+## Spawn points configuration
 
-Opened when validating with **Fixed position** selected, or with `/hb spawn <hunt> config` for an existing hunt. Numbers: **LEFT CLICK** → +, **RIGHT CLICK** → -, hold **SHIFT** for a bigger step.
+Opened when validating with **Spawn points** selected, or with `/hb spawn <hunt> config` for an existing hunt. Numbers: **LEFT CLICK** → +, **RIGHT CLICK** → -, hold **SHIFT** for a bigger step.
 
 | Element                          | Icon              | Action                                                          |
 |----------------------------------|-------------------|-----------------------------------------------------------------|

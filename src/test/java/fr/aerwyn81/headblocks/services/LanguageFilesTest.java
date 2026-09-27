@@ -29,10 +29,10 @@ class LanguageFilesTest {
         var en = keysOf("messages_en.yml");
         var fr = keysOf("messages_fr.yml");
 
-        var spawnEn = en.stream().filter(key -> key.contains("Spawn") || key.contains("FixedPosition")).toList();
-        var spawnFr = fr.stream().filter(key -> key.contains("Spawn") || key.contains("FixedPosition")).toList();
+        var spawnEn = en.stream().filter(key -> key.contains("Spawn")).toList();
+        var spawnFr = fr.stream().filter(key -> key.contains("Spawn")).toList();
 
         assertThat(spawnEn).isNotEmpty().containsExactlyElementsOf(spawnFr);
-        assertThat(en).contains("Gui.SpawnConfigCompletion_FIRST_WINS", "Help.Spawn", "Hunt.Behavior.FixedPosition");
+        assertThat(en).contains("Gui.SpawnConfigCompletion_FIRST_WINS", "Help.Spawn", "Hunt.Behavior.SpawnPoints");
     }
 }
