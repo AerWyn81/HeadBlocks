@@ -387,4 +387,70 @@ class SpawnCommandTest {
         assertThat(command.tabComplete(player, new String[]{"spawn", "spawnhunt", "clear", ""})).isEmpty();
         assertThat(command.tabComplete(player, new String[]{"spawn", "spawnhunt", "point", "add", ""})).isEmpty();
     }
+
+    @Test
+    void add_spawnsTheRequestedHeads() {
+        useFixed();
+        when(spawnService.addHeads(hunt, 3)).thenReturn(2);
+
+        command.perform(player, new String[]{"spawn", "spawnhunt", "add", "3"});
+
+        verify(spawnService).addHeads(hunt, 3);
+        verify(player).sendMessage("Messages.SpawnHeadsAdded");
+    }
+
+    @Test
+    void add_withoutNumber_spawnsOne() {
+        useFixed();
+
+        command.perform(player, new String[]{"spawn", "spawnhunt", "add"});
+
+        verify(spawnService).addHeads(hunt, 1);
+    }
+
+    @Test
+    void add_invalidNumber_showsUsage() {
+        useFixed();
+
+        command.perform(player, new String[]{"spawn", "spawnhunt", "add", "lots"});
+
+        verify(spawnService, never()).addHeads(any(), anyInt());
+        verify(player).sendMessage("Messages.SpawnUsage");
+    }
+
+    @Test
+    void heads_none_saysSo() {
+        useFixed();
+        when(spawnService.getActiveHeads("spawnhunt")).thenReturn(List.of());
+
+        command.perform(player, new String[]{"spawn", "spawnhunt", "heads"});
+
+        verify(player).sendMessage("Messages.SpawnActiveEmpty");
+    }
+
+    @Test
+    void heads_player_getsClickableLines() {
+        useFixed();
+        var head = new fr.aerwyn81.headblocks.data.HeadLocation("", java.util.UUID.randomUUID(), new Location(world, 1.5, 64, 2.5), "spawnhunt");
+        when(spawnService.getActiveHeads("spawnhunt")).thenReturn(List.of(head));
+        Player.Spigot spigot = mock(Player.Spigot.class);
+        when(player.spigot()).thenReturn(spigot);
+
+        command.perform(player, new String[]{"spawn", "spawnhunt", "heads"});
+
+        verify(player).sendMessage("Messages.SpawnActiveHeader");
+        verify(spigot).sendMessage(any(net.md_5.bungee.api.chat.BaseComponent.class));
+    }
+
+    @Test
+    void heads_console_getsPlainLines() {
+        useFixed();
+        var head = new fr.aerwyn81.headblocks.data.HeadLocation("", java.util.UUID.randomUUID(), new Location(world, 1.5, 64, 2.5), "spawnhunt");
+        when(spawnService.getActiveHeads("spawnhunt")).thenReturn(List.of(head));
+        CommandSender console = mock(CommandSender.class);
+
+        command.perform(console, new String[]{"spawn", "spawnhunt", "heads"});
+
+        verify(console).sendMessage("Messages.SpawnActiveLine");
+    }
 }

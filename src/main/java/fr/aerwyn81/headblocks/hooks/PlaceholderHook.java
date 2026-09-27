@@ -11,6 +11,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -189,7 +191,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // %headblocks_hunt_<huntId>_found% | %headblocks_hunt_<huntId>_total% | %headblocks_hunt_<huntId>_progress% | %headblocks_hunt_<huntId>_left%
         if (identifier.startsWith("hunt_")) {
             var knownSuffixes = Set.of("found", "total", "left", "progress", "name", "state",
-                    "besttime", "timedcount", "timeposition", "timetop", "finishers");
+                    "besttime", "timedcount", "timeposition", "timetop", "finishers", "spawned", "active");
 
             // Strip leading "hunt_"
             String remainder = identifier.substring("hunt_".length());
@@ -243,6 +245,15 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 }
                 case "total" -> {
                     return String.valueOf(hunt.getTargetCount());
+                }
+                case "spawned" -> {
+                    return String.valueOf(registry.getSpawnService().totalSpawned(huntId));
+                }
+                case "spawned_formatted" -> {
+                    return grouped(registry.getSpawnService().totalSpawned(huntId));
+                }
+                case "active" -> {
+                    return String.valueOf(registry.getSpawnService().getActiveHeads(huntId).size());
                 }
                 case "left" -> {
                     try {
@@ -405,5 +416,11 @@ public class PlaceholderHook extends PlaceholderExpansion {
         }
 
         return null;
+    }
+
+    private static String grouped(int value) {
+        var symbols = DecimalFormatSymbols.getInstance();
+        symbols.setGroupingSeparator(' ');
+        return new DecimalFormat("#,###", symbols).format(value);
     }
 }

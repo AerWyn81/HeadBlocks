@@ -93,4 +93,104 @@ class SpawnDataTest {
         assertThat(draft.templates.get("template1").rewards()).containsExactly(new Reward(RewardType.COMMAND, "say hi"));
         assertThat(draft.templates).hasSize(1);
     }
+
+    private static SpawnTemplate template() {
+        return new SpawnTemplate("t", "", 1, HeadContent.head("a"), List.of(
+                new Reward(RewardType.MESSAGE, "1"), new Reward(RewardType.MESSAGE, "2")));
+    }
+
+    @Test
+    void template_defaults_giveEveryRewardAndNeverTrap() {
+        var template = template();
+
+        assertThat(template.drawRewards()).hasSize(2);
+        assertThat(template.rollTrap()).isFalse();
+        assertThat(template.points()).isEqualTo(1);
+        assertThat(template.particle()).isNull();
+    }
+
+    @Test
+    void template_randomReward_givesExactlyOne() {
+        var template = template().withRewardDraw(true, 100);
+
+        for (int i = 0; i < 20; i++) {
+            assertThat(template.drawRewards()).hasSize(1);
+        }
+    }
+
+    @Test
+    void template_zeroRewardChance_givesNothing() {
+        assertThat(template().withRewardDraw(false, 0).drawRewards()).isEmpty();
+        assertThat(template().withRewardDraw(true, 0).drawRewards()).isEmpty();
+    }
+
+    @Test
+    void template_noRewards_givesNothing() {
+        assertThat(new SpawnTemplate("t", "", 1, HeadContent.head("a"), List.of()).withRewardDraw(true, 100).drawRewards()).isEmpty();
+    }
+
+    @Test
+    void template_fullTrapChance_alwaysTraps() {
+        assertThat(template().withTrap(100, List.of()).rollTrap()).isTrue();
+    }
+
+    @Test
+    void template_valuesAreClamped() {
+        var template = template().withRewardDraw(false, 150).withTrap(-5, List.of()).withPoints(-3).withWeight(-1);
+
+        assertThat(template.rewardChance()).isEqualTo(100);
+        assertThat(template.trapChance()).isZero();
+        assertThat(template.points()).isZero();
+        assertThat(template.weight()).isZero();
+    }
+
+    @Test
+    void template_saveAndLoad_keepsEverySetting() {
+        var original = template().withRewardDraw(true, 40).withPoints(2.5).withTrap(12.5, List.of("say trap"))
+                .withParticle(new SpawnParticle("DUST", 5, List.of("255,0,0")));
+        var yaml = new YamlConfiguration();
+
+        original.saveTo(yaml);
+        var loaded = SpawnTemplate.fromConfig("t", yaml);
+
+        assertThat(loaded).isEqualTo(original);
+    }
+
+    @Test
+    void particle_withoutName_isIgnored() {
+        var yaml = new YamlConfiguration();
+        yaml.set("amount", 3);
+
+        assertThat(SpawnParticle.fromConfig(yaml)).isNull();
+        assertThat(SpawnParticle.fromConfig(null)).isNull();
+        assertThat(new SpawnParticle("X", 0, List.of()).amount()).isEqualTo(1);
+    }
+
+    @Test
+    void options_saveAndLoad_andFallBack() {
+        var original = new SpawnOptions(true, true, false, SpawnOptions.Scoring.POINTS);
+        var yaml = new YamlConfiguration();
+
+        original.saveTo(yaml);
+
+        assertThat(SpawnOptions.fromConfig(yaml)).isEqualTo(original);
+        assertThat(SpawnOptions.fromConfig(null)).isEqualTo(SpawnOptions.DEFAULT);
+        assertThat(SpawnOptions.Scoring.of("nope")).isEqualTo(SpawnOptions.Scoring.HEADS);
+        assertThat(SpawnOptions.Scoring.of(null)).isEqualTo(SpawnOptions.Scoring.HEADS);
+    }
+
+    @Test
+    void draft_keepsTheNewTemplateSettingsWhenChangingWeightOrRewards() {
+        var draft = new SpawnDraft();
+        draft.addTemplate(HeadContent.head("a"));
+        draft.update("template1", t -> t.withTrap(50, List.of("x")).withPoints(3));
+
+        draft.setWeight("template1", 4);
+        draft.setRewards("template1", List.of(new Reward(RewardType.COMMAND, "c")));
+
+        var template = draft.templates.get("template1");
+        assertThat(template.trapChance()).isEqualTo(50);
+        assertThat(template.points()).isEqualTo(3);
+        assertThat(template.weight()).isEqualTo(4);
+    }
 }

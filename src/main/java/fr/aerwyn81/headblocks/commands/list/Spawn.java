@@ -8,9 +8,12 @@ import fr.aerwyn81.headblocks.data.hunt.behavior.Behavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnPointsBehavior;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnDraft;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnPoint;
+import fr.aerwyn81.headblocks.services.SpawnService;
 import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.scheduler.Task;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
@@ -57,6 +60,8 @@ public class Spawn implements Cmd {
         switch (args[2].toLowerCase()) {
             case "point" -> handlePoint(sender, hunt, behavior, args);
             case "config" -> openConfig(sender, hunt, behavior);
+            case "add" -> addHeads(sender, hunt, args);
+            case "heads" -> listHeads(sender, hunt);
             case "reroll" -> {
                 boolean reset = args.length > 3 && args[3].equalsIgnoreCase("reset");
                 registry.getSpawnService().reroll(hunt, reset);
@@ -71,6 +76,55 @@ public class Spawn implements Cmd {
             default -> sender.sendMessage(registry.getLanguageService().message("Messages.SpawnUsage"));
         }
         return true;
+    }
+
+    private void addHeads(CommandSender sender, HBHunt hunt, String[] args) {
+        int count = 1;
+        if (args.length > 3) {
+            try {
+                count = Math.max(1, Integer.parseInt(args[3]));
+            } catch (NumberFormatException e) {
+                sender.sendMessage(registry.getLanguageService().message("Messages.SpawnUsage"));
+                return;
+            }
+        }
+
+        int spawned = registry.getSpawnService().addHeads(hunt, count);
+        sender.sendMessage(registry.getLanguageService().message("Messages.SpawnHeadsAdded")
+                .replace("%count%", String.valueOf(spawned))
+                .replace("%requested%", String.valueOf(count))
+                .replace("%hunt%", hunt.getId()));
+    }
+
+    private void listHeads(CommandSender sender, HBHunt hunt) {
+        var heads = registry.getSpawnService().getActiveHeads(hunt.getId());
+        if (heads.isEmpty()) {
+            sender.sendMessage(registry.getLanguageService().message("Messages.SpawnActiveEmpty")
+                    .replace("%hunt%", hunt.getId()));
+            return;
+        }
+
+        sender.sendMessage(registry.getLanguageService().message("Messages.SpawnActiveHeader")
+                .replace("%hunt%", hunt.getId())
+                .replace("%count%", String.valueOf(heads.size())));
+
+        for (var head : heads) {
+            var location = head.getLocation();
+            var line = registry.getLanguageService().message("Messages.SpawnActiveLine")
+                    .replace("%name%", head.getNameOrUuid())
+                    .replace("%world%", location.getWorld() == null ? "?" : location.getWorld().getName())
+                    .replace("%x%", String.valueOf(location.getBlockX()))
+                    .replace("%y%", String.valueOf(location.getBlockY()))
+                    .replace("%z%", String.valueOf(location.getBlockZ()));
+
+            if (sender instanceof Player player && location.getWorld() != null) {
+                var component = new TextComponent(line);
+                component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, SpawnService.teleportCommand(location)));
+                player.spigot().sendMessage(component);
+            } else {
+                sender.sendMessage(line);
+            }
+        }
     }
 
     private void openConfig(CommandSender sender, HBHunt hunt, SpawnPointsBehavior behavior) {
@@ -257,7 +311,7 @@ public class Spawn implements Cmd {
                     .filter(hunt -> behaviorOf(hunt) != null)
                     .map(HBHunt::getId)
                     .toList();
-            case 3 -> List.of("point", "config", "reroll", "clear");
+            case 3 -> List.of("point", "config", "add", "heads", "reroll", "clear");
             case 4 -> switch (args[2].toLowerCase()) {
                 case "point" -> List.of("add", "remove", "list", "show");
                 case "reroll" -> List.of("reset");

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 public class SpawnDraft {
     public List<SpawnPoint> points = new ArrayList<>();
@@ -24,6 +25,10 @@ public class SpawnDraft {
     public int intervalSeconds = 3600;
     public boolean resetProgress = false;
     public boolean onStart = true;
+    public boolean announce = false;
+    public boolean log = false;
+    public boolean debug = false;
+    public SpawnOptions.Scoring scoring = SpawnOptions.Scoring.HEADS;
     public final Map<String, SpawnTemplate> templates = new LinkedHashMap<>();
 
     public static SpawnDraft of(SpawnPointsBehavior behavior) {
@@ -44,6 +49,12 @@ public class SpawnDraft {
         draft.resetProgress = respawn.resetProgress();
         draft.onStart = respawn.onStart();
 
+        var options = behavior.options();
+        draft.announce = options.announce();
+        draft.log = options.log();
+        draft.debug = options.debug();
+        draft.scoring = options.scoring();
+
         behavior.templates().forEach(template -> draft.templates.put(template.id(), template));
         return draft;
     }
@@ -58,27 +69,32 @@ public class SpawnDraft {
         templates.put(id, new SpawnTemplate(id, "", 1, content, List.of()));
     }
 
+    public void update(String id, UnaryOperator<SpawnTemplate> change) {
+        templates.computeIfPresent(id, (key, template) -> change.apply(template));
+    }
+
     public void setWeight(String id, int weight) {
-        var template = templates.get(id);
-        if (template != null) {
-            templates.put(id, new SpawnTemplate(id, template.name(), Math.max(0, weight), template.content(), template.rewards()));
-        }
+        update(id, template -> template.withWeight(weight));
     }
 
     public void setRewards(String id, List<Reward> rewards) {
-        var template = templates.get(id);
-        if (template != null) {
-            templates.put(id, new SpawnTemplate(id, template.name(), template.weight(), template.content(), rewards));
-        }
+        update(id, template -> template.withRewards(rewards));
     }
 
     public boolean isValid() {
         return templates.values().stream().anyMatch(template -> template.weight() > 0);
     }
 
+    public RespawnPolicy respawnPolicy() {
+        return new RespawnPolicy(onFind, minDelay, maxDelay, interval, intervalSeconds, resetProgress, onStart);
+    }
+
+    public SpawnOptions options() {
+        return new SpawnOptions(announce, log, debug, scoring);
+    }
+
     public SpawnPointsBehavior build(ServiceRegistry registry) {
         return new SpawnPointsBehavior(registry, points, active, goal, maxTotalSpawns, completion, afterGoal,
-                new RespawnPolicy(onFind, minDelay, maxDelay, interval, intervalSeconds, resetProgress, onStart),
-                templates.values());
+                respawnPolicy(), options(), templates.values());
     }
 }

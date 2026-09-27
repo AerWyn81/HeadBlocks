@@ -130,13 +130,13 @@ class SpawnPointsBehaviorTest {
         when(headService.isSpawned(headUuid)).thenReturn(false);
 
         assertThat(behavior(1, AfterGoal.DENY).tryCommit(player, head, hunt).allowed()).isTrue();
-        verify(spawnService, never()).consume(any(), any());
+        verify(spawnService, never()).claim(any(), any(), any());
     }
 
     @Test
     void tryCommit_consumed_allows() {
         when(headService.isSpawned(headUuid)).thenReturn(true);
-        when(spawnService.consume(hunt, head)).thenReturn(true);
+        when(spawnService.claim(hunt, head, player)).thenReturn(ClaimOutcome.FOUND);
 
         assertThat(behavior(1, AfterGoal.DENY).tryCommit(player, head, hunt).allowed()).isTrue();
     }
@@ -144,7 +144,7 @@ class SpawnPointsBehaviorTest {
     @Test
     void tryCommit_alreadyTaken_denies() {
         when(headService.isSpawned(headUuid)).thenReturn(true);
-        when(spawnService.consume(hunt, head)).thenReturn(false);
+        when(spawnService.claim(hunt, head, player)).thenReturn(ClaimOutcome.TAKEN);
 
         BehaviorResult result = behavior(1, AfterGoal.DENY).tryCommit(player, head, hunt);
 
@@ -256,5 +256,27 @@ class SpawnPointsBehaviorTest {
         var loaded = SpawnPointsBehavior.fromConfig(registry, yaml);
 
         assertThat(loaded.templates()).extracting(SpawnTemplate::id).containsExactly("ok");
+    }
+
+    @Test
+    void tryCommit_trapped_deniesWithTheTrapMessage() {
+        when(headService.isSpawned(headUuid)).thenReturn(true);
+        when(spawnService.claim(hunt, head, player)).thenReturn(ClaimOutcome.TRAPPED);
+
+        BehaviorResult result = behavior(1, AfterGoal.DENY).tryCommit(player, head, hunt);
+
+        assertThat(result.allowed()).isFalse();
+        assertThat(result.denyMessage()).isEqualTo("Messages.SpawnHeadTrapped");
+    }
+
+    @Test
+    void saveAndLoad_keepsTheHuntOptions() {
+        var original = new SpawnPointsBehavior(registry, List.of(), 1, 1, -1, SpawnCompletion.PER_PLAYER, AfterGoal.DENY,
+                RespawnPolicy.DEFAULT, new SpawnOptions(true, true, true, SpawnOptions.Scoring.POINTS), List.of());
+        var yaml = new YamlConfiguration();
+
+        original.saveTo(yaml);
+
+        assertThat(SpawnPointsBehavior.fromConfig(registry, yaml).options()).isEqualTo(original.options());
     }
 }

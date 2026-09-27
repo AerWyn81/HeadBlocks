@@ -17,9 +17,15 @@ public class SpawnPointsBehavior extends SpawnBehavior {
     private final List<SpawnPoint> points;
 
     public SpawnPointsBehavior(ServiceRegistry registry, List<SpawnPoint> points, int active, int goal,
-                                 int maxTotalSpawns, SpawnCompletion completion, AfterGoal afterGoal,
-                                 RespawnPolicy respawn, Collection<SpawnTemplate> templates) {
-        super(registry, active, goal, maxTotalSpawns, completion, afterGoal, respawn, templates);
+                               int maxTotalSpawns, SpawnCompletion completion, AfterGoal afterGoal,
+                               RespawnPolicy respawn, Collection<SpawnTemplate> templates) {
+        this(registry, points, active, goal, maxTotalSpawns, completion, afterGoal, respawn, SpawnOptions.DEFAULT, templates);
+    }
+
+    public SpawnPointsBehavior(ServiceRegistry registry, List<SpawnPoint> points, int active, int goal,
+                               int maxTotalSpawns, SpawnCompletion completion, AfterGoal afterGoal,
+                               RespawnPolicy respawn, SpawnOptions options, Collection<SpawnTemplate> templates) {
+        super(registry, active, goal, maxTotalSpawns, completion, afterGoal, respawn, options, templates);
         this.points = List.copyOf(points);
     }
 
@@ -29,7 +35,7 @@ public class SpawnPointsBehavior extends SpawnBehavior {
 
     public SpawnPointsBehavior withPoints(List<SpawnPoint> newPoints) {
         return new SpawnPointsBehavior(registry, newPoints, active(), goal(), maxTotalSpawns(), completion(),
-                afterGoal(), respawn(), templates());
+                afterGoal(), respawn(), options(), templates());
     }
 
     @Override
@@ -91,6 +97,7 @@ public class SpawnPointsBehavior extends SpawnBehavior {
                 SpawnCompletion.of(section.getString("completion")),
                 AfterGoal.of(section.getString("afterGoal")),
                 RespawnPolicy.fromConfig(section.getConfigurationSection("respawn")),
+                SpawnOptions.fromConfig(section),
                 readTemplates(section.getConfigurationSection("templates")));
     }
 }

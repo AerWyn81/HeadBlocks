@@ -6,6 +6,7 @@ import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.AfterGoal;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.RespawnPolicy;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnCompletion;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnOptions;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnTemplate;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -25,11 +26,12 @@ public abstract class SpawnBehavior implements Behavior {
     private final SpawnCompletion completion;
     private final AfterGoal afterGoal;
     private final RespawnPolicy respawn;
+    private final SpawnOptions options;
     private final Map<String, SpawnTemplate> templates;
 
     protected SpawnBehavior(ServiceRegistry registry, int active, int goal, int maxTotalSpawns,
                             SpawnCompletion completion, AfterGoal afterGoal, RespawnPolicy respawn,
-                            Collection<SpawnTemplate> templates) {
+                            SpawnOptions options, Collection<SpawnTemplate> templates) {
         this.registry = registry;
         this.active = Math.max(1, active);
         this.goal = Math.max(1, goal);
@@ -37,6 +39,7 @@ public abstract class SpawnBehavior implements Behavior {
         this.completion = completion;
         this.afterGoal = afterGoal;
         this.respawn = respawn;
+        this.options = options;
         this.templates = new LinkedHashMap<>();
         templates.forEach(template -> this.templates.put(template.id(), template));
     }
@@ -69,6 +72,10 @@ public abstract class SpawnBehavior implements Behavior {
 
     public RespawnPolicy respawn() {
         return respawn;
+    }
+
+    public SpawnOptions options() {
+        return options;
     }
 
     public Collection<SpawnTemplate> templates() {
@@ -116,11 +123,15 @@ public abstract class SpawnBehavior implements Behavior {
 
     @Override
     public BehaviorResult tryCommit(Player player, HeadLocation head, HBHunt hunt) {
-        if (!registry.getHeadService().isSpawned(head.getUuid()) || registry.getSpawnService().consume(hunt, head)) {
+        if (!registry.getHeadService().isSpawned(head.getUuid())) {
             return BehaviorResult.allow();
         }
 
-        return BehaviorResult.deny(registry.getLanguageService().message("Messages.SpawnHeadTaken"));
+        return switch (registry.getSpawnService().claim(hunt, head, player)) {
+            case FOUND -> BehaviorResult.allow();
+            case TRAPPED -> BehaviorResult.deny(registry.getLanguageService().message("Messages.SpawnHeadTrapped"));
+            case TAKEN -> BehaviorResult.deny(registry.getLanguageService().message("Messages.SpawnHeadTaken"));
+        };
     }
 
     @Override
@@ -139,6 +150,7 @@ public abstract class SpawnBehavior implements Behavior {
         section.set("completion", completion.name());
         section.set("afterGoal", afterGoal.name());
         respawn.saveTo(section.createSection("respawn"));
+        options.saveTo(section);
 
         var templatesSection = section.createSection("templates");
         templates.values().forEach(template -> template.saveTo(templatesSection.createSection(template.id())));

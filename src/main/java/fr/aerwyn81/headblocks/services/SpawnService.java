@@ -8,10 +8,15 @@ import fr.aerwyn81.headblocks.data.head.visual.RenderMode;
 import fr.aerwyn81.headblocks.data.hunt.HBHunt;
 import fr.aerwyn81.headblocks.data.hunt.HuntState;
 import fr.aerwyn81.headblocks.data.hunt.behavior.SpawnBehavior;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.ClaimOutcome;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnParticle;
 import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnTemplate;
+import fr.aerwyn81.headblocks.utils.bukkit.PlayerUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
 import fr.aerwyn81.headblocks.utils.scheduler.Task;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -23,6 +28,9 @@ import java.io.File;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,6 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SpawnService {
     private static final long FLUSH_PERIOD_TICKS = 20L;
     private static final int RETRY_SECONDS = 30;
+    private static final DateTimeFormatter LOG_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final ServiceRegistry registry;
     private final File folder;
@@ -142,11 +151,22 @@ public class SpawnService {
 
     // --- Claim flow ---
 
-    public boolean consume(HBHunt hunt, HeadLocation head) {
+    public ClaimOutcome claim(HBHunt hunt, HeadLocation head, Player player) {
         var state = states.get(hunt.getId());
         var spawn = state == null ? null : state.active.remove(head.getUuid());
         if (spawn == null) {
-            return false;
+            return ClaimOutcome.TAKEN;
+        }
+
+        var behavior = behaviorOf(hunt);
+        var template = behavior == null ? null : behavior.template(spawn.templateId());
+        if (template != null && template.rollTrap()) {
+            registry.getHeadService().removeSpawnedHead(head);
+            markDirty(state);
+            log(state, "TRAP", head, player);
+            runTrapCommands(template, hunt, head, player);
+            respawnAfterFind(state, head.getLocation());
+            return ClaimOutcome.TRAPPED;
         }
 
         try {
@@ -154,18 +174,49 @@ public class SpawnService {
         } catch (InternalException e) {
             state.active.put(head.getUuid(), spawn);
             LogUtil.error("Cannot store the spawned head found in hunt {0}: {1}", hunt.getId(), e.getMessage());
-            return false;
+            return ClaimOutcome.TAKEN;
         }
 
         registry.getHeadService().removeSpawnedHead(head);
         markDirty(state);
+        log(state, "FOUND", head, player);
         respawnAfterFind(state, head.getLocation());
-        return true;
+        return ClaimOutcome.FOUND;
+    }
+
+    public int addHeads(HBHunt hunt, int count) {
+        var state = states.get(hunt.getId());
+        if (state == null || activeBehaviorOf(state) == null) {
+            return 0;
+        }
+
+        int spawned = 0;
+        for (int i = 0; i < count; i++) {
+            if (spawnOne(state, null)) {
+                spawned++;
+            }
+        }
+        announce(state, spawned);
+        return spawned;
+    }
+
+    public SpawnParticle particleOf(HeadLocation head) {
+        var state = states.get(head.getHuntId());
+        var spawn = state == null ? null : state.active.get(head.getUuid());
+        var behavior = spawn == null ? null : activeBehaviorOf(state);
+        var template = behavior == null ? null : behavior.template(spawn.templateId());
+        return template == null ? null : template.particle();
+    }
+
+    public int totalSpawned(String huntId) {
+        var state = states.get(huntId);
+        return state == null ? 0 : state.totalSpawned.get();
     }
 
     public void onLost(HeadLocation head) {
         var state = removeFromItsState(head);
-        if (state != null) {
+        var behavior = state == null ? null : activeBehaviorOf(state);
+        if (behavior != null && freeSlots(state, behavior) > 0) {
             scheduleRespawn(state, RETRY_SECONDS, head.getLocation());
         }
     }
@@ -173,6 +224,7 @@ public class SpawnService {
     public void onDiscarded(HeadLocation head) {
         var state = removeFromItsState(head);
         if (state != null) {
+            log(state, "REMOVED", head, null);
             respawnAfterFind(state, head.getLocation());
         }
     }
@@ -301,21 +353,29 @@ public class SpawnService {
 
         int waiting = Math.min(state.waiting, freeSlots(state, behavior));
         state.waiting = 0;
+        int spawned = 0;
         for (int i = 0; i < waiting; i++) {
-            spawnOne(state, null);
+            if (spawnOne(state, null)) {
+                spawned++;
+            }
         }
 
         if (fillEmptySlots && behavior.respawn().onStart()) {
-            fill(state, behavior);
+            spawned += fill(state, behavior);
         }
+        announce(state, spawned);
         markDirty(state);
     }
 
-    private void fill(SpawnState state, SpawnBehavior behavior) {
+    private int fill(SpawnState state, SpawnBehavior behavior) {
         int missing = freeSlots(state, behavior);
+        int spawned = 0;
         for (int i = 0; i < missing; i++) {
-            spawnOne(state, null);
+            if (spawnOne(state, null)) {
+                spawned++;
+            }
         }
+        return spawned;
     }
 
     private static int freeSlots(SpawnState state, SpawnBehavior behavior) {
@@ -324,38 +384,44 @@ public class SpawnService {
 
     private void respawnAfterFind(SpawnState state, Location freed) {
         var behavior = activeBehaviorOf(state);
-        if (behavior != null && behavior.respawn().onFind()) {
+        if (behavior != null && behavior.respawn().onFind() && freeSlots(state, behavior) > 0) {
             scheduleRespawn(state, behavior.respawn().nextFindDelay(), freed);
         }
     }
 
     private void scheduleRespawn(SpawnState state, int delaySeconds, Location avoid) {
         if (delaySeconds <= 0) {
-            spawnOne(state, avoid);
+            respawn(state, avoid);
             return;
         }
 
         state.pending.incrementAndGet();
         state.respawnTasks.add(registry.getScheduler().runTaskLater(() -> {
             state.pending.decrementAndGet();
-            spawnOne(state, avoid);
+            respawn(state, avoid);
         }, delaySeconds * 20L));
     }
 
-    private void spawnOne(SpawnState state, Location avoid) {
+    private void respawn(SpawnState state, Location avoid) {
+        if (spawnOne(state, avoid)) {
+            announce(state, 1);
+        }
+    }
+
+    private boolean spawnOne(SpawnState state, Location avoid) {
         var behavior = activeBehaviorOf(state);
         if (behavior == null) {
-            return;
+            return false;
         }
 
         if (behavior.maxTotalSpawns() >= 0 && state.totalSpawned.get() >= behavior.maxTotalSpawns()) {
-            return;
+            return false;
         }
 
         var template = behavior.pickTemplate();
         if (template == null) {
             LogUtil.warning("Hunt {0} has no spawn template with a positive weight, no head can appear.", state.huntId);
-            return;
+            return false;
         }
 
         var location = behavior.pickLocation(candidate -> isFree(candidate, avoid));
@@ -365,15 +431,95 @@ public class SpawnService {
 
         if (location == null) {
             scheduleRespawn(state, RETRY_SECONDS, null);
-            return;
+            return false;
         }
 
         var head = buildHead(state.huntId, UUID.randomUUID(), template, location, behavior.yawAt(location));
-        if (activate(state, head, template)) {
-            state.totalSpawned.incrementAndGet();
-        } else {
+        if (!activate(state, head, template)) {
             scheduleRespawn(state, RETRY_SECONDS, null);
+            return false;
         }
+
+        state.totalSpawned.incrementAndGet();
+        log(state, "SPAWN", head, null);
+        traceSpawn(behavior, head);
+        return true;
+    }
+
+    private void announce(SpawnState state, int count) {
+        var behavior = activeBehaviorOf(state);
+        if (count <= 0 || behavior == null || !behavior.options().announce()) {
+            return;
+        }
+
+        var hunt = registry.getHuntService().getHuntById(state.huntId);
+        var message = registry.getLanguageService().message(count == 1 ? "Messages.SpawnHeadAppeared" : "Messages.SpawnHeadsAppeared")
+                .replace("%count%", String.valueOf(count))
+                .replace("%hunt%", hunt.getDisplayName());
+        if (!message.trim().isEmpty()) {
+            Bukkit.broadcastMessage(message);
+        }
+    }
+
+    private void traceSpawn(SpawnBehavior behavior, HeadLocation head) {
+        if (!behavior.options().debug()) {
+            return;
+        }
+
+        var location = head.getLocation();
+        var message = registry.getLanguageService().message("Messages.SpawnDebugAppeared")
+                .replace("%hunt%", head.getHuntId())
+                .replace("%world%", location.getWorld().getName())
+                .replace("%x%", String.valueOf(location.getBlockX()))
+                .replace("%y%", String.valueOf(location.getBlockY()))
+                .replace("%z%", String.valueOf(location.getBlockZ()));
+        LogUtil.info(message);
+
+        var component = new TextComponent(message);
+        component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, teleportCommand(location)));
+        for (Player admin : Bukkit.getOnlinePlayers()) {
+            if (PlayerUtils.hasPermission(admin, "headblocks.admin")) {
+                admin.spigot().sendMessage(component);
+            }
+        }
+    }
+
+    public static String teleportCommand(Location location) {
+        return "/headblocks tp " + location.getWorld().getName() + " " + location.getX() + " " + location.getY()
+                + " " + location.getZ() + " 0.0 90.0";
+    }
+
+    private void runTrapCommands(SpawnTemplate template, HBHunt hunt, HeadLocation head, Player player) {
+        for (String command : template.trapCommands()) {
+            var parsed = registry.getPlaceholdersService().parse(player.getName(), player.getUniqueId(), head, command, hunt.getId());
+            if (!parsed.isBlank()) {
+                registry.getCommandDispatcher().dispatchConsoleCommand(parsed);
+            }
+        }
+    }
+
+    private void log(SpawnState state, String event, HeadLocation head, Player player) {
+        var hunt = registry.getHuntService().getHuntById(state.huntId);
+        var behavior = hunt == null ? null : behaviorOf(hunt);
+        if (behavior == null || !behavior.options().log()) {
+            return;
+        }
+
+        var location = head.getLocation();
+        var line = LOG_TIME.format(LocalDateTime.now()) + " " + event
+                + " " + (location.getWorld() == null ? "?" : location.getWorld().getName())
+                + " " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ()
+                + " " + head.getNameOrUuid()
+                + (player == null ? "" : " " + player.getName())
+                + System.lineSeparator();
+        var file = new File(folder, state.huntId + ".log").toPath();
+        onWriter(() -> {
+            try {
+                Files.writeString(file, line, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            } catch (Exception e) {
+                LogUtil.error("Cannot write the spawn log of hunt {0}: {1}", state.huntId, e.getMessage());
+            }
+        });
     }
 
     private boolean activate(SpawnState state, HeadLocation head, SpawnTemplate template) {
@@ -403,7 +549,7 @@ public class SpawnService {
         head.setContent(template.content());
         head.setYaw(yaw);
         head.setRenderMode(registry.getHuntService().configOf(huntId).getRenderMode());
-        template.rewards().forEach(head::addReward);
+        template.drawRewards().forEach(head::addReward);
         return head;
     }
 

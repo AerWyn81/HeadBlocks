@@ -4,6 +4,7 @@ import fr.aerwyn81.headblocks.HeadBlocks;
 import fr.aerwyn81.headblocks.ServiceRegistry;
 import fr.aerwyn81.headblocks.data.HeadLocation;
 import fr.aerwyn81.headblocks.data.hunt.HuntConfig;
+import fr.aerwyn81.headblocks.data.hunt.behavior.spawn.SpawnParticle;
 import fr.aerwyn81.headblocks.utils.bukkit.ParticlesUtils;
 import fr.aerwyn81.headblocks.utils.internal.InternalException;
 import fr.aerwyn81.headblocks.utils.internal.LogUtil;
@@ -76,6 +77,20 @@ public class GlobalTask implements Runnable {
         registry.getHologramService().ensureHologramsCreated(location, huntConfig);
 
         handleHologramAndParticles(headLocation, huntConfig);
+    }
+
+    private void spawnTemplateParticle(Location location, SpawnParticle particle, Player player) {
+        if (particlesDisabled) {
+            return;
+        }
+
+        try {
+            ParticlesUtils.spawn(location, ParticlesUtils.resolve(particle.name()), particle.amount(), particle.colorList(), player);
+        } catch (Exception ex) {
+            LogUtil.error("Cannot spawn particle {0}... {1}", particle.name(), ex.getMessage());
+            LogUtil.error("To prevent log spamming, particles are disabled until reload");
+            particlesDisabled = true;
+        }
     }
 
     private void spawnParticles(Location location, boolean isFound, Player player, HuntConfig huntConfig) {
@@ -160,7 +175,12 @@ public class GlobalTask implements Runnable {
                             spawnParticles(location, true, player, huntConfig);
                             registry.getHologramService().showFoundTo(player, location, huntConfig);
                         } else {
-                            spawnParticles(location, false, player, huntConfig);
+                            var templateParticle = registry.getSpawnService().particleOf(headLocation);
+                            if (templateParticle != null) {
+                                spawnTemplateParticle(location, templateParticle, player);
+                            } else {
+                                spawnParticles(location, false, player, huntConfig);
+                            }
                             registry.getHologramService().showNotFoundTo(player, location, huntConfig);
                         }
 
