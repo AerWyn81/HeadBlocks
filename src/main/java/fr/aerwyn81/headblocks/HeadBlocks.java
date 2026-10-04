@@ -228,7 +228,6 @@ public final class HeadBlocks extends JavaPlugin {
     private void startMetrics() {
         var m = new Metrics(this, 15495);
         m.addCustomChart(new SimplePie("database_type", () -> serviceRegistry.getStorageService().selectedStorageType()));
-        m.addCustomChart(new SimplePie("databaseType", () -> serviceRegistry.getStorageService().selectedStorageType()));
         m.addCustomChart(new SingleLineChart("heads", () -> serviceRegistry.getHeadService().getChargedHeadLocations().size()));
         m.addCustomChart(new SimplePie("lang", () -> serviceRegistry.getLanguageService().language()));
         m.addCustomChart(new SingleLineChart("hunts", () -> (int) serviceRegistry.getHuntService().getAllHunts().stream().filter(hunt -> !hunt.isDefault()).count()));
