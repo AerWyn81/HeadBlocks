@@ -68,10 +68,16 @@ hint:
 
 Audio and visual hints to help players locate unfound heads. To enable hints for a specific head, use `/hb options` → Hint tab (see the [click/drop reference](options-gui.md#hint-menu-hb-options-hint)).
 
-| Option               | Description                                                                                           |
-|----------------------|-------------------------------------------------------------------------------------------------------|
-| **distance**         | How close (in blocks) a player must be to receive hints                                               |
-| **frequency**        | How often hints appear in ticks (lower = more frequent)                                               |
-| **sound.volume**     | Sound volume                                                                                          |
-| **sound.sound**      | Sound type to play                                                                                    |
-| **actionBarMessage** | Message shown in action bar. Supports `%position%`, `%distance%`, `%arrow%` and standard placeholders |
+| Option               | Description                                                                                                                    |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| **distance**         | How close (in blocks) a player must be to receive hints                                                                        |
+| **frequency**        | Chance of a hint: 1 in `frequency` at each run of the [internal task](global-settings.md#internaltask) (lower = more frequent) |
+| **sound.volume**     | Sound volume                                                                                                                   |
+| **sound.sound**      | Sound type to play                                                                                                             |
+| **actionBarMessage** | Message shown in action bar. Supports `%position%`, `%distance%`, `%arrow%` and standard placeholders                          |
+
+{% hint style="info" %}
+A head uses either the sound or the action bar. For action bar hints, set `frequency: 1`: the message is then refreshed at each run of the internal task and stays on screen, the distance and the arrow following the player.
+
+`frequency` is shared by all heads (or set per hunt), so with `1` the heads using the sound hint will also play it at each run. The action bar stays on screen only if `internalTask.delay` is short enough (around 40 ticks max), otherwise the message blinks.
+{% endhint %}

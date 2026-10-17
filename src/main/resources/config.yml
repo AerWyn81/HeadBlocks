@@ -190,7 +190,8 @@ holograms:
 # Hint system to help player finding heads
 # Configurable via the command /hb options
 # Distance is calculated in blocks
-# Frequency, less = more frequent
+# Frequency: chance of a hint, 1 in 'frequency' at each run of the internal task, less = more frequent
+# For action bar hints, use 1 to keep the message on screen (sound hints will then play at each run too)
 # Message is displayed in actionbar, support placeholders and extra: %position%, %distance%, %arrow%
 hint:
   distance: 16
