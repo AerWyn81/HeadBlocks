@@ -1,3 +1,11 @@
+# HeadBlocks v3.5.1
+
+### 🐛 Bug Fixes
+
+- Fixed HeadDB support with HeadDB 7 (`Error loading HeadDB support: com/github/thesilentpro/headdb/api/HeadAPI`). HeadDB 6 is still supported.
+
+---
+
 # HeadBlocks v3.5.0
 
 ## What's New

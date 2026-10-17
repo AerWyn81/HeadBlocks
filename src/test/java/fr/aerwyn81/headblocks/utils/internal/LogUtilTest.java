@@ -41,6 +41,16 @@ class LogUtilTest {
         LogUtil.error("test");
     }
 
+    @Test
+    void numbers_areNotGrouped() {
+        Logger logger = mock(Logger.class);
+        LogUtil.initialize(logger);
+
+        LogUtil.info("id {0}", 999999999);
+
+        verify(logger).log(Level.INFO, ConsoleColor.BRIGHT_BLUE.apply("id 999999999"));
+    }
+
     // --- color wrapping per level ---
 
     @Test

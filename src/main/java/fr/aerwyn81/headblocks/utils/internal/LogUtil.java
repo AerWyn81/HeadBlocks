@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.utils.internal;
 
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,8 +36,12 @@ public class LogUtil {
 
         var formatted = (args == null || args.length == 0)
                 ? message
-                : MessageFormat.format(message, args);
+                : MessageFormat.format(message, Arrays.stream(args).map(LogUtil::plain).toArray());
 
         logger.log(level, color.apply(formatted));
+    }
+
+    private static Object plain(Object arg) {
+        return arg instanceof Number ? String.valueOf(arg) : arg;
     }
 }
