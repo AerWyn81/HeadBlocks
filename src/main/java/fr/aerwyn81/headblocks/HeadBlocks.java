@@ -56,7 +56,7 @@ public final class HeadBlocks extends JavaPlugin {
     private Task areaOutlineTask;
     private Task visualTask;
     private HeadDatabaseHook headDatabaseHook;
-    private HeadDBHook headDBHook;
+    private AbstractHeadDBHook headDBHook;
     private PacketEventsHook packetEventsHook;
 
     private HoloEasy holoEasyLib;
@@ -203,10 +203,19 @@ public final class HeadBlocks extends JavaPlugin {
             providers.put(headDatabaseHook.prefix(), headDatabaseHook);
         }
         if (isHeadDBActive) {
-            this.headDBHook = new HeadDBHook(pluginProvider, scheduler);
+            this.headDBHook = createHeadDBHook(pluginProvider);
             providers.put(headDBHook.prefix(), headDBHook);
         }
         return providers;
+    }
+
+    private AbstractHeadDBHook createHeadDBHook(PluginProvider pluginProvider) {
+        try {
+            Class.forName(HeadDB7Hook.SERVICE_CLASS);
+            return new HeadDB7Hook(pluginProvider, scheduler);
+        } catch (ClassNotFoundException e) {
+            return new HeadDBHook(pluginProvider, scheduler);
+        }
     }
 
     private void registerListeners(Map<String, VisualProviderHook> visualProviders) {
@@ -375,11 +384,11 @@ public final class HeadBlocks extends JavaPlugin {
         this.headDatabaseHook = headDatabaseHook;
     }
 
-    public HeadDBHook getHeadDBHook() {
+    public AbstractHeadDBHook getHeadDBHook() {
         return headDBHook;
     }
 
-    public void setHeadDBHook(HeadDBHook headDBHook) {
+    public void setHeadDBHook(AbstractHeadDBHook headDBHook) {
         this.headDBHook = headDBHook;
     }
 

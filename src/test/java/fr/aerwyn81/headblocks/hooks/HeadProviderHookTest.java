@@ -131,6 +131,20 @@ class HeadProviderHookTest {
     }
 
     @Test
+    void headDB7Hook_prefix_isHeaddb() {
+        HeadDB7Hook hook = new HeadDB7Hook(pluginProvider, scheduler);
+
+        assertThat(hook.prefix()).isEqualTo("headdb");
+    }
+
+    @Test
+    void headDB7Hook_loadTextures_isNoOpWhenNotInitialized() {
+        HeadDB7Hook hook = new HeadDB7Hook(pluginProvider, scheduler);
+
+        hook.loadTextures();
+    }
+
+    @Test
     void headDBHook_toBase64Texture_wrapsRawHash() {
         String hash = "5e61873d47faa5e67939e964640b425faa7690d6b5dea8528b25ca7110eda1";
 

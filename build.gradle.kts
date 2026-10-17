@@ -67,6 +67,7 @@ val coverageExclusions = listOf(
     "**/hooks/PacketEventsHookImpl.java",
     "**/hooks/HeadDatabaseHook.java",
     "**/hooks/HeadDBHook.java",
+    "**/hooks/HeadDB7Hook.java",
     "**/hooks/visual/NexoHook.java",
     "**/hooks/visual/NexoFurnitureRenderer.java",
     "**/hooks/visual/ItemsAdderFurnitureRenderer.java",
@@ -149,6 +150,7 @@ dependencies {
     compileOnly(libs.placeholderapi)
     compileOnly(libs.headdatabase.api)
     compileOnly(libs.headdb.api)
+    compileOnly(libs.headdb7.api)
     compileOnly(libs.packetevents)
     compileOnly(libs.worldguard)
     compileOnly(libs.nexo) { isTransitive = false }
