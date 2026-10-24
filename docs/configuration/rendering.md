@@ -53,6 +53,7 @@ When the plugin is installed, its contents can be hidden too:
 | `nexo:<id>`                 | Nexo        | Custom item, or furniture placed by Nexo       |
 | `itemsadder:<namespace:id>` | ItemsAdder  | Custom item, or furniture placed by ItemsAdder |
 | `oraxen:<id>`               | Oraxen      | Custom item, or furniture shown as in Oraxen   |
+| `mythiccrucible:<id>`       | MythicCrucible | Custom item, or furniture placed by MythicCrucible (5.13.1+) |
 | `mythicmobs:<mob>`          | MythicMobs  | A MythicMobs mob without AI (`level` option)   |
 | `modelengine:<model>`       | ModelEngine | A 3D model                                     |
 | `bettermodel:<model>`       | BetterModel | A 3D model                                     |
@@ -64,9 +65,10 @@ When the plugin is installed, its contents can be hidden too:
 - Models and NPCs accept `width` and `height` to size the zone players click.
 - HeadBlocks creates its own copies: they are never saved by the other plugin and don't appear in its lists.
 - Nexo and ItemsAdder furniture is placed by its plugin, with its model and orientation. Seats, storage and other furniture actions are disabled.
+- MythicCrucible furniture uses its configured placement rules, barriers and lights. Leave its footprint free and provide the required support; HeadBlocks does not clear terrain. Removal skips break skills and drops. Right clicks claim it instead of rotating or using it. Avoid furniture with timer skills or changing frames, since Crucible can replace its entities. Barriers and lights remain world state, including for players who have found it.
 - Oraxen furniture (display entity type) is shown with the model, size and orientation set in Oraxen, without its seats, barriers or light. Other Oraxen furniture types are shown as an item.
 - Furniture keeps its own size: `scale` and spin don't apply to it. Use `width` and `height` to size the zone players click.
-- Contents are loaded once their plugin is ready, and again after `/nexo reload`, `/iareload`, `/oraxen reload`, `/mm reload`…
+- Contents are loaded once their plugin is ready, and again after `/nexo reload`, `/iareload`, `/oraxen reload`, `/mm reload`, `/crucible reload`…
 
 ## Taking the items
 

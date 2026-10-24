@@ -157,6 +157,7 @@ dependencies {
     compileOnly(libs.itemsadder) { isTransitive = false }
     compileOnly(libs.oraxen) { isTransitive = false }
     compileOnly(libs.mythicmobs) { isTransitive = false }
+    compileOnly(libs.mythiccrucible) { isTransitive = false }
     compileOnly(libs.modelengine) { isTransitive = false }
     compileOnly(libs.bettermodel) { isTransitive = false }
     compileOnly(libs.bettermodel.core) { isTransitive = false }
@@ -167,6 +168,7 @@ dependencies {
     providerApis(libs.itemsadder)
     providerApis(libs.oraxen)
     providerApis(libs.mythicmobs)
+    providerApis(libs.mythiccrucible)
     providerApis(libs.modelengine)
     providerApis(libs.bettermodel)
     providerApis(libs.bettermodel.core)
@@ -208,7 +210,7 @@ fun BukkitPluginDescription.describeHeadBlocks() {
     description = "Challenge your players to find all the heads and earn rewards"
     softDepend = listOf(
         "PlaceholderAPI", "HeadDatabase", "HeadDB", "packetevents", "WorldGuard",
-        "Nexo", "ItemsAdder", "Oraxen", "MythicMobs", "ModelEngine", "BetterModel", "FancyNpcs", "Citizens", "ZNPCsPlus"
+        "Nexo", "ItemsAdder", "Oraxen", "MythicMobs", "MythicCrucible", "ModelEngine", "BetterModel", "FancyNpcs", "Citizens", "ZNPCsPlus"
     )
     version = project.version.toString()
     website = "https://just2craft.fr"
@@ -275,6 +277,7 @@ val paperPluginDescription = PaperPluginDescription(project).apply {
             "ItemsAdder",
             "Oraxen",
             "MythicMobs",
+            "MythicCrucible",
             "ModelEngine",
             "BetterModel",
             "FancyNpcs",
