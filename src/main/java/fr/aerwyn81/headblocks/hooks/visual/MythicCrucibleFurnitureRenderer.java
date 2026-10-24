@@ -1,6 +1,7 @@
 package fr.aerwyn81.headblocks.hooks.visual;
 
 import fr.aerwyn81.headblocks.data.head.visual.HeadContent;
+import fr.aerwyn81.headblocks.utils.bukkit.HeadUtils;
 import fr.aerwyn81.headblocks.visual.Hitbox;
 import fr.aerwyn81.headblocks.visual.RenderSettings;
 import io.lumine.mythiccrucible.api.MythicCrucibleProvider;
@@ -43,7 +44,9 @@ class MythicCrucibleFurnitureRenderer extends HandleProviderHook<Entity> {
     protected Entity create(Interaction base, Location anchor, HeadContent content, RenderSettings settings) {
         var api = MythicCrucibleProvider.get();
         var block = anchor.getBlock();
-        var result = api.placeFurnitureResult(content.value(), block, settings.yaw());
+        // HeadBlocks faces visuals towards the player; Crucible expects the placement yaw.
+        var placementYaw = HeadUtils.normalizeYaw(settings.yaw() - 180f);
+        var result = api.placeFurnitureResult(content.value(), block, placementYaw);
         if (!result.isSuccess()) {
             throw new IllegalStateException("MythicCrucible cannot place " + content.value() + ": " + result);
         }

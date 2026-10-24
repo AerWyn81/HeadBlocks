@@ -29,6 +29,8 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.Vector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Method;
@@ -62,7 +64,7 @@ class MythicCrucibleHookTest {
         when(handle.getItemFrame()).thenReturn(frame);
         when(handle.getFurnitureData()).thenReturn(context);
         when(api.isFurnitureItem("Chair")).thenReturn(true);
-        when(api.placeFurnitureResult("Chair", block, 90)).thenReturn(FurniturePlacementResult.SUCCESS);
+        when(api.placeFurnitureResult("Chair", block, 270)).thenReturn(FurniturePlacementResult.SUCCESS);
         when(api.getFurniture(block)).thenReturn(Optional.of(handle));
         when(api.getFurniture(frame)).thenReturn(Optional.of(handle));
     }
@@ -95,13 +97,24 @@ class MythicCrucibleHookTest {
 
     @Test
     void rejectedPlacement_removesItsInteractionAndReportsTheReason() {
-        when(api.placeFurnitureResult("Chair", block, 90)).thenReturn(FurniturePlacementResult.OBSTRUCTED);
+        when(api.placeFurnitureResult("Chair", block, 270)).thenReturn(FurniturePlacementResult.OBSTRUCTED);
         try (var provider = mockStatic(MythicCrucibleProvider.class)) {
             provider.when(MythicCrucibleProvider::get).thenReturn(api);
             assertThatThrownBy(() -> hook.spawn(anchor, content, settings))
                     .isInstanceOf(IllegalStateException.class).hasMessageContaining("OBSTRUCTED");
             verify(base).remove();
             verifyNoInteractions(context);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, 180", "90, 270", "180, 0", "270, 90", "337.5, 157.5", "-90, 90", "450, 270"})
+    void furniture_convertsHeadBlocksFacingToCruciblePlacementYaw(float headYaw, float placementYaw) {
+        when(api.placeFurnitureResult("Chair", block, placementYaw)).thenReturn(FurniturePlacementResult.SUCCESS);
+        try (var provider = mockStatic(MythicCrucibleProvider.class)) {
+            provider.when(MythicCrucibleProvider::get).thenReturn(api);
+            hook.spawn(anchor, content, new RenderSettings(2, true, headYaw));
+            verify(api).placeFurnitureResult("Chair", block, placementYaw);
         }
     }
 
