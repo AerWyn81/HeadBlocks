@@ -245,17 +245,18 @@ public class StorageService {
     }
 
     public void loadPlayers(Player... players) {
+        var profiles = new ArrayList<PlayerProfileLight>();
+        for (var player : players) {
+            profiles.add(new PlayerProfileLight(player.getUniqueId(), player.getName(), getCustomDisplay(player)));
+        }
+
         CompletableBukkitFuture.runAsync(HeadBlocks.getInstance(), () -> {
-            for (var player : players) {
-                UUID pUuid = player.getUniqueId();
-                String playerName = player.getName();
+            for (var playerProfile : profiles) {
+                UUID pUuid = playerProfile.uuid();
+                String playerName = playerProfile.name();
 
                 try {
                     boolean isExist = containsPlayer(pUuid);
-
-                    String playerDisplayName = getCustomDisplay(player);
-
-                    var playerProfile = new PlayerProfileLight(pUuid, playerName, playerDisplayName);
 
                     var playerHeads = new HashSet<UUID>();
 
@@ -278,6 +279,8 @@ public class StorageService {
                 } catch (InternalException ex) {
                     storageError = true;
                     LogUtil.error("Error while trying to load player {0} from SQL database: {1}", playerName, ex.getMessage());
+                } catch (Exception ex) {
+                    LogUtil.error("Unexpected error while loading player {0}: {1}", playerName, ex.toString());
                 }
             }
         });
@@ -286,20 +289,25 @@ public class StorageService {
     private String getCustomDisplay(Player player) {
         var customName = player.getName();
 
-        if (configService.placeholdersLeaderboardUseNickname()) {
-            customName = player.getDisplayName();
-        }
-
-        if (HeadBlocks.isPlaceholderApiActive) {
-            var prefix = configService.placeholdersLeaderboardPrefix();
-            if (!prefix.isEmpty()) {
-                customName = PlaceholderAPI.setPlaceholders(player, prefix) + customName;
+        try {
+            if (configService.placeholdersLeaderboardUseNickname()) {
+                customName = player.getDisplayName();
             }
 
-            var suffix = configService.placeholdersLeaderboardSuffix();
-            if (!suffix.isEmpty()) {
-                customName = customName + PlaceholderAPI.setPlaceholders(player, suffix);
+            if (HeadBlocks.isPlaceholderApiActive) {
+                var prefix = configService.placeholdersLeaderboardPrefix();
+                if (!prefix.isEmpty()) {
+                    customName = PlaceholderAPI.setPlaceholders(player, prefix) + customName;
+                }
+
+                var suffix = configService.placeholdersLeaderboardSuffix();
+                if (!suffix.isEmpty()) {
+                    customName = customName + PlaceholderAPI.setPlaceholders(player, suffix);
+                }
             }
+        } catch (Exception ex) {
+            LogUtil.error("Error while resolving the leaderboard name of {0}: {1}", player.getName(), ex.toString());
+            return player.getName();
         }
 
         return customName;

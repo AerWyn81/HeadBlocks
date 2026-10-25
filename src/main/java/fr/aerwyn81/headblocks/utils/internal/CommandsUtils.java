@@ -38,7 +38,7 @@ public class CommandsUtils {
         }
 
         if (profile == null) {
-            sender.sendMessage(registry.getLanguageService().message("Messages.PlayerNotFound", args[1]));
+            sender.sendMessage(registry.getLanguageService().message("Messages.PlayerNotFound", pName));
             return null;
         }
 
