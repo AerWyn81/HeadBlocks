@@ -31,6 +31,7 @@
 - `%headblocks_current%`, `%headblocks_left%` and `%current%` only count placed heads, so they stay consistent with `%headblocks_max%`.
 - A database created before version 4 skipped a migration step on upgrade.
 - The progress cache of a player could be partial for a hunt after finding a head.
+- A message missing from a custom language file showed its key instead of the English text.
 
 ### ⚠️ Breaking Changes
 

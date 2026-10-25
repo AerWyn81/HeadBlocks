@@ -98,6 +98,14 @@ public class LanguageService {
     }
 
     public void pushMessages() {
+        messageMap.clear();
+        putMessages("en");
+        if (!"en".equals(lang)) {
+            putMessages(lang);
+        }
+    }
+
+    private void putMessages(String lang) {
         File f = new File(pluginProvider.getDataFolder() + LANGUAGE_MESSAGES + lang + ".yml");
         YamlConfiguration c = YamlConfiguration.loadConfiguration(f);
 

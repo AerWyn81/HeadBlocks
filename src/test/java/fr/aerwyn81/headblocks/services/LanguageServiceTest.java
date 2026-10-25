@@ -158,6 +158,21 @@ class LanguageServiceTest {
     }
 
     @Test
+    void pushMessages_custom_language_falls_back_to_en_for_missing_keys() throws Exception {
+        Files.writeString(tempDir.resolve("language").resolve("messages_de.yml"), "TestMessage: \"Hallo\"\n");
+        languageService.setLang("de");
+        languageService.pushMessages();
+
+        try (MockedStatic<MessageUtils> msgUtils = mockStatic(MessageUtils.class)) {
+            msgUtils.when(() -> MessageUtils.colorize(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+            assertThat(languageService.message("TestMessage")).isEqualTo("Hallo");
+            assertThat(languageService.messageList("TestList")).containsExactly("Line1", "Line2");
+            assertThat(languageService.containsMessage("Other.NameNotSet")).isTrue();
+        }
+    }
+
+    @Test
     void setLang_can_set_arbitrary_language() {
         languageService.setLang("de");
 
