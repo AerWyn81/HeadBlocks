@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VisualProvidersTest {
 
-    private static final List<String> PREFIXES = List.of("nexo", "itemsadder", "oraxen", "mythicmobs", "modelengine",
+    private static final List<String> PREFIXES = List.of("nexo", "itemsadder", "oraxen", "mythicmobs", "mythiccrucible", "modelengine",
             "bettermodel", "fancynpcs", "citizens", "znpcs");
 
     @Test
@@ -35,7 +35,7 @@ class VisualProvidersTest {
             return false;
         });
 
-        assertThat(asked).containsExactly("Nexo", "ItemsAdder", "Oraxen", "MythicMobs", "ModelEngine",
+        assertThat(asked).containsExactly("Nexo", "ItemsAdder", "Oraxen", "MythicMobs", "MythicCrucible", "ModelEngine",
                 "BetterModel", "FancyNpcs", "Citizens", "ZNPCsPlus");
     }
 

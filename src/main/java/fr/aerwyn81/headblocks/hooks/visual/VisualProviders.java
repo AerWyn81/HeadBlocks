@@ -28,6 +28,7 @@ public final class VisualProviders {
         plugins.put("itemsadder", "ItemsAdder");
         plugins.put("oraxen", "Oraxen");
         plugins.put("mythicmobs", "MythicMobs");
+        plugins.put("mythiccrucible", "MythicCrucible");
         plugins.put("modelengine", "ModelEngine");
         plugins.put("bettermodel", "BetterModel");
         plugins.put("fancynpcs", "FancyNpcs");
@@ -60,6 +61,7 @@ public final class VisualProviders {
             case "itemsadder" -> ItemsAdderHook::new;
             case "oraxen" -> OraxenHook::new;
             case "mythicmobs" -> MythicMobsHook::new;
+            case "mythiccrucible" -> MythicCrucibleHook::new;
             case "modelengine" -> ModelEngineHook::new;
             case "bettermodel" -> BetterModelHook::new;
             case "fancynpcs" -> FancyNpcsHook::new;

@@ -12,6 +12,7 @@ nexo = "1.28.0"
 itemsadder = "3.6.3-beta-14"
 oraxen = "1.219.1"
 mythicmobs = "5.13.0"
+mythiccrucible = "5.13.1-SNAPSHOT"
 modelengine = "R4.1.1"
 bettermodel = "3.5.0"
 fancynpcs = "2.11.0"
@@ -58,6 +59,7 @@ nexo = { module = "com.nexomc:nexo", version.ref = "nexo" }
 itemsadder = { module = "com.github.LoneDev6:API-ItemsAdder", version.ref = "itemsadder" }
 oraxen = { module = "io.th0rgal:oraxen", version.ref = "oraxen" }
 mythicmobs = { module = "io.lumine:Mythic-Dist", version.ref = "mythicmobs" }
+mythiccrucible = { module = "io.lumine:MythicCrucible-API", version.ref = "mythiccrucible" }
 modelengine = { module = "com.ticxo.modelengine:ModelEngine", version.ref = "modelengine" }
 bettermodel = { module = "io.github.toxicity188:bettermodel-bukkit-api", version.ref = "bettermodel" }
 bettermodel-core = { module = "io.github.toxicity188:bettermodel-api", version.ref = "bettermodel" }

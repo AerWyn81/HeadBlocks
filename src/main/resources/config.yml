@@ -26,6 +26,7 @@ metrics: true
 #   frame:DIAMOND[visible=true,lit=true]
 # Contents of other plugins, when installed:
 #   "nexo:<id>", "itemsadder:<namespace:id>", "oraxen:<id>"     -> custom items, rendered as a display
+#   "mythiccrucible:<id>"                                     -> a custom item or furniture (MythicCrucible 5.13.1+)
 #   "mythicmobs:<mob>"                                          -> a MythicMobs mob without AI ([level=<n>])
 #   "modelengine:<model>", "bettermodel:<model>"                -> a 3D model ([width=<n>,height=<n>] to size its hitbox)
 #   "citizens:<skin>", "fancynpcs:<skin>", "znpcs:<skin>"       -> an NPC wearing the skin of a player ([name=<name>,type=<ENTITY_TYPE>])
